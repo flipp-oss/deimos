@@ -8,6 +8,8 @@ require 'deimos/tracing/mock'
 require 'deimos/test_helpers'
 require 'active_support/testing/time_helpers'
 require 'activerecord-import'
+require 'handlers/my_batch_consumer'
+require 'handlers/my_consumer'
 
 # Helpers for Executor/DbProducer
 module TestRunners
