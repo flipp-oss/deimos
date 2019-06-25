@@ -137,7 +137,7 @@ module Deimos
               ' `inline_batch`'
           end
         elsif handler_class < Deimos::Consumer
-          unless delivery.nil? || %w(message batch).include?(delivery)
+          if delivery.present? && !%w(message batch).include?(delivery)
             raise "Non-batch Consumer #{listener.handler} must have delivery"\
               ' set to `message` or `batch`'
           end
