@@ -13,9 +13,7 @@ module Deimos
       def initialize(logger=Logger.new(STDOUT))
         @id = SecureRandom.uuid
         @logger = logger
-        if @logger.respond_to?(:push_tags)
-          @logger.push_tags("DbProducer #{@id}")
-        end
+        @logger.push_tags("DbProducer #{@id}") if @logger.respond_to?(:push_tags)
       end
 
       # Start the poll.

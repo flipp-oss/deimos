@@ -52,7 +52,7 @@ module Deimos
         payloads = batch.map { |m| m.metadata[:decoded_payload] }
 
         Deimos.metrics&.count('publish_error', payloads.size,
-                                  tags: %W(topic:#{topic}))
+                              tags: %W(topic:#{topic}))
         Deimos.instrument(
           'produce_error',
           producer: producer,

@@ -37,7 +37,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rake', '~> 10')
   spec.add_development_dependency('rspec', '~> 3')
   spec.add_development_dependency('rspec_junit_formatter', '~>0.3')
-  spec.add_development_dependency('rubocop', '~> 0.58')
+  spec.add_development_dependency('rubocop', '~> 0.72')
   spec.add_development_dependency('rubocop-rspec', '~> 1.27')
   spec.add_development_dependency('sqlite3', '~> 1.3')
 end

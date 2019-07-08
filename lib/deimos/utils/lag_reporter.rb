@@ -94,10 +94,10 @@ module Deimos
           Deimos.config.logger.
             debug("Sending lag: #{group}/#{partition}: #{lag}")
           Deimos.config.metrics&.gauge('consumer_lag', lag, tags: %W(
-            consumer_group:#{group}
-            partition:#{partition}
-            topic:#{self.topic_name}
-          ))
+                                         consumer_group:#{group}
+                                         partition:#{partition}
+                                         topic:#{self.topic_name}
+                                       ))
         end
       end
 

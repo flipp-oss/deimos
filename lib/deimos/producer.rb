@@ -127,7 +127,7 @@ module Deimos
                   end
         if backend == :kafka_async && sync
           backend = :kafka
-        elsif backend == :kafka && sync === false
+        elsif backend == :kafka && sync == false
           backend = :kafka_async
         end
         "Deimos::Backends::#{backend.to_s.classify}".constantize

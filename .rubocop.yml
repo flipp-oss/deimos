@@ -1,7 +1,6 @@
 require: rubocop-rspec
 
 AllCops:
-  TargetRailsVersion: 5.0
   TargetRubyVersion: 2.3
   Exclude:
     - lib/deimos/monkey_patches/*.rb
@@ -101,10 +100,6 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Severity: refactor
-
-# only force merge! to use hash[a] = b if there's only one pair
-Performance/RedundantMerge:
-  MaxKeyValuePairs: 1
 
 # Use alias_method instead of alias
 Style/Alias:
@@ -318,12 +313,6 @@ RSpec/ExpectActual:
   Enabled: false
 
 RSpec/BeforeAfterAll:
-  Enabled: false
-
-Rails/ApplicationRecord:
-  Enabled: false
-
-Rails/TimeZone:
   Enabled: false
 
 Security/YAMLLoad:

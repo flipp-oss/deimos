@@ -99,9 +99,9 @@ module Deimos
         metadata: metadata
       )
       Deimos.config.metrics&.increment('handler', tags: %W(
-        status:received
-        topic:#{metadata[:topic]}
-      ))
+                                         status:received
+                                         topic:#{metadata[:topic]}
+                                       ))
     end
 
     # @param exception [Throwable]
@@ -132,13 +132,13 @@ module Deimos
     # @param metadata [Hash]
     def _handle_success(time_taken, payload, metadata)
       Deimos.config.metrics&.histogram('handler', time_taken, tags: %W(
-        time:consume
-        topic:#{metadata[:topic]}
-      ))
+                                         time:consume
+                                         topic:#{metadata[:topic]}
+                                       ))
       Deimos.config.metrics&.increment('handler', tags: %W(
-        status:success
-        topic:#{metadata[:topic]}
-      ))
+                                         status:success
+                                         topic:#{metadata[:topic]}
+                                       ))
       Deimos.config.logger.info(
         message: 'Finished processing Kafka event',
         payload: payload,
@@ -156,9 +156,9 @@ module Deimos
         return
       end
       Deimos.config.metrics&.histogram('handler', time_delayed, tags: %W(
-        time:time_delayed
-        topic:#{metadata[:topic]}
-      ))
+                                         time:time_delayed
+                                         topic:#{metadata[:topic]}
+                                       ))
     end
   end
 end

@@ -41,9 +41,7 @@ module Deimos
       # https://stackoverflow.com/questions/29568298/run-code-when-signal-is-sent-but-do-not-trap-the-signal-in-ruby
       def prepend_handler(signal)
         previous = Signal.trap(signal) do
-          unless previous.respond_to?(:call)
-            previous = -> { raise SignalException, signal }
-          end
+          previous = -> { raise SignalException, signal } unless previous.respond_to?(:call)
           yield
           previous.call
         end

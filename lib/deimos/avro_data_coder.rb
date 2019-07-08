@@ -73,7 +73,9 @@ module Deimos
     # @return [String]
     def _field_name_from_schema(value_schema)
       raise "Schema #{@schema} not found!" if value_schema.nil?
-      raise "Schema #{@schema} has no fields!" if value_schema['fields']&.empty?
+      if value_schema['fields'].nil? || value_schema['fields'].empty?
+        raise "Schema #{@schema} has no fields!"
+      end
 
       value_schema['fields'][0]['name']
     end

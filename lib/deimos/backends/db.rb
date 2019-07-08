@@ -7,7 +7,6 @@ module Deimos
     # Backend which saves messages to the database instead of immediately
     # sending them.
     class Db < Deimos::PublishBackend
-
       class << self
         # :nodoc:
         def execute(producer_class:, messages:)
@@ -17,9 +16,7 @@ module Deimos
               topic: m.topic,
               partition_key: m.partition_key || m.key
             )
-            unless producer_class.config[:no_keys]
-              message.key = m.encoded_key.to_s.b
-            end
+            message.key = m.encoded_key.to_s.b unless producer_class.config[:no_keys]
             message
           end
           Deimos::KafkaMessage.import(records)

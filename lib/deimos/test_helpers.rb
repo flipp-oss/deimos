@@ -256,9 +256,7 @@ module Deimos
                              partition_key: nil,
                              skip_expectation: false,
                              &block)
-      if call_original && block_given?
-        raise 'Cannot have both call_original and be given a block!'
-      end
+      raise 'Cannot have both call_original and be given a block!' if call_original && block_given?
 
       payload&.stringify_keys!
       handler_class = if handler_class_or_topic.is_a?(String)
@@ -350,9 +348,7 @@ module Deimos
     def _get_handler_class_from_topic(topic)
       listeners = Phobos.config['listeners']
       handler = listeners.find { |l| l.topic == topic }
-      if handler.nil?
-        raise "No consumer found in Phobos configuration for topic #{topic}!"
-      end
+      raise "No consumer found in Phobos configuration for topic #{topic}!" if handler.nil?
 
       handler.handler.constantize
     end

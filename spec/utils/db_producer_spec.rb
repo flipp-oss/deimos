@@ -24,8 +24,8 @@ each_db_config(Deimos::Utils::DbProducer) do
   specify '#retrieve_topics' do
     (1..3).each do |i|
       Deimos::KafkaMessage.create!(topic: "topic#{i}",
-                                        key: 'blergkey',
-                                        message: 'blerg')
+                                   key: 'blergkey',
+                                   message: 'blerg')
     end
     expect(producer.retrieve_topics).
       to contain_exactly('topic1', 'topic2', 'topic3')
@@ -34,8 +34,8 @@ each_db_config(Deimos::Utils::DbProducer) do
   specify '#retrieve_messages' do
     (1..3).each do |i|
       Deimos::KafkaMessage.create!(topic: 'topic1',
-                                        message: 'blah',
-                                        key: "key#{i}")
+                                   message: 'blah',
+                                   key: "key#{i}")
     end
     stub_const('Deimos::Utils::DbProducer::BATCH_SIZE', 5)
     producer.current_topic = 'topic1'
