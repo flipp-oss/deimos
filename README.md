@@ -3,6 +3,7 @@
   <br/>
   <img src="https://img.shields.io/circleci/build/github/flipp-oss/deimos.svg" alt="CircleCI"/>
   <a href="https://badge.fury.io/rb/deimos"><img src="https://badge.fury.io/rb/deimos.svg" alt="Gem Version" height="18"></a>
+  <img src="https://img.shields.io/codeclimate/maintainability/flipp-oss/deimos.svg"/>
 </p>
 
 A Ruby framework for marrying Kafka, Avro, and/or ActiveRecord and provide
