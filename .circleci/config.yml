@@ -6,7 +6,7 @@ defaults: &defaults
         environment:
           RAILS_ENV: test
           DB_HOST_IP: 127.0.0.1
-version: 2
+version: 2.1
 jobs:
   build:
     <<: *defaults
