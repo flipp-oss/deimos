@@ -43,7 +43,7 @@ jobs:
       - run:
            name: Point bundle to vendor/bundle
            command: bundle --path vendor/bundle
-      - run: rubocop
+      - run: bundle exec rubocop
 
   test-rspec:
     <<: *defaults
