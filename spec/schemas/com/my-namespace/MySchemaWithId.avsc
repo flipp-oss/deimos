@@ -1,0 +1,28 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "MySchemaWithId",
+  "type": "record",
+  "doc": "Test schema",
+  "fields": [
+    {
+      "name": "test_id",
+      "type": "string",
+      "doc": "test string"
+    },
+    {
+      "name": "some_int",
+      "type": "int",
+      "doc": "test int"
+    },
+    {
+      "name": "message_id",
+      "type": "string",
+      "doc": "UUID"
+    },
+    {
+      "name": "timestamp",
+      "type": "string",
+      "doc": "timestamp"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "MySchemaWithDateTimes",
+  "type": "record",
+  "doc": "Test schema",
+  "fields": [
+    {
+      "name": "test_id",
+      "type": "string",
+      "doc": "test string"
+    },
+    {
+      "name": "updated_at",
+      "type": ["int", "null"]
+    },
+    {
+      "name": "some_int",
+      "type": ["null", "int"],
+      "doc": "test int"
+    },
+    {
+      "name": "some_datetime_int",
+      "type": ["null", "int"],
+      "doc": "test datetime"
+    },
+    {
+      "name": "timestamp",
+      "type": "string",
+      "doc": "ISO timestamp",
+      "default": ""
+    }
+  ]
+}

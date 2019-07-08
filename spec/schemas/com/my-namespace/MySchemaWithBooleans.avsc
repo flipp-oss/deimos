@@ -1,0 +1,18 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "MySchemaWithBooleans",
+  "type": "record",
+  "doc": "Test schema",
+  "fields": [
+    {
+      "name": "test_id",
+      "type": "string",
+      "doc": "test string"
+    },
+    {
+      "name": "some_bool",
+      "type": "boolean",
+      "doc": "test bool"
+    }
+  ]
+}

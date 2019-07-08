@@ -1,0 +1,27 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "WidgetTheSecond",
+  "type": "record",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "widget_id",
+      "type": "long"
+    },
+    {
+      "name": "model_id",
+      "type": "string"
+    },
+    {
+      "name": "updated_at",
+      "type": "long"
+    },
+    {
+      "name": "created_at",
+      "type": "long"
+    }
+  ]
+}

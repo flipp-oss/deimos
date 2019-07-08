@@ -1,0 +1,30 @@
+class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version %>
+  def self.up
+    create_table :kafka_messages, force: true do |t|
+      t.string :topic, null: false
+      t.binary :message, limit: 10.megabytes
+      t.binary :key
+      t.string :partition_key
+      t.timestamps
+    end
+
+    add_index :kafka_messages, [:topic, :id]
+
+    create_table :kafka_topic_info, force: true do |t|
+      t.string :topic, null: false
+      t.string :locked_by
+      t.datetime :locked_at
+      t.boolean :error, null: false, default: false
+      t.integer :retries, null: false, default: 0
+    end
+    add_index :kafka_topic_info, :topic, unique: true
+    add_index :kafka_topic_info, [:locked_by, :error]
+    add_index :kafka_topic_info, :locked_at
+  end
+
+  def self.down
+    drop_table :kafka_messages
+    drop_table :kafka_topic_info
+  end
+
+end
