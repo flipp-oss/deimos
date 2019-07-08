@@ -2,7 +2,7 @@ defaults: &defaults
     parallelism: 1
     working_directory: ~/workspace
     docker:
-      - image:ruby:2.6
+      - image: ruby:2.6
         environment:
           RAILS_ENV: test
           DB_HOST_IP: 127.0.0.1
