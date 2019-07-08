@@ -43,7 +43,7 @@ GEM
     dogstatsd-ruby (4.2.0)
     excon (0.64.0)
     exponential-backoff (0.0.2)
-    ffi (1.9.21)
+    ffi (1.11.1)
     formatador (0.2.5)
     guard (2.14.2)
       formatador (>= 0.2.4)
