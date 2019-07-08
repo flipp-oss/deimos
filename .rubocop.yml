@@ -1,0 +1,331 @@
+require: rubocop-rspec
+
+AllCops:
+  TargetRailsVersion: 5.0
+  TargetRubyVersion: 2.3
+  Exclude:
+    - lib/deimos/monkey_patches/*.rb
+
+# class Plumbus
+# private
+#  def smooth; end
+# end
+Layout/AccessModifierIndentation:
+  EnforcedStyle: outdent
+
+# foo.bar.
+#  each do
+#     baz
+#   end
+Layout/BlockAlignment:
+  EnforcedStyleAlignWith: start_of_block
+
+# something.
+#  method
+#
+# instead of
+#
+# something
+#  .method
+Layout/DotPosition:
+  EnforcedStyle: trailing
+
+# sometimes empty lines can be used for clarity
+Layout/EmptyLinesAroundBlockBody:
+  Enabled: false
+
+# foo = if expression
+#         'bar'
+#       end
+Layout/MultilineAssignmentLayout:
+  Enabled: true
+  EnforcedStyle: same_line
+
+# while myvariable.
+#        a.
+#        b
+#
+#  # do something
+# end
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+# def some_method(arg1=true, arg2=42)
+Layout/SpaceAroundEqualsInParameterDefault:
+  EnforcedStyle: no_space
+
+# do not allow e.g.
+# if (v = array.grep(/foo/))
+#  do_something(v)
+# end
+Lint/AssignmentInCondition:
+  AllowSafeAssignment: false
+  Severity: convention
+
+Lint/UnusedBlockArgument:
+  AllowUnusedKeywordArguments: true
+
+Lint/UnusedMethodArgument:
+  AllowUnusedKeywordArguments: true
+
+Metrics/AbcSize:
+  Severity: refactor
+  Max: 20
+
+Metrics/BlockLength:
+  Severity: refactor
+
+Metrics/ClassLength:
+  Severity: refactor
+
+Metrics/CyclomaticComplexity:
+  Severity: refactor
+  Max: 20
+
+Metrics/LineLength:
+  Max: 100
+  Severity: refactor
+  Exclude:
+  - 'spec/**/*'
+
+Metrics/MethodLength:
+  Severity: refactor
+  Max: 30
+
+Metrics/ModuleLength:
+  Severity: refactor
+
+Metrics/ParameterLists:
+  Max: 5
+  CountKeywordArgs: false
+
+Metrics/PerceivedComplexity:
+  Severity: refactor
+
+# only force merge! to use hash[a] = b if there's only one pair
+Performance/RedundantMerge:
+  MaxKeyValuePairs: 1
+
+# Use alias_method instead of alias
+Style/Alias:
+  EnforcedStyle: prefer_alias_method
+
+# Allow "and" or "or" to be used as a statement but not a conditional operator
+Style/AndOr:
+  EnforcedStyle: conditionals
+
+# Force use of File.open {...} instead of File.open but as a refactor
+Style/AutoResourceCleanup:
+  Enabled: true
+  Severity: refactor
+
+# Do not allow multiline {} blocks unless it is chained with a .
+Style/BlockDelimiters:
+  EnforcedStyle: braces_for_chaining
+
+# bad
+# some_method(x, y, {a: 1, b: 2})
+# some_method(x, y, {a: 1, b: 2}, a: 1, b: 2)
+
+# good
+# some_method(x, y, a: 1, b: 2)
+# some_method(x, y, {a: 1, b: 2}, {a: 1, b: 2})
+Style/BracesAroundHashParameters:
+  EnforcedStyle: context_dependent
+
+# Enable both this:
+#  MyModule::MyClass
+# and this:
+#  module MyModule
+#    class MyClass
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+# Don't force "reduce" over "inject"
+Style/CollectionMethods:
+  Enabled: true
+  AutoCorrect: false
+  PreferredMethods:
+    collect: map
+    collect!: map!
+    detect: find
+    find_all: select
+
+Style/DateTime:
+  AllowCoercion: true
+
+Style/Documentation:
+  Exclude:
+  - 'app/controllers/**/*'
+  - 'app/helpers/**/*'
+  - 'db/**/*'
+
+# Force documentation for public methods and classes
+Style/DocumentationMethod:
+  Enabled: true
+  Exclude:
+  - 'app/controllers/**/*'
+  - 'db/**/*'
+
+# Allow else with just nil in it
+Style/EmptyElse:
+  EnforcedStyle: empty
+
+# Do not allow one-line methods
+Style/EmptyMethod:
+  EnforcedStyle: expanded
+
+# One-line bodies are fine without a guard clause
+Style/GuardClause:
+  MinBodyLength: 2
+
+# Require hash syntax { key: value } in all cases
+Style/HashSyntax:
+  EnforcedStyle: ruby19_no_mixed_keys
+
+# Allow the following:
+# var x = "foo" +
+#   "bar"
+Style/LineEndConcatenation:
+  Enabled: false
+
+# Require parentheses around all method arguments except for whitelist
+Style/MethodCallWithArgsParentheses:
+  Enabled: true
+  IgnoredMethods:
+    - puts
+    - render
+    - redirect_to
+    - send_data
+    - require
+    - include
+    - require_relative
+    - specify
+    - example
+    - describe
+    - it
+    - to
+    - not_to
+    - to_not
+    - define
+    - expect_with
+    - mock_with
+    - factory
+    - travel_to
+    - travel
+    - get
+    - raise
+    - attr_accessor
+    - class_attribute
+    - before_save
+    - after_save
+    - before_create
+    - after_create
+    - before_update
+    - after_update
+    - before_destroy
+    - after_destroy
+    - queue_as
+  Exclude:
+    - 'bin/**/*'
+    - 'Gemfile'
+
+# Do not allow "end.something"
+Style/MethodCalledOnDoEndBlock:
+  Enabled: true
+
+Style/OptionHash:
+  Enabled: false
+
+# Use %i() and %w() instead of []
+Style/PercentLiteralDelimiters:
+  PreferredDelimiters:
+    '%i': '()'
+    '%I': '()'
+    '%w': '()'
+    '%W': '()'
+
+# Allow self.x in all cases - it helps make it obvious when dealing with
+# instance variables
+Style/RedundantSelf:
+  Enabled: false
+
+# Do not allow single line methods
+Style/SingleLineMethods:
+  AllowIfMethodIsEmpty: false
+
+# NOTE change this for Ruby < 2.0
+# require %i()
+Style/SymbolArray:
+  EnforcedStyle: percent
+
+RSpec/AlignLeftLetBrace:
+  Enabled: false
+
+RSpec/AlignRightLetBrace:
+  Enabled: false
+
+# Allow allow_any_instance_of().to receive
+RSpec/AnyInstance:
+  Enabled: false
+
+# Allow describe MyClass, 'some descriptor that isn't a method'
+RSpec/DescribeMethod:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Severity: refactor
+  Max: 40
+
+# Allow it 'should do something'
+RSpec/ExampleWording:
+  Enabled: false
+
+# Allow describing specs without only using classes and methods
+RSpec/FilePath:
+  Enabled: false
+
+# Use before(:each), not before or before(:example)
+RSpec/HookArgument:
+  EnforcedStyle: each
+
+RSpec/ItBehavesLike:
+  EnforcedStyle: it_should_behave_like
+
+RSpec/MessageChain:
+  Severity: refactor
+
+# Allow both "allow" and "expect"
+RSpec/MessageExpectation:
+  Enabled: false
+
+# Use to receive, not to have_received
+RSpec/MessageSpies:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Max: 10
+  Severity: refactor
+
+# Allow both and_return() and block returns (use these for multi-line)
+RSpec/ReturnFromStub:
+  Enabled: false
+
+RSpec/SubjectStub:
+  Severity: refactor
+
+RSpec/ExpectActual:
+  Enabled: false
+
+RSpec/BeforeAfterAll:
+  Enabled: false
+
+Rails/ApplicationRecord:
+  Enabled: false
+
+Rails/TimeZone:
+  Enabled: false
+
+Security/YAMLLoad:
+  Exclude:
+    - 'lib/deimos.rb'
