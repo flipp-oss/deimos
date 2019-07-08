@@ -2,7 +2,7 @@ defaults: &defaults
     parallelism: 1
     working_directory: ~/workspace
     docker:
-      - image:ruby:2.6
+      - image: ruby:2.6
         environment:
           RAILS_ENV: test
           DB_HOST_IP: 127.0.0.1
@@ -35,6 +35,16 @@ jobs:
           paths:
             - .
 
+  lint:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/workspace
+      - run:
+           name: Point bundle to vendor/bundle
+           command: bundle --path vendor/bundle
+      - run: rubocop
+
   test-rspec:
     <<: *defaults
     steps:
@@ -57,5 +67,8 @@ workflows:
     jobs:
       - build
       - test-rspec:
+          requires:
+            - build
+      - lint:
           requires:
             - build
