@@ -4,6 +4,7 @@ AllCops:
   TargetRubyVersion: 2.3
   Exclude:
     - lib/deimos/monkey_patches/*.rb
+    - vendor/*/
 
 # class Plumbus
 # private
