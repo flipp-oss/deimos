@@ -735,5 +735,7 @@ before submitting a PR.
 
 <p align="center">
   Sponsored by<br/>
-  <img src="support/flipp-logo.png" title="Flipp logo"/>
+  <a href="https://corp.flipp.com/">
+    <img src="support/flipp-logo.png" title="Flipp logo" style="border:none;"/>
+  </a>
 </p>
