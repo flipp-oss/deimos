@@ -733,6 +733,7 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/flipp-
 Deimos uses Rubocop to lint the code. Please run Rubocop on your code 
 before submitting a PR.
 
+---
 <p align="center">
   Sponsored by<br/>
   <a href="https://corp.flipp.com/">
