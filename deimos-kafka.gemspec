@@ -5,12 +5,11 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'deimos/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'deimos'
+  spec.name          = 'deimos-kafka'
   spec.version       = Deimos::VERSION
   spec.authors       = ['Daniel Orner']
   spec.email         = ['daniel.orner@wishabi.com']
   spec.summary       = 'Kafka libraries for Ruby.'
-  spec.description   = 'Write a longer description. Optional.'
   spec.homepage      = ''
   spec.license       = 'Apache 2.0'
 

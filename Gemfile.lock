@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deimos (1.0.0.pre.beta15)
+    deimos-kafka (1.0.0.pre.beta15)
       avro-patches (~> 0.3)
       avro_turf (~> 0.8)
       phobos (~> 1.8)
@@ -147,7 +147,7 @@ DEPENDENCIES
   activerecord-import
   bundler (~> 1)
   ddtrace (~> 0.11)
-  deimos!
+  deimos-kafka!
   dogstatsd-ruby (~> 4.2)
   guard (~> 2)
   guard-rspec (~> 4)
