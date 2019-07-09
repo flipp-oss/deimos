@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deimos-kafka (1.0.0.pre.beta15)
+    deimos-kafka (1.0.0.pre.beta16)
       avro-patches (~> 0.3)
       avro_turf (~> 0.8)
       phobos (~> 1.8)

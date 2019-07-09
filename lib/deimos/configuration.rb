@@ -83,6 +83,7 @@ module Deimos
     def phobos_config_changed?(other_config)
       phobos_keys = %w(seed_broker phobos_config_file ssl_ca_cert ssl_client_cert ssl_client_cert_key)
       return true if phobos_keys.any? { |key| self.send(key) != other_config.send(key) }
+
       other_config.logger != self.logger
     end
   end
