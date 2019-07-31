@@ -73,7 +73,7 @@ describe Deimos do
 
   describe '#start_db_backend!' do
     before(:each) do
-      allow(described_class).to receive(:run_db_backend_in_thread)
+      allow(described_class).to receive(:run_db_backend)
     end
 
     it 'should start if backend is db and num_producer_threads is > 0' do
@@ -94,7 +94,8 @@ describe Deimos do
       described_class.configure do |config|
         config.publish_backend = :kafka
       end
-      described_class.start_db_backend!(thread_count: 2)
+      expect { described_class.start_db_backend!(thread_count: 2) }.
+        to raise_error('Publish backend is not set to :db, exiting')
     end
 
     it 'should not start if num_producer_threads is nil' do
@@ -102,7 +103,8 @@ describe Deimos do
       described_class.configure do |config|
         config.publish_backend = :db
       end
-      described_class.start_db_backend!(thread_count: nil)
+      expect { described_class.start_db_backend!(thread_count: nil) }.
+        to raise_error('Thread count is not given or set to zero, exiting')
     end
 
     it 'should not start if num_producer_threads is 0' do
@@ -110,7 +112,8 @@ describe Deimos do
       described_class.configure do |config|
         config.publish_backend = :db
       end
-      described_class.start_db_backend!(thread_count: 0)
+      expect { described_class.start_db_backend!(thread_count: 0) }.
+        to raise_error('Thread count is not given or set to zero, exiting')
     end
 
   end

@@ -455,6 +455,8 @@ message is first validated, encoded, and saved in the database, and then sent
 on a separate thread. This means if you have to roll back your transaction,
 it also rolls back your Kafka messages.
 
+This is also known as the [Transactional Outbox pattern](https://microservices.io/patterns/data/transactional-outbox.html).
+
 To enable this, first generate the migration to create the relevant tables:
 
     rails g deimos:db_backend
@@ -468,12 +470,17 @@ of immediately sending to Kafka. Now, you just need to call
 
     Deimos.start_db_backend!
     
+If using Rails, you can use a Rake task to do this:
+
+    rails deimos:db_producer
+    
 This creates one or more threads dedicated to scanning and publishing these 
 messages by using the `kafka_topics` table in a manner similar to 
 [Delayed Job](https://github.com/collectiveidea/delayed_job).
 You can pass in a number of threads to the method:
 
-    Deimos.start_db_backend!(thread_count: 2)
+    Deimos.start_db_backend!(thread_count: 2) # OR
+    THREAD_COUNT=5 rails deimos:db_producer
 
 If you want to force a message to send immediately, just call the `publish_list`
 method with `force_send: true`. You can also pass `force_send` into any of the

@@ -78,9 +78,13 @@ module Deimos
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     def start_db_backend!(thread_count: 1)
-      return if self.config.publish_backend != :db ||
-                thread_count.nil? ||
-                thread_count.zero?
+      if self.config.publish_backend != :db
+        raise("Publish backend is not set to :db, exiting")
+      end
+
+      if thread_count.nil? || thread_count.zero?
+        raise("Thread count is not given or set to zero, exiting")
+      end
 
       producers = (1..thread_count).map do
         Deimos::Utils::DbProducer.new(self.config.logger)
@@ -88,12 +92,7 @@ module Deimos
       executor = Deimos::Utils::Executor.new(producers,
                                              self.config.logger)
       signal_handler = Deimos::Utils::SignalHandler.new(executor)
-      run_db_backend_in_thread(signal_handler)
-    end
-
-    # @param signal_handler [Deimos::Utils::SignalHandler]
-    def run_db_backend_in_thread(signal_handler)
-      Thread.new { signal_handler.run! }
+      signal_handler.run!
     end
 
     # @param phobos_config [Hash]
