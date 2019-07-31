@@ -19,7 +19,7 @@ namespace :deimos do
   task db_producer: :environment do
     ENV['DEIMOS_RAKE_TASK'] = 'true'
     STDOUT.sync = true
-    Rails.logger.info("Running deimos:db_producer rake task.")
+    Rails.logger.info('Running deimos:db_producer rake task.')
     thread_count = ENV['THREADS'].presence || 1
     Deimos.start_db_backend!(thread_count: thread_count)
   end

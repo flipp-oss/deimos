@@ -78,12 +78,12 @@ module Deimos
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     def start_db_backend!(thread_count: 1)
-      if self.config.publish_backend != :db
-        raise("Publish backend is not set to :db, exiting")
+      if self.config.publish_backend != :db # rubocop:disable Style/IfUnlessModifier
+        raise('Publish backend is not set to :db, exiting')
       end
 
       if thread_count.nil? || thread_count.zero?
-        raise("Thread count is not given or set to zero, exiting")
+        raise('Thread count is not given or set to zero, exiting')
       end
 
       producers = (1..thread_count).map do
