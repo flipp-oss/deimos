@@ -51,8 +51,8 @@ module Deimos
         producer = batch.first.metadata[:producer_name]
         payloads = batch.map { |m| m.metadata[:decoded_payload] }
 
-        Deimos.metrics&.count('publish_error', payloads.size,
-                              tags: %W(topic:#{topic}))
+        Deimos.config.metrics&.count('publish_error', payloads.size,
+                                     tags: %W(topic:#{topic}))
         Deimos.instrument(
           'produce_error',
           producer: producer,

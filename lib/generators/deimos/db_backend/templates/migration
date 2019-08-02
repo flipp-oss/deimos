@@ -10,7 +10,7 @@ class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version
 
     add_index :kafka_messages, [:topic, :id]
 
-    create_table :kafka_topic_info, force: true do |t|
+    create_table :kafka_topic_info, force: true do |t| # rubocop:disable Rails/CreateTableWithTimestamps
       t.string :topic, null: false
       t.string :locked_by
       t.datetime :locked_at

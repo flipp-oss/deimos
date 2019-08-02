@@ -83,7 +83,7 @@ module Deimos
       def produce_messages(batch)
         @logger.debug("Publishing #{batch.size} messages to #{@current_topic}")
         producer.publish_list(batch)
-        Deimos.metrics&.increment(
+        Deimos.config.metrics&.increment(
           'publish',
           tags: %W(status:success topic:#{@current_topic}),
           by: batch.size
