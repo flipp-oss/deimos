@@ -65,8 +65,7 @@ module Deimos
         attr_hash = { locked_by: nil,
                       locked_at: Time.zone.now,
                       error: true,
-                      retries: record.retries + 1
-        }
+                      retries: record.retries + 1 }
         if Rails::VERSION::MAJOR >= 4
           record.update!(attr_hash)
         else
