@@ -62,8 +62,16 @@ module Deimos
       # @param lock_id [String]
       def register_error(topic, lock_id)
         record = self.where(topic: topic, locked_by: lock_id).last
-        record.update(locked_by: nil, locked_at: Time.zone.now, error: true,
-                      retries: record.retries + 1)
+        attr_hash = { locked_by: nil,
+                      locked_at: Time.zone.now,
+                      error: true,
+                      retries: record.retries + 1
+        }
+        if Rails::VERSION::MAJOR >= 4
+          record.update!(attr_hash)
+        else
+          record.update_attributes!(attr_hash)
+        end
       end
 
       # Update the locked_at timestamp to indicate that the producer is still
