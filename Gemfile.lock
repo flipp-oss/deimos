@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deimos-kafka (1.0.0.pre.beta19)
+    deimos-kafka (1.0.0.pre.beta20)
       avro-patches (~> 0.3)
       avro_turf (~> 0.8)
       phobos (~> 1.8)
@@ -127,7 +127,7 @@ GEM
       unicode-display_width (>= 1.4.0, < 1.7)
     rubocop-rspec (1.32.0)
       rubocop (>= 0.60.0)
-    ruby-kafka (0.7.9)
+    ruby-kafka (0.7.10)
       digest-crc
     ruby-progressbar (1.10.1)
     ruby_dep (1.5.0)
