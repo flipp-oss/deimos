@@ -60,6 +60,10 @@ each_db_config(Deimos::Utils::DbProducer) do
     end
 
     it 'should split the batch size on buffer overflow' do
+      class_producer = double(Phobos::Producer::ClassMethods::PublicAPI,
+                              sync_producer_shutdown: nil)
+      allow(producer.class).to receive(:producer).and_return(class_producer)
+      expect(class_producer).to receive(:sync_producer_shutdown).twice
       count = 0
       allow(phobos_producer).to receive(:publish_list) do
         count += 1

@@ -102,6 +102,9 @@ module Deimos
           else
             batch_size /= 10
           end
+          if self.class.producer.respond_to?(:sync_producer_shutdown) # Phobos 1.8.3
+            self.class.producer.sync_producer_shutdown
+          end
           retry
         end
       end
