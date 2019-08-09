@@ -81,6 +81,7 @@ module Deimos
         KafkaMessage.where(topic: @current_topic).order(:id).limit(BATCH_SIZE)
       end
 
+      # Send metrics to Datadog.
       def send_pending_metrics
         first_message = KafkaMessage.first
         time_diff = first_message ? Time.zone.now - KafkaMessage.first.created_at : 0
