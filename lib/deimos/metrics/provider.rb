@@ -8,21 +8,21 @@ module Deimos
       # Send an counter increment metric
       # @param metric_name [String] The name of the counter metric
       # @param options [Hash] Any additional options, e.g. :tags
-      def increment(metric_name, options)
+      def increment(metric_name, options={})
         raise NotImplementedError
       end
 
       # Send an counter increment metric
       # @param metric_name [String] The name of the counter metric
       # @param options [Hash] Any additional options, e.g. :tags
-      def gauge(metric_name, count, options)
+      def gauge(metric_name, count, options={})
         raise NotImplementedError
       end
 
       # Send an counter increment metric
       # @param metric_name [String] The name of the counter metric
       # @param options [Hash] Any additional options, e.g. :tags
-      def histogram(metric_name, count, options)
+      def histogram(metric_name, count, options={})
         raise NotImplementedError
       end
 

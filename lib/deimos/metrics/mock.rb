@@ -13,17 +13,17 @@ module Deimos
       end
 
       # :nodoc:
-      def increment(metric_name, options)
+      def increment(metric_name, options={})
         @logger.info("MockMetricsProvider.increment: #{metric_name}, #{options}")
       end
 
       # :nodoc:
-      def gauge(metric_name, count, options)
+      def gauge(metric_name, count, options={})
         @logger.info("MockMetricsProvider.gauge: #{metric_name}, #{count}, #{options}")
       end
 
       # :nodoc:
-      def histogram(metric_name, count, options)
+      def histogram(metric_name, count, options={})
         @logger.info("MockMetricsProvider.histogram: #{metric_name}, #{count}, #{options}")
       end
 

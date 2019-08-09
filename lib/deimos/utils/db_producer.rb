@@ -25,6 +25,7 @@ module Deimos
             @logger.info('Shutting down')
             break
           end
+          send_pending_metrics
           process_next_messages
         end
       end
@@ -66,6 +67,7 @@ module Deimos
           break if messages.size < BATCH_SIZE
 
           KafkaTopicInfo.heartbeat(@current_topic, @id) # keep alive
+          send_pending_metrics
           messages = retrieve_messages
         end
         KafkaTopicInfo.clear_lock(@current_topic, @id)
@@ -74,9 +76,15 @@ module Deimos
         KafkaTopicInfo.register_error(@current_topic, @id)
       end
 
-      # @return [Array<KafkaMessage>]
+      # @return [Array<Deimos::KafkaMessage>]
       def retrieve_messages
         KafkaMessage.where(topic: @current_topic).order(:id).limit(BATCH_SIZE)
+      end
+
+      def send_pending_metrics
+        first_message = KafkaMessage.first
+        time_diff = first_message ? Time.zone.now - KafkaMessage.first.created_at : 0
+        Deimos.config.metrics&.gauge('pending_db_messages_max_wait', time_diff)
       end
 
       # @param batch [Array<Hash>]

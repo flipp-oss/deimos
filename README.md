@@ -543,10 +543,10 @@ DB backend only when your rake task is running.
 Deimos includes some metrics reporting out the box. It ships with DataDog support, but you can add custom metric providers as well.
 
 The following metrics are reported:
-* `{service_name}.consumer_lag` - for each partition, the number of messages
+* `consumer_lag` - for each partition, the number of messages
   it's behind the tail of the partition (a gauge). This is only sent if
   `config.report_lag` is set to true.
-* `{service_name}.handler` - a count of the number of messages received. Tagged
+* `handler` - a count of the number of messages received. Tagged
   with the following:
     * `topic:{topic_name}`
     * `status:received`
@@ -554,10 +554,13 @@ The following metrics are reported:
     * `status:error`
     * `time:consume` (histogram)
     * `time:time_delayed` (histogram)
-* `{service_name}.publish` - a count of the number of messages received. Tagged
+* `publish` - a count of the number of messages received. Tagged
   with `topic:{topic_name}`
-* `{service_name}.publish_error` - a count of the number of messages which failed
+* `publish_error` - a count of the number of messages which failed
   to publish. Tagged with `topic:{topic_name}`
+* `pending_db_messages_max_wait` - the number of seconds which the
+  oldest KafkaMessage in the database has been waiting for, for use
+  with the database backend.
 
 ### Configuring Metrics Providers
 

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-beta22] - 2019-08-09
+- Add `pending_db_messages_max_wait` metric for the DB producer.
+- Fix mock metrics to allow optional option hashes.
+
 ## [1.0.0-beta21] - 2019-08-08
 - Handle Phobos `persistent_connections` setting in handling buffer overflows
 
