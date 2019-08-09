@@ -32,7 +32,7 @@ Built on Phobos and hence Ruby-Kafka.
 
 Add this line to your application's Gemfile:
 ```ruby
-gem 'deimos-kafka'
+gem 'deimos-ruby'
 ```
 
 And then execute:
@@ -41,7 +41,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install deimos-kafka
+    $ gem install deimos-ruby
 
 # Versioning
 
@@ -52,7 +52,7 @@ are for bugfixes or new functionality which does not affect existing code. You
 should be locking your Gemfile to the minor version:
 
 ```ruby
-gem 'deimos-kafka', '~> 1.1'
+gem 'deimos-ruby', '~> 1.1'
 ```
 
 # Configuration
