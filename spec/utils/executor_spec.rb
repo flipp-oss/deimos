@@ -28,7 +28,6 @@ RSpec.describe Deimos::Utils::Executor do
 
   it 'reconnects crashed runners' do
     allow(executor).to receive(:handle_crashed_runner).and_call_original
-    allow(executor).to receive(:handle_crashed_runner).and_call_original
     runners.each { |r| r.should_error = true }
     executor.start
     wait_for do

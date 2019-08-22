@@ -90,7 +90,8 @@ module Deimos
         Deimos::Utils::DbProducer.new(self.config.logger)
       end
       executor = Deimos::Utils::Executor.new(producers,
-                                             self.config.logger)
+                                             sleep_seconds: 5,
+                                             logger: self.config.logger)
       signal_handler = Deimos::Utils::SignalHandler.new(executor)
       signal_handler.run!
     end

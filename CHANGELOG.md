@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## UNRELEASED
+- Reconnect DB backend if database goes away.
+- Sleep only 5 seconds between attempts instead of using exponential backoff.
+
 ## [1.0.0-beta23] - 2019-08-22
 - Fix bug where nil payloads were not being saved to the DB.
 - Fix DB producer rake task looking at THREADS env var instead of THREAD_COUNT.

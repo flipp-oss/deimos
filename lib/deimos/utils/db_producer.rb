@@ -20,6 +20,7 @@ module Deimos
       def start
         @logger.info('Starting...')
         @signal_to_stop = false
+        ActiveRecord::Base.connection.reconnect!
         loop do
           if @signal_to_stop
             @logger.info('Shutting down')

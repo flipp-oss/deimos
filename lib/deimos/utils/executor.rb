@@ -13,10 +13,13 @@ module Deimos
       # @param runners [Array<#start, #stop, #id>] A list of objects that can be
       # started or stopped.
       # @param logger [Logger]
-      def initialize(runners, logger=Logger.new(STDOUT))
+      # @param sleep_seconds [Integer] Use a fixed time to sleep between
+      # failed runs instead of using an exponential backoff.
+      def initialize(runners, sleep_seconds: nil, logger: Logger.new(STDOUT))
         @threads = Concurrent::Array.new
         @runners = runners
         @logger = logger
+        @sleep_seconds = sleep_seconds
       end
 
       # Start the executor.
@@ -98,8 +101,12 @@ module Deimos
       # When "runner#start" is interrupted / crashes we assume it's
       # safe to be called again
       def handle_crashed_runner(runner, error, retry_count)
-        backoff = create_exponential_backoff
-        interval = backoff.interval_at(retry_count).round(2)
+        interval = if @sleep_seconds
+                     @sleep_seconds
+                   else
+                     backoff = create_exponential_backoff
+                     backoff.interval_at(retry_count).round(2)
+                   end
 
         metadata = {
           listener_id: runner.id,
