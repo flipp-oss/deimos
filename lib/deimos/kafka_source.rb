@@ -93,14 +93,13 @@ module Deimos
 
         # This will contain an array of hashes, where each hash is the actual
         # attribute hash that created the object.
-        ids =
-          ids = if results.is_a?(Array)
-                  results[1]
-                elsif results.respond_to?(:ids)
-                  results.ids
-                else
-                  []
-                end
+        ids = if results.is_a?(Array)
+                results[1]
+              elsif results.respond_to?(:ids)
+                results.ids
+              else
+                []
+              end
         if ids.blank?
           # re-fill IDs based on what was just entered into the DB.
           if self.connection.adapter_name.downcase =~ /sqlite/

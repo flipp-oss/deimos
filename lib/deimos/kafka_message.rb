@@ -5,7 +5,7 @@ module Deimos
   class KafkaMessage < ActiveRecord::Base
     self.table_name = 'kafka_messages'
 
-    validates_presence_of :message, :topic
+    validates_presence_of :topic
 
     # Ensure it gets turned into a string, e.g. for testing purposes. It
     # should already be a string.
@@ -23,5 +23,6 @@ module Deimos
         topic: self.topic
       }
     end
+
   end
 end

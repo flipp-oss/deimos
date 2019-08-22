@@ -23,6 +23,13 @@ each_db_config(Deimos::Backends::Db) do
       'key' => 'foo3'
     )
   end
+
+  it 'should add nil messages' do
+    described_class.publish(producer_class: MyProducer,
+                            messages: [build_message(nil, 'my-topic', "foo1")])
+    expect(Deimos::KafkaMessage.count).to eq(1)
+  end
+
   it 'should add to non-keyed messages' do
     described_class.publish(producer_class: MyNoKeyProducer,
                             messages: messages)

@@ -7,6 +7,7 @@ require 'deimos/metrics/mock'
 require 'deimos/tracing/mock'
 require 'deimos/test_helpers'
 require 'active_support/testing/time_helpers'
+require 'activerecord-import'
 
 # Helpers for Executor/DbProducer
 module TestRunners
@@ -141,17 +142,18 @@ RSpec.configure do |config|
     Time.zone = 'EST'
     ActiveRecord::Base.logger = Logger.new('/dev/null')
     setup_db(DbConfigs::DB_OPTIONS.last)
-    Deimos.configure do |fr_config|
-      fr_config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.yml')
-      fr_config.schema_path = File.join(File.expand_path(__dir__), 'schemas')
-      fr_config.reraise_consumer_errors = true
-      fr_config.schema_registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
-      fr_config.seed_broker = ENV['KAFKA_SEED_BROKER'] || 'localhost:9092'
-      fr_config.logger = Logger.new('/dev/null')
+    Deimos.configure do |deimos_config|
+      deimos_config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.yml')
+      deimos_config.schema_path = File.join(File.expand_path(__dir__), 'schemas')
+      deimos_config.reraise_consumer_errors = true
+      deimos_config.schema_registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
+      deimos_config.seed_broker = ENV['KAFKA_SEED_BROKER'] || 'localhost:9092'
+      deimos_config.logger = Logger.new('/dev/null')
+      deimos_config.logger.level = Logger::INFO
 
       # Use Mock Metrics and Tracing for rspecs
-      fr_config.metrics = Deimos::Metrics::Mock.new
-      fr_config.tracer = Deimos::Tracing::Mock.new
+      deimos_config.metrics = Deimos::Metrics::Mock.new
+      deimos_config.tracer = Deimos::Tracing::Mock.new
     end
   end
 
