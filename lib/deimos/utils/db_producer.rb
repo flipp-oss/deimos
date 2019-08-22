@@ -69,8 +69,8 @@ module Deimos
                                  consumer.config.merge!(producer.config)
                                  messages.map do |message|
                                    {
-                                     :key => message[:key].present? ? consumer.new.decode_key(message[:key]) : nil,
-                                     :message => consumer.decoder.decode(message[:payload])
+                                     key: message[:key].present? ? consumer.new.decode_key(message[:key]) : nil,
+                                     message: consumer.decoder.decode(message[:payload])
                                    }
                                  end
                                else

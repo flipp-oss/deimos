@@ -26,7 +26,7 @@ each_db_config(Deimos::Backends::Db) do
 
   it 'should add nil messages' do
     described_class.publish(producer_class: MyProducer,
-                            messages: [build_message(nil, 'my-topic', "foo1")])
+                            messages: [build_message(nil, 'my-topic', 'foo1')])
     expect(Deimos::KafkaMessage.count).to eq(1)
   end
 

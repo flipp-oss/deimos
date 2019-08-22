@@ -23,6 +23,5 @@ module Deimos
         topic: self.topic
       }
     end
-
   end
 end
