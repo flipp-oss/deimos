@@ -79,6 +79,8 @@ describe Deimos do
     it 'should start if backend is db and num_producer_threads is > 0' do
       signal_handler = instance_double(Deimos::Utils::SignalHandler)
       allow(signal_handler).to receive(:run!)
+      expect(Deimos::Utils::Executor).to receive(:new).
+        with(anything, sleep_seconds: 5, logger: anything).and_call_original
       expect(Deimos::Utils::SignalHandler).to receive(:new) do |executor|
         expect(executor.runners.size).to eq(2)
         signal_handler

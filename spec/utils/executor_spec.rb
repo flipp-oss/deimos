@@ -26,6 +26,18 @@ RSpec.describe Deimos::Utils::Executor do
     end
   end
 
+  it 'sleeps X seconds' do
+    executor = described_class.new(runners, sleep_seconds: 5)
+    allow(executor).to receive(:handle_crashed_runner).and_call_original
+    expect(executor).to receive(:sleep).with(5).twice
+    runners.each { |r| r.should_error = true }
+    executor.start
+    wait_for do
+      runners.each { |r| expect(r.started).to be_truthy }
+      executor.stop
+    end
+  end
+
   it 'reconnects crashed runners' do
     allow(executor).to receive(:handle_crashed_runner).and_call_original
     runners.each { |r| r.should_error = true }
