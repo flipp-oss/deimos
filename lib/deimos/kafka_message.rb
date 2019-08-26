@@ -11,7 +11,7 @@ module Deimos
     # should already be a string.
     # @param mess [Object]
     def message=(mess)
-      write_attribute(:message, mess.to_s)
+      write_attribute(:message, mess ? mess.to_s : nil)
     end
 
     # @return [Hash]

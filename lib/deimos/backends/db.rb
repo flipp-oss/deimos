@@ -12,7 +12,7 @@ module Deimos
         def execute(producer_class:, messages:)
           records = messages.map do |m|
             message = Deimos::KafkaMessage.new(
-              message: m.encoded_payload.to_s.b,
+              message: m.encoded_payload ? m.encoded_payload.to_s.b : nil,
               topic: m.topic,
               partition_key: m.partition_key || m.key
             )
