@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.0.0-beta25 - 2019-08-28
+- Fix bug where crashing would cause producers to stay disabled
+
 ## 1.0.0-beta24 - 2019-08-26
 - Reconnect DB backend if database goes away.
 - Sleep only 5 seconds between attempts instead of using exponential backoff.

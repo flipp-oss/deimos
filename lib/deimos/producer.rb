@@ -25,9 +25,12 @@ module Deimos
         return
       end
 
-      Thread.current[:frk_disable_all_producers] = true
-      yield
-      Thread.current[:frk_disable_all_producers] = false
+      begin
+        Thread.current[:frk_disable_all_producers] = true
+        yield
+      ensure
+        Thread.current[:frk_disable_all_producers] = false
+      end
     end
 
     # :nodoc:
