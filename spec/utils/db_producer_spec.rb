@@ -178,7 +178,7 @@ each_db_config(Deimos::Utils::DbProducer) do
 
     it 'should notify on error' do
       messages = (1..4).map do |i|
-        Deimos::KafkaMessage.new(
+        Deimos::KafkaMessage.create!(
           id: i,
           topic: 'my-topic',
           message: "mess#{i}",
@@ -192,11 +192,13 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect(producer).to receive(:retrieve_messages).and_return(messages)
       expect(Deimos::KafkaTopicInfo).to receive(:register_error)
 
+      expect(Deimos::KafkaMessage.count).to eq(4)
       Deimos.subscribe('db_producer.produce') do |event|
         expect(event.payload[:exception_object].message).to eq('OH NOES')
         expect(event.payload[:messages]).to eq(messages)
       end
       producer.process_topic('my-topic')
+      expect(Deimos::KafkaMessage.count).to eq(0)
     end
 
   end

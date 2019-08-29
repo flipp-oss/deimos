@@ -64,23 +64,16 @@ module Deimos
 
         while messages.any?
           @logger.debug do
-            producer = Deimos::Producer.descendants.find { |c| c.topic == topic }
-            decoded_messages = if producer
-                                 consumer = Class.new(Deimos::Consumer)
-                                 consumer.config.merge!(producer.config)
-                                 messages.map do |message|
-                                   {
-                                     key: message[:key].present? ? consumer.new.decode_key(message[:key]) : nil,
-                                     message: consumer.decoder.decode(message[:payload])
-                                   }
-                                 end
-                               else
-                                 messages
-                               end
-            "DB producer: Topic #{topic} Producing messages: #{decoded_messages}"
+            decoder = messages.first.decoder
+            "DB producer: Topic #{topic} Producing messages: #{messages.map { |m| m.decoded_message(decoder) }}"
           end
           Deimos.instrument('db_producer.produce', topic: topic, messages: messages) do
-            produce_messages(messages.map(&:phobos_message))
+            begin
+              produce_messages(messages.map(&:phobos_message))
+            rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
+              messages.each(&:delete)
+              raise
+            end
           end
           messages.first.class.where(id: messages.map(&:id)).delete_all
           break if messages.size < BATCH_SIZE

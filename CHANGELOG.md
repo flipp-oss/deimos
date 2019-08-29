@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0-beta26] - 2019-08-29
 - Recover from Kafka::MessageSizeTooLarge in the DB producer.
 - Shut down sync producers correctly when persistent_connections is true.
+- Notify when messages fail to produce in the DB producer.
+- Delete messages on failure and rely on notification.
 
 ## [1.0.0-beta25] - 2019-08-28
 - Fix bug where crashing would cause producers to stay disabled
