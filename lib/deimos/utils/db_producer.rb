@@ -79,7 +79,9 @@ module Deimos
                                end
             "DB producer: Topic #{topic} Producing messages: #{decoded_messages}"
           end
-          produce_messages(messages.map(&:phobos_message))
+          Deimos.instrument('db_producer.produce', topic: topic, messages: messages) do
+            produce_messages(messages.map(&:phobos_message))
+          end
           messages.first.class.where(id: messages.map(&:id)).delete_all
           break if messages.size < BATCH_SIZE
 
@@ -105,6 +107,15 @@ module Deimos
         Deimos.config.metrics&.gauge('pending_db_messages_max_wait', time_diff)
       end
 
+      # Shut down the sync producer if we have to. Phobos will automatically
+      # create a new one. We should call this if the producer can be in a bad
+      # state and e.g. we need to clear the buffer.
+      def shutdown_producer
+        if self.class.producer.respond_to?(:sync_producer_shutdown) # Phobos 1.8.3
+          self.class.producer.sync_producer_shutdown
+        end
+      end
+
       # @param batch [Array<Hash>]
       def produce_messages(batch)
         batch_size = batch.size
@@ -119,18 +130,20 @@ module Deimos
             )
             @logger.info("Sent #{group.size} messages to #{@current_topic}")
           end
-        rescue Kafka::BufferOverflow
-          raise if batch_size == 1
+        rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge,
+               Kafka::RecordListTooLarge => e
+          if batch_size == 1
+            shutdown_producer
+            raise
+          end
 
-          @logger.error("Buffer overflow when publishing #{batch.size} in groups of #{batch_size}, retrying...")
+          @logger.error("Got error #{e.class.name} when publishing #{batch.size} in groups of #{batch_size}, retrying...")
           if batch_size < 10
             batch_size = 1
           else
             batch_size /= 10
           end
-          if self.class.producer.respond_to?(:sync_producer_shutdown) # Phobos 1.8.3
-            self.class.producer.sync_producer_shutdown
-          end
+          shutdown_producer
           retry
         end
       end

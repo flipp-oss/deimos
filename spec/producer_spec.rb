@@ -148,6 +148,15 @@ module ProducerTest
       expect(MyProducer.topic).to have_sent(anything)
     end
 
+    it 'should send messages after a crash' do
+      expect {
+        Deimos.disable_producers do
+          raise 'OH NOES'
+        end
+      }      .to raise_error('OH NOES')
+      expect(Deimos).not_to be_producers_disabled
+    end
+
     it 'should produce to a prefixed topic' do
       Deimos.configure { |c| c.producer_topic_prefix = 'prefix.' }
       payload = { 'test_id' => 'foo', 'some_int' => 123 }

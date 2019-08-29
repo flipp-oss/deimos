@@ -197,7 +197,8 @@ You can listen to these notifications e.g. as follows:
   end
 ``` 
 
-The following events are also produced:
+The following events are produced (in addition to the ones already
+produced by Phobos and RubyKafka):
 
 * `produce_error` - sent when an error occurs when producing a message.
   * producer - the class that produced the message
@@ -208,6 +209,14 @@ The following events are also produced:
   * producer - the class that produced the message
   * topic
   * payloads - the unencoded payloads
+* `db_producer.produce` - sent when the DB producer sends messages for the
+   DB backend. Messages that are too large will be caught with this
+   notification - they will be deleted from the table and this notification
+   will be fired with an exception object.
+   * topic
+   * exception_object
+   * messages - the batch of messages (in the form of `Deimos::KafkaMessage`s)
+     that failed - this should have only a single message in the batch.
   
 Similarly: 
 ```ruby

@@ -124,11 +124,11 @@ end
 
 at_exit do
   begin
-    Deimos::Backends::KafkaAsync.producer.async_producer_shutdown
-    Deimos::Backends::KafkaAsync.producer.kafka_client&.close
+    Deimos::Backends::KafkaAsync.shutdown_producer
+    Deimos::Backends::Kafka.shutdown_producer
   rescue StandardError => e
     Deimos.config.logger.error(
-      "Error closing async producer on shutdown: #{e.message} #{e.backtrace.join("\n")}"
+      "Error closing producer on shutdown: #{e.message} #{e.backtrace.join("\n")}"
     )
   end
 end

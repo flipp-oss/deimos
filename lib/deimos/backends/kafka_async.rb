@@ -6,6 +6,12 @@ module Deimos
     class KafkaAsync < Deimos::PublishBackend
       include Phobos::Producer
 
+      # Shut down the producer cleanly.
+      def self.shutdown_producer
+        producer.async_producer_shutdown
+        producer.kafka_client&.close
+      end
+
       # :nodoc:
       def self.execute(producer_class:, messages:)
         Deimos.instrument(

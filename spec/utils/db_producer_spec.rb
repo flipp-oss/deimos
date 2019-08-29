@@ -176,6 +176,29 @@ each_db_config(Deimos::Utils::DbProducer) do
       producer.process_topic('my-topic')
     end
 
+    it 'should notify on error' do
+      messages = (1..4).map do |i|
+        Deimos::KafkaMessage.new(
+          id: i,
+          topic: 'my-topic',
+          message: "mess#{i}",
+          partition_key: "key#{i}"
+        )
+      end
+
+      expect(Deimos::KafkaTopicInfo).to receive(:lock).
+        with('my-topic', 'abc').and_return(true)
+      expect(producer).to receive(:produce_messages).and_raise('OH NOES')
+      expect(producer).to receive(:retrieve_messages).and_return(messages)
+      expect(Deimos::KafkaTopicInfo).to receive(:register_error)
+
+      Deimos.subscribe('db_producer.produce') do |event|
+        expect(event.payload[:exception_object].message).to eq('OH NOES')
+        expect(event.payload[:messages]).to eq(messages)
+      end
+      producer.process_topic('my-topic')
+    end
+
   end
 
   example 'Full integration test' do
