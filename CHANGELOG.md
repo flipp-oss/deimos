@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## [1.0.0] - 2019-09-03
+- Official release of Deimos 1.0!
+
 ## [1.0.0-beta26] - 2019-08-29
 - Recover from Kafka::MessageSizeTooLarge in the DB producer.
 - Shut down sync producers correctly when persistent_connections is true.
