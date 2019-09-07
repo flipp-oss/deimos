@@ -103,6 +103,20 @@ module ConsumerTest
           expect(metadata[:keys]).to eq(%w(foo bar))
         end
       end
+
+      it 'should decode plain keys for all messages in the batch' do
+        consumer_class = Class.new(Deimos::BatchConsumer) do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config plain: true
+        end
+        stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
+        stub_batch_consumer(consumer_class)
+
+        test_consume_batch('my_batch_consume_topic', batch, keys: [1, 2]) do |_received, metadata|
+          expect(metadata[:keys]).to eq([1, 2])
+        end
+      end
     end
 
     describe 'timestamps' do
@@ -185,6 +199,50 @@ module ConsumerTest
         test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
           expect(received).to eq(batch)
         end
+      end
+    end
+
+    describe 'logging' do
+      before(:each) do
+        # :nodoc:
+        consumer_class = Class.new(Deimos::BatchConsumer) do
+          schema 'MySchemaWithUniqueId'
+          namespace 'com.my-namespace'
+          key_config plain: true
+
+          # :nodoc:
+          def consume_batch(_payloads, _metadata)
+            raise 'This should not be called unless call_original is set'
+          end
+        end
+        stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
+        stub_batch_consumer(consumer_class)
+        allow(Deimos.config.metrics).to receive(:histogram)
+      end
+
+      it 'should log message identifiers' do
+        batch_with_message_id = [
+          { 'id' => 1, 'test_id' => 'foo', 'some_int' => 5,
+            'timestamp' => 3.minutes.ago.to_s, 'message_id' => 'one' },
+          { 'id' => 2, 'test_id' => 'bar', 'some_int' => 6,
+            'timestamp' => 2.minutes.ago.to_s, 'message_id' => 'two' }
+        ]
+
+        allow(Deimos.config.logger).
+          to receive(:info)
+
+        expect(Deimos.config.logger).
+          to receive(:info).
+          with(hash_including(
+                 message_ids: {
+                   keys: [1, 2],
+                   message_ids: %w(one two)
+                 }
+               )
+             ).
+          twice
+
+        test_consume_batch('my_batch_consume_topic', batch_with_message_id, keys: [1, 2])
       end
     end
   end

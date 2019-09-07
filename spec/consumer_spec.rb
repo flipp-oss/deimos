@@ -96,7 +96,7 @@ module ConsumerTest
         expect { MyConsumer.new.decode_key(123) }.to raise_error(NoMethodError)
       end
 
-      it 'should not encode if plain is set' do
+      it 'should not decode if plain is set' do
         consumer_class = Class.new(Deimos::Consumer) do
           schema 'MySchema'
           namespace 'com.my-namespace'

@@ -23,10 +23,8 @@ module Deimos
     # :nodoc:
     def before_consume_batch(batch, metadata)
       _with_error_span(batch, metadata) do
-        if self.class.config[:key_schema] || self.class.config[:key_field]
-          metadata[:keys] = batch.map do |message|
-            decode_key(message.key)
-          end
+        metadata[:keys] = batch.map do |message|
+          decode_key(message.key)
         end
 
         batch.map do |message|
@@ -47,10 +45,15 @@ module Deimos
     def _received_batch(payloads, metadata)
       Deimos.config.logger.info(
         message: 'Got Kafka batch event',
-        payloads: payloads,
-        metadata: metadata
+        message_ids: _payload_identifiers(payloads, metadata),
+        metadata: metadata.except(:keys)
       )
-      Deimos.config.metrics&.increment('handler',
+      Deimos.config.logger.debug(
+        message: 'Kafka batch event payloads',
+        payloads: payloads
+      )
+      Deimos.config.metrics&.increment(
+        'handler',
         by: metadata['batch_size'],
         tags: %W(
           status:batch_received
@@ -76,8 +79,8 @@ module Deimos
       Deimos.config.logger.warn(
         message: 'Error consuming message batch',
         handler: self.class.name,
-        metadata: metadata,
-        data: payloads,
+        metadata: metadata.except(:keys),
+        message_ids: _payload_identifiers(payloads, metadata),
         error_message: exception.message,
         error: exception.backtrace
       )
@@ -92,7 +95,8 @@ module Deimos
         time:consume_batch
         topic:#{metadata[:topic]}
       ))
-      Deimos.config.metrics&.increment('handler',
+      Deimos.config.metrics&.increment(
+        'handler',
         by: metadata['batch_size'],
         tags: %W(
           status:batch_success
@@ -101,10 +105,29 @@ module Deimos
       )
       Deimos.config.logger.info(
         message: 'Finished processing Kafka batch event',
-        payloads: payloads,
+        message_ids: _payload_identifiers(payloads, metadata),
         time_elapsed: time_taken,
-        metadata: metadata
+        metadata: metadata.except(:keys)
       )
+    end
+
+    # Get payload identifiers (key and message_id if present) for logging.
+    # @param payloads [Array<Hash>]
+    # @param metadata [Hash]
+    # @return [Hash] the identifiers.
+    def _payload_identifiers(payloads, metadata)
+      message_ids = payloads&.map do |payload|
+        if payload.is_a?(Hash) && payload.key?('message_id')
+          payload['message_id']
+        end
+      end
+
+      ids = {}
+
+      ids[:message_ids] = message_ids if message_ids&.any?(&:present?)
+      ids[:keys] = metadata[:keys] if metadata[:keys].present?
+
+      ids
     end
   end
 end

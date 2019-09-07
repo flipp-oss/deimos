@@ -379,7 +379,7 @@ class MyBatchConsumer < Deimos::BatchConsumer
     # the same cardinality as the payloads. If you need to iterate
     # over payloads and keys together, you can use something like this:
  
-    payloads.zip(metadata.keys) do |_payload, _key|
+    payloads.zip(metadata[:keys]) do |_payload, _key|
       # Do something 
     end
   end

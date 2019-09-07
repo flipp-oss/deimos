@@ -27,9 +27,7 @@ module Deimos
     # :nodoc:
     def before_consume(payload, metadata)
       _with_error_span(payload, metadata) do
-        if self.class.config[:key_schema] || self.class.config[:key_field]
-          metadata[:key] = decode_key(metadata[:key])
-        end
+        metadata[:key] = decode_key(metadata[:key])
         self.class.decoder.decode(payload) if payload.present?
       end
     end
