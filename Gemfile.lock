@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deimos (1.1.0.pre.beta1)
+    deimos-ruby (1.1.0.pre.beta1)
       avro-patches (~> 0.3)
       avro_turf (~> 0.8)
       phobos (~> 1.8.2.pre.beta2)

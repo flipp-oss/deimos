@@ -94,20 +94,6 @@ module Deimos
         time_elapsed: time_taken,
         metadata: metadata
       )
-      return if payload.nil? || payload['timestamp'].blank?
-
-      begin
-        time_delayed = Time.now.in_time_zone - payload['timestamp'].to_datetime
-      rescue ArgumentError
-        Deimos.config.logger.info(
-          message: "Error parsing timestamp! #{payload['timestamp']}"
-        )
-        return
-      end
-      Deimos.config.metrics&.histogram('handler', time_delayed, tags: %W(
-                                         time:time_delayed
-                                         topic:#{metadata[:topic]}
-                                       ))
     end
   end
 end
