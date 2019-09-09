@@ -32,7 +32,6 @@ module ConsumerTest
       batch.concat([{ 'invalid' => 'key' }])
     end
 
-
     it 'should consume a batch of messages' do
       test_consume_batch(MyBatchConsumer, batch) do |received, _metadata|
         expect(received).to eq(batch)
@@ -76,7 +75,7 @@ module ConsumerTest
     end
 
     describe 'decoding' do
-      let (:keys) do
+      let(:keys) do
         batch.map { |v| v.slice('test_id') }
       end
 

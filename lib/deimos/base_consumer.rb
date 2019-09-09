@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Deimos
+  # Shared methods for Kafka Consumers
   class BaseConsumer
     include SharedConfig
 
@@ -68,24 +69,24 @@ module Deimos
         return
       end
       Deimos.config.metrics&.histogram('handler', time_delayed, tags: %W(
-        time:time_delayed
-        topic:#{metadata[:topic]}
-      ))
+                                         time:time_delayed
+                                         topic:#{metadata[:topic]}
+                                       ))
     end
 
     # @param exception [Throwable]
-    # @param payload [Hash]
-    # @param metadata [Hash]
-    def _handle_error(exception, payload, metadata)
+    # @param _payload [Hash]
+    # @param _metadata [Hash]
+    def _handle_error(exception, _payload, _metadata)
       Deimos.config.tracer&.set_error(@span, exception)
 
       raise if Deimos.config.reraise_consumer_errors
     end
 
-    # @param time_taken [Float]
-    # @param payload [Hash]
-    # @param metadata [Hash]
-    def _handle_success(time_taken, payload, metadata)
+    # @param _time_taken [Float]
+    # @param _payload [Hash]
+    # @param _metadata [Hash]
+    def _handle_success(_time_taken, _payload, _metadata)
       raise NotImplementedError
     end
   end

@@ -92,9 +92,9 @@ module Deimos
     # @param metadata [Hash]
     def _handle_success(time_taken, payloads, metadata)
       Deimos.config.metrics&.histogram('handler', time_taken, tags: %W(
-        time:consume_batch
-        topic:#{metadata[:topic]}
-      ))
+                                         time:consume_batch
+                                         topic:#{metadata[:topic]}
+                                       ))
       Deimos.config.metrics&.increment(
         'handler',
         by: metadata['batch_size'],

@@ -45,11 +45,10 @@ describe Deimos do
         { 'handler' => 'ConsumerTest::MyBatchConsumer',
           'topic' => 'my_batch_consume_topic',
           'group_id' => 'my_batch_group_id',
-          'delivery' => 'inline_batch' },
+          'delivery' => 'inline_batch' }
       ],
       'custom_logger' => nil,
-      'custom_kafka_logger' => nil
-    }
+      'custom_kafka_logger' => nil }
   end
 
   let(:config_path) { File.join(File.dirname(__FILE__), 'phobos.yml') }

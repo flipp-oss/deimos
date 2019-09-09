@@ -117,7 +117,6 @@ module Deimos
 
         stub_batch_consumer(klass)
       end
-
     end
 
     # Stub a given producer class.
@@ -149,7 +148,6 @@ module Deimos
     def stub_batch_consumer(klass)
       _stub_base_consumer(klass)
     end
-
 
     # get the difference of 2 hashes.
     # @param hash1 [Hash]
