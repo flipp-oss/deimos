@@ -122,12 +122,17 @@ module Deimos
         end
       end
 
-      ids = {}
+      # Payloads may be nil if preprocessing failed
+      messages = payloads || metadata[:keys] || []
 
-      ids[:message_ids] = message_ids if message_ids&.any?(&:present?)
-      ids[:keys] = metadata[:keys] if metadata[:keys].present?
+      messages.zip(metadata[:keys] || [], message_ids || []).map do |_, k, m_id|
+        ids = {}
 
-      ids
+        ids[:key] = k if k.present?
+        ids[:message_id] = m_id if m_id.present?
+
+        ids
+      end
     end
   end
 end

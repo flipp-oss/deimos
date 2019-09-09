@@ -234,12 +234,11 @@ module ConsumerTest
         expect(Deimos.config.logger).
           to receive(:info).
           with(hash_including(
-                 message_ids: {
-                   keys: [1, 2],
-                   message_ids: %w(one two)
-                 }
-               )
-             ).
+                 message_ids: [
+                   { key: 1, message_id: 'one' },
+                   { key: 2, message_id: 'two' }
+                 ]
+               )).
           twice
 
         test_consume_batch('my_batch_consume_topic', batch_with_message_id, keys: [1, 2])
