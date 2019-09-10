@@ -608,7 +608,7 @@ The following metrics are reported:
     * `status:error`
     * `time:consume` (histogram)
         * Amount of time spent executing handler for each message
-    * Batch Consumers
+    * Batch Consumers - report counts by number of batches
         * `status:batch_received`
         * `status:batch_success`
         * `status:batch_error`

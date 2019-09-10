@@ -54,10 +54,16 @@ module Deimos
       )
       Deimos.config.metrics&.increment(
         'handler',
-        by: metadata['batch_size'],
         tags: %W(
           status:batch_received
           topic:#{metadata[:topic]}
+        ))
+      Deimos.config.metrics&.increment(
+        'handler',
+        by: metadata['batch_size'],
+        tags: %W(
+           status:received
+           topic:#{metadata[:topic]}
         ))
       if payloads.present?
         payloads.each { |payload| _report_time_delayed(payload, metadata) }
@@ -70,12 +76,10 @@ module Deimos
     def _handle_error(exception, payloads, metadata)
       Deimos.config.metrics&.increment(
         'handler',
-        by: metadata['batch_size'],
         tags: %W(
           status:batch_error
           topic:#{metadata[:topic]}
-        )
-      )
+        ))
       Deimos.config.logger.warn(
         message: 'Error consuming message batch',
         handler: self.class.name,
@@ -97,12 +101,17 @@ module Deimos
                                        ))
       Deimos.config.metrics&.increment(
         'handler',
-        by: metadata['batch_size'],
         tags: %W(
           status:batch_success
           topic:#{metadata[:topic]}
-        )
-      )
+        ))
+      Deimos.config.metrics&.increment(
+        'handler',
+        by: metadata['batch_size'],
+        tags: %W(
+         status:success
+         topic:#{metadata[:topic]}
+        ))
       Deimos.config.logger.info(
         message: 'Finished processing Kafka batch event',
         message_ids: _payload_identifiers(payloads, metadata),
