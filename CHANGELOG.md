@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.1.0-beta1] - 2019-09-10
 - Added BatchConsumer.
 
 ## [1.0.0] - 2019-09-03
