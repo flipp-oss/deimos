@@ -4,7 +4,7 @@ PATH
     deimos-ruby (1.0.0)
       avro-patches (~> 0.3)
       avro_turf (~> 0.8)
-      phobos (~> 1.8)
+      phobos (~> 1.8.2.pre.beta2)
       ruby-kafka (~> 0.7)
 
 GEM
@@ -87,7 +87,7 @@ GEM
     parser (2.6.3.0)
       ast (~> 2.4.0)
     pg (1.1.3)
-    phobos (1.8.1)
+    phobos (1.8.2.pre.beta2)
       activesupport (>= 3.0.0)
       concurrent-ruby (>= 1.0.2)
       concurrent-ruby-ext (>= 1.0.2)

@@ -336,8 +336,53 @@ class MyConsumer < Deimos::Consumer
   def consume(payload, metadata)
     # Same method as Phobos consumers.
     # payload is an Avro-decoded hash.
-    # Metadata is a hash that contains information like :key and :topic. Both
-    # key (if configured) and payload will be Avro-decoded. 
+    # metadata is a hash that contains information like :key and :topic.
+    # In general, your key should be included in the payload itself. However,
+    # if you need to access it separately from the payload, you can use
+    # metadata[:key]
+  end
+end
+```
+
+### Batch Consumption
+
+Instead of consuming messages one at a time, consumers can receive a batch of
+messages as an array and then process them together. This can improve
+consumer throughput, depending on the use case. Batch consumers behave like
+other consumers in regards to key and payload decoding, etc.
+
+To enable batch consumption, create a listener in `phobos.yml` and ensure that
+the `delivery` property is set to `inline_batch`. For example:
+
+```yaml
+listeners:
+  - handler: Consumers::MyBatchConsumer
+    topic: my_batched_topic
+    group_id: my_group_id
+    delivery: inline_batch
+```
+
+Batch consumers must inherit from the Deimos::BatchConsumer class as in
+this sample:
+
+```ruby
+class MyBatchConsumer < Deimos::BatchConsumer
+
+  # See the Consumer sample in the previous section
+  schema 'MySchema'
+  namespace 'com.my-namespace'
+  key_config field: :my_id 
+
+  def consume_batch(payloads, metadata)
+    # payloads is an array of Avro-decoded hashes.
+    # metadata is a hash that contains information like :keys and :topic.
+    # Keys are automatically decoded and available as an array with
+    # the same cardinality as the payloads. If you need to iterate
+    # over payloads and keys together, you can use something like this:
+ 
+    payloads.zip(metadata[:keys]) do |_payload, _key|
+      # Do something 
+    end
   end
 end
 ```
@@ -574,7 +619,17 @@ The following metrics are reported:
     * `status:success`
     * `status:error`
     * `time:consume` (histogram)
+        * Amount of time spent executing handler for each message
+    * Batch Consumers - report counts by number of batches
+        * `status:batch_received`
+        * `status:batch_success`
+        * `status:batch_error`
+        * `time:consume_batch` (histogram)
+            * Amount of time spent executing handler for entire batch
     * `time:time_delayed` (histogram)
+        * Indicates the amount of time between the `timestamp` property of each
+        payload (if present) and the time that the consumer started processing 
+        the message.
 * `publish` - a count of the number of messages received. Tagged
   with `topic:{topic_name}`
 * `publish_error` - a count of the number of messages which failed
@@ -666,6 +721,15 @@ test_consume_message(MyConsumer,
 # Test that a given payload is invalid against the schema:
 test_consume_invalid_message(MyConsumer, 
                             { 'some-invalid-payload' => 'some-value' })
+                            
+# For batch consumers, there are similar methods such as:
+test_consume_batch(MyBatchConsumer,
+                   [{ 'some-payload' => 'some-value' },
+                    { 'some-payload' => 'some-other-value' }]) do |payloads, metadata|
+  # Expectations here
+end
+
+## Producing
                             
 # A matcher which allows you to test that a message was sent on the given
 # topic, without having to know which class produced it.                         

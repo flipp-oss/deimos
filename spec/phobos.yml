@@ -71,3 +71,7 @@ listeners:
     topic: my_consume_topic
     group_id: my_group_id
     max_bytes_per_partition: 524288 # 512 KB
+  - handler: ConsumerTest::MyBatchConsumer
+    topic: my_batch_consume_topic
+    group_id: my_batch_group_id
+    delivery: inline_batch

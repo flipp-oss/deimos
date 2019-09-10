@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Added BatchConsumer.
+
 ## [1.0.0] - 2019-09-03
 - Official release of Deimos 1.0!
 

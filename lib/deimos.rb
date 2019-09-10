@@ -10,6 +10,7 @@ require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
 require 'deimos/consumer'
+require 'deimos/batch_consumer'
 require 'deimos/configuration'
 require 'deimos/instrumentation'
 require 'deimos/utils/lag_reporter'
@@ -58,6 +59,8 @@ module Deimos
         configure_loggers(phobos_config)
 
         Phobos.configure(phobos_config)
+
+        validate_consumers
       end
 
       validate_db_backend if self.config.publish_backend == :db
@@ -78,7 +81,7 @@ module Deimos
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     def start_db_backend!(thread_count: 1)
-      if self.config.publish_backend != :db # rubocop:disable Style/IfUnlessModifier
+      if self.config.publish_backend != :db
         raise('Publish backend is not set to :db, exiting')
       end
 
@@ -118,6 +121,28 @@ module Deimos
     # @return [String] the contents of the file
     def ssl_var_contents(filename)
       File.exist?(filename) ? File.read(filename) : filename
+    end
+
+    # Validate that consumers are configured correctly, including their
+    # delivery mode.
+    def validate_consumers
+      Phobos.config.listeners.each do |listener|
+        handler_class = listener.handler.constantize
+        delivery = listener.delivery
+
+        # Validate that Deimos consumers use proper delivery configs
+        if handler_class < Deimos::BatchConsumer
+          unless delivery == 'inline_batch'
+            raise "BatchConsumer #{listener.handler} must have delivery set to"\
+              ' `inline_batch`'
+          end
+        elsif handler_class < Deimos::Consumer
+          if delivery.present? && !%w(message batch).include?(delivery)
+            raise "Non-batch Consumer #{listener.handler} must have delivery"\
+              ' set to `message` or `batch`'
+          end
+        end
+      end
     end
   end
 end
