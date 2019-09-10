@@ -62,8 +62,8 @@ module Deimos
         'handler',
         by: metadata['batch_size'],
         tags: %W(
-           status:received
-           topic:#{metadata[:topic]}
+          status:received
+          topic:#{metadata[:topic]}
         ))
       if payloads.present?
         payloads.each { |payload| _report_time_delayed(payload, metadata) }
@@ -109,8 +109,8 @@ module Deimos
         'handler',
         by: metadata['batch_size'],
         tags: %W(
-         status:success
-         topic:#{metadata[:topic]}
+          status:success
+          topic:#{metadata[:topic]}
         ))
       Deimos.config.logger.info(
         message: 'Finished processing Kafka batch event',
