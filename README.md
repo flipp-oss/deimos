@@ -21,6 +21,7 @@ Built on Phobos and hence Ruby-Kafka.
         * [Kafka Message Keys](#kafka-message-keys)
    * [Consumers](#consumers)
    * [Rails Integration](#rails-integration)
+   * [Database Backend](#database-backend)
    * [Running Consumers](#running-consumers)
    * [Metrics](#metrics)
    * [Testing](#testing)
@@ -454,7 +455,7 @@ class Widget < ActiveRecord::Base
 end
 ```
 
-#### Database Backend
+# Database Backend
 
 Deimos provides a way to allow Kafka messages to be created inside a
 database transaction, and send them asynchronously. This ensures that your
@@ -479,6 +480,7 @@ of immediately sending to Kafka. Now, you just need to call
 
     Deimos.start_db_backend!
     
+You can do this inside a thread or fork block.
 If using Rails, you can use a Rake task to do this:
 
     rails deimos:db_producer
@@ -494,6 +496,16 @@ You can pass in a number of threads to the method:
 If you want to force a message to send immediately, just call the `publish_list`
 method with `force_send: true`. You can also pass `force_send` into any of the
 other methods that publish events, like `send_event` in `ActiveRecordProducer`.
+
+A couple of gotchas when using this feature:
+* This may result in high throughput depending on your scale. If you're
+  using Rails < 5.1, you should add a migration to change the `id` column
+  to `BIGINT`. Rails >= 5.1 sets it to BIGINT by default.
+* This table is high throughput but should generally be empty. Make sure
+  you optimize/vacuum this table regularly to reclaim the disk space.
+* Currently, threads allow you to scale the *number* of topics but not
+  a single large topic with lots of messages. There is an [issue](https://github.com/flipp-oss/deimos/issues/23)
+  opened that would help with this case.
 
 For more information on how the database backend works and why it was 
 implemented, please see [Database Backends](docs/DATABASE_BACKEND.md).
