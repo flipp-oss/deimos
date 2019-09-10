@@ -72,10 +72,14 @@ module Deimos
     # @return [Tracing::Provider]
     attr_accessor :tracer
 
+    # @return [Deimos::DbProducerConfiguration]
+    attr_accessor :db_producer
+
     # :nodoc:
     def initialize
       @phobos_config_file = 'config/phobos.yml'
       @publish_backend = :kafka_async
+      @db_producer = DbProducerConfiguration.new
     end
 
     # @param other_config [Configuration]
@@ -85,6 +89,24 @@ module Deimos
       return true if phobos_keys.any? { |key| self.send(key) != other_config.send(key) }
 
       other_config.logger != self.logger
+    end
+  end
+
+  # Sub-class for DB producer configs.
+  class DbProducerConfiguration
+    # @return [Logger]
+    attr_accessor :logger
+    # @return [Symbol|Array<String>] A list of topics to log all messages, or
+    # :all to log all topics.
+    attr_accessor :log_topics
+    # @return [Symbol|Array<String>] A list of topics to compact messages for
+    # before sending, or :all to compact all keyed messages.
+    attr_accessor :compact_topics
+
+    # :nodoc:
+    def initialize
+      @log_topics = []
+      @compact_topics = []
     end
   end
 end

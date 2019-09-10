@@ -14,9 +14,11 @@ module Deimos
       write_attribute(:message, mess ? mess.to_s : nil)
     end
 
+    # Get a decoder to decode a set of messages on the given topic.
+    # @param topic [String]
     # @return [Deimos::Consumer]
-    def decoder
-      producer = Deimos::Producer.descendants.find { |c| c.topic == self.topic }
+    def self.decoder(topic)
+      producer = Deimos::Producer.descendants.find { |c| c.topic == topic }
       return nil unless producer
 
       consumer = Class.new(Deimos::Consumer)
@@ -24,17 +26,19 @@ module Deimos
       consumer
     end
 
-    # Decode the message. This assumes for now that we have access to a producer
-    # in the codebase which can decode it.
-    # @param decoder [Deimos::Consumer]
-    # @return [Hash]
-    def decoded_message(decoder=self.decoder)
-      return { key: self.key, message: self.message } unless decoder
+    # Decoded payloads for a list of messages.
+    # @param messages [Array<Deimos::KafkaMessage]
+    # @return [Array<Hash>]
+    def self.decoded(messages=[])
+      return [] if messages.empty?
 
-      {
-        key: self.key.present? ? decoder.new.decode_key(self.key) : nil,
-        payload: decoder.decoder.decode(self.message)
-      }
+      decoder = self.decoder(messages.first.topic)&.new
+      messages.map do |m|
+        {
+          key: m.key.present? ? decoder&.decode_key(m.key) || m.key : nil,
+          payload: decoder&.decoder&.decode(self.message) || self.message
+        }
+      end
     end
 
     # @return [Hash]

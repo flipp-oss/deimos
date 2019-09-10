@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added BatchConsumer.
 
+- Added config to dedupe messages in the DB producer.
+- Added config to log messages in the DB producer.
+- Added config to provide a separate logger to the DB producer.
+
 ## [1.0.0] - 2019-09-03
 - Official release of Deimos 1.0!
 
