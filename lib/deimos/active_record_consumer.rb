@@ -17,7 +17,7 @@ module Deimos
     def consume(payload, metadata)
       key = metadata.with_indifferent_access[:key]
       klass = self.class.config[:record_class]
-      record = klass.where(klass.primary_key => key).first
+      record = klass.unscoped.where(klass.primary_key => key).first
       if payload.nil?
         destroy_record(record)
         return

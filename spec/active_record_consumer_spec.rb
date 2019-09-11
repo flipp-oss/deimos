@@ -17,6 +17,7 @@ module ActiveRecordProducerTest
 
       # :nodoc:
       class Widget < ActiveRecord::Base
+        default_scope -> { where(some_bool: false) }
       end
       Widget.reset_column_information
     end
@@ -55,7 +56,11 @@ module ActiveRecordProducerTest
         expect(widget.test_id).to eq('abc')
         expect(widget.some_int).to eq(3)
         expect(widget.some_datetime_int).to eq(Time.zone.now)
+        expect(widget.some_bool).to eq(false)
         expect(widget.updated_at).to eq(Time.zone.now)
+
+        # test unscoped
+        widget.update_attribute(:some_bool, true)
 
         # test update
         test_consume_message(MyConsumer, {
@@ -64,7 +69,8 @@ module ActiveRecordProducerTest
                                some_datetime_int: Time.zone.now.to_i,
                                timestamp: 2.minutes.ago.to_s
                              }, { call_original: true, key: 5 })
-        widget = Widget.last
+        expect(Widget.unscoped.count).to eq(1)
+        widget = Widget.unscoped.last
         expect(widget.id).to eq(5)
         expect(widget.test_id).to eq('abcd')
         expect(widget.some_int).to eq(3)
