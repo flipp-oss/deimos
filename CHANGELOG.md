@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.1.0-beta2] - 2019-09-11
 - Fixed bug where ActiveRecordConsumer was not using `unscoped` to update
   via primary key and causing duplicate record errors.
 
