@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Changed `pending_db_messages_max_wait` metric to send per topic.
+
 # [1.1.0-beta1] - 2019-09-10
 - Added BatchConsumer.
 
