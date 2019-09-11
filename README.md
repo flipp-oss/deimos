@@ -2,7 +2,7 @@
   <img src="support/deimos-with-name.png" title="Deimos logo"/>
   <br/>
   <img src="https://img.shields.io/circleci/build/github/flipp-oss/deimos.svg" alt="CircleCI"/>
-  <a href="https://badge.fury.io/rb/deimos"><img src="https://badge.fury.io/rb/deimos.svg" alt="Gem Version" height="18"></a>
+  <a href="https://badge.fury.io/rb/deimos-ruby"><img src="https://badge.fury.io/rb/deimos-ruby.svg" alt="Gem Version" height="18"></a>
   <img src="https://img.shields.io/codeclimate/maintainability/flipp-oss/deimos.svg"/>
 </p>
 
@@ -46,7 +46,7 @@ Or install it yourself as:
 
 # Versioning
 
-We use version of semver for this gem. Any change in previous behavior 
+We use a version of semver for this gem. Any change in previous behavior 
 (something works differently or something old no longer works)
 is denoted with a bump in the minor version (0.4 -> 0.5). Patch versions 
 are for bugfixes or new functionality which does not affect existing code. You
@@ -98,6 +98,14 @@ Deimos.configure do |config|
   # be able to proceed past it and will be stuck forever until you fix
   # your code.
   config.reraise_consumer_errors = true
+
+  # Another way to handle errors is to set reraise_consumer_errors to false
+  # but to set a global "fatal error" block that determines when to reraise:
+  config.fatal_error do |exception, payload, metadata|
+    exception.is_a?(BadError)
+  end
+  # Another example would be to check the database connection and fail
+  # if the DB is down entirely.
   
   # Set to true to send consumer lag metrics
   config.report_lag = %w(production staging).include?(Rails.env)
@@ -333,6 +341,13 @@ class MyConsumer < Deimos::Consumer
   # `schema` and `namespace`, above, for this to work.
   key_config field: :my_id 
 
+  # Optionally overload this to consider a particular exception
+  # "fatal" only for this consumer. This is considered in addition
+  # to the global `fatal_error` configuration block. 
+  def fatal_error?(exception, payload, metadata)
+    exception.is_a?(MyBadError)
+  end
+
   def consume(payload, metadata)
     # Same method as Phobos consumers.
     # payload is an Avro-decoded hash.
@@ -343,6 +358,20 @@ class MyConsumer < Deimos::Consumer
   end
 end
 ```
+
+### Fatal Errors
+
+The recommended configuration is for consumers *not* to raise errors
+they encounter while consuming messages. Errors can be come from 
+a variety of sources and it's possible that the message itself (or
+what downstream systems are doing with it) is causing it. If you do
+not continue on past this message, your consumer will essentially be
+stuck forever unless you take manual action to skip the offset.
+
+Use `config.reraise_consumer_errors = false` to swallow errors. You
+can use instrumentation to handle errors you receive. You can also
+specify "fatal errors" either via global configuration (`config.fatal_error`)
+or via overriding a method on an individual consumer (`def fatal_error`).
 
 ### Batch Consumption
 
