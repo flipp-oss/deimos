@@ -50,7 +50,10 @@ module ConsumerTest
     end
 
     it 'should fail if fatal_error is true globally' do
-      Deimos.configure { |config| config.fatal_error { true }; config.reraise_consumer_errors = false }
+      Deimos.configure do |config|
+        config.fatal_error { true }
+        config.reraise_consumer_errors = false
+      end
       test_consume_invalid_message(MyConsumer, 'invalid' => 'key')
     end
 
