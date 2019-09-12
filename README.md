@@ -108,7 +108,7 @@ Deimos.configure do |config|
   # Database Backend producer configuration
  
   # Logger for DB producer
-  config.db_producer.logger = Logger.new('/db_producer')
+  config.db_producer.logger = Logger.new('/db_producer.log')
 
   # List of topics to print full messages for, or :all to print all
   # topics. This can introduce slowdown since it needs to decode
@@ -118,7 +118,8 @@ Deimos.configure do |config|
   # List of topics to compact before sending, i.e. only send the
   # last message with any given key in a batch. This is an optimization
   # which mirrors what Kafka itself will do with compaction turned on
-  # but only within a single batch. 
+  # but only within a single batch.  You can also specify :all to
+  # compact all topics.
   config.db_producer.compact_topics = ['topic1', 'topic2']
   # Configure the metrics provider (see below).
   config.metrics = Deimos::Metrics::Mock.new({ tags: %w(env:prod my_tag:another_1) })

@@ -27,7 +27,7 @@ module Deimos
     end
 
     # Decoded payloads for a list of messages.
-    # @param messages [Array<Deimos::KafkaMessage]
+    # @param messages [Array<Deimos::KafkaMessage>]
     # @return [Array<Hash>]
     def self.decoded(messages=[])
       return [] if messages.empty?

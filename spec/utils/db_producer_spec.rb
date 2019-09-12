@@ -120,19 +120,16 @@ each_db_config(Deimos::Utils::DbProducer) do
       it 'should dedupe messages when :all is set' do
         Deimos.configure { |c| c.db_producer.compact_topics = :all }
         expect(producer.compact_messages(batch)).to eq(deduped_batch)
-        Deimos.configure { |c| c.db_producer.compact_topics = [] }
       end
 
       it 'should dedupe messages when topic is included' do
         Deimos.configure { |c| c.db_producer.compact_topics = %w(my-topic my-topic2) }
         expect(producer.compact_messages(batch)).to eq(deduped_batch)
-        Deimos.configure { |c| c.db_producer.compact_topics = [] }
       end
 
       it 'should not dedupe messages when topic is not included' do
         Deimos.configure { |c| c.db_producer.compact_topics = %w(my-topic3 my-topic2) }
         expect(producer.compact_messages(batch)).to eq(batch)
-        Deimos.configure { |c| c.db_producer.compact_topics = [] }
       end
 
       it 'should not dedupe messages without keys' do
