@@ -12,6 +12,11 @@ module ConsumerTest
         key_config field: 'test_id'
 
         # :nodoc:
+        def fatal_error?(_exception, payload, _metadata)
+          payload == 'fatal'
+        end
+
+        # :nodoc:
         def consume(_payload, _metadata)
           raise 'This should not be called unless call_original is set'
         end
@@ -36,6 +41,19 @@ module ConsumerTest
     end
 
     it 'should fail on invalid message' do
+      test_consume_invalid_message(MyConsumer, 'invalid' => 'key')
+    end
+
+    it 'should fail if reraise is false but fatal_error is true' do
+      Deimos.configure { |config| config.reraise_consumer_errors = false }
+      test_consume_invalid_message(MyConsumer, 'fatal')
+    end
+
+    it 'should fail if fatal_error is true globally' do
+      Deimos.configure do |config|
+        config.fatal_error { true }
+        config.reraise_consumer_errors = false
+      end
       test_consume_invalid_message(MyConsumer, 'invalid' => 'key')
     end
 

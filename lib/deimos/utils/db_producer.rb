@@ -117,9 +117,20 @@ module Deimos
 
       # Send metrics to Datadog.
       def send_pending_metrics
-        first_message = KafkaMessage.first
-        time_diff = first_message ? Time.zone.now - KafkaMessage.first.created_at : 0
-        Deimos.config.metrics&.gauge('pending_db_messages_max_wait', time_diff)
+        metrics = Deimos.config.metrics
+        return unless metrics
+
+        messages = Deimos::KafkaMessage.
+          select('count(*) as num_messages, min(created_at) as earliest, topic').
+          group(:topic)
+        if messages.none?
+          metrics.gauge('pending_db_messages_max_wait', 0)
+        end
+        messages.each do |record|
+          time_diff = Time.zone.now - record.earliest
+          metrics.gauge('pending_db_messages_max_wait', time_diff,
+                        tags: ["topic:#{record.topic}"])
+        end
       end
 
       # Shut down the sync producer if we have to. Phobos will automatically
