@@ -84,7 +84,7 @@ describe Deimos do
       allow(described_class).to receive(:run_db_backend)
     end
 
-    it 'should start if backend is db and num_producer_threads is > 0' do
+    it 'should start if backend is db and thread_count is > 0' do
       signal_handler = instance_double(Deimos::Utils::SignalHandler)
       allow(signal_handler).to receive(:run!)
       expect(Deimos::Utils::Executor).to receive(:new).
@@ -108,7 +108,7 @@ describe Deimos do
         to raise_error('Publish backend is not set to :db, exiting')
     end
 
-    it 'should not start if num_producer_threads is nil' do
+    it 'should not start if thread_count is nil' do
       expect(Deimos::Utils::SignalHandler).not_to receive(:new)
       described_class.configure do |config|
         config.publish_backend = :db
@@ -117,7 +117,7 @@ describe Deimos do
         to raise_error('Thread count is not given or set to zero, exiting')
     end
 
-    it 'should not start if num_producer_threads is 0' do
+    it 'should not start if thread_count is 0' do
       expect(Deimos::Utils::SignalHandler).not_to receive(:new)
       described_class.configure do |config|
         config.publish_backend = :db

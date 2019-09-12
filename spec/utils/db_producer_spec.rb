@@ -93,6 +93,64 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect(phobos_producer).to have_received(:publish_list).with(['A']).once
 
     end
+
+    describe '#compact_messages' do
+      let(:batch) do
+        [
+          {
+            key: 1,
+            topic: 'my-topic',
+            message: 'AAA'
+          },
+          {
+            key: 2,
+            topic: 'my-topic',
+            message: 'BBB'
+          },
+          {
+            key: 1,
+            topic: 'my-topic',
+            message: 'CCC'
+          }
+        ].map { |h| Deimos::KafkaMessage.create!(h) }
+      end
+
+      let(:deduped_batch) { batch[1..2] }
+
+      it 'should dedupe messages when :all is set' do
+        Deimos.configure { |c| c.db_producer.compact_topics = :all }
+        expect(producer.compact_messages(batch)).to eq(deduped_batch)
+      end
+
+      it 'should dedupe messages when topic is included' do
+        Deimos.configure { |c| c.db_producer.compact_topics = %w(my-topic my-topic2) }
+        expect(producer.compact_messages(batch)).to eq(deduped_batch)
+      end
+
+      it 'should not dedupe messages when topic is not included' do
+        Deimos.configure { |c| c.db_producer.compact_topics = %w(my-topic3 my-topic2) }
+        expect(producer.compact_messages(batch)).to eq(batch)
+      end
+
+      it 'should not dedupe messages without keys' do
+        unkeyed_batch = [
+          {
+            key: nil,
+            topic: 'my-topic',
+            message: 'AAA'
+          },
+          {
+            key: nil,
+            topic: 'my-topic',
+            message: 'BBB'
+          }
+        ].map { |h| Deimos::KafkaMessage.create!(h) }
+        Deimos.configure { |c| c.db_producer.compact_topics = :all }
+        expect(producer.compact_messages(unkeyed_batch)).to eq(unkeyed_batch)
+        Deimos.configure { |c| c.db_producer.compact_topics = [] }
+      end
+
+    end
   end
 
   describe '#process_topic' do
@@ -194,10 +252,33 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect(Deimos::KafkaTopicInfo).to receive(:register_error)
 
       expect(Deimos::KafkaMessage.count).to eq(4)
-      Deimos.subscribe('db_producer.produce') do |event|
+      subscriber = Deimos.subscribe('db_producer.produce') do |event|
         expect(event.payload[:exception_object].message).to eq('OH NOES')
         expect(event.payload[:messages]).to eq(messages)
       end
+      producer.process_topic('my-topic')
+      # don't delete for regular errors
+      expect(Deimos::KafkaMessage.count).to eq(4)
+      Deimos.unsubscribe(subscriber)
+    end
+
+    it 'should delete messages on buffer overflow' do
+      messages = (1..4).map do |i|
+        Deimos::KafkaMessage.create!(
+          id: i,
+          topic: 'my-topic',
+          message: "mess#{i}",
+          partition_key: "key#{i}"
+        )
+      end
+
+      expect(Deimos::KafkaTopicInfo).to receive(:lock).
+        with('my-topic', 'abc').and_return(true)
+      expect(producer).to receive(:produce_messages).and_raise(Kafka::BufferOverflow)
+      expect(producer).to receive(:retrieve_messages).and_return(messages)
+      expect(Deimos::KafkaTopicInfo).to receive(:register_error)
+
+      expect(Deimos::KafkaMessage.count).to eq(4)
       producer.process_topic('my-topic')
       expect(Deimos::KafkaMessage.count).to eq(0)
     end

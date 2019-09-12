@@ -90,7 +90,8 @@ module Deimos
       end
 
       producers = (1..thread_count).map do
-        Deimos::Utils::DbProducer.new(self.config.logger)
+        Deimos::Utils::DbProducer.
+          new(self.config.db_producer.logger || self.config.logger)
       end
       executor = Deimos::Utils::Executor.new(producers,
                                              sleep_seconds: 5,
