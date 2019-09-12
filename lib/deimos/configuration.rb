@@ -72,10 +72,22 @@ module Deimos
     # @return [Tracing::Provider]
     attr_accessor :tracer
 
+    # For internal purposes only
+    # @return [Block]
+    attr_accessor :fatal_error_block
+
     # :nodoc:
     def initialize
       @phobos_config_file = 'config/phobos.yml'
       @publish_backend = :kafka_async
+      fatal_error { false }
+    end
+
+    # Block taking an exception, payload and metadata and returning
+    # true if this should be considered a fatal error and false otherwise.
+    # Not needed if reraise_consumer_errors is set to true.
+    def fatal_error(&block)
+      @fatal_error_block = block
     end
 
     # @param other_config [Configuration]

@@ -74,13 +74,25 @@ module Deimos
                                        ))
     end
 
-    # @param exception [Throwable]
-    # @param _payload [Hash]
-    # @param _metadata [Hash]
-    def _handle_error(exception, _payload, _metadata)
+    # Overrideable method to determine if a given error should be considered
+    # "fatal" and always be reraised.
+    # @param error [Exception]
+    # @param payload [Hash]
+    # @param metadata [Hash]
+    # @return [Boolean]
+    def fatal_error?(_error, _payload, _metadata)
+      false
+    end
+
+    # @param exception [Exception]
+    # @param payload [Hash]
+    # @param metadata [Hash]
+    def _handle_error(exception, payload, metadata)
       Deimos.config.tracer&.set_error(@span, exception)
 
-      raise if Deimos.config.reraise_consumer_errors
+      raise if Deimos.config.reraise_consumer_errors ||
+               Deimos.config.fatal_error_block.call(exception, payload, metadata) ||
+               fatal_error?(exception, payload, metadata)
     end
 
     # @param _time_taken [Float]
