@@ -119,6 +119,7 @@ each_db_config(Deimos::Utils::DbProducer) do
         with('my-topic', 'abc').and_return(true)
       expect(producer).to receive(:retrieve_messages).ordered.
         and_return(messages[0..1])
+      expect(producer).to receive(:send_pending_metrics).twice
       expect(producer).to receive(:produce_messages).ordered.with([
                                                                     {
                                                                       payload: 'mess1',
@@ -201,6 +202,37 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect(Deimos::KafkaMessage.count).to eq(0)
     end
 
+  end
+
+  describe '#send_pending_metrics' do
+    it 'should use the first created_at for each topic' do |example|
+      # sqlite date-time strings don't work correctly
+      next if example.metadata[:db_config][:adapter] == 'sqlite3'
+
+      freeze_time do
+        (1..2).each do |i|
+          Deimos::KafkaMessage.create!(topic: "topic#{i}", message: nil,
+                                       created_at: (3 + i).minutes.ago)
+          Deimos::KafkaMessage.create!(topic: "topic#{i}", message: nil,
+                                       created_at: (2 + i).minutes.ago)
+          Deimos::KafkaMessage.create!(topic: "topic#{i}", message: nil,
+                                       created_at: (1 + i).minute.ago)
+        end
+        allow(Deimos.config.metrics).to receive(:gauge)
+        producer.send_pending_metrics
+        expect(Deimos.config.metrics).to have_received(:gauge).twice
+        expect(Deimos.config.metrics).to have_received(:gauge).
+          with('pending_db_messages_max_wait', 4.minutes.to_i, tags: ['topic:topic1'])
+        expect(Deimos.config.metrics).to have_received(:gauge).
+          with('pending_db_messages_max_wait', 5.minutes.to_i, tags: ['topic:topic2'])
+      end
+    end
+
+    it 'should send 0 if no messages' do
+      expect(Deimos.config.metrics).to receive(:gauge).
+        with('pending_db_messages_max_wait', 0)
+      producer.send_pending_metrics
+    end
   end
 
   example 'Full integration test' do
