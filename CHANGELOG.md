@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 - Added `fatal_error` to both global config and consumer classes.
+- Changed `pending_db_messages_max_wait` metric to send per topic.
+
+# [1.1.0-beta2] - 2019-09-11
+- Fixed bug where ActiveRecordConsumer was not using `unscoped` to update
+  via primary key and causing duplicate record errors.
 
 # [1.1.0-beta1] - 2019-09-10
 - Added BatchConsumer.

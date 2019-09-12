@@ -665,7 +665,9 @@ The following metrics are reported:
   to publish. Tagged with `topic:{topic_name}`
 * `pending_db_messages_max_wait` - the number of seconds which the
   oldest KafkaMessage in the database has been waiting for, for use
-  with the database backend.
+  with the database backend. Tagged with the topic that is waiting.
+  Will send a value of 0 with no topics tagged if there are no messages
+  waiting.
 
 ### Configuring Metrics Providers
 
