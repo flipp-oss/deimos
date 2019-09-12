@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.2.0-beta1] - 2019-09-12
 - Added `fatal_error` to both global config and consumer classes.
 - Changed `pending_db_messages_max_wait` metric to send per topic.
+- Added config to compact messages in the DB producer.
+- Added config to log messages in the DB producer.
+- Added config to provide a separate logger to the DB producer.
 
 # [1.1.0-beta2] - 2019-09-11
 - Fixed bug where ActiveRecordConsumer was not using `unscoped` to update
@@ -16,10 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [1.1.0-beta1] - 2019-09-10
 - Added BatchConsumer.
-
-- Added config to dedupe messages in the DB producer.
-- Added config to log messages in the DB producer.
-- Added config to provide a separate logger to the DB producer.
 
 ## [1.0.0] - 2019-09-03
 - Official release of Deimos 1.0!

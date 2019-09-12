@@ -129,6 +129,7 @@ Deimos.configure do |config|
   # but only within a single batch.  You can also specify :all to
   # compact all topics.
   config.db_producer.compact_topics = ['topic1', 'topic2']
+
   # Configure the metrics provider (see below).
   config.metrics = Deimos::Metrics::Mock.new({ tags: %w(env:prod my_tag:another_1) })
 
