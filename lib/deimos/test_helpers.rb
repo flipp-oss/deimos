@@ -106,14 +106,13 @@ module Deimos
       end
 
       Deimos::Consumer.descendants.each do |klass|
-        # TODO: remove this when ActiveRecordConsumer uses batching
         next if klass == Deimos::ActiveRecordConsumer # "abstract" class
 
         stub_consumer(klass)
       end
 
       Deimos::BatchConsumer.descendants.each do |klass|
-        next if klass == Deimos::ActiveRecordConsumer # "abstract" class
+        next if klass == Deimos::ActiveRecordBatchConsumer # "abstract" class
 
         stub_batch_consumer(klass)
       end
@@ -256,7 +255,7 @@ module Deimos
     # @param payload [Hash] the payload to consume
     # @param call_original [Boolean] if true, allow the consume handler
     # to continue as normal. Not compatible with a block.
-    # @param ignore_expectation [Boolean] Set to true to not place any
+    # @param skip_expectation [Boolean] Set to true to not place any
     # expectations on the consumer. Primarily used internally to Deimos.
     # @param key [Object] the key to use.
     # @param partition_key [Object] the partition key to use.
@@ -357,6 +356,9 @@ module Deimos
       batch_messages = payloads.zip(keys, partition_keys).map do |payload, key, partition_key|
         key ||= _key_from_consumer(handler_class)
 
+        payload&.stringify_keys!
+        key&.stringify_keys! if key.is_a?(Hash)
+
         double('message',
                'key' => key,
                'partition_key' => partition_key,
@@ -443,7 +445,9 @@ module Deimos
   private
 
     def _key_from_consumer(consumer)
-      if consumer.config[:key_field] || consumer.config[:key_schema]
+      if consumer.config[:no_keys]
+        nil
+      elsif consumer.config[:key_field] || consumer.config[:key_schema]
         { 'test' => 1 }
       else
         1
@@ -465,6 +469,12 @@ module Deimos
     def _stub_base_consumer(klass)
       allow(klass).to receive(:decoder) do
         create_decoder(klass.config[:schema], klass.config[:namespace])
+      end
+
+      if klass.config[:key_schema] # rubocop:disable Style/GuardClause
+        allow(klass).to receive(:key_decoder) do
+          create_decoder(klass.config[:key_schema], klass.config[:namespace])
+        end
       end
     end
   end

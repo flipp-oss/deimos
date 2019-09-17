@@ -2,6 +2,7 @@
 
 $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'active_record'
+require 'database_cleaner'
 require 'deimos'
 require 'deimos/metrics/mock'
 require 'deimos/tracing/mock'
@@ -130,6 +131,9 @@ RSpec.configure do |config|
   # true by default for RSpec 4.0
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
+  config.filter_run(focus: true)
+  config.run_all_when_everything_filtered = true
+
   config.before(:all) do
     Time.zone = 'EST'
     ActiveRecord::Base.logger = Logger.new('/dev/null')
@@ -157,6 +161,8 @@ RSpec.configure do |config|
       deimos_config.metrics = Deimos::Metrics::Mock.new
       deimos_config.tracer = Deimos::Tracing::Mock.new
     end
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
   end
 
   config.before(:each) do |ex|
@@ -164,13 +170,16 @@ RSpec.configure do |config|
 
     @previous_config = Deimos.config.dup
     @previous_phobos_config = Phobos.config.dup
+
+    DatabaseCleaner.start
   end
 
   config.after(:each) do
     Deimos.config = @previous_config
     Phobos.instance_variable_set(:@config, @previous_phobos_config)
-  end
 
+    DatabaseCleaner.clean
+  end
 end
 
 RSpec.shared_context('with DB') do

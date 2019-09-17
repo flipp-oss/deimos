@@ -635,6 +635,43 @@ class MyConsumer < Deimos::ActiveRecordConsumer
 end
 ```
 
+#### Batch Consumers
+
+Deimos also provides `ActiveRecordBatchConsumer`, which is similar to
+`ActiveRecordConsumer` but inherits from `BatchConsumer` to process multiple
+messages at once. 
+
+Batch consumption makes use of the
+[activerecord-import](https://github.com/zdennis/activerecord-import) to insert
+or update multiple records in a single SQL statement. This reduces processing
+time at the cost of skipping ActiveRecord callbacks for individual records.
+Deleted records (tombstones) are grouped into `delete_all` calls and thus also
+skip `destroy` callbacks.
+
+A sample consumer would look as follows:
+
+```ruby
+class MyConsumer < Deimos::ActiveRecordBatchConsumer
+
+  schema 'MySchema'
+  key_config field: 'my_field'
+  record_class Widget
+
+  # Optional override of the default behavior, which is to call `delete_all`
+  # on the associated records - e.g. you can replace this with setting a deleted
+  # flag on the record. 
+  def remove_records(records)
+    super
+  end
+ 
+  # Optional override to change the attributes of the record before they
+  # are saved.
+  def record_attributes(payload)
+    super.merge(:some_field => 'some_value')
+  end
+end
+```
+
 ## Running consumers
 
 Deimos includes a rake task. Once it's in your gemfile, just run

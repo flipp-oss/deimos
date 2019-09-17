@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Added `ActiveRecordBatchConsumer`
+
 # [1.2.0-beta1] - 2019-09-12
 - Added `fatal_error` to both global config and consumer classes.
 - Changed `pending_db_messages_max_wait` metric to send per topic.
