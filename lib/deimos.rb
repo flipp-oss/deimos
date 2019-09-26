@@ -130,19 +130,6 @@ module Deimos
         handler_class = listener.handler.constantize
         delivery = listener.delivery
 
-        # Validate that Deimos consumers use proper delivery configs
-        # if handler_class < Deimos::BatchConsumer
-        #   unless delivery == 'inline_batch'
-        #     raise "BatchConsumer #{listener.handler} must have delivery set to"\
-        #       ' `inline_batch`'
-        #   end
-        # elsif handler_class < Deimos::Consumer
-        #   if delivery.present? && !%w(message batch).include?(delivery)
-        #     raise "Non-batch Consumer #{listener.handler} must have delivery"\
-        #       ' set to `message` or `batch`'
-        #   end
-        # end
-
         next unless handler_class < Deimos::Consumer
 
         if delivery == 'inline_batch'
@@ -152,18 +139,6 @@ module Deimos
         elsif handler_class.instance_method(:consume).owner != handler_class
           raise "Non-batch Consumer #{listener.handler} does not implement `consume`"
         end
-
-        # if handler_class.instance_method(:consume_batch).owner == handler_class
-        #   unless delivery == 'inline_batch'
-        #     raise "BatchConsumer #{listener.handler} must have delivery set to"\
-        #       ' `inline_batch`'
-        #   end
-        # elsif handler_class.instance_method(:consume).owner == handler_class
-        #   if delivery.present? && !%w(message batch).include?(delivery)
-        #     raise "Non-batch Consumer #{listener.handler} must have delivery"\
-        #       ' set to `message` or `batch`'
-        #   end
-        # end
       end
     end
   end
