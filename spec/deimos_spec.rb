@@ -144,22 +144,22 @@ describe Deimos do
         }.not_to raise_error
       end
 
-      it 'should raise an error if BatchConsumers do not have inline_batch delivery' do
-        phobos_configuration['listeners'] = [{ 'handler' => 'ConsumerTest::MyBatchConsumer',
-                                               'delivery' => 'message' }]
-
-        expect {
-          described_class.configure { |c| c.phobos_config_file = config_path }
-        }.to raise_error('BatchConsumer ConsumerTest::MyBatchConsumer must have delivery set to `inline_batch`')
-      end
-
-      it 'should raise an error if Consumers do not have message or batch delivery' do
+      it 'should raise an error if inline_batch listeners do not implement consume_batch' do
         phobos_configuration['listeners'] = [{ 'handler' => 'ConsumerTest::MyConsumer',
                                                'delivery' => 'inline_batch' }]
 
         expect {
           described_class.configure { |c| c.phobos_config_file = config_path }
-        }.to raise_error('Non-batch Consumer ConsumerTest::MyConsumer must have delivery set to `message` or `batch`')
+        }.to raise_error('BatchConsumer ConsumerTest::MyConsumer does not implement `consume_batch`')
+      end
+
+      it 'should raise an error if Consumers do not have message or batch delivery' do
+        phobos_configuration['listeners'] = [{ 'handler' => 'ConsumerTest::MyBatchConsumer',
+                                               'delivery' => 'message' }]
+
+        expect {
+          described_class.configure { |c| c.phobos_config_file = config_path }
+        }.to raise_error('Non-batch Consumer ConsumerTest::MyBatchConsumer does not implement `consume`')
       end
 
       it 'should treat nil as `batch`' do

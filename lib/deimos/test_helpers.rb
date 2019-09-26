@@ -109,11 +109,6 @@ module Deimos
         next if klass == Deimos::ActiveRecordConsumer # "abstract" class
 
         stub_consumer(klass)
-      end
-
-      Deimos::BatchConsumer.descendants.each do |klass|
-        next if klass == Deimos::ActiveRecordBatchConsumer # "abstract" class
-
         stub_batch_consumer(klass)
       end
     end
@@ -135,10 +130,6 @@ module Deimos
       _stub_base_consumer(klass)
       klass.class_eval do
         alias_method(:old_consume, :consume) unless self.instance_methods.include?(:old_consume)
-      end
-      allow_any_instance_of(klass).to receive(:consume) do |instance, payload, metadata|
-        metadata[:key] = klass.new.decode_key(metadata[:key])
-        instance.old_consume(payload, metadata)
       end
     end
 

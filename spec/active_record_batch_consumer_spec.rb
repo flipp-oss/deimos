@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # :nodoc:
-describe Deimos::ActiveRecordBatchConsumer do
+describe Deimos::ActiveRecordConsumer do
   # Create ActiveRecord table and model
   before(:all) do
     ActiveRecord::Base.connection.create_table(:widgets, force: true) do |t|
@@ -45,7 +45,7 @@ describe Deimos::ActiveRecordBatchConsumer do
 
   # Basic consumer
   let(:consumer_class) do
-    Class.new(Deimos::ActiveRecordBatchConsumer) do
+    Class.new(described_class) do
       schema 'MySchema'
       namespace 'com.my-namespace'
       key_config plain: true
@@ -255,7 +255,7 @@ describe Deimos::ActiveRecordBatchConsumer do
 
   describe 'compound keys' do
     let(:consumer_class) do
-      Class.new(Deimos::ActiveRecordBatchConsumer) do
+      Class.new(described_class) do
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config schema: 'MySchemaCompound-key'
@@ -290,7 +290,7 @@ describe Deimos::ActiveRecordBatchConsumer do
 
   describe 'no keys' do
     let(:consumer_class) do
-      Class.new(Deimos::ActiveRecordBatchConsumer) do
+      Class.new(described_class) do
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config none: true
@@ -322,7 +322,7 @@ describe Deimos::ActiveRecordBatchConsumer do
 
   describe 'soft deletion' do
     let(:consumer_class) do
-      Class.new(Deimos::ActiveRecordBatchConsumer) do
+      Class.new(described_class) do
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config plain: true

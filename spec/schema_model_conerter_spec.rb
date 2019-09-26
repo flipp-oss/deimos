@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'deimos/schema_model_converter'
+
 describe Deimos::SchemaModelConverter do
   # Create ActiveRecord table and model
   before(:all) do

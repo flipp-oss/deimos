@@ -2,7 +2,7 @@
 
 module Deimos
   # Record that keeps track of which topics are being worked on by DbProducers.
-  class KafkaTopicInfo < ActiveRecord::Base
+  class KafkaTopicInfo < ::ActiveRecord::Base
     self.table_name = 'kafka_topic_info'
 
     class << self

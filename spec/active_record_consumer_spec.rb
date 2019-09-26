@@ -28,7 +28,7 @@ module ActiveRecordProducerTest
 
     prepend_before(:each) do
 
-      consumer_class = Class.new(Deimos::ActiveRecordConsumer) do
+      consumer_class = Class.new(described_class) do
         schema 'MySchemaWithDateTimes'
         namespace 'com.my-namespace'
         key_config plain: true

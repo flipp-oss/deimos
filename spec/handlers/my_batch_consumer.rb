@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
 module ConsumerTest
-  class MyBatchConsumer < Deimos::BatchConsumer; end
+  # :no-doc:
+  class MyBatchConsumer < Deimos::Consumer
+    # :no-doc:
+    def consume_batch(_payloads, _metadata)
+
+    end
+  end
 end
