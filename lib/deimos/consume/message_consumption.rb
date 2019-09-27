@@ -2,6 +2,7 @@
 
 module Deimos
   module Consume
+    # Methods used by message-by-message (non-batch) consumers.
     module MessageConsumption
       include Phobos::Handler
 
@@ -38,9 +39,9 @@ module Deimos
           metadata: metadata
         )
         Deimos.config.metrics&.increment('handler', tags: %W(
-                                         status:received
-                                         topic:#{metadata[:topic]}
-        ))
+                                           status:received
+                                           topic:#{metadata[:topic]}
+                                         ))
         _report_time_delayed(payload, metadata)
       end
 
@@ -51,8 +52,8 @@ module Deimos
         Deimos.config.metrics&.increment(
           'handler',
           tags: %W(
-          status:error
-          topic:#{metadata[:topic]}
+            status:error
+            topic:#{metadata[:topic]}
           )
         )
         Deimos.config.logger.warn(
@@ -71,13 +72,13 @@ module Deimos
       # @param metadata [Hash]
       def _handle_success(time_taken, payload, metadata)
         Deimos.config.metrics&.histogram('handler', time_taken, tags: %W(
-                                         time:consume
-                                         topic:#{metadata[:topic]}
-        ))
+                                           time:consume
+                                           topic:#{metadata[:topic]}
+                                         ))
         Deimos.config.metrics&.increment('handler', tags: %W(
-                                         status:success
-                                         topic:#{metadata[:topic]}
-        ))
+                                           status:success
+                                           topic:#{metadata[:topic]}
+                                         ))
         Deimos.config.logger.info(
           message: 'Finished processing Kafka event',
           payload: payload,

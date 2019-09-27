@@ -5,6 +5,18 @@ require 'deimos/activerecord/message_consumption'
 require 'deimos/consumer'
 
 module Deimos
+  # Basic ActiveRecord consumer class. Consumes messages and upserts them to
+  # the database. For tombstones (null payloads), deletes corresponding
+  # records from the database. Can operate in either message-by-message mode
+  # or in batch mode.
+  #
+  # In batch mode, ActiveRecord callbacks will be skipped and messages will
+  # be batched to minimize database calls.
+
+  # To configure batch vs. message mode, change the delivery mode of your
+  # Phobos listener.
+  # Message-by-message -> use `delivery: message` or `delivery: batch`
+  # Batch -> use `delivery: inline_batch`
   class ActiveRecordConsumer < Consumer
     include ActiveRecord::MessageConsumption
     include ActiveRecord::BatchConsumption

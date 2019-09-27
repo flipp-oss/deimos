@@ -5,7 +5,6 @@ module ConsumerTest
   class MyConsumer < Deimos::Consumer
     # :no-doc:
     def consume(_payload, _metadata)
-
     end
   end
 end

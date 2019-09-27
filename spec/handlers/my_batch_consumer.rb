@@ -5,7 +5,6 @@ module ConsumerTest
   class MyBatchConsumer < Deimos::Consumer
     # :no-doc:
     def consume_batch(_payloads, _metadata)
-
     end
   end
 end

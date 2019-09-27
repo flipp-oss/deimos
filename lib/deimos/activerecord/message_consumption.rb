@@ -13,7 +13,7 @@ module Deimos
           return
         end
         record ||= @klass.new
-        attrs = record_attributes(key, payload.with_indifferent_access) #TODO: This is a breaking change. Arg order changed!!
+        attrs = record_attributes(key, payload.with_indifferent_access) # TODO: This is a breaking change. Arg order changed!!
         # don't use attributes= - bypass Rails < 5 attr_protected
         attrs.each do |k, v|
           record.send("#{k}=", v)

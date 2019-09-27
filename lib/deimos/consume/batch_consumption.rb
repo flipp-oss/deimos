@@ -2,6 +2,7 @@
 
 module Deimos
   module Consume
+    # Methods used by batch consumers
     module BatchConsumption
       include Phobos::BatchHandler
 
@@ -49,15 +50,15 @@ module Deimos
         Deimos.config.metrics&.increment(
           'handler',
           tags: %W(
-          status:batch_received
-          topic:#{metadata[:topic]}
+            status:batch_received
+            topic:#{metadata[:topic]}
           ))
         Deimos.config.metrics&.increment(
           'handler',
           by: metadata['batch_size'],
           tags: %W(
-          status:received
-          topic:#{metadata[:topic]}
+            status:received
+            topic:#{metadata[:topic]}
           ))
         if payloads.present?
           payloads.each { |payload| _report_time_delayed(payload, metadata) }
@@ -71,8 +72,8 @@ module Deimos
         Deimos.config.metrics&.increment(
           'handler',
           tags: %W(
-          status:batch_error
-          topic:#{metadata[:topic]}
+            status:batch_error
+            topic:#{metadata[:topic]}
           ))
         Deimos.config.logger.warn(
           message: 'Error consuming message batch',
@@ -90,21 +91,21 @@ module Deimos
       # @param metadata [Hash]
       def _handle_success(time_taken, payloads, metadata)
         Deimos.config.metrics&.histogram('handler', time_taken, tags: %W(
-                                         time:consume_batch
-                                         topic:#{metadata[:topic]}
-        ))
+                                           time:consume_batch
+                                           topic:#{metadata[:topic]}
+                                         ))
         Deimos.config.metrics&.increment(
           'handler',
           tags: %W(
-          status:batch_success
-          topic:#{metadata[:topic]}
+            status:batch_success
+            topic:#{metadata[:topic]}
           ))
         Deimos.config.metrics&.increment(
           'handler',
           by: metadata['batch_size'],
           tags: %W(
-          status:success
-          topic:#{metadata[:topic]}
+            status:success
+            topic:#{metadata[:topic]}
           ))
         Deimos.config.logger.info(
           message: 'Finished processing Kafka batch event',

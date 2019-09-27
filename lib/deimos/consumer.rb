@@ -4,6 +4,10 @@ require 'deimos/consume/batch_consumption'
 require 'deimos/consume/message_consumption'
 
 module Deimos
+  # Basic consumer class. Inherit from this class and override either consume
+  # or consume_batch, depending on the delivery mode of your listener.
+  # `consume` -> use `delivery: message` or `delivery: batch`
+  # `consume_batch` -> use `delivery: inline_batch`
   class Consumer
     include Consume::MessageConsumption
     include Consume::BatchConsumption
@@ -31,7 +35,7 @@ module Deimos
 
       config = self.class.config
       if config[:encode_key] && config[:key_field].nil? &&
-        config[:key_schema].nil?
+         config[:key_schema].nil?
         raise 'No key config given - if you are not decoding keys, please use '\
           '`key_config plain: true`'
       end
@@ -75,7 +79,7 @@ module Deimos
       Deimos.config.metrics&.histogram('handler', time_delayed, tags: %W(
                                          time:time_delayed
                                          topic:#{metadata[:topic]}
-      ))
+                                       ))
     end
 
     # Overrideable method to determine if a given error should be considered
@@ -95,8 +99,8 @@ module Deimos
       Deimos.config.tracer&.set_error(@span, exception)
 
       raise if Deimos.config.reraise_consumer_errors ||
-        Deimos.config.fatal_error_block.call(exception, payload, metadata) ||
-        fatal_error?(exception, payload, metadata)
+               Deimos.config.fatal_error_block.call(exception, payload, metadata) ||
+               fatal_error?(exception, payload, metadata)
     end
   end
 end
