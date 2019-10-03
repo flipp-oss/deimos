@@ -219,3 +219,18 @@ module Deimos
     end
   end
 end
+
+class MyProducer < Deimos::Producer
+
+end
+
+Deimos.configure do |config|
+  config.logger = Logger.new('/tmp/file.txt')
+  config.avro.schema_path = '/my/path'
+  config.producer MyProducer do
+    topic 'MyTopic'
+    schema 'MySchema'
+    namespace 'MyNamespace'
+    key_config plain: true
+  end
+end

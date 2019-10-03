@@ -4,6 +4,7 @@ require 'avro-patches'
 require 'avro_turf'
 require 'phobos'
 require 'deimos/version'
+require 'deimos/configuration'
 require 'deimos/avro_data_encoder'
 require 'deimos/avro_data_decoder'
 require 'deimos/producer'
@@ -11,7 +12,6 @@ require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
 require 'deimos/consumer'
 require 'deimos/batch_consumer'
-require 'deimos/configuration'
 require 'deimos/instrumentation'
 require 'deimos/utils/lag_reporter'
 
@@ -43,28 +43,28 @@ module Deimos
     attr_accessor :config
 
     # Configure Deimos.
-    def configure
-      first_time_config = self.config.nil?
-      self.config ||= Configuration.new
-      old_config = self.config.dup
-      yield(config)
-
-      # Don't re-configure Phobos every time
-      if first_time_config || config.phobos_config_changed?(old_config)
-
-        file = config.phobos_config_file
-        phobos_config = YAML.load(ERB.new(File.read(File.expand_path(file))).result)
-
-        configure_kafka_for_phobos(phobos_config)
-        configure_loggers(phobos_config)
-
-        Phobos.configure(phobos_config)
-
-        validate_consumers
-      end
-
-      validate_db_backend if self.config.publish_backend == :db
-    end
+    # def configure
+    #   first_time_config = self.config.nil?
+    #   self.config ||= Configuration.new
+    #   old_config = self.config.dup
+    #   yield(config)
+    #
+    #   # Don't re-configure Phobos every time
+    #   if first_time_config || config.phobos_config_changed?(old_config)
+    #
+    #     file = config.phobos_config_file
+    #     phobos_config = YAML.load(ERB.new(File.read(File.expand_path(file))).result)
+    #
+    #     configure_kafka_for_phobos(phobos_config)
+    #     configure_loggers(phobos_config)
+    #
+    #     Phobos.configure(phobos_config)
+    #
+    #     validate_consumers
+    #   end
+    #
+    #   validate_db_backend if self.config.publish_backend == :db
+    # end
 
     # Ensure everything is set up correctly for the DB backend.
     def validate_db_backend

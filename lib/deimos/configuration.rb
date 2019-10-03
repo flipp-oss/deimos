@@ -1,124 +1,270 @@
 # frozen_string_literal: true
 
+require 'dry-configurable'
+
 module Deimos
-  # Class to hold configuration.
-  class Configuration
+  extend Dry::Configurable
+
+  # @return [Logger]
+  setting :logger
+
+  # @return [Logger]
+  setting :phobos_logger
+
+  setting :kafka do
+
     # @return [Logger]
-    attr_accessor :logger
-    attr_accessor :phobos_logger
-    attr_accessor :kafka_logger
+    setting :logger
+
+    # URL of the seed broker.
+    # @return [String]
+    setting :seed_brokers, ['localhost:9092']
+
+    # Identifier for this application.
+    # @return [String]
+    setting :client_id, 'phobos'
+
+    # The socket timeout for connecting to the broker, in seconds.
+    # @return [Integer]
+    setting :connect_timeout, 15
+
+    # The socket timeout for reading and writing to the broker, in seconds.
+    # @return [Integer]
+    setting :socket_timeout, 15
+
+    setting :ssl do
+      # Whether SSL is enabled on the brokers.
+      # @return [Boolean]
+      setting :enabled
+
+      # a PEM encoded CA cert, a file path to the cert, or an Array of certs,
+      # to use with an SSL connection.
+      # @return [String|Array<String>]
+      setting :ca_cert
+
+      # a PEM encoded client cert to use with an SSL connection, or a file path
+      # to the cert.
+      # @return [String]
+      setting :client_cert
+
+      # a PEM encoded client cert key to use with an SSL connection.
+      # @return [String]
+      setting :client_cert_key
+    end
+  end
+
+  setting :consumers do
+
+    # Number of seconds after which, if a client hasn't contacted the Kafka cluster,
+    # it will be kicked out of the group.
+    # @return [Integer]
+    setting :session_timeout, 300
+
+    # Interval between offset commits, in seconds.
+    # @return [Integer]
+    setting :offset_commit_interval, 10
+
+    # Number of messages that can be processed before their offsets are committed.
+    # If zero, offset commits are not triggered by message processing
+    # @return [Integer]
+    setting :offset_commit_threshold, 0
+
+    # Interval between heartbeats; must be less than the session window.
+    # @return [Integer]
+    setting :heartbeat_interval, 10
+
+    # Minimum and maximum number of milliseconds to back off after a consumer
+    # error.
+    setting :backoff, (1000..60_000)
 
     # By default, consumer errors will be consumed and logged to
     # the metrics provider.
     # Set this to true to force the error to be raised.
     # @return [Boolean]
-    attr_accessor :reraise_consumer_errors
+    setting :reraise_errors
 
-    # @return [String]
-    attr_accessor :schema_registry_url
+    # @return [Boolean]
+    setting :report_lag
 
-    # @return [String]
-    attr_accessor :seed_broker
+    # Block taking an exception, payload and metadata and returning
+    # true if this should be considered a fatal error and false otherwise.
+    # Not needed if reraise_errors is set to true.
+    # @return [Block]
+    setting(:fatal_error) { proc { false } }
+  end
 
-    # Local path to schemas.
-    # @return [String]
-    attr_accessor :schema_path
+  setting :producers do
+    # Number of seconds a broker can wait for replicas to acknowledge
+    # a write before responding with a timeout.
+    # @return [Integer]
+    setting :ack_timeout, 5
+
+    # Number of replicas that must acknowledge a write, or `:all`
+    # if all in-sync replicas must acknowledge.
+    # @return [Integer|Symbol]
+    setting :required_acks, :all
+
+    # Number of retries that should be attempted before giving up sending
+    # messages to the cluster. Does not include the original attempt.
+    # @return [Integer]
+    setting :max_retries, 2
+
+    # Number of seconds to wait between retries.
+    # @return [Integer]
+    setting :retry_backoff, 1
+
+    # Number of messages allowed in the buffer before new writes will
+    # raise {BufferOverflow} exceptions.
+    # @return [Integer]
+    setting :max_buffer_size, 10_000
+
+    # Maximum size of the buffer in bytes. Attempting to produce messages
+    # when the buffer reaches this size will result in {BufferOverflow} being raised.
+    # @return [Integer]
+    setting :max_buffer_bytesize, 10_000_000
+
+    # Name of the compression codec to use, or nil if no compression should be performed.
+    # Valid codecs: `:snappy` and `:gzip`
+    # @return [Symbol]
+    setting :compression_codec
+
+    # Number of messages that needs to be in a message set before it should be compressed.
+    # Note that message sets are per-partition rather than per-topic or per-producer.
+    # @return [Integer]
+    setting :compression_threshold, 1
+
+    # Maximum number of messages allowed in the queue. Only used for async_producer.
+    # @return [Integer]
+    setting :max_queue_size, 10_000
+
+    # If greater than zero, the number of buffered messages that will automatically
+    # trigger a delivery. Only used for async_producer.
+    # @return [Integer]
+    setting :delivery_threshold, 0
+
+    # if greater than zero, the number of seconds between automatic message
+    # deliveries. Only used for async_producer.
+    # @return [Integer]
+    setting :delivery_interval, 0
+
+    # Set this to true to keep the producer connection between publish calls.
+    # This can speed up subsequent messages by around 30%, but it does mean
+    # that you need to manually call sync_producer_shutdown before exiting,
+    # similar to async_producer_shutdown.
+    # @return [Boolean]
+    setting :persistent_connections, false
 
     # Default namespace for all producers. Can remain nil. Individual
     # producers can override.
     # @return [String]
-    attr_accessor :producer_schema_namespace
+    setting :schema_namespace
 
     # Add a prefix to all topic names. This can be useful if you're using
     # the same Kafka broker for different environments that are producing
     # the same topics.
     # @return [String]
-    attr_accessor :producer_topic_prefix
+    setting :topic_prefix
 
-    # Disable all actual message producing. Useful when doing things like
-    # mass imports or data space management when events don't need to be
-    # fired.
+    # Disable all actual message producing. Generally more useful to use
+    # the `disable_producers` method instead.
     # @return [Boolean]
-    attr_accessor :disable_producers
+    setting :disabled
 
-    # File path to the Phobos configuration file, relative to the application root.
-    # @return [String]
-    attr_accessor :phobos_config_file
-
-    # @return [Boolean]
-    attr_accessor :ssl_enabled
-
-    # @return [String]
-    attr_accessor :ssl_ca_cert
-
-    # @return [String]
-    attr_accessor :ssl_client_cert
-
-    # @return [String]
-    attr_accessor :ssl_client_cert_key
-
-    # Currently can be set to :db, :kafka, or :async_kafka. If using Kafka
-    # directly, set to async in your user-facing app, and sync in your
-    # consumers or delayed workers.
+    # Currently can be set to :db, :kafka, or :kafka_async. If using Kafka
+    # directly, a good pattern is to set to async in your user-facing app, and
+    # sync in your consumers or delayed workers.
     # @return [Symbol]
-    attr_accessor :publish_backend
-
-    # @return [Boolean]
-    attr_accessor :report_lag
-
-    # @return [Metrics::Provider]
-    attr_accessor :metrics
-
-    # @return [Tracing::Provider]
-    attr_accessor :tracer
-
-    # @return [Deimos::DbProducerConfiguration]
-    attr_accessor :db_producer
-
-    # For internal purposes only
-    # @return [Block]
-    attr_accessor :fatal_error_block
-
-    # :nodoc:
-    def initialize
-      @phobos_config_file = 'config/phobos.yml'
-      @publish_backend = :kafka_async
-      @db_producer = DbProducerConfiguration.new
-      fatal_error { false }
-    end
-
-    # Block taking an exception, payload and metadata and returning
-    # true if this should be considered a fatal error and false otherwise.
-    # Not needed if reraise_consumer_errors is set to true.
-    def fatal_error(&block)
-      @fatal_error_block = block
-    end
-
-    # @param other_config [Configuration]
-    # @return [Boolean]
-    def phobos_config_changed?(other_config)
-      phobos_keys = %w(seed_broker phobos_config_file ssl_ca_cert ssl_client_cert ssl_client_cert_key)
-      return true if phobos_keys.any? { |key| self.send(key) != other_config.send(key) }
-
-      other_config.logger != self.logger
-    end
+    setting :backend, :kafka_async
   end
 
-  # Sub-class for DB producer configs.
-  class DbProducerConfiguration
+  setting :avro do
+    # @return [String]
+    setting :schema_registry_url, 'http://localhost:8081'
+    # @return [String]
+    setting :schema_path
+  end
+
+  # The configured metrics provider.
+  # @return [Metrics::Provider]
+  setting :metrics, Metrics::Mock
+
+  # The configured tracing / APM provider.
+  # @return [Tracing::Provider]
+  setting :tracer, Tracing::Mock
+
+  setting :db_producer do
+
     # @return [Logger]
-    attr_accessor :logger
+    setting :logger
+
     # @return [Symbol|Array<String>] A list of topics to log all messages, or
     # :all to log all topics.
-    attr_accessor :log_topics
+    setting :log_topics, []
+
     # @return [Symbol|Array<String>] A list of topics to compact messages for
     # before sending, or :all to compact all keyed messages.
-    attr_accessor :compact_topics
+    setting :compact_topics, []
 
-    # :nodoc:
-    def initialize
-      @log_topics = []
-      @compact_topics = []
+  end
+
+  class KafkaAvroConfig
+    attr_accessor :topic
+    attr_accessor :schema
+    attr_accessor :namespace
+    attr_accessor :key_config
+    attr_accessor :klass
+  end
+
+  class << Deimos.config
+
+    def producer(klass)
+      @current_kafka_config = KafkaAvroConfig.new
+      @current_kafka_config.klass = klass
+      yield
+      configure_producer_or_consumer(@current_kafka_config)
     end
+
+    def configure_producer_or_consumer(kafka_config)
+      kafka_config.klass.class_eval do
+        topic kafka_config.topic
+        schema kafka_config.schema
+        namespace kafka_config.namespace if kafka_config.namespace.present?
+        key_config kafka_config.key_config
+      end
+    end
+
+    def consumer(klass)
+      @current_kafka_config = KafkaAvroConfig.new
+      @current_kafka_config.klass = klass
+      yield
+      configure_producer_or_consumer(@current_kafka_config)
+    end
+
+    def topic(t)
+      @current_kafka_config.topic = t
+    end
+
+    def schema(t)
+      @current_kafka_config.schema = t
+    end
+
+    def namespace(t)
+      @current_kafka_config.namespace = t
+    end
+
+    def key_config(c)
+      @current_kafka_config.key_config = c
+    end
+
+  end
+
+  # @param other_config [Configuration]
+  # @return [Boolean]
+  def phobos_config_changed?(other_config)
+    phobos_keys = %w(seed_broker phobos_config_file ssl_ca_cert ssl_client_cert ssl_client_cert_key)
+    return true if phobos_keys.any? { |key| self.send(key) != other_config.send(key) }
+
+    other_config.logger != self.logger
   end
 end
+
