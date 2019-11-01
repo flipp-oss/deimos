@@ -145,7 +145,7 @@ module KafkaSourceSpec
     context 'with DB backend' do
       before(:each) do
         Deimos.configure do |config|
-          config.publish_backend = :db
+          config.producers.backend = :db
         end
         setup_db(DB_OPTIONS.last) # sqlite
         allow(Deimos::Producer).to receive(:produce_batch).and_call_original

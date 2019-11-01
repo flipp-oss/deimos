@@ -381,7 +381,7 @@ what downstream systems are doing with it) is causing it. If you do
 not continue on past this message, your consumer will essentially be
 stuck forever unless you take manual action to skip the offset.
 
-Use `config.reraise_consumer_errors = false` to swallow errors. You
+Use `config.consumers.reraise_errors = false` to swallow errors. You
 can use instrumentation to handle errors you receive. You can also
 specify "fatal errors" either via global configuration (`config.fatal_error`)
 or via overriding a method on an individual consumer (`def fatal_error`).

@@ -63,7 +63,7 @@ module Deimos
       def config
         @config ||= {
           encode_key: true,
-          namespace: Deimos.config.producer_schema_namespace
+          namespace: Deimos.config.producers.schema_namespace
         }
       end
 
@@ -76,7 +76,7 @@ module Deimos
           return
         end
         # accessor
-        "#{Deimos.config.producer_topic_prefix}#{config[:topic]}"
+        "#{Deimos.config.producers.topic_prefix}#{config[:topic]}"
       end
 
       # Override the default partition key (which is the payload key).
@@ -100,8 +100,8 @@ module Deimos
       # @param force_send [Boolean] if true, ignore the configured backend
       # and send immediately to Kafka.
       def publish_list(payloads, sync: nil, force_send: false)
-        return if Deimos.config.seed_broker.blank? ||
-                  Deimos.config.disable_producers ||
+        return if Deimos.config.kafka.seed_brokers.blank? ||
+                  Deimos.config.producers.disabled ||
                   Deimos.producers_disabled?(self)
 
         backend_class = determine_backend_class(sync, force_send)
@@ -126,7 +126,7 @@ module Deimos
         backend = if force_send
                     :kafka
                   else
-                    Deimos.config.publish_backend
+                    Deimos.config.producers.backend
                   end
         if backend == :kafka_async && sync
           backend = :kafka
@@ -220,17 +220,3 @@ module Deimos
   end
 end
 
-class MyProducer < Deimos::Producer
-
-end
-
-Deimos.configure do |config|
-  config.logger = Logger.new('/tmp/file.txt')
-  config.avro.schema_path = '/my/path'
-  config.producer MyProducer do
-    topic 'MyTopic'
-    schema 'MySchema'
-    namespace 'MyNamespace'
-    key_config plain: true
-  end
-end

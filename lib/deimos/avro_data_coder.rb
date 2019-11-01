@@ -12,7 +12,7 @@ module Deimos
       @schema = schema
       @namespace = namespace
       @schema_store = schema_store ||
-                      AvroTurf::SchemaStore.new(path: Deimos.config.schema_path)
+                      AvroTurf::SchemaStore.new(path: Deimos.config.schema.path)
     end
 
     # @param schema [String]
@@ -27,7 +27,7 @@ module Deimos
     # @return [AvroTurf]
     def avro_turf
       @avro_turf ||= AvroTurf.new(
-        schemas_path: Deimos.config.schema_path,
+        schemas_path: Deimos.config.schema.path,
         schema_store: @schema_store
       )
       @avro_turf
@@ -37,8 +37,8 @@ module Deimos
     def avro_turf_messaging
       @avro_turf_messaging ||= AvroTurf::Messaging.new(
         schema_store: @schema_store,
-        registry_url: Deimos.config.schema_registry_url,
-        schemas_path: Deimos.config.schema_path,
+        registry_url: Deimos.config.schema.registry_url,
+        schemas_path: Deimos.config.schema.path,
         namespace: @namespace
       )
     end

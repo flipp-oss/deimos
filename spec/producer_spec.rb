@@ -377,7 +377,7 @@ module ProducerTest
       end
 
       it 'should return db if db is set' do
-        allow(Deimos.config).to receive(:publish_backend).and_return(:db)
+        Deimos.configure { producers.backend = :db}
         expect(described_class.determine_backend_class(true, false)).
           to eq(Deimos::Backends::Db)
         expect(described_class.determine_backend_class(false, false)).
@@ -385,7 +385,7 @@ module ProducerTest
       end
 
       it 'should return kafka if force_send is true' do
-        allow(Deimos.config).to receive(:publish_backend).and_return(:db)
+        Deimos.configure { producers.backend = :db }
         expect(described_class.determine_backend_class(true, true)).
           to eq(Deimos::Backends::Kafka)
         expect(described_class.determine_backend_class(false, true)).

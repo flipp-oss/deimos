@@ -144,33 +144,21 @@ RSpec.configure do |config|
     Time.zone = 'EST'
     ActiveRecord::Base.logger = Logger.new('/dev/null')
     setup_db(DbConfigs::DB_OPTIONS.last)
-    Deimos.configure do |deimos_config|
-      deimos_config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.yml')
-      deimos_config.schema_path = File.join(File.expand_path(__dir__), 'schemas')
-      deimos_config.reraise_consumer_errors = true
-      deimos_config.schema_registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
-      deimos_config.seed_broker = ENV['KAFKA_SEED_BROKER'] || 'localhost:9092'
-      deimos_config.logger = Logger.new('/dev/null')
-      deimos_config.logger.level = Logger::INFO
-
-      # Use Mock Metrics and Tracing for rspecs
-      deimos_config.metrics = Deimos::Metrics::Mock.new
-      deimos_config.tracer = Deimos::Tracing::Mock.new
-    end
   end
 
   config.before(:each) do |ex|
+    Deimos.config.reset!
+    Deimos.configure do |deimos_config|
+      deimos_config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.yml')
+      deimos_config.schema.path = File.join(File.expand_path(__dir__), 'schemas')
+      deimos_config.consumers.reraise_errors = true
+      deimos_config.schema.registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
+      deimos_config.kafka.seed_brokers = ENV['KAFKA_SEED_BROKER'] || 'localhost:9092'
+      deimos_config.logger = Logger.new('/dev/null')
+      deimos_config.logger.level = Logger::INFO
+    end
     stub_producers_and_consumers! unless ex.metadata[:integration]
-
-    @previous_config = Deimos.config.dup
-    @previous_phobos_config = Phobos.config.dup
   end
-
-  config.after(:each) do
-    Deimos.config = @previous_config
-    Phobos.instance_variable_set(:@config, @previous_phobos_config)
-  end
-
 end
 
 RSpec.shared_context('with DB') do

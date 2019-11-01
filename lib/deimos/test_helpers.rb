@@ -76,9 +76,7 @@ module Deimos
         config.before(:suite) do
           Deimos.configure do |fr_config|
             fr_config.logger = Logger.new(STDOUT)
-            fr_config.seed_broker ||= 'test_broker'
-            fr_config.tracer = Deimos::Tracing::Mock.new
-            fr_config.metrics = Deimos::Metrics::Mock.new
+            fr_config.kafka.seed_brokers ||= ['test_broker']
           end
         end
 

@@ -45,14 +45,14 @@ module ConsumerTest
     end
 
     it 'should fail if reraise is false but fatal_error is true' do
-      Deimos.configure { |config| config.reraise_consumer_errors = false }
+      Deimos.configure { |config| config.consumers.reraise_errors = false }
       test_consume_invalid_message(MyConsumer, 'fatal')
     end
 
     it 'should fail if fatal_error is true globally' do
       Deimos.configure do |config|
-        config.fatal_error { true }
-        config.reraise_consumer_errors = false
+        config.consumers.fatal_error = proc { true }
+        config.consumers.reraise_errors = false
       end
       test_consume_invalid_message(MyConsumer, 'invalid' => 'key')
     end
@@ -65,7 +65,7 @@ module ConsumerTest
     end
 
     it 'should not fail when before_consume fails without reraising errors' do
-      Deimos.configure { |config| config.reraise_consumer_errors = false }
+      Deimos.configure { |config| config.consumers.reraise_errors = false }
       expect {
         test_consume_message(
           MyConsumer,
@@ -77,7 +77,7 @@ module ConsumerTest
     end
 
     it 'should not fail when consume fails without reraising errors' do
-      Deimos.configure { |config| config.reraise_consumer_errors = false }
+      Deimos.configure { |config| config.consumers.reraise_errors = false }
       expect {
         test_consume_message(
           MyConsumer,

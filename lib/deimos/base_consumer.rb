@@ -89,8 +89,8 @@ module Deimos
     def _handle_error(exception, payload, metadata)
       Deimos.config.tracer&.set_error(@span, exception)
 
-      raise if Deimos.config.reraise_consumer_errors ||
-               Deimos.config.fatal_error_block.call(exception, payload, metadata) ||
+      raise if Deimos.config.consumers.reraise_errors ||
+               Deimos.config.consumers.fatal_error&.call(exception, payload, metadata) ||
                fatal_error?(exception, payload, metadata)
     end
 

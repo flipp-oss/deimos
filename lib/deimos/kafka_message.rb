@@ -14,6 +14,12 @@ module Deimos
       write_attribute(:message, mess ? mess.to_s : nil)
     end
 
+    # Decoded payload for this message.
+    # @return [Hash]
+    def decoded_message
+      self.class.decoded([self]).first
+    end
+
     # Get a decoder to decode a set of messages on the given topic.
     # @param topic [String]
     # @return [Deimos::Consumer]
