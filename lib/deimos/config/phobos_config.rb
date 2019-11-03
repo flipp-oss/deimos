@@ -1,7 +1,7 @@
 module Deimos
-  # Module to handle deprecated configuration methods (e.g. phobos.yml)
-  # as well as outputting the configuration to save to Phobos itself.
-  module DeprecatedConfig
+  # Module to handle phobos.yml as well as outputting the configuration to save
+  # to Phobos itself.
+  module PhobosConfig
     extend ActiveSupport::Concern
 
     # @return [Hash]
@@ -18,48 +18,6 @@ module Deimos
         end
         }.to_h
     end
-
-    # Deprecate an old message indicating that the new message should be called.
-    # @param old_message [String]
-    # @param new_message [String]
-    def self.deprecate(old_message, new_message)
-      define_method("#{old_message}=") do |*args|
-        return super(*args) if self != Deimos.config
-        Deimos.config.logger&.warn("config.#{old_message}= is deprecated - use config.#{new_message}=")
-        obj = self
-        messages = new_message.split('.')
-        messages[0..-2].each do |message|
-          obj = obj.send(message)
-        end
-        obj.send("#{messages[-1]}=", args[0])
-      end
-
-      define_method(old_message) do |*args|
-        return super(*args) if self != Deimos.config
-        Deimos.config.logger&.warn("config.#{old_message} is deprecated - use config.#{new_message}")
-        obj = self
-        messages = new_message.split('.')
-        messages[0..-2].each do |message|
-          obj = obj.send(message)
-        end
-        obj.send(messages[-1], *args)
-      end
-    end
-
-    deprecate 'kafka_logger', 'kafka.logger'
-    deprecate 'reraise_consumer_errors', 'consumers.reraise_errors'
-    deprecate 'schema_registry_url', 'schema.registry_url'
-    deprecate 'seed_broker', 'kafka.seed_brokers'
-    deprecate 'schema_path', 'schema.path'
-    deprecate 'producer_schema_namespace', 'producers.schema_namespace'
-    deprecate 'producer_topic_prefix', 'producers.topic_prefix'
-    deprecate 'disable_producers', 'producers.disabled'
-    deprecate 'ssl_enabled', 'kafka.ssl.enabled'
-    deprecate 'ssl_ca_cert', 'kafka.ssl.ca_cert'
-    deprecate 'ssl_client_cert', 'kafka.ssl.client_cert'
-    deprecate 'ssl_client_cert_key', 'kafka.ssl.client_cert_key'
-    deprecate 'publish_backend', 'producers.backend'
-    deprecate 'report_lag', 'consumers.report_lag'
 
     # :nodoc:
     def reset!

@@ -58,88 +58,7 @@ gem 'deimos-ruby', '~> 1.1'
 
 # Configuration
 
-To configure the gem, use `configure` in an initializer:
-
-```ruby
-Deimos.configure do |config|
-  # Configure logger
-  config.logger = Rails.logger
-
-  # Phobos settings
-  config.phobos_config_file = 'config/phobos.yml'
-  config.schema_registry_url = 'https://my-schema-registry.com'
-  config.seed_broker = 'my.seed.broker.0.net:9093,my.seed.broker.1.net:9093'
-  config.ssl_enabled = ENV['KAFKA_SSL_ENABLED']
-  if config.ssl_enabled
-    config.ssl_ca_cert = File.read(ENV['SSL_CA_CERT'])
-    config.ssl_client_cert = File.read(ENV['SSL_CLIENT_CERT'])
-    config.ssl_client_cert_key = File.read(ENV['SSL_CLIENT_CERT_KEY'])
-  end
-  
-  # Other settings
-
-  # Local path to find schemas, for publishing and testing consumers
-  config.schema_path = "#{Rails.root}/app/schemas"
-
-  # Default namespace for producers to use
-  config.producer_schema_namespace = 'com.deimos.my_app'
-  
-  # Prefix for all topics, e.g. environment name
-  config.producer_topic_prefix = 'myenv.'
-   
-  # Disable all producers - e.g. when doing heavy data lifting and events
-  # would be fired a different way
-  config.disable_producers = true 
-  
-  # Default behavior is to swallow uncaught exceptions and log to DataDog.
-  # Set this to true to instead raise all errors. Note that raising an error
-  # will ensure that the message cannot be processed - if there is a bad
-  # message which will always raise that error, your consumer will not
-  # be able to proceed past it and will be stuck forever until you fix
-  # your code.
-  config.reraise_consumer_errors = true
-
-  # Another way to handle errors is to set reraise_consumer_errors to false
-  # but to set a global "fatal error" block that determines when to reraise:
-  config.fatal_error do |exception, payload, metadata|
-    exception.is_a?(BadError)
-  end
-  # Another example would be to check the database connection and fail
-  # if the DB is down entirely.
-  
-  # Set to true to send consumer lag metrics
-  config.report_lag = %w(production staging).include?(Rails.env)
-  
-  # Change the default backend. See Backends, below.
-  config.backend = :db
-
-  # Database Backend producer configuration
- 
-  # Logger for DB producer
-  config.db_producer.logger = Logger.new('/db_producer.log')
-
-  # List of topics to print full messages for, or :all to print all
-  # topics. This can introduce slowdown since it needs to decode
-  # each message using the schema registry. 
-  config.db_producer.log_topics = ['topic1', 'topic2']
-
-  # List of topics to compact before sending, i.e. only send the
-  # last message with any given key in a batch. This is an optimization
-  # which mirrors what Kafka itself will do with compaction turned on
-  # but only within a single batch.  You can also specify :all to
-  # compact all topics.
-  config.db_producer.compact_topics = ['topic1', 'topic2']
-
-  # Configure the metrics provider (see below).
-  config.metrics = Deimos::Metrics::Mock.new({ tags: %w(env:prod my_tag:another_1) })
-
-  # Configure the tracing provider (see below).
-  config.tracer = Deimos::Tracing::Mock.new({service_name: 'my-service'})
-end
-```
-
-Note that the configuration options from Phobos (seed_broker and the SSL settings)
-can be removed from `phobos.yml` since Deimos will load them instead.
+For a full configuration reference, please see [the configuration docs ](docs/CONFIGURATION.md).
 
 # Producers
 
@@ -147,15 +66,6 @@ Producers will look like this:
 
 ```ruby
 class MyProducer < Deimos::Producer
-
-  # Can override default namespace.
-  namespace 'com.deimos.my-app-special'
-  topic 'MyApp.MyTopic'
-  schema 'MySchema'
-  key_config field: 'my_field' # see Kafka Message Keys, below
-  
-  # If config.schema_path is app/schemas, assumes there is a file in
-  # app/schemas/com/deimos/my-app-special/MySchema.avsc
 
   class << self
   
@@ -342,18 +252,6 @@ Here is a sample consumer:
 ```ruby
 class MyConsumer < Deimos::Consumer
 
-  # These are optional but strongly recommended for testing purposes; this
-  # will validate against a local schema file used as the reader schema,
-  # as well as being able to write tests against this schema.
-  # This is recommended since it ensures you are always getting the values 
-  # you expect.
-  schema 'MySchema'
-  namespace 'com.my-namespace'
-  # This directive works identically to the producer - see Kafka Keys, above.
-  # This only affects the `decode_key` method below. You need to provide
-  # `schema` and `namespace`, above, for this to work.
-  key_config field: :my_id 
-
   # Optionally overload this to consider a particular exception
   # "fatal" only for this consumer. This is considered in addition
   # to the global `fatal_error` configuration block. 
@@ -393,15 +291,17 @@ messages as an array and then process them together. This can improve
 consumer throughput, depending on the use case. Batch consumers behave like
 other consumers in regards to key and payload decoding, etc.
 
-To enable batch consumption, create a listener in `phobos.yml` and ensure that
-the `delivery` property is set to `inline_batch`. For example:
+To enable batch consumption, ensure that the `delivery` property is set to `inline_batch`. For example:
 
-```yaml
-listeners:
-  - handler: Consumers::MyBatchConsumer
-    topic: my_batched_topic
-    group_id: my_group_id
-    delivery: inline_batch
+```ruby
+Deimos.configure do
+  consumer do
+    class_name 'Consumers::MyBatchConsumer'
+    topic 'my_batched_topic'
+    group_id 'my_group_id'
+    delivery :inline_batch
+  end
+end
 ```
 
 Batch consumers must inherit from the Deimos::BatchConsumer class as in
@@ -409,11 +309,6 @@ this sample:
 
 ```ruby
 class MyBatchConsumer < Deimos::BatchConsumer
-
-  # See the Consumer sample in the previous section
-  schema 'MySchema'
-  namespace 'com.my-namespace'
-  key_config field: :my_id 
 
   def consume_batch(payloads, metadata)
     # payloads is an array of Avro-decoded hashes.
@@ -441,10 +336,6 @@ An example would look like this:
 ```ruby
 class MyProducer < Deimos::ActiveRecordProducer
 
-  topic 'MyApp.MyTopic'
-  schema 'MySchema'
-  key_config field: 'my_field'
-  
   # The record class should be set on every ActiveRecordProducer.
   # By default, if you give the producer a hash, it will re-fetch the
   # record itself for use in the payload generation. This can be useful
@@ -479,7 +370,7 @@ MyProducer.send_events([{foo: 1}, {foo: 2}])
 
 You can disable producers globally or inside a block. Globally:
 ```ruby
-Deimos.config.disable_producers = true
+Deimos.config.producers.disabled = true
 ```
 
 For the duration of a block:
@@ -560,7 +451,7 @@ To enable this, first generate the migration to create the relevant tables:
     
 You can now set the following configuration:
 
-    config.publish_backend = :db
+    config.producers.backend = :db
 
 This will save all your Kafka messages to the `kafka_messages` table instead
 of immediately sending to Kafka. Now, you just need to call
@@ -615,9 +506,6 @@ A sample consumer would look as follows:
 
 ```ruby
 class MyConsumer < Deimos::ActiveRecordConsumer
-
-  schema 'MySchema'
-  key_config field: 'my_field'
   record_class Widget
 
   # Optional override of the way to fetch records based on payload and
@@ -696,7 +584,7 @@ The following metrics are reported:
 
 ### Configuring Metrics Providers
 
-See the `# Configure Metrics Provider` section under [Configuration](#configuration)
+See the `metrics` field under [Configuration](CONFIGURATION.md).
 View all available Metrics Providers [here](lib/deimos/metrics/metrics_providers)
 
 ### Custom Metrics Providers
@@ -721,7 +609,7 @@ separate span for message consume logic.
 
 ### Configuring Tracing Providers
 
-See the `# Configure Tracing Provider` section under [Configuration](#configuration)
+See the `tracing` field under [Configuration](#configuration).
 View all available Tracing Providers [here](lib/deimos/tracing)
 
 ### Custom Tracing Providers
@@ -763,7 +651,7 @@ test_consume_message(MyConsumer,
 end
 
 # You can also pass a topic name instead of the consumer class as long
-# as the topic is configured in your phobos.yml configuration:
+# as the topic is configured in your Deimos configuration:
 test_consume_message('my-topic-name',
                     { 'some-payload' => 'some-value' }) do |payload, metadata|
       # do some expectation handling here

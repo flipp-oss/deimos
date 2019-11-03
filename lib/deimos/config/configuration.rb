@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'deprecated_config'
+require_relative 'phobos_config'
 require_relative 'configurable'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
@@ -10,7 +10,7 @@ module Deimos
   include Configurable
 
   class Configurable::ConfigStruct
-    include Deimos::DeprecatedConfig
+    include Deimos::PhobosConfig
   end
 
   def self.configure
@@ -76,12 +76,12 @@ module Deimos
     setting :logger, Logger.new(STDOUT)
 
     # @return [Logger]
-    setting :phobos_logger, Logger.new(STDOUT)
+    setting :phobos_logger, default_proc: proc { Deimos.config.logger }
 
     setting :kafka do
 
       # @return [Logger]
-      setting :logger, Logger.new(STDOUT)
+      setting :logger, default_proc: proc { Deimos.config.logger }
 
       # URL of the seed broker.
       # @return [String]
@@ -169,7 +169,7 @@ module Deimos
       # Number of replicas that must acknowledge a write, or `:all`
       # if all in-sync replicas must acknowledge.
       # @return [Integer|Symbol]
-      setting :required_acks, :all
+      setting :required_acks, 1
 
       # Number of retries that should be attempted before giving up sending
       # messages to the cluster. Does not include the original attempt.
@@ -262,7 +262,7 @@ module Deimos
     setting :db_producer do
 
       # @return [Logger]
-      setting :logger
+      setting :logger, default_proc: proc { Deimos.config.logger }
 
       # @return [Symbol|Array<String>] A list of topics to log all messages, or
       # :all to log all topics.
@@ -305,6 +305,22 @@ module Deimos
       setting :offset_retention_time
       setting :heartbeat_interval
     end
+
+    deprecate 'kafka_logger', 'kafka.logger'
+    deprecate 'reraise_consumer_errors', 'consumers.reraise_errors'
+    deprecate 'schema_registry_url', 'schema.registry_url'
+    deprecate 'seed_broker', 'kafka.seed_brokers'
+    deprecate 'schema_path', 'schema.path'
+    deprecate 'producer_schema_namespace', 'producers.schema_namespace'
+    deprecate 'producer_topic_prefix', 'producers.topic_prefix'
+    deprecate 'disable_producers', 'producers.disabled'
+    deprecate 'ssl_enabled', 'kafka.ssl.enabled'
+    deprecate 'ssl_ca_cert', 'kafka.ssl.ca_cert'
+    deprecate 'ssl_client_cert', 'kafka.ssl.client_cert'
+    deprecate 'ssl_client_cert_key', 'kafka.ssl.client_cert_key'
+    deprecate 'publish_backend', 'producers.backend'
+    deprecate 'report_lag', 'consumers.report_lag'
+
   end
 
 end
