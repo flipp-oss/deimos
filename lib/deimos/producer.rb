@@ -219,4 +219,3 @@ module Deimos
     end
   end
 end
-

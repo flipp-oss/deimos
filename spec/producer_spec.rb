@@ -377,7 +377,7 @@ module ProducerTest
       end
 
       it 'should return db if db is set' do
-        Deimos.configure { producers.backend = :db}
+        Deimos.configure { producers.backend = :db }
         expect(described_class.determine_backend_class(true, false)).
           to eq(Deimos::Backends::Db)
         expect(described_class.determine_backend_class(false, false)).

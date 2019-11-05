@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Deimos
   # Module to handle phobos.yml as well as outputting the configuration to save
   # to Phobos itself.
@@ -16,7 +18,7 @@ module Deimos
         elsif val.present?
           [f, val]
         end
-        }.to_h
+      }.to_h
     end
 
     # :nodoc:
@@ -59,20 +61,20 @@ module Deimos
         backoff: {
           min_ms: self.consumers.backoff.to_a[0],
           max_ms: self.consumers.backoff.to_a[-1]
-        },
+        }
       }
 
       p_config[:listeners] = self.consumer_objects.map do |consumer|
         hash = consumer.to_h.reject do |k, _|
           %i(class_name schema namespace key_config backoff).include?(k)
         end
-        hash = hash.map { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v]}.to_h
+        hash = hash.map { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v] }.to_h
         hash[:handler] = consumer.class_name
         if consumer.backoff
           hash[:backoff] = {
             min_ms: consumer.backoff.to_a[0],
             max_ms: consumer.backoff.to_a[-1]
-        }
+          }
         end
         hash
       end
@@ -95,9 +97,9 @@ module Deimos
 
     # Legacy method to parse Phobos config file
     def phobos_config_file=(file)
-      self.logger&.warn("phobos.yml is deprecated - use direct configuration instead.")
       pconfig = YAML.load(ERB.new(File.read(File.expand_path(file))).result).
         with_indifferent_access
+      self.logger&.warn('phobos.yml is deprecated - use direct configuration instead.')
       pconfig[:kafka].each do |k, v|
         if k.starts_with?('ssl')
           k = k.sub('ssl_', '')

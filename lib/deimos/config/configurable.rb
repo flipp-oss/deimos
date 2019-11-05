@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'active_support/concern'
 
 module Deimos
-
   # Module to allow configuration. Loosely based off of the dry-configuration
   # gem but with several advantages:
   # - Works with Ruby 2.3.
@@ -43,6 +44,7 @@ module Deimos
         end
       end
 
+      # :nodoc:
       def clone
         setting = ConfigSetting.new(self.value, self.default_value,
                                     self.default_proc, self.deprecation)
@@ -54,7 +56,6 @@ module Deimos
 
     # Class that defines and keeps the configuration values.
     class ConfigStruct
-
       # @param name [String]
       def initialize(name)
         @name = name
@@ -65,7 +66,7 @@ module Deimos
 
       # Reset config back to default values.
       def reset!
-        @setting_objects = @setting_templates.map { |k, _| [k, []]}.to_h
+        @setting_objects = @setting_templates.map { |k, _| [k, []] }.to_h
         @settings.values.each(&:reset!)
       end
 
@@ -84,14 +85,14 @@ module Deimos
 
       # @return [Hash]
       def to_h
-        @settings.map { |k, v| [k, v.value]}.to_h
+        @settings.map { |k, v| [k, v.value] }.to_h
       end
 
       # :nodoc:
       def clone
         new_config = super
         new_config.setting_objects = new_config.setting_objects.clone
-        new_config.settings = new_config.settings.map { |k, v| [k, v.clone]}.to_h
+        new_config.settings = new_config.settings.map { |k, v| [k, v.clone] }.to_h
         new_config
       end
 
@@ -142,7 +143,6 @@ module Deimos
 
       # :nodoc:
       def method_missing(method, *args, &block)
-
         config_key = method.to_s.sub(/=$/, '').to_sym
 
         # Return the list of setting objects with the given name
@@ -166,15 +166,16 @@ module Deimos
         end
 
         return super unless setting
+
         _default_config_method(config_key, *args)
       end
 
-      protected
+    protected
 
       # Only for the clone method
       attr_accessor :settings, :setting_objects
 
-      private
+    private
 
       def _deprecated_config_method(method, *args)
         config_key = method.to_s.sub(/=$/, '').to_sym
@@ -215,13 +216,12 @@ module Deimos
 
       # Define new values inside a block.
       def _block_config_method(config_key, &block)
-        if @settings[config_key].value.is_a?(ConfigStruct)
-          @settings[config_key].value.instance_eval(&block)
-        else
+        unless @settings[config_key].value.is_a?(ConfigStruct)
           raise "Block called for #{config_key} but it is not a nested config!"
         end
-      end
 
+        @settings[config_key].value.instance_eval(&block)
+      end
     end
 
     class_methods do
@@ -236,6 +236,5 @@ module Deimos
         @config ||= ConfigStruct.new('config')
       end
     end
-
   end
 end

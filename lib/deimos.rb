@@ -61,7 +61,6 @@ module Deimos
       signal_handler = Deimos::Utils::SignalHandler.new(executor)
       signal_handler.run!
     end
-
   end
 end
 

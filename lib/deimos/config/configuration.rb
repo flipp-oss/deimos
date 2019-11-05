@@ -5,14 +5,16 @@ require_relative 'configurable'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
 
+# :nodoc:
 module Deimos
-
   include Configurable
 
+  # :nodoc:
   class Configurable::ConfigStruct
     include Deimos::PhobosConfig
   end
 
+  # :nodoc:
   def self.configure
     super
     Phobos.configure(self.config.phobos_config)
@@ -60,13 +62,14 @@ module Deimos
     end
   end
 
+  # @param kafka_config [Configurable::ConfigStruct]
   def self.configure_producer_or_consumer(kafka_config)
     klass = kafka_config.class_name.constantize
     klass.class_eval do
-      topic kafka_config.topic if kafka_config.topic.present? && klass.respond_to?(:topic)
-      schema kafka_config.schema if kafka_config.schema.present?
-      namespace kafka_config.namespace if kafka_config.namespace.present?
-      key_config kafka_config.key_config if kafka_config.key_config.present?
+      topic(kafka_config.topic) if kafka_config.topic.present? && klass.respond_to?(:topic)
+      schema(kafka_config.schema) if kafka_config.schema.present?
+      namespace(kafka_config.namespace) if kafka_config.namespace.present?
+      key_config(kafka_config.key_config) if kafka_config.key_config.present?
     end
   end
 
@@ -322,6 +325,4 @@ module Deimos
     deprecate 'report_lag', 'consumers.report_lag'
 
   end
-
 end
-

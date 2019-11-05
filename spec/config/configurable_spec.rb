@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# :nodoc:
 class MyConfig
   include Deimos::Configurable
 
@@ -6,7 +9,7 @@ class MyConfig
     setting :set2, 'hi mom'
     setting :group do
       setting :set3, default_proc: proc { false }
-      setting :set5, proc { 5 }
+      setting :set5, (proc { 5 })
     end
 
     setting_object :listy do
@@ -65,7 +68,7 @@ describe Deimos::Configurable do
   it 'should add with block syntax' do
     MyConfig.configure do
       group do
-        set5 proc { 10 }
+        set5(proc { 10 })
       end
     end
     expect(MyConfig.config.group.set5.call).to eq(10)
