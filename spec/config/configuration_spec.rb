@@ -54,7 +54,9 @@ describe Deimos, 'configuration' do
       kafka: {
         client_id: 'phobos',
         connect_timeout: 15,
-        socket_timeout: 15
+        socket_timeout: 15,
+        ssl_verify_hostname: true,
+        seed_brokers: ['localhost:9092']
       },
       listeners: [
         {
@@ -123,6 +125,7 @@ describe Deimos, 'configuration' do
         ssl.ca_cert('cert')
         ssl.client_cert('cert')
         ssl.client_cert_key('key')
+        ssl.verify_hostname(false)
       end
       consumers do
         session_timeout 30
@@ -182,9 +185,11 @@ describe Deimos, 'configuration' do
           client_id: 'phobos2',
           connect_timeout: 30,
           socket_timeout: 30,
-          ca_cert: 'cert',
-          client_cert: 'cert',
-          client_cert_key: 'key'
+          ssl_ca_cert: 'cert',
+          ssl_client_cert: 'cert',
+          ssl_client_cert_key: 'key',
+          ssl_verify_hostname: false,
+          seed_brokers: ['my-seed-brokers']
         },
         listeners: [
           {

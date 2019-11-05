@@ -15,8 +15,7 @@ module Deimos
   end
 
   # :nodoc:
-  def self.configure
-    super
+  after_configure do
     Phobos.configure(self.config.phobos_config)
     self.config.producer_objects.each do |producer|
       configure_producer_or_consumer(producer)
@@ -120,6 +119,9 @@ module Deimos
         # a PEM encoded client cert key to use with an SSL connection.
         # @return [String]
         setting :client_cert_key
+
+        # Verify certificate hostname if supported (ruby >= 2.4.0)
+        setting :verify_hostname, true
       end
     end
 

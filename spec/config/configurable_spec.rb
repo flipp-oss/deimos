@@ -74,4 +74,26 @@ describe Deimos::Configurable do
     expect(MyConfig.config.group.set5.call).to eq(10)
   end
 
+  it 'should add or redefine settings' do
+    MyConfig.configure do
+      setting :group do
+        setting :set6, 15
+        setting :set5, (proc { 15 })
+      end
+    end
+
+    expect(MyConfig.config.group.set6).to eq(15)
+    expect(MyConfig.config.group.set5.call).to eq(15)
+
+    # This should not remove any keys
+    MyConfig.configure do
+      setting :group do
+        setting :set6, 20
+      end
+    end
+    expect(MyConfig.config.group.set6).to eq(20)
+    expect(MyConfig.config.group.set5.call).to eq(15)
+
+  end
+
 end

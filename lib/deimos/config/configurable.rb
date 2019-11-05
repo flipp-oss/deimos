@@ -28,6 +28,7 @@ module Deimos
   #   setting :my_val, default_proc: proc { MyDefault.calculated_value }
   #  end
   # - Support for setting up and automatically calling deprecated configurations.
+  # - Support for configuration callbacks.
   module Configurable
     extend ActiveSupport::Concern
 
@@ -56,6 +57,10 @@ module Deimos
 
     # Class that defines and keeps the configuration values.
     class ConfigStruct
+      include ActiveSupport::Callbacks
+
+      define_callbacks :configure
+
       # @param name [String]
       def initialize(name)
         @name = name
@@ -118,11 +123,11 @@ module Deimos
       def setting(name, default_value=nil, default_proc: nil, &block)
         if block_given?
           # Create a nested setting
-          new_config = ConfigStruct.new("#{@name}.#{name}")
+          setting_config = @settings[name]&.value || ConfigStruct.new("#{@name}.#{name}")
           setting = ConfigSetting.new
-          setting.value = new_config
+          setting.value = setting_config
           @settings[name] = setting
-          new_config.instance_eval(&block)
+          setting_config.instance_eval(&block)
         else
           setting = ConfigSetting.new
           setting.default_proc = default_proc
@@ -161,11 +166,11 @@ module Deimos
           return _deprecated_config_method(method, *args)
         end
 
+        return super unless setting
+
         if block_given?
           return _block_config_method(config_key, &block)
         end
-
-        return super unless setting
 
         _default_config_method(config_key, *args)
       end
@@ -187,7 +192,11 @@ module Deimos
         messages[0..-2].each do |message|
           obj = obj.send(message)
         end
-        obj.send("#{messages[-1]}=", args[0])
+        if args.length.positive?
+          obj.send(messages[-1], args[0])
+        else
+          obj.send(messages[-1])
+        end
       end
 
       # Get or set a value.
@@ -224,16 +233,25 @@ module Deimos
       end
     end
 
-    class_methods do
-
+    # :nodoc:
+    module ClassMethods
       # Pass the configuration into a block.
       def configure(&block)
-        config.instance_eval(&block)
+        config.run_callbacks(:configure) do
+          config.instance_eval(&block)
+        end
       end
 
       # @return [ConfigStruct]
       def config
         @config ||= ConfigStruct.new('config')
+      end
+
+      # Pass a block to run after configuration is done.
+      def after_configure(&block)
+        mod = self
+        config.class.set_callback(:configure, :after,
+                                  proc { mod.instance_eval(&block) })
       end
     end
   end

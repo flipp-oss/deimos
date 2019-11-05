@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'active_support/core_ext/array'
+
 module Deimos
   # Module to handle phobos.yml as well as outputting the configuration to save
   # to Phobos itself.
@@ -37,7 +39,9 @@ module Deimos
         kafka: {
           client_id: self.kafka.client_id,
           connect_timeout: self.kafka.connect_timeout,
-          socket_timeout: self.kafka.socket_timeout
+          socket_timeout: self.kafka.socket_timeout,
+          ssl_verify_hostname: self.kafka.ssl.verify_hostname,
+          seed_brokers: Array.wrap(self.kafka.seed_brokers)
         },
         producer: {
           ack_timeout: self.producers.ack_timeout,
@@ -83,7 +87,7 @@ module Deimos
         %w(ca_cert client_cert client_cert_key).each do |key|
           next if self.kafka.ssl.send(key).blank?
 
-          p_config[:kafka][key.to_sym] = ssl_var_contents(self.kafka.ssl.send(key))
+          p_config[:kafka]["ssl_#{key}".to_sym] = ssl_var_contents(self.kafka.ssl.send(key))
         end
       end
       p_config
