@@ -97,7 +97,7 @@ module Deimos
 
     # Legacy method to parse Phobos config file
     def phobos_config_file=(file)
-      pconfig = YAML.load(ERB.new(File.read(File.expand_path(file))).result).
+      pconfig = YAML.load(ERB.new(File.read(File.expand_path(file))).result). # rubocop:disable Security/YAMLLoad
         with_indifferent_access
       self.logger&.warn('phobos.yml is deprecated - use direct configuration instead.')
       pconfig[:kafka].each do |k, v|
