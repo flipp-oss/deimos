@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Complete revamp of configuration method.
+
 # [1.3.0-beta2] - 2019-11-22
 - Fixed bug where consumers would require a key config in all cases
   even though it's optional if they don't use keys.
