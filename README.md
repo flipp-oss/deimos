@@ -553,7 +553,7 @@ Deimos includes some metrics reporting out the box. It ships with DataDog suppor
 The following metrics are reported:
 * `consumer_lag` - for each partition, the number of messages
   it's behind the tail of the partition (a gauge). This is only sent if
-  `config.report_lag` is set to true.
+  `config.consumers.report_lag` is set to true.
 * `handler` - a count of the number of messages received. Tagged
   with the following:
     * `topic:{topic_name}`

@@ -136,7 +136,7 @@ Deimos.configure do
     namespace 'my.namespace'
     key_config field: :id
 
-  # If config.schema_path is app/schemas, assumes there is a file in
+  # If config.schema.path is app/schemas, assumes there is a file in
   # app/schemas/my/namespace/MyTopicSchema.avsc
   end
 end
