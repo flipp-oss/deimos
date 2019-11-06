@@ -29,14 +29,14 @@ module Deimos
     # @param _payload [Hash]
     # @param key [Object]
     def assign_key(record, _payload, key)
-      record[klass.primary_key] = key
+      record[record.class.primary_key] = key
     end
 
     # :nodoc:
     def consume(payload, metadata)
       key = metadata.with_indifferent_access[:key]
       klass = self.class.config[:record_class]
-      record = fetch_record(klass, payload.with_indifferent_access, key)
+      record = fetch_record(klass, (payload || {}).with_indifferent_access, key)
       if payload.nil?
         destroy_record(record)
         return
