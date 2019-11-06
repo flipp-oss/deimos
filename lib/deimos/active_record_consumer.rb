@@ -13,22 +13,43 @@ module Deimos
       end
     end
 
+    # Find the record specified by the given payload and key.
+    # Default is to use the primary key column and the value of the first
+    # field in the key.
+    # @param klass [Class < ActiveRecord::Base]
+    # @param _payload [Hash]
+    # @param key [Object]
+    # @return [ActiveRecord::Base]
+    def fetch_record(klass, _payload, key)
+      klass.unscoped.where(klass.primary_key => key).first
+    end
+
+    # Assign a key to a new record.
+    # @param record [ActiveRecord::Base]
+    # @param _payload [Hash]
+    # @param key [Object]
+    def assign_key(record, _payload, key)
+      record[klass.primary_key] = key
+    end
+
     # :nodoc:
     def consume(payload, metadata)
       key = metadata.with_indifferent_access[:key]
       klass = self.class.config[:record_class]
-      record = klass.unscoped.where(klass.primary_key => key).first
+      record = fetch_record(klass, payload.with_indifferent_access, key)
       if payload.nil?
         destroy_record(record)
         return
       end
-      record ||= klass.new
+      if record.blank?
+        record = klass.new
+        assign_key(record, payload, key)
+      end
       attrs = record_attributes(payload.with_indifferent_access)
       # don't use attributes= - bypass Rails < 5 attr_protected
       attrs.each do |k, v|
         record.send("#{k}=", v)
       end
-      record[klass.primary_key] = key
       record.created_at ||= Time.zone.now if record.respond_to?(:created_at)
       record.updated_at ||= Time.zone.now if record.respond_to?(:updated_at)
       record.save!

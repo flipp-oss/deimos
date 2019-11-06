@@ -620,6 +620,18 @@ class MyConsumer < Deimos::ActiveRecordConsumer
   key_config field: 'my_field'
   record_class Widget
 
+  # Optional override of the way to fetch records based on payload and
+  # key. Default is to use the key to search the primary key of the table.
+  def fetch_record(klass, payload, key)
+    super
+  end
+
+  # Optional override on how to set primary key for new records. 
+  # Default is to set the class's primary key to the message's decoded key. 
+  def assign_key(record, payload, key)
+    super
+  end
+
   # Optional override of the default behavior, which is to call `destroy`
   # on the record - e.g. you can replace this with "archiving" the record
   # in some way. 
