@@ -42,11 +42,13 @@ module ActiveRecordProducerTest
         key_config none: true
         record_class Widget
 
-        def assign_key(record, payload, key)
+        # :nodoc:
+        def assign_key(_record, _payload, _key)
           # do nothing since we're not using primary keys
         end
 
-        def fetch_record(klass, payload, key)
+        # :nodoc:
+        def fetch_record(klass, payload, _key)
           klass.unscoped.where('test_id' => payload[:test_id]).first
         end
       end
