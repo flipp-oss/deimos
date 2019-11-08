@@ -36,6 +36,24 @@ module ActiveRecordProducerTest
       end
       stub_const('MyConsumer', consumer_class)
 
+      consumer_class = Class.new(Deimos::ActiveRecordConsumer) do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config none: true
+        record_class Widget
+
+        # :nodoc:
+        def assign_key(_record, _payload, _key)
+          # do nothing since we're not using primary keys
+        end
+
+        # :nodoc:
+        def fetch_record(klass, payload, _key)
+          klass.unscoped.where('test_id' => payload[:test_id]).first
+        end
+      end
+      stub_const('MyCustomFetchConsumer', consumer_class)
+
       Time.zone = 'Eastern Time (US & Canada)'
     end
 
@@ -81,6 +99,24 @@ module ActiveRecordProducerTest
 
       end
 
+    end
+
+    it 'should find widgets by custom logic' do
+      widget1 = Widget.create!(test_id: 'id1')
+      expect(widget1.some_int).to be_nil
+      test_consume_message(MyCustomFetchConsumer, {
+                             test_id: 'id1',
+                             some_int: 3
+                           }, { call_original: true })
+      expect(widget1.reload.some_int).to eq(3)
+      expect(Widget.count).to eq(1)
+      test_consume_message(MyCustomFetchConsumer, {
+                             test_id: 'id2',
+                             some_int: 4
+                           }, { call_original: true })
+      expect(Widget.count).to eq(2)
+      expect(Widget.find_by_test_id('id1').some_int).to eq(3)
+      expect(Widget.find_by_test_id('id2').some_int).to eq(4)
     end
 
   end
