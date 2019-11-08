@@ -76,6 +76,7 @@ module Deimos
         config.before(:suite) do
           Deimos.configure do |fr_config|
             fr_config.logger = Logger.new(STDOUT)
+            fr_config.consumers.reraise_errors = true
             fr_config.kafka.seed_brokers ||= ['test_broker']
           end
         end
