@@ -63,7 +63,7 @@ describe Deimos do
         config.producers.backend = :db
         config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.bad_db.yml')
       end
-    }.to raise_error('Cannot set producers.backend to :db unless required_acks is set to ":all" in phobos.yml!')
+    }.to raise_error('Cannot set producers.backend to :db unless producers.required_acks is set to ":all"!')
   end
 
   describe '#start_db_backend!' do

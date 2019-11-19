@@ -1,62 +1,13 @@
 # Configuration
 
-## Configuration Syntax
-
 Deimos supports a succinct, readable syntax which uses
-pure Ruby to allow flexible configuration. Under the hood, this
-uses `method_missing` to evaluate all blocks in the context
-of the configuration object.
+pure Ruby to allow flexible configuration.
 
-You can access any configuration value via 
-simple `Deimos.config.whatever`.
+You can access any configuration value via a simple `Deimos.config.whatever`.
 
 Nested configuration is denoted in simple dot notation:
 `kafka.ssl.enabled`. Headings below will follow the nested
 configurations.
-
-Sample:
-
-```ruby
-Deimos.configure do
-  logger Logger.new(STDOUT)
-  # Nested config field
-  kafka.seed_brokers ['my.kafka.broker:9092']
-
-  # Multiple nested config fields via block
-  consumers do
-    session_timeout 30
-    offset_commit_interval 10
-  end
-
-  # Define a new producer
-  producer do
-    class_name 'MyProducer'
-    topic 'MyTopic'
-    schema 'MyTopicSchema'
-    key_config field: :id
-  end
-
-  # Define another new producer
-  producer do
-    class_name 'AnotherProducer'
-    topic 'AnotherTopic'
-    schema 'AnotherSchema'
-    key_config plain: true
-  end
-
-  # Define a consumer
-  consumer do
-    class_name 'MyConsumer'
-    topic 'TopicToConsume'
-    schema 'ConsumerSchema'
-    key_config plain: true
-    # include Phobos / RubyKafka configs
-    start_from_beginning true
-    heartbeat_interval 10 
-  end
-
-end
-```
 
 ## Base Configuration
 Config name|Default|Description
@@ -65,6 +16,76 @@ logger|`Logger.new(STDOUT)`|The logger that Deimos will use.
 phobos_logger|`Deimos.config.logger`|The logger passed to Phobos.
 metrics|`Deimos::Metrics::Mock.new`|The metrics backend use for reporting.
 tracer|`Deimos::Tracer::Mock.new`|The tracer backend used for debugging.
+
+## Defining Producers
+
+You can define a new producer thusly:
+```ruby
+Deimos.configure do
+  producer do
+    class_name 'MyProducer'
+    topic 'MyTopic'
+    schema 'MyTopicSchema'
+    namespace 'my.namespace'
+    key_config field: :id
+
+  # If config.schema.path is app/schemas, assumes there is a file in
+  # app/schemas/my/namespace/MyTopicSchema.avsc
+  end
+end
+```
+
+You can have as many `producer` blocks as you like to define more producers.
+|Config name|Default|Description
+-----------|-------|-----------
+class_name|nil|Class name of the producer class (subclass of `Deimos::Producer`.)
+topic|nil|Topic to produce to.
+schema|nil|Name of the schema to use to encode data before producing.
+namespace|nil|Namespace of the schema to use when finding it locally.
+key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
+
+## Defining Consumers
+
+Consumers are defined almost identically to producers:
+
+```ruby
+Deimos.configure do
+  consumer do
+    class_name 'MyConsumer'
+    topic 'MyTopic'
+    schema 'MyTopicSchema'
+    namespace 'my.namespace'
+    key_config field: :id
+
+  # If config.schema.path is app/schemas, assumes there is a file in
+  # app/schemas/my/namespace/MyTopicSchema.avsc
+  end
+end
+```
+
+In addition to the producer configs, you can define a number of overrides
+to the basic consumer configuration for each consumer. This is analogous to
+the `listener` config in `phobos.yml`.
+|Config name|Default|Description
+-----------|-------|-----------
+class_name|nil|Class name of the consumer class (subclass of `Deimos::Consumer`.)
+topic|nil|Topic to produce to.
+schema|nil|This is optional but strongly recommended for testing purposes; this will validate against a local schema file used as the reader schema, as well as being able to write tests against this schema. This is recommended since it ensures you are always getting the values  you expect.
+namespace|nil|Namespace of the schema to use when finding it locally.
+key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
+group_id|nil|ID of the consumer group.
+max_concurrency|1|Number of threads created for this listener. Each thread will behave as an independent consumer. They don't share any state.
+start_from_beginning|true|Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of config. As such, this setting only applies when the consumer initially starts consuming from a topic
+max_bytes_per_partition|512.kilobytes|Maximum amount of data fetched from a single partition at a time.
+min_bytes|1|Minimum number of bytes to read before returning messages from the server; if `max_wait_time` is reached, this is ignored.
+max_wait_time|5|Maximum duration of time to wait before returning messages from the server, in seconds.
+force_encoding|nil|Apply this encoding to the message payload. If blank it uses the original encoding. This property accepts values defined by the ruby Encoding class (https://ruby-doc.org/core-2.3.0/Encoding.html). Ex: UTF_8, ASCII_8BIT, etc.
+delivery|`:batch`|The delivery mode for the consumer. Possible values: `:message, :batch, :inline_batch`. See Phobos documentation for more details.
+session_timeout|300|Number of seconds after which, if a client hasn't contacted the Kafka cluster, it will be kicked out of the group.
+offset_commit_interval|10|Interval between offset commits, in seconds.
+offset_commit_threshold|0|Number of messages that can be processed before their offsets are committed. If zero, offset commits are not triggered by message processing
+heartbeat_interval|10|Interval between heartbeats; must be less than the session window.
+backoff|`(1000..60_000)`|Range representing the minimum and maximum number of milliseconds to back off after a consumer error.
 
 ## Kafka Configuration
 Config name|Default|Description
@@ -80,6 +101,10 @@ kafka.ssl.client_cert|nil|A PEM encoded client cert to use with an SSL connectio
 kafka.ssl.client_cert_key|nil|A PEM encoded client cert key to use with an SSL connection.
 
 ## Consumer Configuration
+
+These are top-level configuration settings, but they can be overridden
+by individual consumers.
+
 |Config name|Default|Description
 -----------|-------|-----------
 consumers.session_timeout|300|Number of seconds after which, if a client hasn't contacted the Kafka cluster, it will be kicked out of the group.
@@ -124,55 +149,52 @@ db_producer.logger|`Deimos.config.logger`|Logger to use inside the DB producer.
 db_producer.log_topics|`[]`|List of topics to print full messages for, or `:all` to print all topics. This can introduce slowdown since it needs to decode each message using the schema registry. 
 db_producer.compact_topics|`[]`|List of topics to compact before sending, i.e. only send the last message with any given key in a batch. This is an optimization which mirrors what Kafka itself will do with compaction turned on but only within a single batch.  You can also specify `:all` to compact all topics.
 
-## Defining Producers
+## Configuration Syntax
 
-You can define a new producer thusly:
+Sample: 
+
 ```ruby
 Deimos.configure do
+  logger Logger.new(STDOUT)
+  # Nested config field
+  kafka.seed_brokers ['my.kafka.broker:9092']
+
+  # Multiple nested config fields via block
+  consumers do
+    session_timeout 30
+    offset_commit_interval 10
+  end
+
+  # Define a new producer
   producer do
     class_name 'MyProducer'
     topic 'MyTopic'
     schema 'MyTopicSchema'
-    namespace 'my.namespace'
     key_config field: :id
-
-  # If config.schema.path is app/schemas, assumes there is a file in
-  # app/schemas/my/namespace/MyTopicSchema.avsc
   end
+
+  # Define another new producer
+  producer do
+    class_name 'AnotherProducer'
+    topic 'AnotherTopic'
+    schema 'AnotherSchema'
+    key_config plain: true
+  end
+
+  # Define a consumer
+  consumer do
+    class_name 'MyConsumer'
+    topic 'TopicToConsume'
+    schema 'ConsumerSchema'
+    key_config plain: true
+    # include Phobos / RubyKafka configs
+    start_from_beginning true
+    heartbeat_interval 10 
+  end
+
 end
 ```
 
-You can have as many `producer` blocks as you like to define more producers.
-|Config name|Default|Description
------------|-------|-----------
-class_name|nil|Class name of the producer class (subclass of `Deimos::Producer`.)
-topic|nil|Topic to produce to.
-schema|nil|Name of the schema to use to encode data before producing.
-namespace|nil|Namespace of the schema to use when finding it locally.
-key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
-
-## Defining Consumers
-
-In addition to the producer configs, you can define a number of overrides
-to the basic consumer configuration for each consumer. This is analogous to
-the `listener` config in `phobos.yml`.
-|Config name|Default|Description
------------|-------|-----------
-class_name|nil|Class name of the consumer class (subclass of `Deimos::Consumer`.)
-topic|nil|Topic to produce to.
-schema|nil|This is optional but strongly recommended for testing purposes; this will validate against a local schema file used as the reader schema, as well as being able to write tests against this schema. This is recommended since it ensures you are always getting the values  you expect.
-namespace|nil|Namespace of the schema to use when finding it locally.
-key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
-group_id|nil|ID of the consumer group.
-max_concurrency|1|Number of threads created for this listener. Each thread will behave as an independent consumer. They don't share any state.
-start_from_beginning|true|Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of config. As such, this setting only applies when the consumer initially starts consuming from a topic
-max_bytes_per_partition|512.kilobytes|Maximum amount of data fetched from a single partition at a time.
-min_bytes|1|Minimum number of bytes to read before returning messages from the server; if `max_wait_time` is reached, this is ignored.
-max_wait_time|5|Maximum duration of time to wait before returning messages from the server, in seconds.
-force_encoding|nil|Apply this encoding to the message payload. If blank it uses the original encoding. This property accepts values defined by the ruby Encoding class (https://ruby-doc.org/core-2.3.0/Encoding.html). Ex: UTF_8, ASCII_8BIT, etc.
-delivery|`:batch`|The delivery mode for the consumer. Possible values: `:message, :batch, :inline_batch`. See Phobos documentation for more details.
-session_timeout|300|Number of seconds after which, if a client hasn't contacted the Kafka cluster, it will be kicked out of the group.
-offset_commit_interval|10|Interval between offset commits, in seconds.
-offset_commit_threshold|0|Number of messages that can be processed before their offsets are committed. If zero, offset commits are not triggered by message processing
-heartbeat_interval|10|Interval between heartbeats; must be less than the session window.
-backoff|`(1000..60_000)`|Range representing the minimum and maximum number of milliseconds to back off after a consumer error.
+Note that all blocks are evaluated in the context of the configuration object.
+If you're calling this inside another class or method, you'll need to save
+things you need to reference into local variables before calling `configure`.

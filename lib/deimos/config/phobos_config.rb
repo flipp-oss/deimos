@@ -13,10 +13,7 @@ module Deimos
       (FIELDS + [:handler]).map { |f|
         val = self.send(f)
         if f == :backoff && val
-          [:backoff, {
-            min_ms: val[0],
-            max_ms: val[-1]
-          }]
+          [:backoff, _backoff(val)]
         elsif val.present?
           [f, val]
         end
@@ -62,10 +59,7 @@ module Deimos
           offset_commit_threshold: self.consumers.offset_commit_threshold,
           heartbeat_interval: self.consumers.heartbeat_interval
         },
-        backoff: {
-          min_ms: self.consumers.backoff.to_a[0],
-          max_ms: self.consumers.backoff.to_a[-1]
-        }
+        backoff: _backoff(self.consumers.backoff.to_a)
       }
 
       p_config[:listeners] = self.consumer_objects.map do |consumer|
@@ -75,10 +69,7 @@ module Deimos
         hash = hash.map { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v] }.to_h
         hash[:handler] = consumer.class_name
         if consumer.backoff
-          hash[:backoff] = {
-            min_ms: consumer.backoff.to_a[0],
-            max_ms: consumer.backoff.to_a[-1]
-          }
+          hash[:backoff] = _backoff(consumer.backoff.to_a)
         end
         hash
       end
@@ -127,6 +118,17 @@ module Deimos
           end
         end
       end
+    end
+
+  private
+
+    # @param values [Array<Integer>]
+    # @return [Hash<Integer>]
+    def _backoff(values)
+      {
+        min_ms: values[0],
+        max_ms: values[-1]
+      }
     end
   end
 end

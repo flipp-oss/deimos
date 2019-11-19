@@ -32,7 +32,7 @@ module Deimos
   module Configurable
     extend ActiveSupport::Concern
 
-    ConfigSetting = Struct.new(:value, :default_value, :default_proc, :deprecation) do
+    ConfigValue = Struct.new(:value, :default_value, :default_proc, :deprecation) do
 
       # Reset value back to default.
       def reset!
@@ -46,9 +46,9 @@ module Deimos
       end
 
       # :nodoc:
-      def clone
-        setting = ConfigSetting.new(self.value, self.default_value,
-                                    self.default_proc, self.deprecation)
+      def clone_and_reset
+        setting = ConfigValue.new(self.value, self.default_value,
+                                  self.default_proc, self.deprecation)
         setting.reset!
         setting
       end
@@ -79,7 +79,7 @@ module Deimos
       # @param old_config [String]
       # @param new_config [String]
       def deprecate(old_config, new_config)
-        @settings[old_config.to_sym] ||= ConfigSetting.new
+        @settings[old_config.to_sym] ||= ConfigValue.new
         @settings[old_config.to_sym].deprecation = new_config
       end
 
@@ -94,10 +94,10 @@ module Deimos
       end
 
       # :nodoc:
-      def clone
-        new_config = super
+      def clone_and_reset
+        new_config = self.clone
         new_config.setting_objects = new_config.setting_objects.clone
-        new_config.settings = new_config.settings.map { |k, v| [k, v.clone] }.to_h
+        new_config.settings = new_config.settings.map { |k, v| [k, v.clone_and_reset] }.to_h
         new_config
       end
 
@@ -124,12 +124,12 @@ module Deimos
         if block_given?
           # Create a nested setting
           setting_config = @settings[name]&.value || ConfigStruct.new("#{@name}.#{name}")
-          setting = ConfigSetting.new
+          setting = ConfigValue.new
           setting.value = setting_config
           @settings[name] = setting
           setting_config.instance_eval(&block)
         else
-          setting = ConfigSetting.new
+          setting = ConfigValue.new
           setting.default_proc = default_proc
           setting.default_value = default_value
           setting.reset!
@@ -212,14 +212,14 @@ module Deimos
 
       # Define a new setting object and use the passed block to define values.
       def _new_setting_object_method(config_key, &block)
-        new_config = @setting_templates[config_key].clone
+        new_config = @setting_templates[config_key].clone_and_reset
         new_config.instance_eval(&block)
         @setting_objects[config_key] << new_config
       end
 
       # Return a setting object.
       def _setting_object_method(config_key)
-        key = config_key.to_s.sub('_objects', '').to_sym
+        key = config_key.to_s.sub(/_objects$/, '').to_sym
         @setting_objects[key]
       end
 

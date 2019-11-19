@@ -34,8 +34,8 @@ module Deimos
     rescue LoadError
       raise 'Cannot set producers.backend to :db without activerecord-import! Please add it to your Gemfile.'
     end
-    if Phobos.config.producer_hash[:required_acks] != :all
-      raise 'Cannot set producers.backend to :db unless required_acks is set to ":all" in phobos.yml!'
+    if Deimos.config.producers.required_acks != :all
+      raise 'Cannot set producers.backend to :db unless producers.required_acks is set to ":all"!'
     end
   end
 
@@ -86,7 +86,7 @@ module Deimos
       setting :logger, default_proc: proc { Deimos.config.logger }
 
       # URL of the seed broker.
-      # @return [String]
+      # @return [Array<String>]
       setting :seed_brokers, ['localhost:9092']
 
       # Identifier for this application.
@@ -250,8 +250,11 @@ module Deimos
     end
 
     setting :schema do
+      # URL of the Confluent schema registry.
       # @return [String]
       setting :registry_url, 'http://localhost:8081'
+
+      # Local path to look for schemas in.
       # @return [String]
       setting :path
     end
@@ -280,21 +283,42 @@ module Deimos
     end
 
     setting_object :producer do
+      # Producer class.
+      # @return [String]
       setting :class_name
+      # Topic to produce to.
+      # @return [String]
       setting :topic
+      # Schema of the data in the topic.
+      # @return [String]
       setting :schema
+      # Optional namespace to access the schema.
+      # @return [String]
       setting :namespace
+      # Key configuration (see docs).
+      # @return [Hash]
       setting :key_config
     end
 
     setting_object :consumer do
+      # Consumer class.
+      # @return [String]
       setting :class_name
+      # Topic to read from.
+      # @return [String]
       setting :topic
+      # Schema of the data in the topic.
+      # @return [String]
       setting :schema
+      # Optional namespace to access the schema.
+      # @return [String]
       setting :namespace
+      # Key configuration (see docs).
+      # @return [Hash]
       setting :key_config
 
-      # These are the phobos "listener" configs.
+      # These are the phobos "listener" configs. See CONFIGURATION.md for more
+      # info.
       setting :group_id
       setting :max_concurrency
       setting :start_from_beginning

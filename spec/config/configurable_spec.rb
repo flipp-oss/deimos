@@ -29,6 +29,10 @@ describe Deimos::Configurable do
     expect { MyConfig.config.group.set4 }.to raise_error(NameError)
   end
 
+  it "should raise error when setting configs that don't exist" do
+    expect { MyConfig.configure { set15 'some_value' } }.to raise_error(NameError)
+  end
+
   it 'should add values' do
     MyConfig.configure do |config|
       config.set1 = 5 # config.x syntax
@@ -80,10 +84,28 @@ describe Deimos::Configurable do
         setting :set6, 15
         setting :set5, (proc { 15 })
       end
+      setting_object :notey do
+        setting :note_title, 'some-title'
+      end
     end
 
     expect(MyConfig.config.group.set6).to eq(15)
     expect(MyConfig.config.group.set5.call).to eq(15)
+    expect(MyConfig.config.listy_objects).to be_empty
+    expect(MyConfig.config.notey_objects).to be_empty
+
+    MyConfig.configure do
+      notey do
+        note_title 'hi mom'
+      end
+      listy do
+        list1 0
+      end
+    end
+    expect(MyConfig.config.notey_objects.size).to eq(1)
+    expect(MyConfig.config.notey_objects.first.note_title).to eq('hi mom')
+    expect(MyConfig.config.listy_objects.size).to eq(1)
+    expect(MyConfig.config.listy_objects.first.list1).to eq(0)
 
     # This should not remove any keys
     MyConfig.configure do
