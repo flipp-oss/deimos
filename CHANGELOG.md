@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.3.0-beta1] - 2019-11-21
 - Added `fetch_record` and `assign_key` methods to ActiveRecordConsumer.
 
 # [1.2.0-beta1] - 2019-09-12
