@@ -23,8 +23,10 @@ module Deimos
     # :nodoc:
     def before_consume_batch(batch, metadata)
       _with_error_span(batch, metadata) do
-        metadata[:keys] = batch.map do |message|
-          decode_key(message.key)
+        if self.class.config[:key_configured]
+          metadata[:keys] = batch.map do |message|
+            decode_key(message.key)
+          end
         end
 
         batch.map do |message|

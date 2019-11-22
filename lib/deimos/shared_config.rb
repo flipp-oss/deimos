@@ -14,8 +14,11 @@ module Deimos
       def config
         return @config if @config
 
+        # default to none: true
         @config = {
-          encode_key: true
+          key_configured: false,
+          encode_key: false,
+          no_keys: true
         }
         klass = self.superclass
         while klass.respond_to?(:config)
@@ -49,6 +52,7 @@ module Deimos
       # @param plain [Boolean] if true, do not encode keys at all
       # @param none [Boolean] if true, do not use keys at all
       def key_config(plain: nil, field: nil, schema: nil, none: nil)
+        config[:key_configured] = true
         config[:no_keys] = none
         config[:encode_key] = !plain && !none
         config[:key_field] = field&.to_s

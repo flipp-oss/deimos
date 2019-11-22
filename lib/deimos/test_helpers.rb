@@ -138,7 +138,7 @@ module Deimos
         alias_method(:old_consume, :consume) unless self.instance_methods.include?(:old_consume)
       end
       allow_any_instance_of(klass).to receive(:consume) do |instance, payload, metadata|
-        metadata[:key] = klass.new.decode_key(metadata[:key])
+        metadata[:key] = klass.new.decode_key(metadata[:key]) if klass.config[:key_configured]
         instance.old_consume(payload, metadata)
       end
     end
@@ -445,6 +445,8 @@ module Deimos
     def _key_from_consumer(consumer)
       if consumer.config[:key_field] || consumer.config[:key_schema]
         { 'test' => 1 }
+      elsif consumer.config[:no_keys]
+        nil
       else
         1
       end

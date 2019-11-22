@@ -26,8 +26,7 @@ module Deimos
       return nil if key.nil?
 
       config = self.class.config
-      if config[:encode_key] && config[:key_field].nil? &&
-         config[:key_schema].nil?
+      unless config[:key_configured]
         raise 'No key config given - if you are not decoding keys, please use '\
           '`key_config plain: true`'
       end
