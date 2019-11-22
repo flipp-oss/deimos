@@ -38,8 +38,6 @@ module Deimos
       def reset!
         if self.value.is_a?(ConfigStruct)
           self.value.reset!
-        elsif self.default_proc
-          self.value = self.default_proc.call
         else
           self.value = self.default_value
         end
@@ -206,7 +204,11 @@ module Deimos
           @settings[config_key].value = args[0]
         else
           # Get the value
-          @settings[config_key].value
+          setting = @settings[config_key]
+          if setting.default_proc && setting.value.nil?
+            setting.value = setting.default_proc.call
+          end
+          setting.value
         end
       end
 

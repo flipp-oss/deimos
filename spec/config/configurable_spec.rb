@@ -29,6 +29,19 @@ describe Deimos::Configurable do
     expect { MyConfig.config.group.set4 }.to raise_error(NameError)
   end
 
+  it 'should not call the proc until it has to' do
+    num_calls = 0
+    value_proc = proc { num_calls += 1; num_calls }
+    MyConfig.configure do
+      setting :set_with_proc, default_proc: value_proc
+    end
+    expect(num_calls).to eq(0)
+    expect(MyConfig.config.set_with_proc).to eq(1)
+    # calling twice should not call the proc again
+    expect(MyConfig.config.set_with_proc).to eq(1)
+    expect(num_calls).to eq(1)
+  end
+
   it "should raise error when setting configs that don't exist" do
     expect { MyConfig.configure { set15 'some_value' } }.to raise_error(NameError)
   end
