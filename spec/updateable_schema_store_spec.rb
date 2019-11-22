@@ -3,7 +3,7 @@
 describe AvroTurf::SchemaStore do
 
   it 'should add an in-memory schema' do
-    schema_store = described_class.new(path: Deimos.config.schema_path)
+    schema_store = described_class.new(path: Deimos.config.schema.path)
     schema_store.load_schemas!
     found_schema = schema_store.find('MySchema', 'com.my-namespace').as_json
     expect(found_schema['name']).to eq('MySchema')

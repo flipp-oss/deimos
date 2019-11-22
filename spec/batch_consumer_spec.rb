@@ -50,7 +50,7 @@ module ConsumerTest
 
     describe 'when reraising errors is disabled' do
       before(:each) do
-        Deimos.configure { |config| config.reraise_consumer_errors = false }
+        Deimos.configure { |config| config.consumers.reraise_errors = false }
       end
 
       it 'should not fail when before_consume_batch fails' do
