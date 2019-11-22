@@ -31,7 +31,10 @@ describe Deimos::Configurable do
 
   it 'should not call the proc until it has to' do
     num_calls = 0
-    value_proc = proc { num_calls += 1; num_calls }
+    value_proc = proc do
+      num_calls += 1
+      num_calls
+    end
     MyConfig.configure do
       setting :set_with_proc, default_proc: value_proc
     end
