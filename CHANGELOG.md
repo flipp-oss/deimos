@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.4.0-beta1] - 2019-11-22
 - Complete revamp of configuration method.
 
 # [1.3.0-beta2] - 2019-11-22
