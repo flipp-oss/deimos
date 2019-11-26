@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'active_support/concern'
+require 'active_support/callbacks'
 
 module Deimos
   # Module to allow configuration. Loosely based off of the dry-configuration
@@ -24,7 +25,7 @@ module Deimos
   #   end
   # - Allows to call `configure` multiple times without crashing.
   # - Allows to lazy-set default values by passing a proc as a default:
-  #  Deimos.configure do |config|
+  #  Deimos.define_settings do |config|
   #   setting :my_val, default_proc: proc { MyDefault.calculated_value }
   #  end
   # - Support for setting up and automatically calling deprecated configurations.
@@ -237,7 +238,13 @@ module Deimos
 
     # :nodoc:
     module ClassMethods
-      # Pass the configuration into a block.
+
+      # Define and redefine settings.
+      def define_settings(&block)
+        config.instance_eval(&block)
+      end
+
+      # Configure the settings with values.
       def configure(&block)
         config.run_callbacks(:configure) do
           config.instance_eval(&block)

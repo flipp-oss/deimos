@@ -4,7 +4,7 @@
 class MyConfig
   include Deimos::Configurable
 
-  configure do
+  define_settings do
     setting :set1
     setting :set2, 'hi mom'
     setting :group do
@@ -35,7 +35,7 @@ describe Deimos::Configurable do
       num_calls += 1
       num_calls
     end
-    MyConfig.configure do
+    MyConfig.define_settings do
       setting :set_with_proc, default_proc: value_proc
     end
     expect(num_calls).to eq(0)
@@ -95,7 +95,7 @@ describe Deimos::Configurable do
   end
 
   it 'should add or redefine settings' do
-    MyConfig.configure do
+    MyConfig.define_settings do
       setting :group do
         setting :set6, 15
         setting :set5, (proc { 15 })
@@ -124,14 +124,13 @@ describe Deimos::Configurable do
     expect(MyConfig.config.listy_objects.first.list1).to eq(0)
 
     # This should not remove any keys
-    MyConfig.configure do
+    MyConfig.define_settings do
       setting :group do
         setting :set6, 20
       end
     end
     expect(MyConfig.config.group.set6).to eq(20)
     expect(MyConfig.config.group.set5.call).to eq(15)
-
   end
 
 end

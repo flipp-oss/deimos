@@ -72,7 +72,7 @@ module Deimos
     end
   end
 
-  configure do
+  define_settings do
 
     # @return [Logger]
     setting :logger, Logger.new(STDOUT)
