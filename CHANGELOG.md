@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.3.0-beta3] - 2019-11-26
+- Fixed bug in TestHelpers where key_decoder was not stubbed out.
+
 # [1.3.0-beta2] - 2019-11-22
 - Fixed bug where consumers would require a key config in all cases
   even though it's optional if they don't use keys.
