@@ -238,7 +238,6 @@ module Deimos
 
     # :nodoc:
     module ClassMethods
-
       # Define and redefine settings.
       def define_settings(&block)
         config.instance_eval(&block)
