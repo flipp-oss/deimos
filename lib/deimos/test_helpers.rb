@@ -61,6 +61,7 @@ module Deimos
             encoder = Deimos::AvroDataEncoder.new(schema: schema,
                                                   namespace: decoder.namespace)
             encoder.schema_store = decoder.schema_store
+            payload = payload.respond_to?(:stringify_keys) ? payload.stringify_keys : payload
             encoder.encode_local(payload)
           end
           payload
@@ -466,6 +467,12 @@ module Deimos
     def _stub_base_consumer(klass)
       allow(klass).to receive(:decoder) do
         create_decoder(klass.config[:schema], klass.config[:namespace])
+      end
+
+      if klass.config[:key_schema] # rubocop:disable Style/GuardClause
+        allow(klass).to receive(:key_decoder) do
+          create_decoder(klass.config[:key_schema], klass.config[:namespace])
+        end
       end
     end
   end
