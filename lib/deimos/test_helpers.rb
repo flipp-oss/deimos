@@ -468,7 +468,8 @@ module Deimos
       allow(klass).to receive(:decoder) do
         create_decoder(klass.config[:schema], klass.config[:namespace])
       end
-      if klass.config[:key_schema]
+
+      if klass.config[:key_schema] # rubocop:disable Style/GuardClause
         allow(klass).to receive(:key_decoder) do
           create_decoder(klass.config[:key_schema], klass.config[:namespace])
         end
