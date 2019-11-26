@@ -61,7 +61,8 @@ module Deimos
             encoder = Deimos::AvroDataEncoder.new(schema: schema,
                                                   namespace: decoder.namespace)
             encoder.schema_store = decoder.schema_store
-            encoder.encode_local(payload.stringify_keys)
+            payload = payload.respond_to?(:stringify_keys) ? payload.stringify_keys : payload
+            encoder.encode_local(payload)
           end
           payload
         end
