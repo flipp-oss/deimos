@@ -36,6 +36,7 @@ end
 ```
 
 You can have as many `producer` blocks as you like to define more producers.
+
 Config name|Default|Description
 -----------|-------|-----------
 class_name|nil|Class name of the producer class (subclass of `Deimos::Producer`.)
@@ -66,6 +67,7 @@ end
 In addition to the producer configs, you can define a number of overrides
 to the basic consumer configuration for each consumer. This is analogous to
 the `listener` config in `phobos.yml`.
+
 Config name|Default|Description
 -----------|-------|-----------
 class_name|nil|Class name of the consumer class (subclass of `Deimos::Consumer`.)
@@ -88,6 +90,7 @@ heartbeat_interval|10|Interval between heartbeats; must be less than the session
 backoff|`(1000..60_000)`|Range representing the minimum and maximum number of milliseconds to back off after a consumer error.
 
 ## Kafka Configuration
+
 Config name|Default|Description
 -----------|-------|-----------
 kafka.logger|`Deimos.config.logger`|Logger passed to RubyKafka.
@@ -117,6 +120,7 @@ consumers.report_lag|false|Whether to send the `consumer_lag` metric. This requi
 consumers.fatal_error|`proc { false }`|Block taking an exception, payload and metadata and returning true if this should be considered a fatal error and false otherwise. E.g. you can use this to always fail if the database is available. Not needed if reraise_errors is set to true.
 
 ## Producer Configuration
+
 Config name|Default|Description
 -----------|-------|-----------
 producers.ack_timeout|5|Number of seconds a broker can wait for replicas to acknowledge a write before responding with a timeout.
@@ -137,12 +141,14 @@ producers.disabled|false|Disable all actual message producing. Generally more us
 producers.backend|`:kafka_async`|Currently can be set to `:db`, `:kafka`, or `:kafka_async`. If using Kafka directly, a good pattern is to set to async in your user-facing app, and sync in your consumers or delayed workers.
 
 ## Schema Configuration
+
 Config name|Default|Description
 -----------|-------|-----------
 schema.registry_url|`http://localhost:8081`|URL of the Confluent schema registry.
 schema.path|nil|Local path to find your schemas.
 
 ## Database Producer Configuration
+
 Config name|Default|Description
 -----------|-------|-----------
 db_producer.logger|`Deimos.config.logger`|Logger to use inside the DB producer.
