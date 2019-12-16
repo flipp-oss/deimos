@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.4.0-beta5] - 2019-12-16
+- Added default for max_bytes_per_partition.
+
 # [1.4.0-beta4] - 2019-11-26
 - Added `define_settings` to define settings without invoking callbacks.
 

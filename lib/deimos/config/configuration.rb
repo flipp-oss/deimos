@@ -322,7 +322,7 @@ module Deimos
       setting :group_id
       setting :max_concurrency
       setting :start_from_beginning
-      setting :max_bytes_per_partition
+      setting :max_bytes_per_partition, 500.kilobytes
       setting :min_bytes
       setting :max_wait_time
       setting :force_encoding
