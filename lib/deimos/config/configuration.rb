@@ -4,6 +4,7 @@ require_relative 'phobos_config'
 require_relative 'configurable'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
+require 'active_support/core_ext/numeric'
 
 # :nodoc:
 module Deimos

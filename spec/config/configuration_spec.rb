@@ -80,7 +80,7 @@ describe Deimos, 'configuration' do
           group_id: 'my_batch_group_id',
           max_concurrency: nil,
           start_from_beginning: nil,
-          max_bytes_per_partition: nil,
+          max_bytes_per_partition: 500.kilobytes,
           min_bytes: nil,
           max_wait_time: nil,
           force_encoding: nil,
