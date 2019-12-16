@@ -74,7 +74,7 @@ GEM
     digest-crc (0.4.1)
     dogstatsd-ruby (4.2.0)
     erubi (1.9.0)
-    excon (0.69.1)
+    excon (0.71.0)
     exponential-backoff (0.0.4)
     ffi (1.11.1)
     formatador (0.2.5)
