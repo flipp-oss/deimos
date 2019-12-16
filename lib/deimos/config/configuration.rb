@@ -79,12 +79,12 @@ module Deimos
     setting :logger, Logger.new(STDOUT)
 
     # @return [Logger]
-    setting :phobos_logger, default_proc: proc { Deimos.config.logger }
+    setting :phobos_logger, default_proc: proc { Deimos.config.logger.clone }
 
     setting :kafka do
 
       # @return [Logger]
-      setting :logger, default_proc: proc { Deimos.config.logger }
+      setting :logger, default_proc: proc { Deimos.config.logger.clone }
 
       # URL of the seed broker.
       # @return [Array<String>]

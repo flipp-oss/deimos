@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.4.0-beta7] - 2019-12-16
+- Clone loggers when assigning to multiple levels.
+
 # [1.4.0-beta6] - 2019-12-16
 - Added default for max_bytes_per_partition.
 
