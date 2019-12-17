@@ -6,12 +6,12 @@ describe Deimos::Utils::LagReporter do
     kafka_client = instance_double(Kafka::Client)
     allow(kafka_client).to receive(:last_offset_for).and_return(100)
     allow(Phobos).to receive(:create_kafka_client).and_return(kafka_client)
-    Deimos.configure { |c| c.report_lag = true }
+    Deimos.configure { |c| c.consumers.report_lag = true }
   end
 
   after(:each) do
     described_class.reset
-    Deimos.configure { |c| c.report_lag = false }
+    Deimos.configure { |c| c.consumers.report_lag = false }
   end
 
   it 'should not report lag before ready' do

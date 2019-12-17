@@ -6,7 +6,7 @@ begin
 
   RSpec::Core::RakeTask.new(:spec)
   task(default: :spec)
-rescue LoadError # rubocop:disable Lint/HandleExceptions
+rescue LoadError # rubocop:disable Lint/SuppressedException
   # no rspec available
 end
 

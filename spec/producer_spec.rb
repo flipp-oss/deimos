@@ -125,7 +125,7 @@ module ProducerTest
 
     it 'should not publish if publish disabled' do
       expect(described_class).not_to receive(:produce_batch)
-      Deimos.configure { |c| c.disable_producers = true }
+      Deimos.configure { |c| c.producers.disabled = true }
       MyProducer.publish_list(
         [{ 'test_id' => 'foo', 'some_int' => 123 },
          { 'test_id' => 'bar', 'some_int' => 124 }]
@@ -158,7 +158,7 @@ module ProducerTest
     end
 
     it 'should produce to a prefixed topic' do
-      Deimos.configure { |c| c.producer_topic_prefix = 'prefix.' }
+      Deimos.configure { |c| c.producers.topic_prefix = 'prefix.' }
       payload = { 'test_id' => 'foo', 'some_int' => 123 }
       expect(described_class).to receive(:produce_batch).once do |_, messages|
         expect(messages.size).to eq(1)
@@ -176,7 +176,7 @@ module ProducerTest
       end
 
       MyProducer.publish_list([payload])
-      Deimos.configure { |c| c.producer_topic_prefix = nil }
+      Deimos.configure { |c| c.producers.topic_prefix = nil }
       expect(described_class).to receive(:produce_batch).once do |_, messages|
         expect(messages.size).to eq(1)
         expect(messages[0].to_h).
@@ -377,7 +377,7 @@ module ProducerTest
       end
 
       it 'should return db if db is set' do
-        allow(Deimos.config).to receive(:publish_backend).and_return(:db)
+        Deimos.configure { producers.backend = :db }
         expect(described_class.determine_backend_class(true, false)).
           to eq(Deimos::Backends::Db)
         expect(described_class.determine_backend_class(false, false)).
@@ -385,7 +385,7 @@ module ProducerTest
       end
 
       it 'should return kafka if force_send is true' do
-        allow(Deimos.config).to receive(:publish_backend).and_return(:db)
+        Deimos.configure { producers.backend = :db }
         expect(described_class.determine_backend_class(true, true)).
           to eq(Deimos::Backends::Kafka)
         expect(described_class.determine_backend_class(false, true)).

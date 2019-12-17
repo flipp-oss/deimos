@@ -153,28 +153,28 @@ module Deimos
   end
 
   ActiveSupport::Notifications.subscribe('start_process_message.consumer.kafka') do |*args|
-    next unless Deimos.config.report_lag
+    next unless Deimos.config.consumers.report_lag
 
     event = ActiveSupport::Notifications::Event.new(*args)
     Deimos::Utils::LagReporter.message_processed(event.payload)
   end
 
   ActiveSupport::Notifications.subscribe('start_process_batch.consumer.kafka') do |*args|
-    next unless Deimos.config.report_lag
+    next unless Deimos.config.consumers.report_lag
 
     event = ActiveSupport::Notifications::Event.new(*args)
     Deimos::Utils::LagReporter.message_processed(event.payload)
   end
 
   ActiveSupport::Notifications.subscribe('seek.consumer.kafka') do |*args|
-    next unless Deimos.config.report_lag
+    next unless Deimos.config.consumers.report_lag
 
     event = ActiveSupport::Notifications::Event.new(*args)
     Deimos::Utils::LagReporter.offset_seek(event.payload)
   end
 
   ActiveSupport::Notifications.subscribe('heartbeat.consumer.kafka') do |*args|
-    next unless Deimos.config.report_lag
+    next unless Deimos.config.consumers.report_lag
 
     event = ActiveSupport::Notifications::Event.new(*args)
     Deimos::Utils::LagReporter.heartbeat(event.payload)
