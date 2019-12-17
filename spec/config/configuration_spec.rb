@@ -5,7 +5,7 @@ end
 describe Deimos, 'configuration' do
   it 'should configure with deprecated fields' do
     logger = Logger.new(nil)
-    Deimos.configure do
+    described_class.configure do
       kafka_logger logger
       reraise_consumer_errors true
       schema_registry_url 'http://schema.registry'
@@ -22,25 +22,25 @@ describe Deimos, 'configuration' do
       report_lag true
     end
 
-    expect(Deimos.config.kafka.logger).to eq(logger)
-    expect(Deimos.config.consumers.reraise_errors).to eq(true)
-    expect(Deimos.config.schema.registry_url).to eq('http://schema.registry')
-    expect(Deimos.config.kafka.seed_brokers).to eq('whatever')
-    expect(Deimos.config.producers.schema_namespace).to eq('namespace')
-    expect(Deimos.config.producers.topic_prefix).to eq('prefix')
-    expect(Deimos.config.producers.disabled).to eq(true)
-    expect(Deimos.config.kafka.ssl.enabled).to eq(true)
-    expect(Deimos.config.kafka.ssl.ca_cert).to eq('cert')
-    expect(Deimos.config.kafka.ssl.client_cert).to eq('cert')
-    expect(Deimos.config.kafka.ssl.client_cert_key).to eq('key')
-    expect(Deimos.config.producers.backend).to eq('db')
-    expect(Deimos.config.consumers.report_lag).to eq(true)
+    expect(described_class.config.kafka.logger).to eq(logger)
+    expect(described_class.config.consumers.reraise_errors).to eq(true)
+    expect(described_class.config.schema.registry_url).to eq('http://schema.registry')
+    expect(described_class.config.kafka.seed_brokers).to eq('whatever')
+    expect(described_class.config.producers.schema_namespace).to eq('namespace')
+    expect(described_class.config.producers.topic_prefix).to eq('prefix')
+    expect(described_class.config.producers.disabled).to eq(true)
+    expect(described_class.config.kafka.ssl.enabled).to eq(true)
+    expect(described_class.config.kafka.ssl.ca_cert).to eq('cert')
+    expect(described_class.config.kafka.ssl.client_cert).to eq('cert')
+    expect(described_class.config.kafka.ssl.client_cert_key).to eq('key')
+    expect(described_class.config.producers.backend).to eq('db')
+    expect(described_class.config.consumers.report_lag).to eq(true)
   end
 
   it 'reads existing Phobos config YML files' do
-    Deimos.config.reset!
-    Deimos.configure { |c| c.phobos_config_file = File.join(File.dirname(__FILE__), '..', 'phobos.yml') }
-    expect(Deimos.config.phobos_config).to match(
+    described_class.config.reset!
+    described_class.configure { |c| c.phobos_config_file = File.join(File.dirname(__FILE__), '..', 'phobos.yml') }
+    expect(described_class.config.phobos_config).to match(
       logger: an_instance_of(Logger),
       backoff: { min_ms: 1000, max_ms: 60_000 },
       consumer: {
@@ -112,8 +112,8 @@ describe Deimos, 'configuration' do
   specify '#phobos_config' do
     logger1 = Logger.new(nil)
     logger2 = Logger.new(nil)
-    Deimos.config.reset!
-    Deimos.configure do
+    described_class.config.reset!
+    described_class.configure do
       phobos_logger logger1
       kafka do
         logger logger2
@@ -169,7 +169,7 @@ describe Deimos, 'configuration' do
       end
     end
 
-    expect(Deimos.config.phobos_config).
+    expect(described_class.config.phobos_config).
       to match(
         logger: an_instance_of(Logger),
         backoff: { min_ms: 5, max_ms: 10 },

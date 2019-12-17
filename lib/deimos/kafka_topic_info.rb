@@ -14,7 +14,7 @@ module Deimos
         # Try to create it - it's fine if it already exists
         begin
           self.create(topic: topic)
-        rescue ActiveRecord::RecordNotUnique # rubocop:disable Lint/HandleExceptions
+        rescue ActiveRecord::RecordNotUnique # rubocop:disable Lint/SuppressedException
           # continue on
         end
 
