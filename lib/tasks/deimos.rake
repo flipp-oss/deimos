@@ -7,7 +7,7 @@ namespace :deimos do
   desc 'Starts Deimos in the rails environment'
   task start: :environment do
     Deimos.configure do |config|
-      config.producers.backend = :kafka_sync if config.producers.backend == :kafka_async
+      config.producers.backend = :kafka if config.producers.backend == :kafka_async
     end
     ENV['DEIMOS_RAKE_TASK'] = 'true'
     STDOUT.sync = true

@@ -10,4 +10,4 @@ rescue LoadError # rubocop:disable Lint/SuppressedException
   # no rspec available
 end
 
-import('./lib/tasks/phobos.rake')
+import('./lib/tasks/deimos.rake')

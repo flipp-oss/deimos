@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # [1.4.0-beta1] - 2019-11-22
 - Complete revamp of configuration method.
 
+# [1.3.0-beta4] - 2019-12-02
+- Fixed bug where by running `rake deimos:start` without
+  specifying a producer backend would crash.
+
 # [1.3.0-beta3] - 2019-11-26
 - Fixed bug in TestHelpers where key_decoder was not stubbed out.
 
