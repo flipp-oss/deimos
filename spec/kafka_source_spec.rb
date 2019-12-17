@@ -89,6 +89,14 @@ module KafkaSourceSpec
       expect('my-topic-the-second').to have_sent(nil, 1)
     end
 
+    it 'should not call generate_payload but still publish a nil payload for deletion' do
+      widget = Widget.create!(widget_id: '808', name: 'delete_me!')
+      expect(Deimos::ActiveRecordProducer).not_to receive(:generate_payload)
+      widget.destroy
+      expect('my-topic').to have_sent(nil, widget.id)
+      expect('my-topic-the-second').to have_sent(nil, widget.id)
+    end
+
     it 'should send events on import' do
       widgets = (1..3).map do |i|
         Widget.new(widget_id: i, name: "Widget #{i}")
