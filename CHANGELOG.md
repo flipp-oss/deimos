@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Add `:test` producer backend which replaces the existing TestHelpers
+  functionality of writing messages to an in-memory hash.
+
 # [1.4.0-beta7] - 2019-12-16
 - Clone loggers when assigning to multiple levels.
 

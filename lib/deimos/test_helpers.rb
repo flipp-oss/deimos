@@ -14,9 +14,10 @@ module Deimos
     extend ActiveSupport::Concern
 
     class << self
+      # for backwards compatibility
       # @return [Array<Hash>]
       def sent_messages
-        @sent_messages ||= []
+        Deimos::Backends::Test.sent_messages
       end
     end
 
@@ -93,11 +94,8 @@ module Deimos
 
     # Stub all already-loaded producers and consumers for unit testing purposes.
     def stub_producers_and_consumers!
-      Deimos::TestHelpers.sent_messages.clear
-
-      allow(Deimos::Producer).to receive(:produce_batch) do |_, batch|
-        Deimos::TestHelpers.sent_messages.concat(batch.map(&:to_h))
-      end
+      Deimos.configure { |c| c.producers.backend = :test }
+      Deimos::Backends::Test.sent_messages.clear
 
       Deimos::Producer.descendants.each do |klass|
         next if klass == Deimos::ActiveRecordProducer # "abstract" class
@@ -166,7 +164,7 @@ module Deimos
 
     # :nodoc:
     def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
-      messages = Deimos::TestHelpers.sent_messages.
+      messages = Deimos::Backends::Test.sent_messages.
         select { |m| m[:topic] == topic }.
         map { |m| m.except(:topic) }
       message_string = ''
@@ -200,7 +198,7 @@ module Deimos
                   msg
                 end
       match do |topic|
-        Deimos::TestHelpers.sent_messages.any? do |m|
+        Deimos::Backends::Test.sent_messages.any? do |m|
           hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
           hash_matcher.send(:match,
                             message,
@@ -231,7 +229,7 @@ module Deimos
     # Clear all sent messages - e.g. if we want to check that
     # particular messages were sent or not sent after a point in time.
     def clear_kafka_messages!
-      Deimos::TestHelpers.sent_messages.clear
+      Deimos::Backends::Test.sent_messages.clear
     end
 
     # test that a message was sent on the given topic.
@@ -241,7 +239,7 @@ module Deimos
     # @param key [String|Integer]
     # @return [Boolean]
     def was_message_sent?(message, topic, key=nil)
-      Deimos::TestHelpers.sent_messages.any? do |m|
+      Deimos::Backends::Test.sent_messages.any? do |m|
         message == m[:payload] && m[:topic] == topic &&
           (key.present? ? m[:key] == key : true)
       end

@@ -18,6 +18,7 @@ require 'deimos/utils/lag_reporter'
 require 'deimos/publish_backend'
 require 'deimos/backends/kafka'
 require 'deimos/backends/kafka_async'
+require 'deimos/backends/test'
 
 require 'deimos/monkey_patches/ruby_kafka_heartbeat'
 require 'deimos/monkey_patches/schema_store'
