@@ -69,7 +69,7 @@ module ProducerTest
 
     it 'should produce a message' do
       expect(described_class).to receive(:produce_batch).once.with(
-        Deimos::Backends::KafkaAsync,
+        Deimos::Backends::Test,
         [
           Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
                               MyProducer,
@@ -82,7 +82,7 @@ module ProducerTest
                               partition_key: 'bar',
                               key: 'bar')
         ]
-      )
+      ).and_call_original
 
       MyProducer.publish_list(
         [{ 'test_id' => 'foo', 'some_int' => 123 },
@@ -364,6 +364,10 @@ module ProducerTest
     end
 
     describe '#determine_backend_class' do
+      before(:each) do
+        Deimos.configure { |c| c.producers.backend = :kafka_async }
+      end
+
       it 'should return kafka_async if sync is false' do
         expect(described_class.determine_backend_class(false, false)).
           to eq(Deimos::Backends::KafkaAsync)
