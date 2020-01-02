@@ -1,66 +1,20 @@
 # frozen_string_literal: true
 
+require 'active_support/time'
+
 module Deimos
   # Class to coerce values in a payload to match a schema.
-  class SchemaCoercer
+  class AvroSchemaCoercer
     # @param schema [Avro::Schema]
     def initialize(schema)
       @schema = schema
     end
 
-    # @param payload [Hash]
-    # @return [HashWithIndifferentAccess]
-    def coerce(payload)
-      result = {}
-      @schema.fields.each do |field|
-        name = field.name
-        next unless payload.key?(name)
-
-        val = payload[name]
-        result[name] = _coerce_type(field.type, val)
-      end
-      result.with_indifferent_access
-    end
-
-  private
-
-    # @param val [String]
-    # @return [Boolean]
-    def _is_integer_string?(val)
-      return false unless val.is_a?(String)
-
-      begin
-          true if Integer(val)
-      rescue StandardError
-        false
-        end
-    end
-
-    # @param val [String]
-    # @return [Boolean]
-    def _is_float_string?(val)
-      return false unless val.is_a?(String)
-
-      begin
-          true if Float(val)
-      rescue StandardError
-        false
-        end
-    end
-
-    # @param val [Object]
-    # @return [Boolean]
-    def _is_to_s_defined?(val)
-      return false if val.nil?
-
-      Object.instance_method(:to_s).bind(val).call != val.to_s
-    end
-
     # @param type [Symbol]
     # @param val [Object]
     # @return [Object]
-    def _coerce_type(type, val)
-      int_classes = [Time, DateTime, ActiveSupport::TimeWithZone]
+    def coerce_type(type, val)
+      int_classes = [Time, ActiveSupport::TimeWithZone]
       field_type = type.type.to_sym
       if field_type == :union
         union_types = type.schemas.map { |s| s.type.to_sym }
@@ -103,6 +57,40 @@ module Deimos
       else
         val
       end
+    end
+
+  private
+
+    # @param val [String]
+    # @return [Boolean]
+    def _is_integer_string?(val)
+      return false unless val.is_a?(String)
+
+      begin
+          true if Integer(val)
+      rescue StandardError
+        false
+        end
+    end
+
+    # @param val [String]
+    # @return [Boolean]
+    def _is_float_string?(val)
+      return false unless val.is_a?(String)
+
+      begin
+          true if Float(val)
+      rescue StandardError
+        false
+        end
+    end
+
+    # @param val [Object]
+    # @return [Boolean]
+    def _is_to_s_defined?(val)
+      return false if val.nil?
+
+      Object.instance_method(:to_s).bind(val).call != val.to_s
     end
   end
 end

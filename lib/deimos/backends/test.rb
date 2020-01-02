@@ -3,7 +3,7 @@
 module Deimos
   module Backends
     # Backend which saves messages to an in-memory hash.
-    class Test < Deimos::PublishBackend
+    class Test < Deimos::Backends::Base
       class << self
         # @return [Array<Hash>]
         def sent_messages

@@ -251,6 +251,10 @@ module Deimos
     end
 
     setting :schema do
+
+      # Backend class to use when encoding/decoding messages.
+      setting :backend, :mock
+
       # URL of the Confluent schema registry.
       # @return [String]
       setting :registry_url, 'http://localhost:8081'

@@ -68,31 +68,30 @@ module Deimos
     def record_attributes(payload)
       klass = self.class.config[:record_class]
       attributes = {}
-      schema = self.class.decoder.avro_schema
-      schema.fields.each do |field|
+      self.class.decoder.schema_fields.each do |field|
         column = klass.columns.find { |c| c.name == field.name }
         next if column.nil?
         next if %w(updated_at created_at).include?(field.name)
 
-        attributes[field.name] = _coerce_field(field, column, payload[field.name])
+        attributes[field.name] = _coerce_field(column, payload[field.name])
       end
       attributes
     end
 
   private
 
-    # @param field [Avro::Schema]
     # @param column [ActiveRecord::ConnectionAdapters::Column]
     # @param val [Object]
-    def _coerce_field(field, column, val)
+    def _coerce_field(column, val)
       return nil if val.nil?
 
-      field_type = field.type.type.to_sym
-      if field_type == :union
-        union_types = field.type.schemas.map { |s| s.type.to_sym }
-        field_type = union_types.find { |t| t != :null }
-      end
-      if column.type == :datetime && %i(int long).include?(field_type)
+      is_integer = begin
+                     val.is_a?(Integer) || (val.is_a?(String) && Integer(val))
+                   rescue StandardError
+                     false
+                   end
+
+      if column.type == :datetime && is_integer
         return Time.zone.strptime(val.to_s, '%s')
       end
 

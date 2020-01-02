@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-require 'deimos/avro_data_encoder'
 require 'deimos/message'
 require 'deimos/shared_config'
-require 'deimos/schema_coercer'
 require 'phobos/producer'
 require 'active_support/notifications'
 
@@ -143,23 +141,23 @@ module Deimos
         backend.publish(producer_class: self, messages: batch)
       end
 
-      # @return [AvroDataEncoder]
+      # @return [Deimos::SchemaBackends::Base]
       def encoder
-        @encoder ||= AvroDataEncoder.new(schema: config[:schema],
-                                         namespace: config[:namespace])
+        @encoder ||= Deimos.schema_backend(schema: config[:schema],
+                                           namespace: config[:namespace])
       end
 
-      # @return [AvroDataEncoder]
+      # @return [Deimos::SchemaBackends::Base]
       def key_encoder
-        @key_encoder ||= AvroDataEncoder.new(schema: config[:key_schema],
-                                             namespace: config[:namespace])
+        @key_encoder ||= Deimos.schema_backend(schema: config[:key_schema],
+                                               namespace: config[:namespace])
       end
 
       # Override this in active record producers to add
       # non-schema fields to check for updates
       # @return [Array<String>] fields to check for updates
       def watched_attributes
-        self.encoder.avro_schema.fields.map(&:name)
+        self.encoder.schema_fields.map(&:name)
       end
 
     private
@@ -169,13 +167,13 @@ module Deimos
         # this violates the Law of Demeter but it has to happen in a very
         # specific order and requires a bunch of methods on the producer
         # to work correctly.
-        message.add_fields(encoder.avro_schema)
+        message.add_fields(encoder.schema_fields.map(&:name))
         message.partition_key = self.partition_key(message.payload)
         message.key = _retrieve_key(message.payload)
         # need to do this before _coerce_fields because that might result
         # in an empty payload which is an *error* whereas this is intended.
         message.payload = nil if message.payload.blank?
-        message.coerce_fields(encoder.avro_schema)
+        message.coerce_fields(encoder)
         message.encoded_key = _encode_key(message.key)
         message.topic = self.topic
         message.encoded_payload = if message.payload.nil?
@@ -200,7 +198,7 @@ module Deimos
         end
 
         if config[:key_field]
-          encoder.encode_key(config[:key_field], key, "#{config[:topic]}-key")
+          encoder.encode_key(config[:key_field], key, topic: "#{config[:topic]}-key")
         elsif config[:key_schema]
           key_encoder.encode(key, topic: "#{config[:topic]}-key")
         else

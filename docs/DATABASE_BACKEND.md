@@ -77,7 +77,7 @@ The database backend consists of three tables:
 
 * `kafka_messages` - this keeps track of the messages that were "published",
   including the payload, topic, key and partition key. These messages
-  are *raw data* - all processing, including Avro encoding, must happen
+  are *raw data* - all processing, including schema-encoding, must happen
   upstream before they are inserted.
 * `kafka_topic_info` - this table is essentially a lock table used to ensure
   that only one producer thread is ever "working" on a topic at a time.

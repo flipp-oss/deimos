@@ -1,12 +1,8 @@
 # frozen_string_literal: true
 
-require 'avro-patches'
-require 'avro_turf'
 require 'phobos'
 require 'deimos/version'
 require 'deimos/config/configuration'
-require 'deimos/avro_data_encoder'
-require 'deimos/avro_data_decoder'
 require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
@@ -15,17 +11,19 @@ require 'deimos/batch_consumer'
 require 'deimos/instrumentation'
 require 'deimos/utils/lag_reporter'
 
-require 'deimos/publish_backend'
+require 'deimos/backends/base'
 require 'deimos/backends/kafka'
 require 'deimos/backends/kafka_async'
 require 'deimos/backends/test'
 
+require 'deimos/schema_backends/base'
+
 require 'deimos/monkey_patches/ruby_kafka_heartbeat'
-require 'deimos/monkey_patches/schema_store'
 require 'deimos/monkey_patches/phobos_producer'
 require 'deimos/monkey_patches/phobos_cli'
 
 require 'deimos/railtie' if defined?(Rails)
+
 if defined?(ActiveRecord)
   require 'deimos/kafka_source'
   require 'deimos/kafka_topic_info'
@@ -34,6 +32,7 @@ if defined?(ActiveRecord)
   require 'deimos/utils/executor.rb'
   require 'deimos/utils/db_producer.rb'
 end
+
 require 'deimos/utils/inline_consumer'
 require 'yaml'
 require 'erb'
@@ -41,6 +40,22 @@ require 'erb'
 # Parent module.
 module Deimos
   class << self
+    # @return [Class < Deimos::SchemaBackends::Base]
+    def schema_backend_class
+      backend = Deimos.config.schema.backend.to_s
+
+      require "deimos/schema_backends/#{backend}"
+
+      "Deimos::SchemaBackends::#{backend.classify}".constantize
+    end
+
+    # @param schema [String|Symbol]
+    # @param namespace [String]
+    # @return [Deimos::SchemaBackends::Base]
+    def schema_backend(schema:, namespace:)
+      schema_backend_class.new(schema: schema, namespace: namespace)
+    end
+
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     def start_db_backend!(thread_count: 1)

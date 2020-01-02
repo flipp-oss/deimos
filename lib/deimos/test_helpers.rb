@@ -2,7 +2,6 @@
 
 require 'active_support/concern'
 require 'active_support/core_ext'
-require 'avro_turf'
 require 'deimos/tracing/mock'
 require 'deimos/metrics/mock'
 
@@ -22,129 +21,47 @@ module Deimos
     end
 
     included do
-      # @param encoder_schema [String]
-      # @param namespace [String]
-      # @return [Deimos::AvroDataEncoder]
-      def create_encoder(encoder_schema, namespace)
-        encoder = Deimos::AvroDataEncoder.new(schema: encoder_schema,
-                                              namespace: namespace)
-
-        # we added and_wrap_original to RSpec 2 but the regular block
-        # syntax wasn't working for some reason - block wasn't being passed
-        # to the method
-        block = proc do |m, *args|
-          m.call(*args)
-          args[0]
-        end
-        allow(encoder).to receive(:encode_local).and_wrap_original(&block)
-        allow(encoder).to receive(:encode) do |payload, schema: nil, topic: nil|
-          encoder.encode_local(payload, schema: schema)
-        end
-
-        block = proc do |m, *args|
-          m.call(*args)&.values&.first
-        end
-        allow(encoder).to receive(:encode_key).and_wrap_original(&block)
-        encoder
-      end
-
-      # @param decoder_schema [String]
-      # @param namespace [String]
-      # @return [Deimos::AvroDataDecoder]
-      def create_decoder(decoder_schema, namespace)
-        decoder = Deimos::AvroDataDecoder.new(schema: decoder_schema,
-                                              namespace: namespace)
-        allow(decoder).to receive(:decode_local) { |payload| payload }
-        allow(decoder).to receive(:decode) do |payload, schema: nil|
-          schema ||= decoder.schema
-          if schema && decoder.namespace
-            # Validate against local schema.
-            encoder = Deimos::AvroDataEncoder.new(schema: schema,
-                                                  namespace: decoder.namespace)
-            encoder.schema_store = decoder.schema_store
-            payload = payload.respond_to?(:stringify_keys) ? payload.stringify_keys : payload
-            encoder.encode_local(payload)
-          end
-          payload
-        end
-        allow(decoder).to receive(:decode_key) do |payload, _key_id|
-          payload.values.first
-        end
-        decoder
-      end
 
       RSpec.configure do |config|
 
         config.before(:suite) do
-          Deimos.configure do |fr_config|
-            fr_config.logger = Logger.new(STDOUT)
-            fr_config.consumers.reraise_errors = true
-            fr_config.kafka.seed_brokers ||= ['test_broker']
+          Deimos.configure do |d_config|
+            d_config.logger = Logger.new(STDOUT)
+            d_config.consumers.reraise_errors = true
+            d_config.kafka.seed_brokers ||= ['test_broker']
+            d_config.schema.backend = Deimos.schema_backend_class.mock_backend
           end
         end
-
       end
+
       before(:each) do
         client = double('client').as_null_object
         allow(client).to receive(:time) do |*_args, &block|
           block.call
         end
+        Deimos.configure { |c| c.producers.backend = :test }
+        Deimos::Backends::Test.sent_messages.clear
       end
     end
 
-    # Stub all already-loaded producers and consumers for unit testing purposes.
+    # :nodoc:
     def stub_producers_and_consumers!
-      Deimos.configure { |c| c.producers.backend = :test }
-      Deimos::Backends::Test.sent_messages.clear
-
-      Deimos::Producer.descendants.each do |klass|
-        next if klass == Deimos::ActiveRecordProducer # "abstract" class
-
-        stub_producer(klass)
-      end
-
-      Deimos::Consumer.descendants.each do |klass|
-        # TODO: remove this when ActiveRecordConsumer uses batching
-        next if klass == Deimos::ActiveRecordConsumer # "abstract" class
-
-        stub_consumer(klass)
-      end
-
-      Deimos::BatchConsumer.descendants.each do |klass|
-        next if klass == Deimos::ActiveRecordConsumer # "abstract" class
-
-        stub_batch_consumer(klass)
-      end
+      warn('stub_producers_and_consumers! is no longer necessary and this method will be removed in 3.0')
     end
 
-    # Stub a given producer class.
-    # @param klass [Class < Deimos::Producer]
-    def stub_producer(klass)
-      allow(klass).to receive(:encoder) do
-        create_encoder(klass.config[:schema], klass.config[:namespace])
-      end
-      allow(klass).to receive(:key_encoder) do
-        create_encoder(klass.config[:key_schema], klass.config[:namespace])
-      end
+    # :nodoc:
+    def stub_producer(_klass)
+      warn('Stubbing producers is no longer necessary and this method will be removed in 3.0')
     end
 
-    # Stub a given consumer class.
-    # @param klass [Class < Deimos::Consumer]
-    def stub_consumer(klass)
-      _stub_base_consumer(klass)
-      klass.class_eval do
-        alias_method(:old_consume, :consume) unless self.instance_methods.include?(:old_consume)
-      end
-      allow_any_instance_of(klass).to receive(:consume) do |instance, payload, metadata|
-        metadata[:key] = klass.new.decode_key(metadata[:key]) if klass.config[:key_configured]
-        instance.old_consume(payload, metadata)
-      end
+    # :nodoc:
+    def stub_consumer(_klass)
+      warn('Stubbing consumers is no longer necessary and this method will be removed in 3.0')
     end
 
-    # Stub a given batch consumer class.
-    # @param klass [Class < Deimos::BatchConsumer]
-    def stub_batch_consumer(klass)
-      _stub_base_consumer(klass)
+    # :nodoc:
+    def stub_batch_consumer(_klass)
+      warn('Stubbing batch consumers is no longer necessary and this method will be removed in 3.0')
     end
 
     # get the difference of 2 hashes.
@@ -246,7 +163,7 @@ module Deimos
     end
 
     # Test that a given handler will consume a given payload correctly, i.e.
-    # that the Avro schema is correct. If
+    # that the schema is correct. If
     # a block is given, that block will be executed when `consume` is called.
     # Otherwise it will just confirm that `consume` is called at all.
     # @param handler_class_or_topic [Class|String] Class which inherits from
@@ -298,33 +215,18 @@ module Deimos
       ).send(:process_message, payload)
     end
 
-    # Check to see that a given message will fail due to Avro errors.
+    # Check to see that a given message will fail due to validation errors.
     # @param handler_class [Class]
     # @param payload [Hash]
     def test_consume_invalid_message(handler_class, payload)
-      handler = handler_class.new
-      allow(handler_class).to receive(:new).and_return(handler)
-      listener = double('listener',
-                        handler_class: handler_class,
-                        encoding: nil)
-      message = double('message',
-                       key: _key_from_consumer(handler_class),
-                       partition_key: nil,
-                       partition: 1,
-                       offset: 1,
-                       value: payload)
-
       expect {
-        Phobos::Actions::ProcessMessage.new(
-          listener: listener,
-          message: message,
-          listener_metadata: { topic: 'my-topic' }
-        ).send(:process_message, payload)
-      }.to raise_error(Avro::SchemaValidator::ValidationError)
+        handler_class.decoder.validate(payload,
+                                       schema: handler_class.decoder.schema)
+      }.to raise_error
     end
 
     # Test that a given handler will consume a given batch payload correctly,
-    # i.e. that the Avro schema is correct. If
+    # i.e. that the schema is correct. If
     # a block is given, that block will be executed when `consume` is called.
     # Otherwise it will just confirm that `consume` is called at all.
     # @param handler_class_or_topic [Class|String] Class which inherits from
@@ -382,7 +284,7 @@ module Deimos
       action.send(:execute)
     end
 
-    # Check to see that a given message will fail due to Avro errors.
+    # Check to see that a given message will fail due to validation errors.
     # @param handler_class [Class]
     # @param payloads [Array<Hash>]
     def test_consume_batch_invalid_message(handler_class, payloads)
@@ -416,33 +318,21 @@ module Deimos
       allow(action).to receive(:handle_error) { |e| raise e }
 
       expect { action.send(:execute) }.
-        to raise_error(Avro::SchemaValidator::ValidationError)
-    end
-
-    # @param schema1 [String|Hash] a file path, JSON string, or
-    # hash representing a schema.
-    # @param schema2 [String|Hash] a file path, JSON string, or
-    # hash representing a schema.
-    # @return [Boolean] true if the schemas are compatible, false otherwise.
-    def self.schemas_compatible?(schema1, schema2)
-      json1, json2 = [schema1, schema2].map do |schema|
-        if schema.is_a?(String)
-          schema = File.read(schema) unless schema.strip.starts_with?('{') # file path
-          MultiJson.load(schema)
-        else
-          schema
-        end
-      end
-      avro_schema1 = Avro::Schema.real_parse(json1, {})
-      avro_schema2 = Avro::Schema.real_parse(json2, {})
-      Avro::SchemaCompatibility.mutual_read?(avro_schema1, avro_schema2)
+        to raise_error
     end
 
   private
 
     def _key_from_consumer(consumer)
-      if consumer.config[:key_field] || consumer.config[:key_schema]
-        { 'test' => 1 }
+      if consumer.config[:key_field]
+        { consumer.config[:key_field] => 1 }
+      elsif consumer.config[:key_schema]
+        backend = consumer.decoder
+        old_schema = backend.schema
+        backend.schema = consumer.config[:key_schema]
+        key = backend.schema_fields.map { |field| [field.name, 1] }.to_h
+        backend.schema = old_schema
+        key
       elsif consumer.config[:no_keys]
         nil
       else
@@ -458,20 +348,6 @@ module Deimos
       raise "No consumer found in Phobos configuration for topic #{topic}!" if handler.nil?
 
       handler.handler.constantize
-    end
-
-    # Stub shared methods between consumers/batch consumers
-    # @param [Class < Deimos::BaseConsumer] klass Consumer class to stub
-    def _stub_base_consumer(klass)
-      allow(klass).to receive(:decoder) do
-        create_decoder(klass.config[:schema], klass.config[:namespace])
-      end
-
-      if klass.config[:key_schema] # rubocop:disable Style/GuardClause
-        allow(klass).to receive(:key_decoder) do
-          create_decoder(klass.config[:key_schema], klass.config[:namespace])
-        end
-      end
     end
   end
 end

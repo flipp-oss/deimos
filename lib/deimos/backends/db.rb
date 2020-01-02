@@ -6,7 +6,7 @@ module Deimos
   module Backends
     # Backend which saves messages to the database instead of immediately
     # sending them.
-    class Db < Deimos::PublishBackend
+    class Db < Base
       class << self
         # :nodoc:
         def execute(producer_class:, messages:)

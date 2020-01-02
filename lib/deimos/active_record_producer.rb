@@ -53,10 +53,10 @@ module Deimos
       # is not set.
       # @return [Hash]
       def generate_payload(attributes, _record)
-        schema = self.encoder.avro_schema
+        fields = self.encoder.schema_fields
         payload = attributes.stringify_keys
         payload.delete_if do |k, _|
-          k.to_sym != :payload_key && !schema.fields.find { |f| f.name == k }
+          k.to_sym != :payload_key && !fields.map(&:name).include?(k)
         end
       end
     end

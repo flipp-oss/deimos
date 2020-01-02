@@ -62,8 +62,9 @@ module ProducerTest
       subscriber = Deimos.subscribe('produce') do |event|
         expect(event.payload[:payloads]).to eq([{ 'invalid' => 'key' }])
       end
+      expect(MyProducer.encoder).to receive(:validate).and_raise('OH NOES')
       expect { MyProducer.publish('invalid' => 'key', :payload_key => 'key') }.
-        to raise_error(Avro::SchemaValidator::ValidationError)
+        to raise_error('OH NOES')
       Deimos.unsubscribe(subscriber)
     end
 
@@ -198,25 +199,16 @@ module ProducerTest
     end
 
     it 'should encode the key' do
-      encoder = instance_double(Deimos::AvroDataEncoder)
-      allow(Deimos::Message).to receive(:new).and_wrap_original do |m, hash, producer|
-        message = m.call(hash, producer)
-        allow(message).to receive(:add_fields)
-        allow(message).to receive(:coerce_fields)
-        message
-      end
-      allow(MyProducer).to receive(:encoder).and_return(encoder).at_least(:once)
-      allow(encoder).to receive(:avro_schema)
-      expect(encoder).to receive(:encode_key).with('test_id', 'foo', 'my-topic-key')
-      expect(encoder).to receive(:encode_key).with('test_id', 'bar', 'my-topic-key')
-      expect(encoder).to receive(:encode).with({
-                                                 'test_id' => 'foo',
-                                                 'some_int' => 123
-                                               }, { topic: 'my-topic-value' })
-      expect(encoder).to receive(:encode).with({
-                                                 'test_id' => 'bar',
-                                                 'some_int' => 124
-                                               }, { topic: 'my-topic-value' })
+      expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
+      expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'bar', topic: 'my-topic-key')
+      expect(MyProducer.encoder).to receive(:encode).with({
+                                                            'test_id' => 'foo',
+                                                            'some_int' => 123
+                                                          }, { topic: 'my-topic-value' })
+      expect(MyProducer.encoder).to receive(:encode).with({
+                                                            'test_id' => 'bar',
+                                                            'some_int' => 124
+                                                          }, { topic: 'my-topic-value' })
 
       MyProducer.publish_list(
         [{ 'test_id' => 'foo', 'some_int' => 123 },
@@ -225,13 +217,7 @@ module ProducerTest
     end
 
     it 'should not encode with plaintext key' do
-      key_encoder = Deimos::AvroDataEncoder.new(
-        schema: 'MySchema',
-        namespace: 'com.my-namespace'
-      )
-      allow(key_encoder).to receive(:encode)
-      allow(MyNonEncodedProducer).to receive(:encoder).and_return(key_encoder)
-      expect(key_encoder).not_to receive(:encode_key)
+      expect(MyNonEncodedProducer.key_encoder).not_to receive(:encode_key)
 
       MyNonEncodedProducer.publish_list(
         [{ 'test_id' => 'foo', 'some_int' => 123, :payload_key => 'foo_key' },
@@ -240,14 +226,10 @@ module ProducerTest
     end
 
     it 'should encode with a schema' do
-
-      encoder = instance_double(Deimos::AvroDataEncoder)
-      expect(MySchemaProducer).to receive(:key_encoder).and_return(encoder).
-        at_least(:once)
-      expect(encoder).to receive(:encode).with({ 'test_id' => 'foo_key' },
-                                               { topic: 'my-topic2-key' })
-      expect(encoder).to receive(:encode).with({ 'test_id' => 'bar_key' },
-                                               { topic: 'my-topic2-key' })
+      expect(MySchemaProducer.key_encoder).to receive(:encode).with({ 'test_id' => 'foo_key' },
+                                                                    { topic: 'my-topic2-key' })
+      expect(MySchemaProducer.key_encoder).to receive(:encode).with({ 'test_id' => 'bar_key' },
+                                                                    { topic: 'my-topic2-key' })
 
       MySchemaProducer.publish_list(
         [{ 'test_id' => 'foo', 'some_int' => 123,

@@ -150,7 +150,6 @@ module ConsumerTest
           end
         end
         stub_const('ConsumerTest::MyConsumer', consumer_class)
-        stub_consumer(consumer_class)
       end
 
       it 'should consume a message' do

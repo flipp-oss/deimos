@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'deimos/avro_data_decoder'
 require 'deimos/base_consumer'
 require 'phobos/batch_handler'
 

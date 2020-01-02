@@ -146,6 +146,11 @@ RSpec.configure do |config|
     setup_db(DbConfigs::DB_OPTIONS.last)
   end
 
+  config.mock_with(:rspec) do |mocks|
+    mocks.yield_receiver_to_any_instance_implementation_blocks = true
+    mocks.verify_partial_doubles = true
+  end
+
   config.before(:each) do |ex|
     Deimos.config.reset!
     Deimos.configure do |deimos_config|
@@ -156,6 +161,7 @@ RSpec.configure do |config|
       deimos_config.kafka.seed_brokers = ENV['KAFKA_SEED_BROKER'] || 'localhost:9092'
       deimos_config.logger = Logger.new('/dev/null')
       deimos_config.logger.level = Logger::INFO
+      deimos_config.schema.backend = :avro_validation
     end
     stub_producers_and_consumers! unless ex.metadata[:integration]
   end
