@@ -693,6 +693,11 @@ The following metrics are reported:
   with the database backend. Tagged with the topic that is waiting.
   Will send a value of 0 with no topics tagged if there are no messages
   waiting.
+* `db_producer.insert` - the number of messages inserted into the database
+  for publishing. Tagged with `topic:{topic_name}`
+* `db_producer.process` - the number of DB messages processed. Note that this
+  is *not* the same as the number of messages *published* if those messages
+  are compacted. Tagged with `topic:{topic_name}`
 
 ### Configuring Metrics Providers
 

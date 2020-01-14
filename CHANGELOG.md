@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Added `db_producer.insert` and `db_producer.process` metrics.
+
 # [1.3.0-beta4] - 2019-12-02
 - Fixed bug where by running `rake deimos:start` without
   specifying a producer backend would crash.

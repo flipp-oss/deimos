@@ -93,6 +93,11 @@ module Deimos
           end
         end
         Deimos::KafkaMessage.where(id: messages.map(&:id)).delete_all
+        Deimos.config.metrics&.increment(
+          'db_producer.process',
+          tags: %W(topic:#{@current_topic}),
+          by: messages.size
+        )
         return false if batch_size < BATCH_SIZE
 
         KafkaTopicInfo.heartbeat(@current_topic, @id) # keep alive
