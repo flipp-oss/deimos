@@ -4,6 +4,11 @@ each_db_config(Deimos::Backends::Db) do
   include_context 'with publish_backend'
 
   it 'should save to the database' do
+    expect(Deimos.config.metrics).to receive(:increment).ordered.with(
+      'db_producer.insert',
+      tags: %w(topic:my-topic),
+      by: 3
+    )
     described_class.publish(producer_class: MyProducer, messages: messages)
     records = Deimos::KafkaMessage.all
     expect(records.size).to eq(3)

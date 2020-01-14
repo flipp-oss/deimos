@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Added `db_producer.insert` and `db_producer.process` metrics.
+
 - Add `:test` producer backend which replaces the existing TestHelpers
   functionality of writing messages to an in-memory hash.
 
