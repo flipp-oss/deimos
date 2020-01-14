@@ -20,6 +20,11 @@ module Deimos
             message
           end
           Deimos::KafkaMessage.import(records)
+          Deimos.config.metrics&.increment(
+            'db_producer.insert',
+            tags: %W(topic:#{producer_class.topic}),
+            by: records.size
+          )
         end
       end
     end

@@ -192,6 +192,11 @@ each_db_config(Deimos::Utils::DbProducer) do
                                                                       topic: 'my-topic'
                                                                     }
                                                                   ])
+      expect(Deimos.config.metrics).to receive(:increment).ordered.with(
+        'db_producer.process',
+        tags: %w(topic:my-topic),
+        by: 2
+      )
       expect(producer).to receive(:retrieve_messages).ordered.
         and_return(messages[2..3])
       expect(producer).to receive(:produce_messages).ordered.with([
@@ -208,6 +213,11 @@ each_db_config(Deimos::Utils::DbProducer) do
                                                                       topic: 'my-topic'
                                                                     }
                                                                   ])
+      expect(Deimos.config.metrics).to receive(:increment).ordered.with(
+        'db_producer.process',
+        tags: %w(topic:my-topic),
+        by: 2
+      )
       expect(producer).to receive(:retrieve_messages).ordered.
         and_return([])
       expect(Deimos::KafkaTopicInfo).to receive(:heartbeat).
