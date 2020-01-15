@@ -85,14 +85,14 @@ module Deimos
     def _coerce_field(column, val)
       return nil if val.nil?
 
-      is_integer = begin
-                     val.is_a?(Integer) || (val.is_a?(String) && Integer(val))
-                   rescue StandardError
-                     false
-                   end
+      if column.type == :datetime
+        int_val = begin
+                    val.is_a?(Integer) ? val : (val.is_a?(String) && Integer(val))
+                  rescue StandardError
+                    nil
+                  end
 
-      if column.type == :datetime && is_integer
-        return Time.zone.strptime(val.to_s, '%s')
+        return Time.zone.at(int_val) if int_val
       end
 
       val

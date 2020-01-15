@@ -110,7 +110,7 @@ module Deimos
       end
 
       # Encode a message key. To be defined by subclass.
-      # @param key [String] the value to use as the key.
+      # @param key [String|Hash] the value to use as the key.
       # @param key_id [Symbol|String] the field name of the key.
       # @param topic [String]
       # @return [String]

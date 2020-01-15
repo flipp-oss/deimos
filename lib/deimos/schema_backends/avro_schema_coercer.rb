@@ -67,10 +67,10 @@ module Deimos
       return false unless val.is_a?(String)
 
       begin
-          true if Integer(val)
+        true if Integer(val)
       rescue StandardError
         false
-        end
+      end
     end
 
     # @param val [String]
@@ -79,10 +79,10 @@ module Deimos
       return false unless val.is_a?(String)
 
       begin
-          true if Float(val)
+        true if Float(val)
       rescue StandardError
         false
-        end
+      end
     end
 
     # @param val [Object]

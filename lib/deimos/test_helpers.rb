@@ -44,22 +44,22 @@ module Deimos
       end
     end
 
-    # :nodoc:
+    # @deprecated
     def stub_producers_and_consumers!
       warn('stub_producers_and_consumers! is no longer necessary and this method will be removed in 3.0')
     end
 
-    # :nodoc:
+    # @deprecated
     def stub_producer(_klass)
       warn('Stubbing producers is no longer necessary and this method will be removed in 3.0')
     end
 
-    # :nodoc:
+    # @deprecated
     def stub_consumer(_klass)
       warn('Stubbing consumers is no longer necessary and this method will be removed in 3.0')
     end
 
-    # :nodoc:
+    # @deprecated
     def stub_batch_consumer(_klass)
       warn('Stubbing batch consumers is no longer necessary and this method will be removed in 3.0')
     end

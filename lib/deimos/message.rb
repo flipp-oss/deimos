@@ -18,7 +18,7 @@ module Deimos
 
     # Add message_id and timestamp default values if they are in the
     # schema and don't already have values.
-    # @param fields [Array<Name>] existing fields in the schema.
+    # @param fields [Array<String>] existing name fields in the schema.
     def add_fields(fields)
       return if @payload.except(:payload_key, :partition_key).blank?
 
