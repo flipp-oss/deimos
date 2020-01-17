@@ -144,6 +144,7 @@ producers.backend|`:kafka_async`|Currently can be set to `:db`, `:kafka`, or `:k
 
 Config name|Default|Description
 -----------|-------|-----------
+schema.backend|`:mock`|Backend representing the schema encoder/decoder. You can see a full list [here](../lib/deimos/schema_backends).
 schema.registry_url|`http://localhost:8081`|URL of the Confluent schema registry.
 schema.path|nil|Local path to find your schemas.
 

@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
-require 'deimos/avro_data_decoder'
 require 'deimos/base_consumer'
 require 'deimos/shared_config'
 require 'phobos/handler'
 require 'active_support/all'
-require 'ddtrace'
 
 # Class to consume messages coming from the pipeline topic
 # Note: According to the docs, instances of your handler will be created

@@ -2,8 +2,6 @@ PATH
   remote: .
   specs:
     deimos-ruby (1.4.0.pre.beta7)
-      avro-patches (~> 0.3)
-      avro_turf (~> 0.8)
       phobos (~> 1.8.2.pre.beta2)
       ruby-kafka (~> 0.7)
 
@@ -55,10 +53,8 @@ GEM
       tzinfo (~> 1.1)
     arel (9.0.0)
     ast (2.4.0)
-    avro (1.8.2)
+    avro (1.9.1)
       multi_json
-    avro-patches (0.4.1)
-      avro (= 1.8.2)
     avro_turf (0.11.0)
       avro (>= 1.7.7, < 1.10)
       excon (~> 0.45)
@@ -74,7 +70,7 @@ GEM
     digest-crc (0.4.1)
     dogstatsd-ruby (4.5.0)
     erubi (1.9.0)
-    excon (0.71.0)
+    excon (0.71.1)
     exponential-backoff (0.0.4)
     ffi (1.11.3)
     formatador (0.2.5)
@@ -228,6 +224,8 @@ PLATFORMS
 DEPENDENCIES
   activerecord (~> 5.2)
   activerecord-import
+  avro (~> 1.9)
+  avro_turf (~> 0.8)
   bundler (~> 1)
   ddtrace (~> 0.11)
   deimos-ruby!

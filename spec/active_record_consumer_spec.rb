@@ -119,5 +119,12 @@ module ActiveRecordProducerTest
       expect(Widget.find_by_test_id('id2').some_int).to eq(4)
     end
 
+    it 'should coerce int values to datetimes' do
+      column = Widget.columns.find { |c| c.name == 'some_datetime_int' }
+      expect(MyConsumer.new.send(:_coerce_field, column, 1_579_046_400)).to eq('2020-01-14 19:00:00 -0500')
+      expect(MyConsumer.new.send(:_coerce_field, column, '1579046400')).to eq('2020-01-14 19:00:00 -0500')
+      expect(MyConsumer.new.send(:_coerce_field, column, 'some-other-val')).to eq('some-other-val')
+    end
+
   end
 end

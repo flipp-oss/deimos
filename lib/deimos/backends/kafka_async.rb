@@ -3,7 +3,7 @@
 module Deimos
   module Backends
     # Backend which produces to Kafka via an async producer.
-    class KafkaAsync < Deimos::PublishBackend
+    class KafkaAsync < Base
       include Phobos::Producer
 
       # Shut down the producer cleanly.

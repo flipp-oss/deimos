@@ -18,13 +18,13 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency('avro-patches', '~> 0.3')
-  spec.add_runtime_dependency('avro_turf', '~> 0.8')
   spec.add_runtime_dependency('phobos', '~> 1.8.2.pre.beta2')
   spec.add_runtime_dependency('ruby-kafka', '~> 0.7')
 
   spec.add_development_dependency('activerecord', '~> 5.2')
   spec.add_development_dependency('activerecord-import')
+  spec.add_development_dependency('avro', '~> 1.9')
+  spec.add_development_dependency('avro_turf', '~> 0.8')
   spec.add_development_dependency('bundler', '~> 1')
   spec.add_development_dependency('ddtrace', '~> 0.11')
   spec.add_development_dependency('dogstatsd-ruby', '~> 4.2')

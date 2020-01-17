@@ -67,10 +67,6 @@ describe Deimos do
   end
 
   describe '#start_db_backend!' do
-    before(:each) do
-      allow(described_class).to receive(:run_db_backend)
-    end
-
     it 'should start if backend is db and thread_count is > 0' do
       signal_handler = instance_double(Deimos::Utils::SignalHandler)
       allow(signal_handler).to receive(:run!)

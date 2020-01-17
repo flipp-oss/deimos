@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `db_producer.insert` and `db_producer.process` metrics.
 
+- Added schema backends, which should simplify Avro encoding and make it
+  more flexible for unit tests and local development.
+
+- BREAKING CHANGE: Deimos no longer comes with `avro_turf` as a dependency.
+  You will need to include it if you are Avro-encoding or decoding your
+  messages.
+
 - Add `:test` producer backend which replaces the existing TestHelpers
   functionality of writing messages to an in-memory hash.
 

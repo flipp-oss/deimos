@@ -3,7 +3,7 @@
 module Deimos
   module Backends
     # Default backend to produce to Kafka.
-    class Kafka < Deimos::PublishBackend
+    class Kafka < Base
       include Phobos::Producer
 
       # Shut down the producer if necessary.

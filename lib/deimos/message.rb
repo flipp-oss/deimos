@@ -18,23 +18,23 @@ module Deimos
 
     # Add message_id and timestamp default values if they are in the
     # schema and don't already have values.
-    # @param schema [Avro::Schema]
-    def add_fields(schema)
+    # @param fields [Array<String>] existing name fields in the schema.
+    def add_fields(fields)
       return if @payload.except(:payload_key, :partition_key).blank?
 
-      if schema.fields.any? { |f| f.name == 'message_id' }
+      if fields.include?('message_id')
         @payload['message_id'] ||= SecureRandom.uuid
       end
-      if schema.fields.any? { |f| f.name == 'timestamp' }
+      if fields.include?('timestamp')
         @payload['timestamp'] ||= Time.now.in_time_zone.to_s
       end
     end
 
-    # @param schema [Avro::Schema]
-    def coerce_fields(schema)
+    # @param encoder [Deimos::SchemaBackends::Base]
+    def coerce_fields(encoder)
       return if payload.nil?
 
-      @payload = SchemaCoercer.new(schema).coerce(@payload)
+      @payload = encoder.coerce(@payload)
     end
 
     # @return [Hash]

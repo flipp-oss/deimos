@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/codeclimate/maintainability/flipp-oss/deimos.svg"/>
 </p>
 
-A Ruby framework for marrying Kafka, Avro, and/or ActiveRecord and provide
+A Ruby framework for marrying Kafka, a schema definition like Avro, and/or ActiveRecord and provide
 a useful toolbox of goodies for Ruby-based Kafka development.
 Built on Phobos and hence Ruby-Kafka.
 
@@ -14,6 +14,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Installation](#installation)
    * [Versioning](#versioning)
    * [Configuration](#configuration)
+   * [Schemas](#schemas)
    * [Producers](#producers)
         * [Auto-added Fields](#auto-added-fields)
         * [Coerced Values](#coerced-values)
@@ -59,6 +60,27 @@ gem 'deimos-ruby', '~> 1.1'
 # Configuration
 
 For a full configuration reference, please see [the configuration docs ](docs/CONFIGURATION.md).
+
+# Schemas
+
+Deimos was originally written only supporting Avro encoding via a schema registry.
+This has since been expanded to a plugin architecture allowing messages to be
+encoded and decoded via any schema specification you wish. 
+
+Currently we have the following possible schema backends:
+* Avro Local (use pure Avro)
+* Avro Schema Registry (use the Confluent Schema Registry)
+* Avro Validation (validate using an Avro schema but leave decoded - this is useful
+  for unit testing and development)
+* Mock (no actual encoding/decoding).
+
+Note that to use Avro-encoding, you must include the [avro_turf](https://github.com/dasch/avro_turf) gem in your
+Gemfile.
+
+Other possible schemas could include [Protobuf](https://developers.google.com/protocol-buffers), [JSONSchema](https://json-schema.org/), etc. Feel free to
+contribute!
+
+To create a new schema backend, please see the existing examples [here](lib/deimos/schema_backends).
 
 # Producers
 
@@ -137,7 +159,7 @@ produced by Phobos and RubyKafka):
   * topic
   * exception_object
   * payloads - the unencoded payloads
-* `encode_messages` - sent when messages are being Avro-encoded.
+* `encode_messages` - sent when messages are being schema-encoded.
   * producer - the class that produced the message
   * topic
   * payloads - the unencoded payloads
@@ -165,8 +187,8 @@ Similarly:
 ### Kafka Message Keys
 
 Topics representing events rather than domain data don't need keys. However,
-best practice for domain messages is to Avro-encode message keys 
-with a separate Avro schema. 
+best practice for domain messages is to schema-encode message keys 
+with a separate schema.
 
 This enforced by requiring producers to define a `key_config` directive. If
 any message comes in with a key, the producer will error out if `key_config` is
@@ -179,7 +201,7 @@ There are three possible configurations to use:
   all your messages in a topic need to have a key, or they all need to have
   no key. This is a good choice for events that aren't keyed - you can still
   set a partition key.
-* `key_config plain: true` - this indicates that you are not using an Avro-encoded
+* `key_config plain: true` - this indicates that you are not using an encoded
   key. Use this for legacy topics - new topics should not use this setting.
 * `key_config schema: 'MyKeySchema-key'` - this tells the producer to look for
   an existing key schema named `MyKeySchema-key` in the schema registry and to
@@ -234,8 +256,8 @@ like this:
 ```
 
 If you publish a payload `{ "test_id" => "123", "some_int" => 123 }`, this
-will be turned into a key that looks like `{ "test_id" => "123"}` and encoded
-via Avro before being sent to Kafka. 
+will be turned into a key that looks like `{ "test_id" => "123"}` and schema-encoded
+before being sent to Kafka. 
 
 If you are using `plain` or `schema` as your config, you will need to have a
 special `payload_key` key to your payload hash. This will be extracted and
@@ -261,7 +283,7 @@ class MyConsumer < Deimos::Consumer
 
   def consume(payload, metadata)
     # Same method as Phobos consumers.
-    # payload is an Avro-decoded hash.
+    # payload is an schema-decoded hash.
     # metadata is a hash that contains information like :key and :topic.
     # In general, your key should be included in the payload itself. However,
     # if you need to access it separately from the payload, you can use
@@ -311,7 +333,7 @@ this sample:
 class MyBatchConsumer < Deimos::BatchConsumer
 
   def consume_batch(payloads, metadata)
-    # payloads is an array of Avro-decoded hashes.
+    # payloads is an array of schema-decoded hashes.
     # metadata is a hash that contains information like :keys and :topic.
     # Keys are automatically decoded and available as an array with
     # the same cardinality as the payloads. If you need to iterate
@@ -609,7 +631,7 @@ Also see [deimos.rb](lib/deimos.rb) under `Configure metrics` to see how the met
 Deimos also includes some tracing for kafka consumers. It ships with 
 DataDog support, but you can add custom tracing providers as well.
 
-Trace spans are used for when incoming messages are avro decoded, and a 
+Trace spans are used for when incoming messages are schema-decoded, and a 
 separate span for message consume logic.
 
 ### Configuring Tracing Providers
@@ -754,7 +776,7 @@ be
 }
 ```
 
-Both payload and key will be Avro-decoded as necessary according to the
+Both payload and key will be schema-decoded as necessary according to the
 key config.
 
 You can also just pass an existing producer or consumer class into the method,

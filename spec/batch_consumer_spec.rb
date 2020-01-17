@@ -80,11 +80,6 @@ module ConsumerTest
       end
 
       it 'should decode payloads for all messages in the batch' do
-        expect_any_instance_of(Deimos::AvroDataDecoder).
-          to receive(:decode).with(batch[0])
-        expect_any_instance_of(Deimos::AvroDataDecoder).
-          to receive(:decode).with(batch[1])
-
         test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
           # Mock decoder simply returns the payload
           expect(received).to eq(batch)
@@ -110,7 +105,6 @@ module ConsumerTest
           key_config plain: true
         end
         stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
-        stub_batch_consumer(consumer_class)
 
         test_consume_batch('my_batch_consume_topic', batch, keys: [1, 2]) do |_received, metadata|
           expect(metadata[:keys]).to eq([1, 2])
@@ -132,7 +126,6 @@ module ConsumerTest
           end
         end
         stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
-        stub_batch_consumer(consumer_class)
         allow(Deimos.config.metrics).to receive(:histogram)
       end
 
@@ -215,7 +208,6 @@ module ConsumerTest
           end
         end
         stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
-        stub_batch_consumer(consumer_class)
         allow(Deimos.config.metrics).to receive(:histogram)
       end
 

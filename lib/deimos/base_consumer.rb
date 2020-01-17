@@ -6,20 +6,20 @@ module Deimos
     include SharedConfig
 
     class << self
-      # @return [AvroDataEncoder]
+      # @return [Deimos::SchemaBackends::Base]
       def decoder
-        @decoder ||= AvroDataDecoder.new(schema: config[:schema],
-                                         namespace: config[:namespace])
+        @decoder ||= Deimos.schema_backend(schema: config[:schema],
+                                           namespace: config[:namespace])
       end
 
-      # @return [AvroDataEncoder]
+      # @return [Deimos::SchemaBackends::Base]
       def key_decoder
-        @key_decoder ||= AvroDataDecoder.new(schema: config[:key_schema],
-                                             namespace: config[:namespace])
+        @key_decoder ||= Deimos.schema_backend(schema: config[:key_schema],
+                                               namespace: config[:namespace])
       end
     end
 
-    # Helper method to decode an Avro-encoded key.
+    # Helper method to decode an encoded key.
     # @param key [String]
     # @return [Object] the decoded key.
     def decode_key(key)
