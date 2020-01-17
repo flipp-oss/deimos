@@ -1,7 +1,8 @@
 PATH
   remote: .
   specs:
-    deimos-ruby (1.4.0.pre.beta7)
+    deimos-ruby (1.5.0.pre.beta2)
+      avro_turf (~> 0.11)
       phobos (~> 1.8.2.pre.beta2)
       ruby-kafka (~> 0.7)
 
@@ -225,7 +226,6 @@ DEPENDENCIES
   activerecord (~> 5.2)
   activerecord-import
   avro (~> 1.9)
-  avro_turf (~> 0.8)
   bundler (~> 1)
   ddtrace (~> 0.11)
   deimos-ruby!

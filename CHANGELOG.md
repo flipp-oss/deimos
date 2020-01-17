@@ -7,15 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-- Added `db_producer.insert` and `db_producer.process` metrics.
-
+# [1.5.0-beta2] - 2020-01-17
 - Added schema backends, which should simplify Avro encoding and make it
   more flexible for unit tests and local development.
-
-- BREAKING CHANGE: Deimos no longer comes with `avro_turf` as a dependency.
-  You will need to include it if you are Avro-encoding or decoding your
-  messages.
-
 - Add `:test` producer backend which replaces the existing TestHelpers
   functionality of writing messages to an in-memory hash.
 
@@ -34,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [1.4.0-beta1] - 2019-11-22
 - Complete revamp of configuration method.
+
+# [1.3.0-beta5] - 2020-01-14
+- Added `db_producer.insert` and `db_producer.process` metrics.
 
 # [1.3.0-beta4] - 2019-12-02
 - Fixed bug where by running `rake deimos:start` without
