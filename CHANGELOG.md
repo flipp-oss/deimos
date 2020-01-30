@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.6.0] - 2020-01-30
+- Added a session_id column (string) to the kafka_messages table.
+- Added an index for this session_id column.
+- DB Producer now updates the session_id column with a UUID when a batch of KafkaMessages
+  is retrieved, and uses this UUID when the messages are deleted.
+
 # [1.5.0-beta2] - 2020-01-17
 - Added schema backends, which should simplify Avro encoding and make it
   more flexible for unit tests and local development.

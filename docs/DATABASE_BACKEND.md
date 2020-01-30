@@ -114,8 +114,8 @@ The algorithm for sending the messages makes use of the `kafka_topic_info` table
       ```
      * If the lock was unsuccessful, move on to the next topic in the list
   * Find the first 1000 messages in `kafka_messages` for that topic, ordered by ID (insertion order)
-  * Send the messages synchronously to Kafka, with all brokers acking the message.
-  * Delete the records from the DB
+  * Send the messages synchronously to Kafka, updating the `session_id` column of this batch of KafkaMessages with a unique UUID, with all brokers acking the message.
+  * Delete the records from the DB that have the same UUID of the previous step.
   * Update the `locked_at` timestamp in `kafka_topic_info` to `NOW()` to ensure liveness in case a particular batch took longer than expected to send.
   * If the current batch is 1000 messages, repeat with the next batch of
     messages until it returns less than 1000
