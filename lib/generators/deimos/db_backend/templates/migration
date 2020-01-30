@@ -6,9 +6,11 @@ class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version
       t.binary :key
       t.string :partition_key
       t.timestamps
+      t.string :session_id, null: false, default: '0'
     end
 
     add_index :kafka_messages, [:topic, :id]
+    add_index :kafka_messages, :session_id
 
     create_table :kafka_topic_info, force: true do |t| # rubocop:disable Rails/CreateTableWithTimestamps
       t.string :topic, null: false
