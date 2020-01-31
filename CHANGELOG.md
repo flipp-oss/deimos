@@ -7,63 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-# [1.6.0] - 2020-01-30
+## [1.6.0] - 2020-01-30
+
 - Added a session_id column (string) to the kafka_messages table.
 - Added an index for this session_id column.
 - DB Producer now updates the session_id column with a UUID when a batch of KafkaMessages
   is retrieved, and uses this UUID when the messages are deleted.
 
-# [1.5.0-beta2] - 2020-01-17
+## RELEASED
+
+## [1.5.0-beta2] - 2020-01-17
+
 - Added schema backends, which should simplify Avro encoding and make it
   more flexible for unit tests and local development.
 - Add `:test` producer backend which replaces the existing TestHelpers
   functionality of writing messages to an in-memory hash.
 
-# [1.4.0-beta7] - 2019-12-16
+## [1.4.0-beta7] - 2019-12-16
+
 - Clone loggers when assigning to multiple levels.
 
-# [1.4.0-beta6] - 2019-12-16
+## [1.4.0-beta6] - 2019-12-16
+
 - Added default for max_bytes_per_partition.
 
-# [1.4.0-beta4] - 2019-11-26
+## [1.4.0-beta4] - 2019-11-26
+
 - Added `define_settings` to define settings without invoking callbacks.
 
-# [1.4.0-beta2] - 2019-11-22
+## [1.4.0-beta2] - 2019-11-22
 - FIX: settings with default_proc were being called immediately
   instead of being lazy-evaluated.
 
-# [1.4.0-beta1] - 2019-11-22
+## [1.4.0-beta1] - 2019-11-22
 - Complete revamp of configuration method.
 
-# [1.3.0-beta5] - 2020-01-14
+## [1.3.0-beta5] - 2020-01-14
 - Added `db_producer.insert` and `db_producer.process` metrics.
 
-# [1.3.0-beta4] - 2019-12-02
+## [1.3.0-beta4] - 2019-12-02
 - Fixed bug where by running `rake deimos:start` without
   specifying a producer backend would crash.
 
-# [1.3.0-beta3] - 2019-11-26
+## [1.3.0-beta3] - 2019-11-26
 - Fixed bug in TestHelpers where key_decoder was not stubbed out.
 
-# [1.3.0-beta2] - 2019-11-22
+## [1.3.0-beta2] - 2019-11-22
 - Fixed bug where consumers would require a key config in all cases
   even though it's optional if they don't use keys.
 
-# [1.3.0-beta1] - 2019-11-21
+## [1.3.0-beta1] - 2019-11-21
 - Added `fetch_record` and `assign_key` methods to ActiveRecordConsumer.
 
-# [1.2.0-beta1] - 2019-09-12
+## [1.2.0-beta1] - 2019-09-12
 - Added `fatal_error` to both global config and consumer classes.
 - Changed `pending_db_messages_max_wait` metric to send per topic.
 - Added config to compact messages in the DB producer.
 - Added config to log messages in the DB producer.
 - Added config to provide a separate logger to the DB producer.
 
-# [1.1.0-beta2] - 2019-09-11
+## [1.1.0-beta2] - 2019-09-11
 - Fixed bug where ActiveRecordConsumer was not using `unscoped` to update
   via primary key and causing duplicate record errors.
 
-# [1.1.0-beta1] - 2019-09-10
+## [1.1.0-beta1] - 2019-09-10
 - Added BatchConsumer.
 
 ## [1.0.0] - 2019-09-03
@@ -114,3 +121,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-beta15] - 2019-07-08
 - Initial release.
+
