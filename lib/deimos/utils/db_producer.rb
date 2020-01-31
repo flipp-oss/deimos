@@ -80,9 +80,9 @@ module Deimos
         return false if messages.empty?
 
         # Update session_id column for this batch of KafkaMessages
-        @batch_uuid = SecureRandom.uuid
+        batch_uuid = SecureRandom.uuid
         messages.update_all(
-          session_id: @batch_uuid
+          session_id: batch_uuid
         )
 
         batch_size = messages.size
@@ -92,13 +92,13 @@ module Deimos
           begin
             produce_messages(compacted_messages.map(&:phobos_message))
           rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
-            Deimos::KafkaMessage.where(session_id: @batch_uuid).delete_all
+            Deimos::KafkaMessage.where(session_id: batch_uuid).delete_all
             @logger.error('Message batch too large, deleting...')
             @logger.error(Deimos::KafkaMessage.decoded(messages))
             raise
           end
         end
-        Deimos::KafkaMessage.where(session_id: @batch_uuid).delete_all
+        Deimos::KafkaMessage.where(session_id: batch_uuid).delete_all
         Deimos.config.metrics&.increment(
           'db_producer.process',
           tags: %W(topic:#{@current_topic}),
