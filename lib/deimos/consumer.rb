@@ -17,17 +17,13 @@ module Deimos
     def around_consume(payload, metadata)
       _received_message(payload, metadata)
       benchmark = Benchmark.measure do
-        _with_error_span(payload, metadata) { yield }
+        _with_error_span(payload, metadata) do
+          metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
+          decoded_payload = payload ? self.class.decoder.decode(payload) : nil
+          yield decoded_payload, metadata
+        end
       end
       _handle_success(benchmark.real, payload, metadata)
-    end
-
-    # :nodoc:
-    def before_consume(payload, metadata)
-      _with_error_span(payload, metadata) do
-        metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
-        self.class.decoder.decode(payload) if payload.present?
-      end
     end
 
     # Consume incoming messages.

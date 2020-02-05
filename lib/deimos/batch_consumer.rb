@@ -11,27 +11,24 @@ module Deimos
     include Phobos::BatchHandler
 
     # :nodoc:
-    def around_consume_batch(payloads, metadata)
-      _received_batch(payloads, metadata)
+    def around_consume_batch(batch, metadata)
+      payloads = []
       benchmark = Benchmark.measure do
-        _with_error_span(payloads, metadata) { yield }
-      end
-      _handle_success(benchmark.real, payloads, metadata)
-    end
-
-    # :nodoc:
-    def before_consume_batch(batch, metadata)
-      _with_error_span(batch, metadata) do
         if self.class.config[:key_configured]
           metadata[:keys] = batch.map do |message|
             decode_key(message.key)
           end
         end
 
-        batch.map do |message|
-          self.class.decoder.decode(message.payload) if message.payload.present?
+        payloads = batch.map do |message|
+          message.payload ? self.class.decoder.decode(message.payload) : nil
+        end
+        _received_batch(payloads, metadata)
+        _with_error_span(payloads, metadata) do
+          yield payloads, metadata
         end
       end
+      _handle_success(benchmark.real, payloads, metadata)
     end
 
     # Consume a batch of incoming messages.

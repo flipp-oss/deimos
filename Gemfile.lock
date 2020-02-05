@@ -3,7 +3,7 @@ PATH
   specs:
     deimos-ruby (1.5.0.pre.beta2)
       avro_turf (~> 0.11)
-      phobos (~> 1.8.2.pre.beta2)
+      phobos (~> 1.9.0.pre.beta3)
       ruby-kafka (~> 0.7)
 
 GEM
@@ -71,7 +71,7 @@ GEM
     digest-crc (0.4.1)
     dogstatsd-ruby (4.5.0)
     erubi (1.9.0)
-    excon (0.71.1)
+    excon (0.72.0)
     exponential-backoff (0.0.4)
     ffi (1.11.3)
     formatador (0.2.5)
@@ -131,7 +131,7 @@ GEM
     parser (2.6.5.0)
       ast (~> 2.4.0)
     pg (1.1.4)
-    phobos (1.8.2)
+    phobos (1.9.0.pre.beta3)
       activesupport (>= 3.0.0)
       concurrent-ruby (>= 1.0.2)
       concurrent-ruby-ext (>= 1.0.2)
