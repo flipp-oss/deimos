@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated dependency for Phobos to 1.9.0-beta3. This ensures compatibility with
   Phobos 2.0.
-  Fixed RSpec warning when using `test_consume_invalid_message`.
+- Fixed RSpec warning when using `test_consume_invalid_message`.
 
 # [1.5.0-beta2] - 2020-01-17
 - Added schema backends, which should simplify Avro encoding and make it
