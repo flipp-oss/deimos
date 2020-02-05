@@ -201,6 +201,7 @@ module Deimos
                        'partition_key' => partition_key,
                        'partition' => 1,
                        'offset' => 1,
+                       'headers' => {},
                        'value' => payload)
 
       unless skip_expectation
@@ -222,7 +223,7 @@ module Deimos
       expect {
         handler_class.decoder.validate(payload,
                                        schema: handler_class.decoder.schema)
-      }.to raise_error
+      }.to raise_error(Avro::SchemaValidator::ValidationError)
     end
 
     # Test that a given handler will consume a given batch payload correctly,
@@ -262,6 +263,7 @@ module Deimos
                'partition_key' => partition_key,
                'partition' => 1,
                'offset' => 1,
+               'headers' => {},
                'value' => payload)
       end
       batch = double('fetched_batch',

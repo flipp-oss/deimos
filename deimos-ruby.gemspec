@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency('avro_turf', '~> 0.11')
-  spec.add_runtime_dependency('phobos', '~> 1.8.2.pre.beta2')
+  spec.add_runtime_dependency('phobos', '~> 1.9.0.pre.beta3')
   spec.add_runtime_dependency('ruby-kafka', '~> 0.7')
 
   spec.add_development_dependency('activerecord', '~> 5.2')

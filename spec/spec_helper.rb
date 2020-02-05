@@ -151,7 +151,7 @@ RSpec.configure do |config|
     mocks.verify_partial_doubles = true
   end
 
-  config.before(:each) do |ex|
+  config.before(:each) do
     Deimos.config.reset!
     Deimos.configure do |deimos_config|
       deimos_config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.yml')
@@ -163,7 +163,6 @@ RSpec.configure do |config|
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
     end
-    stub_producers_and_consumers! unless ex.metadata[:integration]
   end
 end
 
