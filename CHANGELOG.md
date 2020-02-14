@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.6.0-beta1] - 2020-02-05
 - Updated dependency for Phobos to 1.9.0-beta3. This ensures compatibility with
   Phobos 2.0.
 - Fixed RSpec warning when using `test_consume_invalid_message`.
