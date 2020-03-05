@@ -89,9 +89,9 @@ module ProducerTest
         [{ 'test_id' => 'foo', 'some_int' => 123 },
          { 'test_id' => 'bar', 'some_int' => 124 }]
       )
-      expect('my-topic').to have_sent({ 'test_id' => 'foo', 'some_int' => 123 })
-      expect('your-topic').not_to have_sent({ 'test_id' => 'foo', 'some_int' => 123 })
-      expect('my-topic').not_to have_sent({ 'test_id' => 'foo2', 'some_int' => 123 })
+      expect('my-topic').to have_sent('test_id' => 'foo', 'some_int' => 123)
+      expect('your-topic').not_to have_sent('test_id' => 'foo', 'some_int' => 123)
+      expect('my-topic').not_to have_sent('test_id' => 'foo2', 'some_int' => 123)
     end
 
     it 'should add a message ID' do
