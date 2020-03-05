@@ -653,17 +653,13 @@ Also see [deimos.rb](lib/deimos.rb) under `Configure tracing` to see how the tra
 
 # Testing
 
-Deimos comes with a test helper class which automatically stubs out
-external calls (like metrics and tracing providers and the schema 
-registry) and provides useful methods for testing consumers.
+Deimos comes with a test helper class which sets the various backends
+to mock versions, and provides useful methods for testing consumers.
 
 In `spec_helper.rb`:
 ```ruby
 RSpec.configure do |config|
   config.include Deimos::TestHelpers
-  config.before(:each) do
-    stub_producers_and_consumers!
-  end
 end
 ```
 
@@ -707,20 +703,13 @@ end
 expect(topic_name).to have_sent(payload, key=nil)
 
 # Inspect sent messages
-message = Deimos::TestHelpers.sent_messages[0]
+message = Deimos::Backends::Test.sent_messages[0]
 expect(message).to eq({
   message: {'some-key' => 'some-value'},
   topic: 'my-topic',
   key: 'my-id'
 })
 ```
-
-**Important note:** To use the `have_sent` helper, your producers need to be
-loaded / required *before* starting the test. You can do this in your
-`spec_helper` file, or if you are defining producers dynamically, you can
-add an `RSpec.prepend_before(:each)` block where you define the producer.
-Alternatively, you can use the `stub_producer` and `stub_consumer` methods
-in your test.
 
 There is also a helper method that will let you test if an existing schema
 would be compatible with a new version of it. You can use this in your 

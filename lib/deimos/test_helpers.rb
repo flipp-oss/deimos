@@ -149,19 +149,6 @@ module Deimos
       Deimos::Backends::Test.sent_messages.clear
     end
 
-    # test that a message was sent on the given topic.
-    # DEPRECATED - use the "have_sent" matcher instead.
-    # @param message [Hash]
-    # @param topic [String]
-    # @param key [String|Integer]
-    # @return [Boolean]
-    def was_message_sent?(message, topic, key=nil)
-      Deimos::Backends::Test.sent_messages.any? do |m|
-        message == m[:payload] && m[:topic] == topic &&
-          (key.present? ? m[:key] == key : true)
-      end
-    end
-
     # Test that a given handler will consume a given payload correctly, i.e.
     # that the schema is correct. If
     # a block is given, that block will be executed when `consume` is called.

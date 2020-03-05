@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# [1.6.0] - 2020-03-05
+- Removed `was_message_sent?` method from `TestHelpers`.
+- Bumped version to 1.6.0.
+
 # [1.6.0-beta1] - 2020-02-05
 - Updated dependency for Phobos to 1.9.0-beta3. This ensures compatibility with
   Phobos 2.0.
