@@ -8,69 +8,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 # [1.6.0] - 2020-03-05
-## Roadmap :car:
+### Roadmap :car:
 - Removed `was_message_sent?` method from `TestHelpers`.
 
 # [1.6.0-beta1] - 2020-02-05
-## Roadmap :car:
+### Roadmap :car:
 - Updated dependency for Phobos to 1.9.0-beta3. This ensures compatibility with
   Phobos 2.0.
-## Fixes :wrench:
+### Fixes :wrench:
 - Fixed RSpec warning when using `test_consume_invalid_message`.
 
 # [1.5.0-beta2] - 2020-01-17
-## Roadmap :car:
+### Roadmap :car:
 - Added schema backends, which should simplify Avro encoding and make it
   more flexible for unit tests and local development.
-## Features :star:
+### Features :star:
 - Add `:test` producer backend which replaces the existing TestHelpers
   functionality of writing messages to an in-memory hash.
 
 # [1.4.0-beta7] - 2019-12-16
-## Fixes :wrench:
+### Fixes :wrench:
 - Clone loggers when assigning to multiple levels.
 
 # [1.4.0-beta6] - 2019-12-16
-## Features :star:
+### Features :star:
 - Added default for max_bytes_per_partition.
 
 # [1.4.0-beta4] - 2019-11-26
-## Features :star:
+### Features :star:
 - Added `define_settings` to define settings without invoking callbacks.
 
 # [1.4.0-beta2] - 2019-11-22
-## Fixes :wrench:
+### Fixes :wrench:
 - Settings with default_proc were being called immediately
   instead of being lazy-evaluated.
 
 # [1.4.0-beta1] - 2019-11-22
-## Roadmap :car:
+### Roadmap :car:
 - Complete revamp of configuration method.
 
 # [1.3.0-beta5] - 2020-01-14
-## Features :star:
+### Features :star:
 - Added `db_producer.insert` and `db_producer.process` metrics.
 
 # [1.3.0-beta4] - 2019-12-02
-## Fixes :wrench:
+### Fixes :wrench:
 - Fixed bug where by running `rake deimos:start` without
   specifying a producer backend would crash.
 
 # [1.3.0-beta3] - 2019-11-26
-## Fixes :wrench:
+### Fixes :wrench:
 - Fixed bug in TestHelpers where key_decoder was not stubbed out.
 
 # [1.3.0-beta2] - 2019-11-22
-## Fixes :wrench:
+### Fixes :wrench:
 - Fixed bug where consumers would require a key config in all cases
   even though it's optional if they don't use keys.
 
 # [1.3.0-beta1] - 2019-11-21
-## Features :star:
+### Features :star:
 - Added `fetch_record` and `assign_key` methods to ActiveRecordConsumer.
 
 # [1.2.0-beta1] - 2019-09-12
-## Features :star:
+### Features :star:
 - Added `fatal_error` to both global config and consumer classes.
 - Changed `pending_db_messages_max_wait` metric to send per topic.
 - Added config to compact messages in the DB producer.
@@ -78,16 +78,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added config to provide a separate logger to the DB producer.
 
 # [1.1.0-beta2] - 2019-09-11
-## Fixes :wrench:
+### Fixes :wrench:
 - Fixed bug where ActiveRecordConsumer was not using `unscoped` to update
   via primary key and causing duplicate record errors.
 
 # [1.1.0-beta1] - 2019-09-10
-## Features :star:
+### Features :star:
 - Added BatchConsumer.
 
 ## [1.0.0] - 2019-09-03
-## Roadmap :car:
+### Roadmap :car:
 - Official release of Deimos 1.0!
 
 ## [1.0.0-beta26] - 2019-08-29
