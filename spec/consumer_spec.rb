@@ -40,15 +40,13 @@ module ConsumerTest
         k['test_id']
       end
       MyConsumer.new.around_consume({ 'test_id' => 'foo',
-                             'some_int' => 123
-                           }, test_metadata) do |_payload, metadata|
-        expect(metadata[:key]).to eq('foo')
-      end
+                                      'some_int' => 123 }, test_metadata) do |_payload, metadata|
+                                        expect(metadata[:key]).to eq('foo')
+                                      end
       MyConsumer.new.around_consume({ 'test_id' => 'foo',
-                             'some_int' => 123
-                           }, test_metadata) do |_payload, metadata|
-        expect(metadata[:key]).to eq('foo')
-      end
+                                      'some_int' => 123 }, test_metadata) do |_payload, metadata|
+                                        expect(metadata[:key]).to eq('foo')
+                                      end
     end
 
     it 'should consume a message on a topic' do
