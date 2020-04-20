@@ -85,7 +85,7 @@ module Deimos
           retry unless @signal_to_stop
         end
       rescue Exception => e
-        @logger.error("Failed to run listener (#{e.message}) #{error_metadata(e)}")
+        @logger.error("Failed to run executor (#{e.message}) #{error_metadata(e)}")
         raise e
       end
 

@@ -23,6 +23,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Consumers](#consumers)
    * [Rails Integration](#rails-integration)
    * [Database Backend](#database-backend)
+   * [Database Poller](#database-poller)
    * [Running Consumers](#running-consumers)
    * [Metrics](#metrics)
    * [Testing](#testing)
@@ -556,6 +557,72 @@ class MyConsumer < Deimos::ActiveRecordConsumer
   end
 end
 ```
+
+## Database Poller
+
+Another method of fetching updates from the database to Kafka is by polling
+the database (a process popularized by [Kafka Connect](https://docs.confluent.io/current/connect/index.html)).
+Deimos provides a database poller, which allows you the same pattern but
+with all the flexibility of real Ruby code, and the added advantage of having
+a single consistent framework to talk to Kafka.
+
+One of the disadvantages of Kafka Connect is that it can't detect deletions.
+You can get over this by configuring a mixin to send messages *only* on deletion,
+and use the poller to handle all other updates. You can reuse the same producer
+for both cases to handle joins, changes/mappings, business logic, etc.
+
+To enable the poller, generate the migration:
+
+```ruby
+rails g deimos:db_poller
+```
+
+Run the migration:
+
+```ruby
+rails db:migrate
+```
+
+Add the following configuration:
+
+```ruby
+Deimos.configure do
+  db_poller do
+    producer_class 'MyProducer' # an ActiveRecordProducer
+  end
+  db_poller do
+    producer_class 'MyOtherProducer'
+    run_every 2.minutes
+    delay 5.seconds # to allow for transactions to finish
+    full_table true # if set, dump the entire table every run; use for small tables
+  end
+end
+```
+
+All the information around connecting and querying the database lives in the
+producer itself, so you don't need to write any additional code. You can 
+define one additional method on the producer:
+
+```ruby
+class MyProducer < Deimos::ActiveRecordProducer
+  ...
+  def poll_query(time_from, time_to, column_name, full_scan)
+    # Default is to use the timestamp `column_name` to find all records
+    # between time_from and time_to, or if full_scan is set, to get all records.
+    # You can override or change this behavior if necessary.
+  end
+end
+```
+
+To run the DB poller:
+
+    rake deimos:db_poller
+
+Note that the DB poller creates one thread per configured poller, and is
+currently designed *not* to be scaled out - i.e. it assumes you will only
+have one process running at a time. If a particular poll takes longer than
+the poll interval (i.e. interval is set at 1 minute but it takes 75 seconds)
+the next poll will begin immediately following the first one completing.
 
 ## Running consumers
 

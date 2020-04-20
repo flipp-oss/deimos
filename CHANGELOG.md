@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When logging payloads and metadata, decode them first.
 - Fixes bug in `KafkaSource` that crashes when importing a mix of existing and new records with the `:on_duplicate_key_update` option.
 
+### Features :star:
+- Added the DB Poller feature / process.
+
 ## [1.6.1] - 2020-04-20
 ### Fixes :wrench:
 - Re-consuming a message after crashing would try to re-decode message keys.

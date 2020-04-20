@@ -340,6 +340,23 @@ module Deimos
       setting :heartbeat_interval
     end
 
+    setting_object :db_poller do
+      # Producer class to use for the poller.
+      setting :producer_class
+      # How often to run the poller, in seconds. If the poll takes longer than this
+      # time, it will run again immediately and the timeout
+      # will be pushed to the next e.g. 1 minute.
+      setting :run_every, 60
+      # Column to use to find updates. Must have an index on it.
+      setting :timestamp_column, :updated_at
+      # Amount of time, in seconds, to wait before catching updates, to allow transactions
+      # to complete but still pick up the right records.
+      setting :delay_time, 2
+      # If true, dump the full table rather than incremental changes. Should
+      # only be used for very small tables.
+      setting :full_table, false
+    end
+
     deprecate 'kafka_logger', 'kafka.logger'
     deprecate 'reraise_consumer_errors', 'consumers.reraise_errors'
     deprecate 'schema_registry_url', 'schema.registry_url'

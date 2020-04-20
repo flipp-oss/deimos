@@ -89,6 +89,28 @@ offset_commit_threshold|0|Number of messages that can be processed before their 
 heartbeat_interval|10|Interval between heartbeats; must be less than the session window.
 backoff|`(1000..60_000)`|Range representing the minimum and maximum number of milliseconds to back off after a consumer error.
 
+## Defining Database Pollers
+
+These are used when polling the database via `rake deimos:db_poller`. You
+can create a number of pollers, one per topic.
+
+```ruby
+Deimos.configure do
+  db_poller do
+    producer_class 'MyProducer'
+    run_every 2.minutes
+  end
+end
+```
+
+Config name|Default|Description
+-----------|-------|-----------
+producer_class|nil|ActiveRecordProducer class to use for sending messages.
+run_every|60|Amount of time in seconds to wait between runs.
+timestamp_column|`:updated_at`|Name of the column to query. Remember to add an index to this column!
+delay_time|2|Amount of time in seconds to wait before picking up records, to allow for transactions to finish.
+full_table|false|If set to true, do a full table dump to Kafka each run. Good for very small tables.
+
 ## Kafka Configuration
 
 Config name|Default|Description

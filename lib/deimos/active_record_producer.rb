@@ -59,6 +59,25 @@ module Deimos
           k.to_sym != :payload_key && !fields.map(&:name).include?(k)
         end
       end
+
+      # Query to use when polling the database with the DbPoller. Add
+      # includes, joins, or wheres as necessary, or replace entirely.
+      # @param time_from [Time] the time to start the query from.
+      # @param time_to [Time] the time to end the query.
+      # @param column_name [Symbol] the column name to look for.
+      # @param full_scan [Boolean] if true, grab all records.
+      def poll_query(time_from, time_to, column_name, full_scan)
+        klass = config[:record_class]
+        table = ActiveRecord::Base.connection.quote_table_name(klass.table_name)
+        column = ActiveRecord::Base.connection.quote_column_name(column_name)
+        if full_scan
+          klass.all
+        else
+          klass.where("#{table}.#{column} > ? AND #{table}.#{column} <= ?",
+                      time_from,
+                      time_to)
+        end
+      end
     end
   end
 end

@@ -1,0 +1,10 @@
+class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version %>
+  def change
+    create_table :deimos_poll_info, force: true do |t|
+      t.string :producer, null: false
+      t.datetime :last_sent
+    end
+
+    add_index :deimos_poll_info, [:producer]
+  end
+end

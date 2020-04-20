@@ -31,6 +31,7 @@ if defined?(ActiveRecord)
   require 'deimos/utils/signal_handler.rb'
   require 'deimos/utils/executor.rb'
   require 'deimos/utils/db_producer.rb'
+  require 'deimos/utils/db_poller'
 end
 
 require 'deimos/utils/inline_consumer'
