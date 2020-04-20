@@ -32,6 +32,25 @@ module ConsumerTest
                            end
     end
 
+    it 'should consume a message idempotently' do
+      # testing for a crash and re-consuming the same message/metadata
+      key = { 'test_id' => 'foo' }
+      test_metadata = { key: key }
+      allow_any_instance_of(MyConsumer).to(receive(:decode_key)) do |_instance, k|
+        k['test_id']
+      end
+      MyConsumer.new.around_consume({ 'test_id' => 'foo',
+                             'some_int' => 123
+                           }, test_metadata) do |_payload, metadata|
+        expect(metadata[:key]).to eq('foo')
+      end
+      MyConsumer.new.around_consume({ 'test_id' => 'foo',
+                             'some_int' => 123
+                           }, test_metadata) do |_payload, metadata|
+        expect(metadata[:key]).to eq('foo')
+      end
+    end
+
     it 'should consume a message on a topic' do
       test_consume_message('my_consume_topic',
                            'test_id' => 'foo',

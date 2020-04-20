@@ -18,9 +18,10 @@ module Deimos
       _received_message(payload, metadata)
       benchmark = Benchmark.measure do
         _with_error_span(payload, metadata) do
-          metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
+          new_metadata = metadata.dup
+          new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
           decoded_payload = payload ? self.class.decoder.decode(payload) : nil
-          yield decoded_payload, metadata
+          yield decoded_payload, new_metadata
         end
       end
       _handle_success(benchmark.real, payload, metadata)
