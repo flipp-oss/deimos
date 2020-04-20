@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## [1.6.1] - 2020-04-20
+### Fixes :wrench:
+- Re-consuming a message after crashing would try to re-decode message keys.
+
 # [1.6.0] - 2020-03-05
 ### Roadmap :car:
 - Removed `was_message_sent?` method from `TestHelpers`.
