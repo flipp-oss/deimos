@@ -66,6 +66,7 @@ GEM
     concurrent-ruby-ext (1.1.6)
       concurrent-ruby (= 1.1.6)
     crass (1.0.6)
+    database_cleaner (1.8.5)
     ddtrace (0.35.1)
       msgpack
     diff-lcs (1.3)
@@ -232,6 +233,7 @@ DEPENDENCIES
   activerecord (~> 5.2)
   activerecord-import
   avro (~> 1.9)
+  database_cleaner (~> 1.7)
   ddtrace (~> 0.11)
   deimos-ruby!
   dogstatsd-ruby (~> 4.2)

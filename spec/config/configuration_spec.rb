@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class MyConfigConsumer < Deimos::Consumer
+  def consume; end
 end
 describe Deimos, 'configuration' do
   it 'should configure with deprecated fields' do

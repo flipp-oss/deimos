@@ -1,0 +1,43 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "Wibble",
+  "type": "record",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "wibble_id",
+      "type": "long"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "floop",
+      "type": "string"
+    },
+    {
+      "name": "birthday_int",
+      "type": "int"
+    },
+    {
+      "name": "birthday_long",
+      "type": "long"
+    },
+    {
+      "name": "birthday_optional",
+      "type": ["null", "int"]
+    },
+    {
+      "name": "updated_at",
+      "type": "long"
+    },
+    {
+      "name": "created_at",
+      "type": "long"
+    }
+  ]
+}

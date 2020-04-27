@@ -108,54 +108,62 @@ describe Deimos do
       expect { described_class.start_db_backend!(thread_count: 0) }.
         to raise_error('Thread count is not given or set to zero, exiting')
     end
+  end
 
-    describe 'delivery configuration' do
-      before(:each) do
-        allow(YAML).to receive(:load).and_return(phobos_configuration)
-      end
+  describe 'delivery configuration' do
+    before(:each) do
+      allow(YAML).to receive(:load).and_return(phobos_configuration)
+    end
 
-      it 'should not raise an error with properly configured handlers' do
-        path = config_path # for scope issues in the block below
-        # Add explicit consumers
-        phobos_configuration['listeners'] << { 'handler' => 'ConsumerTest::MyConsumer',
-                                               'delivery' => 'message' }
-        phobos_configuration['listeners'] << { 'handler' => 'ConsumerTest::MyConsumer',
-                                               'delivery' => 'batch' }
+    it 'should not raise an error with properly configured handlers' do
+      expect {
+        described_class.configure do
+          consumer do
+            class_name 'ConsumerTest::MyConsumer'
+            delivery :message
+          end
+          consumer do
+            class_name 'ConsumerTest::MyConsumer'
+            delivery :batch
+          end
+          consumer do
+            class_name 'ConsumerTest::MyBatchConsumer'
+            delivery :inline_batch
+          end
+        end
+      }.not_to raise_error
+    end
 
-        expect {
-          described_class.configure { |c| c.phobos_config_file = path }
-        }.not_to raise_error
-      end
+    it 'should raise an error if inline_batch listeners do not implement consume_batch' do
+      expect {
+        described_class.configure do
+          consumer do
+            class_name 'ConsumerTest::MyConsumer'
+            delivery :inline_batch
+          end
+        end
+      }.to raise_error('BatchConsumer ConsumerTest::MyConsumer does not implement `consume_batch`')
+    end
 
-      it 'should raise an error if BatchConsumers do not have inline_batch delivery' do
-        path = config_path # for scope issues in the block below
-        phobos_configuration['listeners'] = [{ 'handler' => 'ConsumerTest::MyBatchConsumer',
-                                               'delivery' => 'message' }]
+    it 'should raise an error if Consumers do not have message or batch delivery' do
+      expect {
+        described_class.configure do
+          consumer do
+            class_name 'ConsumerTest::MyBatchConsumer'
+            delivery :message
+          end
+        end
+      }.to raise_error('Non-batch Consumer ConsumerTest::MyBatchConsumer does not implement `consume`')
+    end
 
-        expect {
-          described_class.configure { |c| c.phobos_config_file = path }
-        }.to raise_error('BatchConsumer ConsumerTest::MyBatchConsumer must have delivery set to `inline_batch`')
-      end
-
-      it 'should raise an error if Consumers do not have message or batch delivery' do
-        path = config_path # for scope issues in the block below
-        phobos_configuration['listeners'] = [{ 'handler' => 'ConsumerTest::MyConsumer',
-                                               'delivery' => 'inline_batch' }]
-
-        expect {
-          described_class.configure { |c| c.phobos_config_file = path }
-        }.to raise_error('Non-batch Consumer ConsumerTest::MyConsumer must have delivery set to `message` or `batch`')
-      end
-
-      it 'should treat nil as `batch`' do
-        path = config_path # for scope issues in the block below
-        phobos_configuration['listeners'] = [{ 'handler' => 'ConsumerTest::MyConsumer' }]
-
-        expect {
-          described_class.configure { |c| c.phobos_config_file = path }
-        }.not_to raise_error
-      end
-
+    it 'should treat nil as `batch`' do
+      expect {
+        described_class.configure do
+          consumer do
+            class_name 'ConsumerTest::MyConsumer'
+          end
+        end
+      }.not_to raise_error
     end
   end
 end

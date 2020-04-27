@@ -327,11 +327,11 @@ Deimos.configure do
 end
 ```
 
-Batch consumers must inherit from the Deimos::BatchConsumer class as in
-this sample:
+Batch consumers will invoke the `consume_batch` method instead of `consume`
+as in this example:
 
 ```ruby
-class MyBatchConsumer < Deimos::BatchConsumer
+class MyBatchConsumer < Deimos::Consumer
 
   def consume_batch(payloads, metadata)
     # payloads is an array of schema-decoded hashes.
@@ -533,12 +533,14 @@ class MyConsumer < Deimos::ActiveRecordConsumer
 
   # Optional override of the way to fetch records based on payload and
   # key. Default is to use the key to search the primary key of the table.
+  # Only used in non-batch mode.
   def fetch_record(klass, payload, key)
     super
   end
 
   # Optional override on how to set primary key for new records. 
   # Default is to set the class's primary key to the message's decoded key. 
+  # Only used in non-batch mode.
   def assign_key(record, payload, key)
     super
   end
@@ -546,7 +548,49 @@ class MyConsumer < Deimos::ActiveRecordConsumer
   # Optional override of the default behavior, which is to call `destroy`
   # on the record - e.g. you can replace this with "archiving" the record
   # in some way. 
+  # Only used in non-batch mode.
   def destroy_record(record)
+    super
+  end
+ 
+  # Optional override to change the attributes of the record before they
+  # are saved.
+  def record_attributes(payload)
+    super.merge(:some_field => 'some_value')
+  end
+
+  # Optional override to change the attributes used for identifying records
+  def record_key(payload)
+    super
+  end
+end
+```
+
+#### Batch Consumers
+
+Deimos also provides a batch consumption mode for `ActiveRecordConsumer` which
+processes groups of messages at once using the ActiveRecord backend. 
+
+Batch ActiveRecord consumers make use of the
+[activerecord-import](https://github.com/zdennis/activerecord-import) to insert
+or update multiple records in bulk SQL statements. This reduces processing
+time at the cost of skipping ActiveRecord callbacks for individual records.
+Deleted records (tombstones) are grouped into `delete_all` calls and thus also
+skip `destroy` callbacks.
+
+Batch consumption is used when the `delivery` setting for your consumer is set to `inline_batch`.
+
+A sample batch consumer would look as follows:
+
+```ruby
+class MyConsumer < Deimos::ActiveRecordConsumer
+  schema 'MySchema'
+  key_config field: 'my_field'
+  record_class Widget
+  # Optional override of the default behavior, which is to call `delete_all`
+  # on the associated records - e.g. you can replace this with setting a deleted
+  # flag on the record. 
+  def remove_records(records)
     super
   end
  

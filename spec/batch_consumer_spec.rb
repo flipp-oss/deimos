@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
-require 'deimos/batch_consumer'
-
 # :nodoc:
 module ConsumerTest
-  describe Deimos::BatchConsumer do
+  describe Deimos::Consumer, 'Batch Consumer' do
 
     prepend_before(:each) do
       # :nodoc:
-      consumer_class = Class.new(Deimos::BatchConsumer) do
+      consumer_class = Class.new(described_class) do
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config field: 'test_id'
@@ -30,6 +28,24 @@ module ConsumerTest
 
     let(:invalid_payloads) do
       batch.concat([{ 'invalid' => 'key' }])
+    end
+
+    it 'should provide backwards compatibility for BatchConsumer class' do
+      consumer_class = Class.new(Deimos::BatchConsumer) do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config field: 'test_id'
+
+        # :nodoc:
+        def consume_batch(_payloads, _metadata)
+          raise 'This should not be called unless call_original is set'
+        end
+      end
+      stub_const('ConsumerTest::MyOldBatchConsumer', consumer_class)
+
+      test_consume_batch(MyOldBatchConsumer, batch) do |received, _metadata|
+        expect(received).to eq(batch)
+      end
     end
 
     it 'should consume a batch of messages' do
@@ -99,7 +115,7 @@ module ConsumerTest
       end
 
       it 'should decode plain keys for all messages in the batch' do
-        consumer_class = Class.new(Deimos::BatchConsumer) do
+        consumer_class = Class.new(described_class) do
           schema 'MySchema'
           namespace 'com.my-namespace'
           key_config plain: true
@@ -115,7 +131,7 @@ module ConsumerTest
     describe 'timestamps' do
       before(:each) do
         # :nodoc:
-        consumer_class = Class.new(Deimos::BatchConsumer) do
+        consumer_class = Class.new(described_class) do
           schema 'MySchemaWithDateTimes'
           namespace 'com.my-namespace'
           key_config plain: true
@@ -197,7 +213,7 @@ module ConsumerTest
     describe 'logging' do
       before(:each) do
         # :nodoc:
-        consumer_class = Class.new(Deimos::BatchConsumer) do
+        consumer_class = Class.new(described_class) do
           schema 'MySchemaWithUniqueId'
           namespace 'com.my-namespace'
           key_config plain: true

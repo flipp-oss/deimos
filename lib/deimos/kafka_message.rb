@@ -2,7 +2,7 @@
 
 module Deimos
   # Store Kafka messages into the database.
-  class KafkaMessage < ActiveRecord::Base
+  class KafkaMessage < ::ActiveRecord::Base
     self.table_name = 'kafka_messages'
 
     validates_presence_of :topic
