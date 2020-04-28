@@ -131,7 +131,7 @@ module KafkaSourceSpec
       widget2 = Widget.create(widget_id: 2, name: 'Widget 2')
       widget1.name = 'New Widget 1'
       widget2.name = 'New Widget 2'
-      Widget.import([widget1, widget2], :on_duplicate_key_update => %i(widget_id name))
+      Widget.import([widget1, widget2], on_duplicate_key_update: %i(widget_id name))
 
       expect('my-topic').to have_sent({
                                         widget_id: 1,
@@ -161,7 +161,7 @@ module KafkaSourceSpec
 
       widget2 = Widget.new(widget_id: 2, name: 'Widget 2')
       widget1.name = 'New Widget 1'
-      Widget.import([widget1, widget2], :on_duplicate_key_update => %i(widget_id))
+      Widget.import([widget1, widget2], on_duplicate_key_update: %i(widget_id))
       widgets = Widget.all
       expect('my-topic').to have_sent({
                                         widget_id: 1,

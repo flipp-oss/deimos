@@ -103,21 +103,21 @@ module Deimos
 
         if hashes_without_id.any?
           if options[:on_duplicate_key_update].present? &&
-              options[:on_duplicate_key_update] != [:updated_at]
+             options[:on_duplicate_key_update] != [:updated_at]
             unique_columns = column_names.map(&:to_s) -
-                options[:on_duplicate_key_update].map(&:to_s) - %w(id created_at)
+                             options[:on_duplicate_key_update].map(&:to_s) - %w(id created_at)
             records = hashes_without_id.map do |hash|
               self.where(unique_columns.map { |c| [c, hash[c]] }.to_h).first
             end
             self.kafka_producers.each { |p| p.send_events(records) }
           else
             # re-fill IDs based on what was just entered into the DB.
-            if self.connection.adapter_name.downcase =~ /sqlite/
-              last_id = self.connection.select_value('select last_insert_rowid()') -
-                  hashes_without_id.size + 1
-            else # mysql
-              last_id = self.connection.select_value('select LAST_INSERT_ID()')
-            end
+            last_id = if self.connection.adapter_name.downcase =~ /sqlite/
+                        self.connection.select_value('select last_insert_rowid()') -
+                          hashes_without_id.size + 1
+                      else # mysql
+                        self.connection.select_value('select LAST_INSERT_ID()')
+                      end
             hashes_without_id.each_with_index do |attrs, i|
               attrs[:id] = last_id + i
             end
