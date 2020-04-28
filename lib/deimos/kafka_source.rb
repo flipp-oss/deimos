@@ -105,7 +105,7 @@ module Deimos
           if options[:on_duplicate_key_update].present? &&
               options[:on_duplicate_key_update] != [:updated_at]
             unique_columns = column_names.map(&:to_s) -
-                options[:on_duplicate_key_update].map(&:to_s) - %w(created_at)
+                options[:on_duplicate_key_update].map(&:to_s) - %w(id created_at)
             records = hashes_without_id.map do |hash|
               self.where(unique_columns.map { |c| [c, hash[c]] }.to_h).first
             end
