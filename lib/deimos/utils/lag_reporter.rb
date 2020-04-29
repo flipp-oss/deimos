@@ -45,14 +45,26 @@ module Deimos
           self.topics[topic.to_s] ||= Topic.new(topic, self)
           self.topics[topic.to_s].compute_lag(partition, offset)
         end
+
+        # Adjust the current lag based by asking Kafka based on the current offset.
+        # @param topic [String]
+        # @param partition [Integer]
+        # @param offset [Integer]
+        def recompute_lag(topic, partition)
+          self.topics[topic.to_s] ||= Topic.new(topic, self)
+          self.topics[topic.to_s].recompute_lag(partition)
+        end
       end
 
-      # Topic which has a hash of partition => last known offset lag
+      # Topic which has a hash of partition => last known offset lag and
+      # hash of partition => last known offset
       class Topic
         # @return [String]
         attr_accessor :topic_name
         # @return [Hash<Integer, Integer>]
         attr_accessor :partition_offset_lags
+        # @return [Hash<Integer, Integer>]
+        attr_accessor :partition_last_offsets
         # @return [ConsumerGroup]
         attr_accessor :consumer_group
 
@@ -62,12 +74,19 @@ module Deimos
           self.topic_name = topic_name
           self.consumer_group = group
           self.partition_offset_lags = {}
+          self.partition_last_offsets = {}
         end
 
         # @param partition [Integer]
         # @param lag [Integer]
         def assign_lag(partition, lag)
           self.partition_offset_lags[partition.to_i] = lag
+        end
+
+        # @param partition [Integer]
+        # @param lag [Integer]
+        def assign_last_offset(partition, offset)
+          self.partition_last_offsets[partition.to_i] = offset
         end
 
         # @param partition [Integer]
@@ -78,10 +97,30 @@ module Deimos
           begin
             client = Phobos.create_kafka_client
             last_offset = client.last_offset_for(self.topic_name, partition)
+            # Store this "last offset" for later
+            assign_last_offset(partition, last_offset)
             assign_lag(partition, [last_offset - offset, 0].max)
           rescue StandardError # don't do anything, just wait
             Deimos.config.logger.
               debug("Error computing lag for #{self.topic_name}, will retry")
+          end
+        end
+
+        # @param partition [Integer]
+        # @param offset [Integer]
+        def recompute_lag(partition)
+          current_lag = self.partition_offset_lags[partition.to_i]
+          last_reported_offset = self.partition_last_offsets[partition.to_i]
+          return unless current_lag && last_reported_offset
+
+          begin
+            client = Phobos.create_kafka_client
+            last_offset = client.last_offset_for(self.topic_name, partition)
+            assign_last_offset(partition, last_offset)
+            assign_lag(partition, current_lag + (last_offset - last_reported_offset))
+          rescue StandardError # don't do anything, just wait
+            Deimos.config.logger.
+              debug("Error recomputing lag for #{self.topic_name}, will retry")
           end
         end
 
@@ -143,6 +182,7 @@ module Deimos
             consumer_group = @groups[group.to_s]
             payload[:topic_partitions].each do |topic, partitions|
               partitions.each do |partition|
+                consumer_group.recompute_lag(topic, partition)
                 consumer_group.report_lag(topic, partition)
               end
             end
