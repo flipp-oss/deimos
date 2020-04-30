@@ -93,31 +93,37 @@ module Deimos
 
         # This will contain an array of hashes, where each hash is the actual
         # attribute hash that created the object.
-        ids = if results.is_a?(Array)
-                results[1]
-              elsif results.respond_to?(:ids)
-                results.ids
-              else
-                []
-              end
-        if ids.blank?
-          # re-fill IDs based on what was just entered into the DB.
-          if self.connection.adapter_name.downcase =~ /sqlite/
-            last_id = self.connection.select_value('select last_insert_rowid()')
-            ids = ((last_id - array_of_attributes.size + 1)..last_id).to_a
-          else # mysql
-            last_id = self.connection.select_value('select LAST_INSERT_ID()')
-            ids = (last_id..(last_id + array_of_attributes.size)).to_a
+        array_of_hashes = []
+        array_of_attributes.each do |array|
+          array_of_hashes << column_names.zip(array).to_h.with_indifferent_access
+        end
+        hashes_with_id, hashes_without_id = array_of_hashes.partition { |arr| arr[:id].present? }
+
+        self.kafka_producers.each { |p| p.send_events(hashes_with_id) }
+
+        if hashes_without_id.any?
+          if options[:on_duplicate_key_update].present? &&
+             options[:on_duplicate_key_update] != [:updated_at]
+            unique_columns = column_names.map(&:to_s) -
+                             options[:on_duplicate_key_update].map(&:to_s) - %w(id created_at)
+            records = hashes_without_id.map do |hash|
+              self.where(unique_columns.map { |c| [c, hash[c]] }.to_h).first
+            end
+            self.kafka_producers.each { |p| p.send_events(records) }
+          else
+            # re-fill IDs based on what was just entered into the DB.
+            last_id = if self.connection.adapter_name.downcase =~ /sqlite/
+                        self.connection.select_value('select last_insert_rowid()') -
+                          hashes_without_id.size + 1
+                      else # mysql
+                        self.connection.select_value('select LAST_INSERT_ID()')
+                      end
+            hashes_without_id.each_with_index do |attrs, i|
+              attrs[:id] = last_id + i
+            end
+            self.kafka_producers.each { |p| p.send_events(hashes_without_id) }
           end
         end
-        array_of_hashes = []
-        array_of_attributes.each_with_index do |array, i|
-          hash = column_names.zip(array).to_h.with_indifferent_access
-          hash[self.primary_key] = ids[i] if hash[self.primary_key].blank?
-          array_of_hashes << hash
-        end
-
-        self.kafka_producers.each { |p| p.send_events(array_of_hashes) }
         results
       end
     end

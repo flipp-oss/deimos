@@ -126,6 +126,59 @@ module KafkaSourceSpec
                                       }, widgets[2].id)
     end
 
+    it 'should send events on import with on_duplicate_key_update and existing records' do
+      widget1 = Widget.create(widget_id: 1, name: 'Widget 1')
+      widget2 = Widget.create(widget_id: 2, name: 'Widget 2')
+      widget1.name = 'New Widget 1'
+      widget2.name = 'New Widget 2'
+      Widget.import([widget1, widget2], on_duplicate_key_update: %i(widget_id name))
+
+      expect('my-topic').to have_sent({
+                                        widget_id: 1,
+                                        name: 'New Widget 1',
+                                        id: widget1.id,
+                                        created_at: anything,
+                                        updated_at: anything
+                                      }, widget1.id)
+      expect('my-topic').to have_sent({
+                                        widget_id: 2,
+                                        name: 'New Widget 2',
+                                        id: widget2.id,
+                                        created_at: anything,
+                                        updated_at: anything
+                                      }, widget2.id)
+    end
+
+    it 'should not fail when mixing existing and new records for import :on_duplicate_key_update' do
+      widget1 = Widget.create(widget_id: 1, name: 'Widget 1')
+      expect('my-topic').to have_sent({
+                                        widget_id: 1,
+                                        name: 'Widget 1',
+                                        id: widget1.id,
+                                        created_at: anything,
+                                        updated_at: anything
+                                      }, widget1.id)
+
+      widget2 = Widget.new(widget_id: 2, name: 'Widget 2')
+      widget1.name = 'New Widget 1'
+      Widget.import([widget1, widget2], on_duplicate_key_update: %i(widget_id))
+      widgets = Widget.all
+      expect('my-topic').to have_sent({
+                                        widget_id: 1,
+                                        name: 'New Widget 1',
+                                        id: widgets[0].id,
+                                        created_at: anything,
+                                        updated_at: anything
+                                      }, widgets[0].id)
+      expect('my-topic').to have_sent({
+                                        widget_id: 2,
+                                        name: 'Widget 2',
+                                        id: widgets[1].id,
+                                        created_at: anything,
+                                        updated_at: anything
+                                      }, widgets[1].id)
+    end
+
     it 'should send events even if the save fails' do
       widget = Widget.create!(widget_id: 1, name: 'widget')
       expect('my-topic').to have_sent({
