@@ -15,12 +15,12 @@ module Deimos
 
     # :nodoc:
     def around_consume(payload, metadata)
-      _received_message(payload, metadata)
       benchmark = Benchmark.measure do
         _with_error_span(payload, metadata) do
           new_metadata = metadata.dup
           new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
           decoded_payload = payload ? self.class.decoder.decode(payload) : nil
+          _received_message(payload, metadata)
           yield decoded_payload, new_metadata
         end
       end
