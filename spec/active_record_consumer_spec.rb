@@ -22,6 +22,10 @@ module ActiveRecordProducerTest
       Widget.reset_column_information
     end
 
+    before(:each) do
+      Widget.delete_all
+    end
+
     after(:all) do
       ActiveRecord::Base.connection.drop_table(:widgets)
     end
@@ -102,9 +106,9 @@ module ActiveRecordProducerTest
     end
 
     it 'should update only updated_at' do
-      travel_to Time.local(2020, 05, 05, 05, 05, 05)
+      travel_to Time.local(2020, 5, 5, 5, 5, 5)
       widget1 = Widget.create!(test_id: 'id1', some_int: 3)
-      expect(widget1.updated_at.in_time_zone).to eq(Time.local(2020, 05, 05, 05, 05, 05))
+      expect(widget1.updated_at.in_time_zone).to eq(Time.local(2020, 5, 5, 5, 5, 5))
 
       travel 1.day
       test_consume_message(MyCustomFetchConsumer, {
@@ -112,7 +116,7 @@ module ActiveRecordProducerTest
                              some_int: 3
                            }, { call_original: true })
       expect(widget1.reload.updated_at.in_time_zone).
-        to eq(Time.local(2020, 05, 06, 05, 05, 05))
+        to eq(Time.local(2020, 5, 6, 5, 5, 5))
       travel_back
     end
 
