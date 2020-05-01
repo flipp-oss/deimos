@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('guard-rubocop', '~> 1')
   spec.add_development_dependency('mysql2', '~> 0.5')
   spec.add_development_dependency('pg', '~> 1.1')
-  spec.add_development_dependency('rails', '~> 5.2')
+  spec.add_development_dependency('rails', '~> 5.2', '>= 5.2.4.2')
   spec.add_development_dependency('rake', '~> 13')
   spec.add_development_dependency('rspec', '~> 3')
   spec.add_development_dependency('rspec_junit_formatter', '~>0.3')
