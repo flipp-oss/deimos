@@ -51,7 +51,7 @@ module Deimos
         record.send("#{k}=", v)
       end
       record.created_at ||= Time.zone.now if record.respond_to?(:created_at)
-      record.updated_at ||= Time.zone.now if record.respond_to?(:updated_at)
+      record.updated_at = Time.zone.now if record.respond_to?(:updated_at)
       record.save!
     end
 

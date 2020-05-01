@@ -101,6 +101,21 @@ module ActiveRecordProducerTest
 
     end
 
+    it 'should update only updated_at' do
+      travel_to Time.local(2020, 05, 05, 05, 05, 05)
+      widget1 = Widget.create!(test_id: 'id1', some_int: 3)
+      expect(widget1.updated_at.in_time_zone).to eq(Time.local(2020, 05, 05, 05, 05, 05))
+
+      travel 1.day
+      test_consume_message(MyCustomFetchConsumer, {
+                             test_id: 'id1',
+                             some_int: 3
+                           }, { call_original: true })
+      expect(widget1.reload.updated_at.in_time_zone).
+        to eq(Time.local(2020, 05, 06, 05, 05, 05))
+      travel_back
+    end
+
     it 'should find widgets by custom logic' do
       widget1 = Widget.create!(test_id: 'id1')
       expect(widget1.some_int).to be_nil
