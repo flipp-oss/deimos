@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.6.3 - 2020-05-04
+### Fixes :wrench:
+- Fixed the payload logging fix.
+
 ## 1.6.2 - 2020-05-04
 ### Fixes :wrench:
 - When saving records via `ActiveRecordConsumer`, update `updated_at` to today's time
