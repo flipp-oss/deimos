@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## UNRELEASED
+
+## 1.6.2 - 2020-05-04
 ### Fixes :wrench:
+- When saving records via `ActiveRecordConsumer`, update `updated_at` to today's time
+  even if nothing else was saved.
+- When logging payloads and metadata, decode them first.
 - Fixes bug in `KafkaSource` that crashes when importing a mix of existing and new records with the `:on_duplicate_key_update` option.
 
 ## [1.6.1] - 2020-04-20
