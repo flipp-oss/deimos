@@ -13,6 +13,18 @@ module Deimos
       # Needed for Executor so it can identify the worker
       attr_reader :id
 
+      # Reset a poller to the given time. Use if you are starting a brand new
+      # poller and don't want it starting from the beginning of time.
+      # @param producer_name [String]
+      # @param time [TimeWithZone]
+      def self.reset_poller(producer_name, time=Time.zone.now)
+        info = Deimos::PollInfo.find_by_producer(producer_name) ||
+               Deimos::PollInfo.new(producer: producer_name)
+        info.last_sent = time
+        info.last_sent_id = 0
+        info.save!
+      end
+
       # Begin the DB Poller process.
       def self.start!
         if Deimos.config.db_poller_objects.empty?
@@ -49,6 +61,10 @@ module Deimos
       # 2) On a loop, process all the recent updates between the last time
       # we ran and now.
       def start
+        # Don't send asynchronously
+        if Deimos.config.producers.backend == :kafka_async
+          Deimos.config.producers.backend = :kafka
+        end
         Deimos.config.logger.info('Starting...')
         @signal_to_stop = false
         retrieve_poll_info
@@ -67,7 +83,8 @@ module Deimos
         ActiveRecord::Base.connection.reconnect!
         @info = Deimos::PollInfo.find_by_producer(@config.producer_class) ||
                 Deimos::PollInfo.create!(producer: @config.producer_class,
-                                         last_sent: Time.new(0))
+                                         last_sent: Time.new(0),
+                                         last_sent_id: 0)
       end
 
       # Stop the poll.
@@ -80,33 +97,61 @@ module Deimos
       # will busy-wait (sleeping 1/2 second) until it's ready.
       # @return [Boolean]
       def should_run?
-        Time.zone.now - @info.last_sent >= @config.run_every
+        Time.zone.now - @info.last_sent - @config.delay_time >= @config.run_every
+      end
+
+      # @param record [ActiveRecord::Base]
+      # @return [ActiveSupport::TimeWithZone]
+      def last_updated(record)
+        record.public_send(@config.timestamp_column)
       end
 
       # Send messages for updated data.
       def process_updates
         return unless should_run?
 
-        time_from = @info.last_sent.in_time_zone
+        time_from = @config.full_table ? Time.new(0) : @info.last_sent.in_time_zone
         time_to = Time.zone.now - @config.delay_time
         Deimos.config.logger.info("Polling #{@producer.topic} from #{time_from} to #{time_to}")
         message_count = 0
-        batch_count = 1
+        batch_count = 0
 
         # poll_query gets all the relevant data from the database, as defined
         # by the producer itself.
-        @producer.poll_query(time_from,
-                             time_to,
-                             @config.timestamp_column,
-                             @config.full_table).
-          find_in_batches(batch_size: BATCH_SIZE) do |batch|
-            Deimos.config.logger.debug("Polling #{@producer.topic}, batch #{batch_count} (starting #{batch.first.id})")
-            @producer.send_events(batch)
-            message_count += batch.size
-            batch_count += 1
-          end
-        @info.update_attribute(:last_sent, time_to)
+        loop do
+          Deimos.config.logger.debug("Polling #{@producer.topic}, batch #{batch_count + 1}")
+          batch = fetch_results(time_from, time_to).to_a
+          break if batch.empty?
+
+          batch_count += 1
+          process_batch(batch)
+          message_count += batch.size
+          time_from = last_updated(batch.last)
+        end
         Deimos.config.logger.info("Poll #{@producer.topic} complete at #{time_to} (#{message_count} messages, #{batch_count} batches}")
+      end
+
+      # @param time_from [ActiveSupport::TimeWithZone]
+      # @param time_to [ActiveSupport::TimeWithZone]
+      # @return [ActiveRecord::Relation]
+      def fetch_results(time_from, time_to)
+        id = @producer.config[:record_class].primary_key
+        @producer.poll_query(time_from: time_from,
+                             time_to: time_to,
+                             column_name: @config.timestamp_column,
+                             min_id: @info.last_sent_id).
+          limit(BATCH_SIZE).
+          order("#{@config.timestamp_column}, #{id}")
+      end
+
+      # @param batch [Array<ActiveRecord::Base>]
+      def process_batch(batch)
+        record = batch.last
+        id_method = record.class.primary_key
+        last_id = record.public_send(id_method)
+        last_updated_at = last_updated(record)
+        @producer.send_events(batch)
+        @info.update_attributes!(last_sent: last_updated_at, last_sent_id: last_id)
       end
     end
   end

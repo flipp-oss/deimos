@@ -90,7 +90,7 @@ module ConsumerTest
             'some_int' => 123 },
           { skip_expectation: true }
         ) { raise 'OH NOES' }
-      } .not_to raise_error
+      }.not_to raise_error
     end
 
     it 'should not fail when consume fails without reraising errors' do
@@ -101,7 +101,7 @@ module ConsumerTest
           { 'invalid' => 'key' },
           { skip_expectation: true }
         )
-      } .not_to raise_error
+      }.not_to raise_error
     end
 
     it 'should call original' do

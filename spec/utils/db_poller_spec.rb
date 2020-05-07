@@ -1,6 +1,48 @@
 # frozen_string_literal: true
 
+# @param seconds [Integer]
+# @return [Time]
+def time_value(secs: 0, mins: 0)
+  Time.local(2015, 5, 5, 1, 0, 0) + (secs + (mins * 60))
+end
+
 each_db_config(Deimos::Utils::DbPoller) do
+
+  before(:each) do
+    Deimos::PollInfo.delete_all
+  end
+
+  describe '#reset_poller' do
+
+    it 'should save a new info' do
+      travel_to time_value
+      expect(Deimos::PollInfo.count).to eq(0)
+      described_class.reset_poller('MyProducer', time_value.strftime('%Y-%m-%d %H:%M:%S'))
+      expect(Deimos::PollInfo.count).to eq(1)
+      info = Deimos::PollInfo.first
+      expect(info.producer).to eq('MyProducer')
+      expect(info.last_sent).to eq(time_value.strftime('%Y-%m-%d %H:%M:%S'))
+      expect(info.last_sent_id).to eq(0)
+      travel_back
+    end
+
+    it 'should update existing info' do
+      travel_to time_value
+      Deimos::PollInfo.create!(producer: 'MyProducer',
+                               last_sent: 1.year.ago,
+                               last_sent_id: 5)
+      expect(Deimos::PollInfo.count).to eq(1)
+      described_class.reset_poller('MyProducer', time_value.strftime('%Y-%m-%d %H:%M:%S'))
+      expect(Deimos::PollInfo.count).to eq(1)
+      info = Deimos::PollInfo.first
+      expect(info.producer).to eq('MyProducer')
+      expect(info.last_sent).to eq(time_value.strftime('%Y-%m-%d %H:%M:%S'))
+      expect(info.last_sent_id).to eq(0)
+      travel_back
+    end
+
+  end
+
   describe '#start!' do
 
     before(:each) do
@@ -94,12 +136,12 @@ each_db_config(Deimos::Utils::DbPoller) do
     end
 
     specify '#retrieve_poll_info' do
-      travel_to(Time.zone.local(2020, 0o5, 0o5, 0o5, 0o0, 0o0))
       poller.retrieve_poll_info
       expect(Deimos::PollInfo.count).to eq(1)
       info = Deimos::PollInfo.last
       expect(info.producer).to eq('MyProducer')
       expect(info.last_sent).to eq(Time.new(0))
+      expect(info.last_sent_id).to eq(0)
     end
 
     specify '#start' do
@@ -113,118 +155,179 @@ each_db_config(Deimos::Utils::DbPoller) do
 
     specify '#should_run?' do
       Deimos::PollInfo.create!(producer: 'MyProducer',
-                               last_sent: Time.zone.local(2020, 0o5, 0o5, 0o3, 59, 0o0))
+                               last_sent: time_value)
       poller.retrieve_poll_info
 
-      travel_to(Time.zone.local(2020, 0o5, 0o5, 0o5, 0o0, 0o0))
-      expect(poller.should_run?).to eq(true)
-
       # run_every is set to 1 minute
-
-      travel_to(Time.zone.local(2020, 0o5, 0o5, 0o4, 0o1, 0o0))
+      travel_to time_value(secs: 62)
       expect(poller.should_run?).to eq(true)
 
-      travel_to(Time.zone.local(2020, 0o5, 0o5, 0o3, 59, 30))
+      travel_to time_value(secs: 30)
       expect(poller.should_run?).to eq(false)
 
-      travel_to(Time.zone.local(2020, 0o5, 0o5, 0o3, 58, 0o0))
+      travel_to time_value(mins: -1) # this shouldn't be possible but meh
       expect(poller.should_run?).to eq(false)
+
+      # take the 2 seconds of delay_time into account
+      travel_to time_value(secs: 60)
+      expect(poller.should_run?).to eq(false)
+    end
+
+    specify '#process_batch' do
+      travel_to time_value
+      widgets = (1..3).map { Widget.create!(test_id: 'some_id', some_int: 4) }
+      widgets.last.update_attribute(:updated_at, time_value(mins: -30))
+      expect(MyProducer).to receive(:send_events).with(widgets)
+      poller.retrieve_poll_info
+      poller.process_batch(widgets)
+      info = Deimos::PollInfo.last
+      expect(info.last_sent.in_time_zone).to eq(time_value(mins: -30))
+      expect(info.last_sent_id).to eq(widgets.last.id)
     end
 
     describe '#process_updates' do
       before(:each) do
         Deimos::PollInfo.create!(producer: 'MyProducer',
-                                 last_sent: Time.zone.local(2020, 0o5, 0o4, 22, 59, 0o0))
-        travel_to(Time.zone.local(2020, 0o5, 0o5, 0o1, 0o0, 0o0))
-        allow(poller).to receive(:process_updates).and_wrap_original do |m|
-          m.call
-          poller.stop
-        end
-        allow(MyProducer).to receive(:send_events)
+                                 last_sent: time_value(mins: -61),
+                                 last_sent_id: 0)
+        poller.retrieve_poll_info
+        travel_to time_value
         stub_const('Deimos::Utils::DbPoller::BATCH_SIZE', 3)
+      end
 
+      let!(:old_widget) do
         # old widget, earlier than window
-        Widget.create!(test_id: 'some_id', some_int: 4,
-                       updated_at: Time.local(2020, 0o5, 0o3, 23, 59, 30))
+        Widget.create!(test_id: 'some_id', some_int: 40,
+                       updated_at: time_value(mins: -200))
+      end
+
+      let!(:last_widget) do
         # new widget, before delay
         Widget.create!(test_id: 'some_id', some_int: 10,
-                       updated_at: Time.local(2020, 0o5, 0o5, 0o0, 59, 59))
+                       updated_at: time_value(secs: -1))
       end
 
       let!(:widgets) do
         (1..7).map do |i|
           Widget.create!(test_id: 'some_id', some_int: i,
-                         updated_at: Time.local(2020, 0o5, 0o4, 23, 59, 30 + i))
+                         updated_at: time_value(mins: -61, secs: 30 + i))
         end
       end
 
       it 'should update the full table' do
+        info = Deimos::PollInfo.last
         config.full_table = true
-        expect(MyProducer).to receive(:poll_query).
-          with(Time.local(2020, 0o5, 0o4, 22, 59, 0o0),
-               Time.local(2020, 0o5, 0o5, 0o0, 59, 58),
-               :updated_at,
-               true).and_call_original
-        widgets = Widget.all
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[0], widgets[1], widgets[2]])
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[3], widgets[4], widgets[5]])
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[6], widgets[7], widgets[8]])
-        poller.start
+        expect(MyProducer).to receive(:poll_query).at_least(:once).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([old_widget, widgets[0], widgets[1]]).and_wrap_original do |m, *args|
+            m.call(*args)
+            expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 32))
+            expect(info.last_sent_id).to eq(widgets[1].id)
+          end
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[2], widgets[3], widgets[4]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[5], widgets[6]]).and_call_original
+        poller.process_updates
+
+        expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
+        expect(info.last_sent_id).to eq(widgets[6].id)
+
+        last_widget.update_attribute(:updated_at, time_value(mins: -250))
 
         travel 61.seconds
-        expect(MyProducer).to receive(:poll_query).
-          with(Time.local(2020, 0o5, 0o5, 0o0, 59, 58),
-               Time.local(2020, 0o5, 0o5, 0o1, 0o0, 59),
-               :updated_at,
-               true).and_call_original
         # should reprocess the table
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[0], widgets[1], widgets[2]])
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[3], widgets[4], widgets[5]])
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[6], widgets[7], widgets[8]])
-        poller.start
+        expect(poller).to receive(:process_batch).ordered.
+          with([last_widget, old_widget, widgets[0]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[1], widgets[2], widgets[3]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[4], widgets[5], widgets[6]]).and_call_original
+        poller.process_updates
 
+        expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
+        expect(info.last_sent_id).to eq(widgets[6].id)
       end
 
       it 'should send events across multiple batches' do
-        expect(MyProducer).to receive(:poll_query).
-          with(Time.local(2020, 0o5, 0o4, 22, 59, 0o0),
-               Time.local(2020, 0o5, 0o5, 0o0, 59, 58),
-               :updated_at,
-               false).and_call_original
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[0], widgets[1], widgets[2]])
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[3], widgets[4], widgets[5]])
-        expect(MyProducer).to receive(:send_events).ordered.
-          with([widgets[6]])
-        poller.start
+        allow(MyProducer).to receive(:poll_query).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[0], widgets[1], widgets[2]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[3], widgets[4], widgets[5]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[6]]).and_call_original
+        poller.process_updates
+
+        expect(MyProducer).to have_received(:poll_query).
+          with(time_from: time_value(mins: -61),
+               time_to: time_value(secs: -2),
+               column_name: :updated_at,
+               min_id: 0)
 
         travel 61.seconds
-        expect(MyProducer).to receive(:poll_query).
-          with(Time.local(2020, 0o5, 0o5, 0o0, 59, 58),
-               Time.local(2020, 0o5, 0o5, 0o1, 0o0, 59),
-               :updated_at,
-               false).and_call_original
         # process the last widget which came in during the delay
-        expect(MyProducer).to receive(:send_events).with([Widget.find_by_some_int(10)])
-        poller.start
+        expect(poller).to receive(:process_batch).with([last_widget]).
+          and_call_original
+        poller.process_updates
+
+        expect(MyProducer).to have_received(:poll_query).
+          with(time_from: time_value(mins: -61, secs: 37),
+               time_to: time_value(secs: 59), # plus 61 seconds minus 2 seconds for delay
+               column_name: :updated_at,
+               min_id: widgets[6].id)
 
         travel 61.seconds
-        expect(MyProducer).to receive(:poll_query).
-          with(Time.local(2020, 0o5, 0o5, 0o1, 0o0, 59),
-               Time.local(2020, 0o5, 0o5, 0o1, 0o2, 0o0),
-               :updated_at,
-               false).and_call_original
         # nothing else to process
-        expect(MyProducer).not_to receive(:send_events)
-        poller.start
+        expect(poller).not_to receive(:process_batch)
+        poller.process_updates
 
+        expect(MyProducer).to have_received(:poll_query).
+          with(time_from: time_value(secs: -1),
+               time_to: time_value(secs: 120), # plus 122 seconds minus 2 seconds
+               column_name: :updated_at,
+               min_id: last_widget.id)
+      end
+
+      it 'should recover correctly with errors and save the right ID' do
+        widgets.each do |w|
+          w.update_attribute(:updated_at, time_value(mins: -61, secs: 30))
+        end
+        allow(MyProducer).to receive(:poll_query).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[0], widgets[1], widgets[2]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
+
+        expect { poller.process_updates }.to raise_exception('OH NOES')
+
+        expect(MyProducer).to have_received(:poll_query).
+          with(time_from: time_value(mins: -61),
+               time_to: time_value(secs: -2),
+               column_name: :updated_at,
+               min_id: 0)
+
+        info = Deimos::PollInfo.last
+        expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
+        expect(info.last_sent_id).to eq(widgets[2].id)
+
+        travel 61.seconds
+        # process the last widget which came in during the delay
+        # note that it has an earlier ID even though it has a later updated_at
+        # so it will come first in this batch
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[3], widgets[4], widgets[5]]).and_call_original
+        expect(poller).to receive(:process_batch).with([widgets[6], last_widget]).
+          and_call_original
+        poller.process_updates
+        expect(MyProducer).to have_received(:poll_query).
+          with(time_from: time_value(mins: -61, secs: 30),
+               time_to: time_value(secs: 59),
+               column_name: :updated_at,
+               min_id: widgets[2].id)
+
+        expect(info.reload.last_sent.in_time_zone).to eq(time_value(secs: -1))
+        expect(info.last_sent_id).to eq(last_widget.id)
       end
 
     end

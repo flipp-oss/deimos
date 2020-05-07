@@ -21,6 +21,9 @@ jobs:
       # so Dockerfile does not copy them since
       # its base image is different than CircleCI
       - run:
+          name: Install bundler
+          command: gem install bundler:2.1.4
+      - run:
           name: Bundle install
           command: bundle install --path vendor/bundle --jobs=4 --retry=3
 
@@ -41,6 +44,9 @@ jobs:
       - attach_workspace:
           at: ~/workspace
       - run:
+          name: Install bundler
+          command: gem install bundler:2.1.4
+      - run:
            name: Point bundle to vendor/bundle
            command: bundle --path vendor/bundle
       - run: bundle exec rubocop --display-only-fail-level-offenses --fail-level C
@@ -50,6 +56,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/workspace
+      - run:
+          name: Install bundler
+          command: gem install bundler:2.1.4
       - run:
            name: Point bundle to vendor/bundle
            command: bundle --path vendor/bundle

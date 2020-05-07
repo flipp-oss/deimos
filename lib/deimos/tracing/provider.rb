@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Lint/UnusedMethodArgument
 module Deimos
   module Tracing
     # Base class for all tracing providers.
@@ -28,4 +27,3 @@ module Deimos
     end
   end
 end
-# rubocop:enable Lint/UnusedMethodArgument

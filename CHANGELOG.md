@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Features :star:
+- Added the DB Poller feature / process.
+
 ## 1.6.4 - 2020-05-11
 - Fixed the payload logging fix for errored messages as well.
 
@@ -20,9 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   even if nothing else was saved.
 - When logging payloads and metadata, decode them first.
 - Fixes bug in `KafkaSource` that crashes when importing a mix of existing and new records with the `:on_duplicate_key_update` option.
-
-### Features :star:
-- Added the DB Poller feature / process.
 
 ## [1.6.1] - 2020-04-20
 ### Fixes :wrench:

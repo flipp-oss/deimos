@@ -566,7 +566,7 @@ Deimos provides a database poller, which allows you the same pattern but
 with all the flexibility of real Ruby code, and the added advantage of having
 a single consistent framework to talk to Kafka.
 
-One of the disadvantages of Kafka Connect is that it can't detect deletions.
+One of the disadvantages of polling the database is that it can't detect deletions.
 You can get over this by configuring a mixin to send messages *only* on deletion,
 and use the poller to handle all other updates. You can reuse the same producer
 for both cases to handle joins, changes/mappings, business logic, etc.
@@ -606,9 +606,12 @@ define one additional method on the producer:
 ```ruby
 class MyProducer < Deimos::ActiveRecordProducer
   ...
-  def poll_query(time_from, time_to, column_name, full_scan)
+  def poll_query(time_from:, time_to:, column_name:, min_id:)
     # Default is to use the timestamp `column_name` to find all records
-    # between time_from and time_to, or if full_scan is set, to get all records.
+    # between time_from and time_to, or records where `updated_at` is equal to
+    # `time_from` but its ID is greater than `min_id`. This is called
+    # successively as the DB is polled to ensure even if a batch ends in the
+    # middle of a timestamp, we won't miss any records.
     # You can override or change this behavior if necessary.
   end
 end

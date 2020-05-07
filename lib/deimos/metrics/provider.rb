@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Lint/UnusedMethodArgument
 module Deimos
   module Metrics
     # Base class for all metrics providers.
@@ -35,4 +34,3 @@ module Deimos
     end
   end
 end
-# rubocop:enable Lint/UnusedMethodArgument

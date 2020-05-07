@@ -65,18 +65,21 @@ module Deimos
       # @param time_from [Time] the time to start the query from.
       # @param time_to [Time] the time to end the query.
       # @param column_name [Symbol] the column name to look for.
-      # @param full_scan [Boolean] if true, grab all records.
-      def poll_query(time_from, time_to, column_name, full_scan)
+      # @param min_id [Numeric] the minimum ID (i.e. all IDs must be greater
+      # than this value).
+      # @return [ActiveRecord::Relation]
+      def poll_query(time_from:, time_to:, column_name: :updated_at, min_id:)
         klass = config[:record_class]
         table = ActiveRecord::Base.connection.quote_table_name(klass.table_name)
         column = ActiveRecord::Base.connection.quote_column_name(column_name)
-        if full_scan
-          klass.all
-        else
-          klass.where("#{table}.#{column} > ? AND #{table}.#{column} <= ?",
-                      time_from,
-                      time_to)
-        end
+        klass.where(
+          "(#{table}.#{column} = ? AND #{table}.#{klass.primary_key} > ?) \
+           OR #{table}.#{column} > ? AND #{table}.#{column} <= ?",
+          time_from,
+          min_id,
+          time_from,
+          time_to
+        )
       end
     end
   end
