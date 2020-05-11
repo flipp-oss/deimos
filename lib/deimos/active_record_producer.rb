@@ -72,9 +72,10 @@ module Deimos
         klass = config[:record_class]
         table = ActiveRecord::Base.connection.quote_table_name(klass.table_name)
         column = ActiveRecord::Base.connection.quote_column_name(column_name)
+        primary = ActiveRecord::Base.connection.quote_column_name(klass.primary_key)
         klass.where(
-          "(#{table}.#{column} = ? AND #{table}.#{klass.primary_key} > ?) \
-           OR #{table}.#{column} > ? AND #{table}.#{column} <= ?",
+          "((#{table}.#{column} = ? AND #{table}.#{primary} > ?) \
+           OR #{table}.#{column} > ?) AND #{table}.#{column} <= ?",
           time_from,
           min_id,
           time_from,

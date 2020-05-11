@@ -13,18 +13,6 @@ module Deimos
       # Needed for Executor so it can identify the worker
       attr_reader :id
 
-      # Reset a poller to the given time. Use if you are starting a brand new
-      # poller and don't want it starting from the beginning of time.
-      # @param producer_name [String]
-      # @param time [TimeWithZone]
-      def self.reset_poller(producer_name, time=Time.zone.now)
-        info = Deimos::PollInfo.find_by_producer(producer_name) ||
-               Deimos::PollInfo.new(producer: producer_name)
-        info.last_sent = time
-        info.last_sent_id = 0
-        info.save!
-      end
-
       # Begin the DB Poller process.
       def self.start!
         if Deimos.config.db_poller_objects.empty?
@@ -81,9 +69,10 @@ module Deimos
       # Grab the PollInfo or create if it doesn't exist.
       def retrieve_poll_info
         ActiveRecord::Base.connection.reconnect!
+        new_time = @config.start_from_beginning ? Time.new(0) : Time.zone.now
         @info = Deimos::PollInfo.find_by_producer(@config.producer_class) ||
                 Deimos::PollInfo.create!(producer: @config.producer_class,
-                                         last_sent: Time.new(0),
+                                         last_sent: new_time,
                                          last_sent_id: 0)
       end
 
@@ -94,7 +83,7 @@ module Deimos
       end
 
       # Indicate whether this current loop should process updates. Most loops
-      # will busy-wait (sleeping 1/2 second) until it's ready.
+      # will busy-wait (sleeping 0.1 seconds) until it's ready.
       # @return [Boolean]
       def should_run?
         Time.zone.now - @info.last_sent - @config.delay_time >= @config.run_every
@@ -136,12 +125,14 @@ module Deimos
       # @return [ActiveRecord::Relation]
       def fetch_results(time_from, time_to)
         id = @producer.config[:record_class].primary_key
+        quoted_timestamp = ActiveRecord::Base.connection.quote_column_name(@config.timestamp_column)
+        quoted_id = ActiveRecord::Base.connection.quote_column_name(id)
         @producer.poll_query(time_from: time_from,
                              time_to: time_to,
                              column_name: @config.timestamp_column,
                              min_id: @info.last_sent_id).
           limit(BATCH_SIZE).
-          order("#{@config.timestamp_column}, #{id}")
+          order("#{quoted_timestamp}, #{quoted_id}")
       end
 
       # @param batch [Array<ActiveRecord::Base>]

@@ -355,6 +355,9 @@ module Deimos
       # If true, dump the full table rather than incremental changes. Should
       # only be used for very small tables.
       setting :full_table, false
+      # If false, start from the current time instead of the beginning of time
+      # if this is the first time running the poller.
+      setting :start_from_beginning, true
     end
 
     deprecate 'kafka_logger', 'kafka.logger'

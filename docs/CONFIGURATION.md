@@ -110,6 +110,7 @@ run_every|60|Amount of time in seconds to wait between runs.
 timestamp_column|`:updated_at`|Name of the column to query. Remember to add an index to this column!
 delay_time|2|Amount of time in seconds to wait before picking up records, to allow for transactions to finish.
 full_table|false|If set to true, do a full table dump to Kafka each run. Good for very small tables.
+start_from_beginning|true|If false, start from the current time instead of the beginning of time if this is the first time running the poller.
 
 ## Kafka Configuration
 

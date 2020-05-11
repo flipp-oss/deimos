@@ -12,37 +12,6 @@ each_db_config(Deimos::Utils::DbPoller) do
     Deimos::PollInfo.delete_all
   end
 
-  describe '#reset_poller' do
-
-    it 'should save a new info' do
-      travel_to time_value
-      expect(Deimos::PollInfo.count).to eq(0)
-      described_class.reset_poller('MyProducer', time_value.strftime('%Y-%m-%d %H:%M:%S'))
-      expect(Deimos::PollInfo.count).to eq(1)
-      info = Deimos::PollInfo.first
-      expect(info.producer).to eq('MyProducer')
-      expect(info.last_sent).to eq(time_value.strftime('%Y-%m-%d %H:%M:%S'))
-      expect(info.last_sent_id).to eq(0)
-      travel_back
-    end
-
-    it 'should update existing info' do
-      travel_to time_value
-      Deimos::PollInfo.create!(producer: 'MyProducer',
-                               last_sent: 1.year.ago,
-                               last_sent_id: 5)
-      expect(Deimos::PollInfo.count).to eq(1)
-      described_class.reset_poller('MyProducer', time_value.strftime('%Y-%m-%d %H:%M:%S'))
-      expect(Deimos::PollInfo.count).to eq(1)
-      info = Deimos::PollInfo.first
-      expect(info.producer).to eq('MyProducer')
-      expect(info.last_sent).to eq(time_value.strftime('%Y-%m-%d %H:%M:%S'))
-      expect(info.last_sent_id).to eq(0)
-      travel_back
-    end
-
-  end
-
   describe '#start!' do
 
     before(:each) do
@@ -99,9 +68,10 @@ each_db_config(Deimos::Utils::DbPoller) do
       poller
     end
 
-    let(:config) { Deimos.config.db_poller_objects.first }
+    let(:config) { Deimos.config.db_poller_objects.first.dup }
 
     before(:each) do
+      Widget.delete_all
       producer_class = Class.new(Deimos::ActiveRecordProducer) do
         schema 'MySchemaWithId'
         namespace 'com.my-namespace'
@@ -125,8 +95,6 @@ each_db_config(Deimos::Utils::DbPoller) do
     end
 
     after(:each) do
-      Deimos::PollInfo.delete_all
-      Widget.delete_all
       travel_back
     end
 
@@ -135,13 +103,28 @@ each_db_config(Deimos::Utils::DbPoller) do
       expect { described_class.new(config) }.to raise_error('Class NoProducer not found!')
     end
 
-    specify '#retrieve_poll_info' do
-      poller.retrieve_poll_info
-      expect(Deimos::PollInfo.count).to eq(1)
-      info = Deimos::PollInfo.last
-      expect(info.producer).to eq('MyProducer')
-      expect(info.last_sent).to eq(Time.new(0))
-      expect(info.last_sent_id).to eq(0)
+    describe '#retrieve_poll_info' do
+
+      it 'should start from beginning when configured' do
+        poller.retrieve_poll_info
+        expect(Deimos::PollInfo.count).to eq(1)
+        info = Deimos::PollInfo.last
+        expect(info.producer).to eq('MyProducer')
+        expect(info.last_sent).to eq(Time.new(0))
+        expect(info.last_sent_id).to eq(0)
+      end
+
+      it 'should start from now when configured' do
+        travel_to time_value
+        config.start_from_beginning = false
+        poller.retrieve_poll_info
+        expect(Deimos::PollInfo.count).to eq(1)
+        info = Deimos::PollInfo.last
+        expect(info.producer).to eq('MyProducer')
+        expect(info.last_sent).to eq(time_value)
+        expect(info.last_sent_id).to eq(0)
+      end
+
     end
 
     specify '#start' do
@@ -230,6 +213,7 @@ each_db_config(Deimos::Utils::DbPoller) do
           with([widgets[5], widgets[6]]).and_call_original
         poller.process_updates
 
+        # this is the updated_at of widgets[6]
         expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
         expect(info.last_sent_id).to eq(widgets[6].id)
 
@@ -271,6 +255,7 @@ each_db_config(Deimos::Utils::DbPoller) do
           and_call_original
         poller.process_updates
 
+        # widgets[6] updated_at value
         expect(MyProducer).to have_received(:poll_query).
           with(time_from: time_value(mins: -61, secs: 37),
                time_to: time_value(secs: 59), # plus 61 seconds minus 2 seconds for delay
@@ -281,8 +266,9 @@ each_db_config(Deimos::Utils::DbPoller) do
         # nothing else to process
         expect(poller).not_to receive(:process_batch)
         poller.process_updates
+        poller.process_updates
 
-        expect(MyProducer).to have_received(:poll_query).
+        expect(MyProducer).to have_received(:poll_query).twice.
           with(time_from: time_value(secs: -1),
                time_to: time_value(secs: 120), # plus 122 seconds minus 2 seconds
                column_name: :updated_at,
@@ -313,8 +299,6 @@ each_db_config(Deimos::Utils::DbPoller) do
 
         travel 61.seconds
         # process the last widget which came in during the delay
-        # note that it has an earlier ID even though it has a later updated_at
-        # so it will come first in this batch
         expect(poller).to receive(:process_batch).ordered.
           with([widgets[3], widgets[4], widgets[5]]).and_call_original
         expect(poller).to receive(:process_batch).with([widgets[6], last_widget]).
