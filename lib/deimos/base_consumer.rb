@@ -42,16 +42,12 @@ module Deimos
 
   protected
 
-    # @param payload [Hash|String]
-    # @param metadata [Hash]
-    def _with_error_span(payload, metadata)
+    def _with_span
       @span = Deimos.config.tracer&.start(
         'deimos-consumer',
         resource: self.class.name.gsub('::', '-')
       )
       yield
-    rescue StandardError => e
-      _handle_error(e, payload, metadata)
     ensure
       Deimos.config.tracer&.finish(@span)
     end

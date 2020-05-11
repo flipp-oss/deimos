@@ -24,11 +24,13 @@ module Deimos
           message.payload ? self.class.decoder.decode(message.payload) : nil
         end
         _received_batch(payloads, metadata)
-        _with_error_span(payloads, metadata) do
+        _with_span do
           yield payloads, metadata
         end
       end
       _handle_success(benchmark.real, payloads, metadata)
+    rescue StandardError => e
+      _handle_error(e, payloads, metadata)
     end
 
     # Consume a batch of incoming messages.

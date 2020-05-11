@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.6.4 - 2020-05-11
+- Fixed the payload logging fix for errored messages as well.
+
 ## 1.6.3 - 2020-05-04
 ### Fixes :wrench:
 - Fixed the payload logging fix.
