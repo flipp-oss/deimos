@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.7.0-beta1 - 2020-05-12
 ### Features :star:
 - Added the DB Poller feature / process.
 
