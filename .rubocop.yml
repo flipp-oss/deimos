@@ -1,10 +1,11 @@
 require: rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.4
   Exclude:
     - lib/deimos/monkey_patches/*.rb
     - vendor/**/*
+  NewCops: enable
 
 # class Plumbus
 # private
@@ -33,6 +34,12 @@ Layout/DotPosition:
 # sometimes empty lines can be used for clarity
 Layout/EmptyLinesAroundBlockBody:
   Enabled: false
+
+Layout/LineLength:
+  Max: 100
+  Severity: refactor
+  Exclude:
+  - 'spec/**/*'
 
 # foo = if expression
 #         'bar'
@@ -82,12 +89,6 @@ Metrics/CyclomaticComplexity:
   Severity: refactor
   Max: 20
 
-Metrics/LineLength:
-  Max: 100
-  Severity: refactor
-  Exclude:
-  - 'spec/**/*'
-
 Metrics/MethodLength:
   Severity: refactor
   Max: 30
@@ -122,12 +123,6 @@ Style/BlockDelimiters:
 # bad
 # some_method(x, y, {a: 1, b: 2})
 # some_method(x, y, {a: 1, b: 2}, a: 1, b: 2)
-
-# good
-# some_method(x, y, a: 1, b: 2)
-# some_method(x, y, {a: 1, b: 2}, {a: 1, b: 2})
-Style/BracesAroundHashParameters:
-  EnforcedStyle: context_dependent
 
 # Enable both this:
 #  MyModule::MyClass
@@ -178,6 +173,13 @@ Style/GuardClause:
 # Require hash syntax { key: value } in all cases
 Style/HashSyntax:
   EnforcedStyle: ruby19_no_mixed_keys
+
+# We are still unofficially targeting Ruby 2.3
+Style/HashTransformKeys:
+  Enabled: false
+
+Style/HashTransformValues:
+  Enabled: false
 
 Style/IfUnlessModifier:
   Enabled: false

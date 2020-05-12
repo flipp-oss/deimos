@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Features :star:
+- Added the DB Poller feature / process.
+
 ## 1.6.4 - 2020-05-11
 - Fixed the payload logging fix for errored messages as well.
 

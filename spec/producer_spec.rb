@@ -148,7 +148,7 @@ module ProducerTest
         Deimos.disable_producers do
           raise 'OH NOES'
         end
-      }      .to raise_error('OH NOES')
+      }.to raise_error('OH NOES')
       expect(Deimos).not_to be_producers_disabled
     end
 
@@ -246,7 +246,7 @@ module ProducerTest
         MyNonEncodedProducer.publish_list(
           [{ 'test_id' => 'foo', 'some_int' => 123 }]
         )
-      }      .to raise_error('No key given but a key is required! Use `key_config none: true` to avoid using keys.')
+      }.to raise_error('No key given but a key is required! Use `key_config none: true` to avoid using keys.')
     end
 
     it 'should allow nil keys if none: true is configured' do
@@ -254,7 +254,7 @@ module ProducerTest
         MyNoKeyProducer.publish_list(
           [{ 'test_id' => 'foo', 'some_int' => 123 }]
         )
-      }      .not_to raise_error
+      }.not_to raise_error
     end
 
     it 'should use a partition key' do

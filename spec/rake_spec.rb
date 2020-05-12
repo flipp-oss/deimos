@@ -9,7 +9,7 @@ if Rake.application.lookup(:environment).nil?
   Rake::Task.define_task(:environment)
 end
 
-describe 'Rakefile' do # rubocop:disable RSpec/DescribeClass
+describe 'Rakefile' do
   it 'should start listeners' do
     runner = instance_double(Phobos::CLI::Runner)
     expect(Phobos::CLI::Runner).to receive(:new).and_return(runner)

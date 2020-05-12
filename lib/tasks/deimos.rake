@@ -24,4 +24,11 @@ namespace :deimos do
     Deimos.start_db_backend!(thread_count: thread_count)
   end
 
+  task db_poller: :environment do
+    ENV['DEIMOS_RAKE_TASK'] = 'true'
+    STDOUT.sync = true
+    Rails.logger.info('Running deimos:db_poller rake task.')
+    Deimos::Utils::DbPoller.start!
+  end
+
 end

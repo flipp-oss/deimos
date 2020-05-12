@@ -100,9 +100,8 @@ module DbConfigs
     end
   end
 
-  # Set up the given database.
-  def setup_db(options)
-    ActiveRecord::Base.establish_connection(options)
+  # :nodoc:
+  def run_db_backend_migration
     migration_class_name = 'DbBackendMigration'
     migration_version = '[5.2]'
     migration = ERB.new(
@@ -110,6 +109,24 @@ module DbConfigs
     ).result(binding)
     eval(migration) # rubocop:disable Security/Eval
     ActiveRecord::Migration.new.run(DbBackendMigration, direction: :up)
+  end
+
+  # :nodoc:
+  def run_db_poller_migration
+    migration_class_name = 'DbPollerMigration'
+    migration_version = '[5.2]'
+    migration = ERB.new(
+      File.read('lib/generators/deimos/db_poller/templates/migration')
+    ).result(binding)
+    eval(migration) # rubocop:disable Security/Eval
+    ActiveRecord::Migration.new.run(DbPollerMigration, direction: :up)
+  end
+
+  # Set up the given database.
+  def setup_db(options)
+    ActiveRecord::Base.establish_connection(options)
+    run_db_backend_migration
+    run_db_poller_migration
 
     ActiveRecord::Base.descendants.each do |klass|
       klass.reset_sequence_name if klass.respond_to?(:reset_sequence_name)
@@ -131,7 +148,7 @@ RSpec.configure do |config|
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
   config.before(:all) do
-    Time.zone = 'EST'
+    Time.zone = 'Eastern Time (US & Canada)'
     ActiveRecord::Base.logger = Logger.new('/dev/null')
     ActiveRecord::Base.establish_connection(
       'adapter' => 'sqlite3',
@@ -141,8 +158,6 @@ RSpec.configure do |config|
   config.include Deimos::TestHelpers
   config.include ActiveSupport::Testing::TimeHelpers
   config.before(:suite) do
-    Time.zone = 'EST'
-    ActiveRecord::Base.logger = Logger.new('/dev/null')
     setup_db(DbConfigs::DB_OPTIONS.last)
   end
 
@@ -163,6 +178,29 @@ RSpec.configure do |config|
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
     end
+  end
+end
+
+RSpec.shared_context('with widgets') do
+  before(:all) do
+    ActiveRecord::Base.connection.create_table(:widgets, force: true) do |t|
+      t.string(:test_id)
+      t.integer(:some_int)
+      t.boolean(:some_bool)
+      t.timestamps
+    end
+
+    # :nodoc:
+    class Widget < ActiveRecord::Base
+      # @return [String]
+      def generated_id
+        'generated_id'
+      end
+    end
+  end
+
+  after(:all) do
+    ActiveRecord::Base.connection.drop_table(:widgets)
   end
 end
 
