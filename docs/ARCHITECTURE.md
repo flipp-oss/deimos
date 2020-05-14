@@ -61,7 +61,8 @@ Schema backends are used to encode and decode payloads into different formats
 such as Avro. These are integrated with producers and consumers, as well
 as test helpers. These are a bit more involved than producer backends, and
 must define methods such as:
-* `encode` a payload or key
+* `encode` a payload or key (when encoding a key, for Avro a key schema
+  may be auto-generated)
 * `decode` a payload or key
 * `validate` that a payload is correct for encoding
 * `coerce` a payload into the given schema (e.g. turn ints into strings)
@@ -70,7 +71,7 @@ must define methods such as:
 * Define a `mock` backend when the given backend is used. This is used
   during testing. Typically mock backends will validate values but not
   actually encode/decode them.
-
+  
 ### Configuration
 
 Deimos has its own `Configurable` module that makes heavy use of `method_missing`
