@@ -23,8 +23,8 @@ module Deimos
           self.new(poller_config)
         end
         executor = Sigurd::Executor.new(pollers,
-                                               sleep_seconds: 5,
-                                               logger: Deimos.config.logger)
+                                        sleep_seconds: 5,
+                                        logger: Deimos.config.logger)
         signal_handler = Sigurd::SignalHandler.new(executor)
         signal_handler.run!
       end

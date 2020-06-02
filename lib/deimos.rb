@@ -73,8 +73,8 @@ module Deimos
           new(self.config.db_producer.logger || self.config.logger)
       end
       executor = Sigurd::Executor.new(producers,
-                                             sleep_seconds: 5,
-                                             logger: self.config.logger)
+                                      sleep_seconds: 5,
+                                      logger: self.config.logger)
       signal_handler = Sigurd::SignalHandler.new(executor)
       signal_handler.run!
     end
