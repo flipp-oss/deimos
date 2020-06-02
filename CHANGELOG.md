@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Roadmap
+- Moved SignalHandler and Executor to the `sigurd` gem.
+
 ## 1.7.0-beta1 - 2020-05-12
 ### Features :star:
 - Added the DB Poller feature / process.
