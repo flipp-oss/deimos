@@ -48,8 +48,8 @@ each_db_config(Deimos::Utils::DbPoller) do
       end
 
       allow(Deimos::Utils::DbPoller).to receive(:new)
-      signal_double = instance_double(Deimos::Utils::SignalHandler, run!: nil)
-      allow(Deimos::Utils::SignalHandler).to receive(:new).and_return(signal_double)
+      signal_double = instance_double(Sigurd::SignalHandler, run!: nil)
+      allow(Sigurd::SignalHandler).to receive(:new).and_return(signal_double)
       described_class.start!
       expect(Deimos::Utils::DbPoller).to have_received(:new).twice
       expect(Deimos::Utils::DbPoller).to have_received(:new).

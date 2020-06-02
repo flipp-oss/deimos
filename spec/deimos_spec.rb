@@ -68,11 +68,11 @@ describe Deimos do
 
   describe '#start_db_backend!' do
     it 'should start if backend is db and thread_count is > 0' do
-      signal_handler = instance_double(Deimos::Utils::SignalHandler)
+      signal_handler = instance_double(Sigurd::SignalHandler)
       allow(signal_handler).to receive(:run!)
-      expect(Deimos::Utils::Executor).to receive(:new).
+      expect(Sigurd::Executor).to receive(:new).
         with(anything, sleep_seconds: 5, logger: anything).and_call_original
-      expect(Deimos::Utils::SignalHandler).to receive(:new) do |executor|
+      expect(Sigurd::SignalHandler).to receive(:new) do |executor|
         expect(executor.runners.size).to eq(2)
         signal_handler
       end
@@ -83,7 +83,7 @@ describe Deimos do
     end
 
     it 'should not start if backend is not db' do
-      expect(Deimos::Utils::SignalHandler).not_to receive(:new)
+      expect(Sigurd::SignalHandler).not_to receive(:new)
       described_class.configure do |config|
         config.producers.backend = :kafka
       end
@@ -92,7 +92,7 @@ describe Deimos do
     end
 
     it 'should not start if thread_count is nil' do
-      expect(Deimos::Utils::SignalHandler).not_to receive(:new)
+      expect(Sigurd::SignalHandler).not_to receive(:new)
       described_class.configure do |config|
         config.producers.backend = :db
       end
@@ -101,7 +101,7 @@ describe Deimos do
     end
 
     it 'should not start if thread_count is 0' do
-      expect(Deimos::Utils::SignalHandler).not_to receive(:new)
+      expect(Sigurd::SignalHandler).not_to receive(:new)
       described_class.configure do |config|
         config.producers.backend = :db
       end

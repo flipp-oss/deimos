@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'deimos/poll_info'
-require 'deimos/utils/executor'
-require 'deimos/utils/signal_handler'
+require 'sigurd/executor'
+require 'sigurd/signal_handler'
 
 module Deimos
   module Utils
@@ -22,10 +22,10 @@ module Deimos
         pollers = Deimos.config.db_poller_objects.map do |poller_config|
           self.new(poller_config)
         end
-        executor = Deimos::Utils::Executor.new(pollers,
-                                               sleep_seconds: 5,
-                                               logger: Deimos.config.logger)
-        signal_handler = Deimos::Utils::SignalHandler.new(executor)
+        executor = Sigurd::Executor.new(pollers,
+                                        sleep_seconds: 5,
+                                        logger: Deimos.config.logger)
+        signal_handler = Sigurd::SignalHandler.new(executor)
         signal_handler.run!
       end
 
