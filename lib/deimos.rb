@@ -28,8 +28,8 @@ if defined?(ActiveRecord)
   require 'deimos/kafka_source'
   require 'deimos/kafka_topic_info'
   require 'deimos/backends/db'
-  require 'deimos/utils/signal_handler.rb'
-  require 'deimos/utils/executor.rb'
+  require 'sigurd/signal_handler.rb'
+  require 'sigurd/executor.rb'
   require 'deimos/utils/db_producer.rb'
   require 'deimos/utils/db_poller'
 end
@@ -72,10 +72,10 @@ module Deimos
         Deimos::Utils::DbProducer.
           new(self.config.db_producer.logger || self.config.logger)
       end
-      executor = Deimos::Utils::Executor.new(producers,
+      executor = Sigurd::Executor.new(producers,
                                              sleep_seconds: 5,
                                              logger: self.config.logger)
-      signal_handler = Deimos::Utils::SignalHandler.new(executor)
+      signal_handler = Sigurd::SignalHandler.new(executor)
       signal_handler.run!
     end
   end
