@@ -83,11 +83,11 @@ module ActiveRecordBatchConsumerTest
 
       expect(all_widgets).
         to match_array(
-             [
-               have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start, created_at: start),
-               have_attributes(id: 2, test_id: 'def', some_int: 4, updated_at: start, created_at: start)
-             ]
-           )
+          [
+            have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start, created_at: start),
+            have_attributes(id: 2, test_id: 'def', some_int: 4, updated_at: start, created_at: start)
+          ]
+        )
     end
 
     it 'should handle deleting a record that doesn\'t exist' do
@@ -132,10 +132,10 @@ module ActiveRecordBatchConsumerTest
 
       expect(all_widgets).
         to match_array(
-             [
-               have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: Time.zone.now, created_at: Time.zone.now)
-             ]
-           )
+          [
+            have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: Time.zone.now, created_at: Time.zone.now)
+          ]
+        )
     end
 
     it 'should handle a double update' do
@@ -154,10 +154,10 @@ module ActiveRecordBatchConsumerTest
 
       expect(all_widgets).
         to match_array(
-             [
-               have_attributes(id: 1, test_id: 'ghi', some_int: 4, updated_at: Time.zone.now, created_at: start)
-             ]
-           )
+          [
+            have_attributes(id: 1, test_id: 'ghi', some_int: 4, updated_at: Time.zone.now, created_at: start)
+          ]
+        )
     end
 
     it 'should handle a double deletion' do
@@ -190,10 +190,10 @@ module ActiveRecordBatchConsumerTest
 
       expect(all_widgets).
         to match_array(
-             [
-               have_attributes(id: 2, test_id: 'def', some_int: 5)
-             ]
-           )
+          [
+            have_attributes(id: 2, test_id: 'def', some_int: 5)
+          ]
+        )
     end
 
     describe 'batch atomicity' do
@@ -217,10 +217,10 @@ module ActiveRecordBatchConsumerTest
 
         expect(all_widgets).
           to match_array(
-               [
-                 have_attributes(id: 1, test_id: 'abc', some_int: 2, updated_at: start, created_at: start)
-               ]
-             )
+            [
+              have_attributes(id: 1, test_id: 'abc', some_int: 2, updated_at: start, created_at: start)
+            ]
+          )
       end
 
       it 'should roll back if there was an invalid instance while upserting' do
@@ -246,11 +246,11 @@ module ActiveRecordBatchConsumerTest
 
         expect(all_widgets).
           to match_array(
-               [
-                 have_attributes(id: 1, test_id: 'abc', some_int: 2, updated_at: start, created_at: start),
-                 have_attributes(id: 3, test_id: 'ghi', some_int: 3, updated_at: start, created_at: start)
-               ]
-             )
+            [
+              have_attributes(id: 1, test_id: 'abc', some_int: 2, updated_at: start, created_at: start),
+              have_attributes(id: 3, test_id: 'ghi', some_int: 3, updated_at: start, created_at: start)
+            ]
+          )
       end
     end
 
@@ -281,11 +281,11 @@ module ActiveRecordBatchConsumerTest
 
         expect(all_widgets).
           to match_array(
-               [
-                 have_attributes(test_id: 'aaa', some_int: 3, part_one: 'abc', part_two: 'def'),
-                 have_attributes(test_id: 'bbb', some_int: 4, part_one: 'ghi', part_two: 'jkl')
-               ]
-             )
+            [
+              have_attributes(test_id: 'aaa', some_int: 3, part_one: 'abc', part_two: 'def'),
+              have_attributes(test_id: 'bbb', some_int: 4, part_one: 'ghi', part_two: 'jkl')
+            ]
+          )
       end
     end
 
@@ -312,12 +312,12 @@ module ActiveRecordBatchConsumerTest
 
         expect(all_widgets).
           to match_array(
-               [
-                 have_attributes(test_id: 'xxx', some_int: 2),
-                 have_attributes(test_id: 'aaa', some_int: 3),
-                 have_attributes(test_id: 'bbb', some_int: 4)
-               ]
-             )
+            [
+              have_attributes(test_id: 'xxx', some_int: 2),
+              have_attributes(test_id: 'aaa', some_int: 3),
+              have_attributes(test_id: 'bbb', some_int: 4)
+            ]
+          )
       end
     end
 
@@ -372,13 +372,13 @@ module ActiveRecordBatchConsumerTest
 
         expect(all_widgets).
           to match_array(
-               [
-                 have_attributes(id: 1, test_id: 'abc', some_int: 2, deleted: true, created_at: start, updated_at: Time.zone.now),
-                 have_attributes(id: 2, test_id: 'def', some_int: 3, deleted: true, created_at: Time.zone.now, updated_at: Time.zone.now),
-                 have_attributes(id: 3, test_id: 'ghi', some_int: 4, deleted: false, created_at: start, updated_at: Time.zone.now),
-                 have_attributes(id: 4, test_id: 'uvw', some_int: 5, deleted: false, created_at: start, updated_at: Time.zone.now)
-               ]
-             )
+            [
+              have_attributes(id: 1, test_id: 'abc', some_int: 2, deleted: true, created_at: start, updated_at: Time.zone.now),
+              have_attributes(id: 2, test_id: 'def', some_int: 3, deleted: true, created_at: Time.zone.now, updated_at: Time.zone.now),
+              have_attributes(id: 3, test_id: 'ghi', some_int: 4, deleted: false, created_at: start, updated_at: Time.zone.now),
+              have_attributes(id: 4, test_id: 'uvw', some_int: 5, deleted: false, created_at: start, updated_at: Time.zone.now)
+            ]
+          )
       end
     end
 
@@ -389,8 +389,8 @@ module ActiveRecordBatchConsumerTest
         # Should receive original attempt + 2 retries
         expect(Widget).
           to receive(:import!).
-            and_raise(ActiveRecord::Deadlocked.new).
-            exactly(3).times
+          and_raise(ActiveRecord::Deadlocked.new).
+          exactly(3).times
 
         # After 3 tries, should let it bubble up
         expect { publish_batch(batch) }.to raise_error(ActiveRecord::Deadlocked)
@@ -400,15 +400,15 @@ module ActiveRecordBatchConsumerTest
         # Fail on first attempt, succeed on second
         expect(Widget).
           to receive(:import!).
-            and_raise(ActiveRecord::Deadlocked.new).
-            once.
-            ordered
+          and_raise(ActiveRecord::Deadlocked.new).
+          once.
+          ordered
 
         expect(Widget).
           to receive(:import!).
-            once.
-            ordered.
-            and_call_original
+          once.
+          ordered.
+          and_call_original
 
         # Should not raise anything
         publish_batch(batch)
@@ -419,8 +419,8 @@ module ActiveRecordBatchConsumerTest
       it 'should not retry non-deadlock exceptions' do
         expect(Widget).
           to receive(:import!).
-            and_raise(ActiveRecord::StatementInvalid.new('Oops!!')).
-            once
+          and_raise(ActiveRecord::StatementInvalid.new('Oops!!')).
+          once
 
         expect { publish_batch(batch) }.
           to raise_error(ActiveRecord::StatementInvalid, 'Oops!!')

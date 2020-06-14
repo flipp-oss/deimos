@@ -51,10 +51,10 @@ module Deimos
 
       # Validate that each consumer implements the correct method for its type
       if delivery == 'inline_batch'
-        if handler_class.instance_method(:consume_batch).owner != handler_class
+        if handler_class.instance_method(:consume_batch).owner == Deimos::Consume::BatchConsumption
           raise "BatchConsumer #{listener.handler} does not implement `consume_batch`"
         end
-      elsif handler_class.instance_method(:consume).owner != handler_class
+      elsif handler_class.instance_method(:consume).owner == Deimos::Consume::MessageConsumption
         raise "Non-batch Consumer #{listener.handler} does not implement `consume`"
       end
     end

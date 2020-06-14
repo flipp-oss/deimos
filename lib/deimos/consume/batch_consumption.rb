@@ -51,15 +51,15 @@ module Deimos
         Deimos.config.metrics&.increment(
           'handler',
           tags: %W(
-          status:batch_received
-          topic:#{metadata[:topic]}
+            status:batch_received
+            topic:#{metadata[:topic]}
           ))
         Deimos.config.metrics&.increment(
           'handler',
           by: metadata['batch_size'],
           tags: %W(
-          status:received
-          topic:#{metadata[:topic]}
+            status:received
+            topic:#{metadata[:topic]}
           ))
         if payloads.present?
           payloads.each { |payload| _report_time_delayed(payload, metadata) }
@@ -73,8 +73,8 @@ module Deimos
         Deimos.config.metrics&.increment(
           'handler',
           tags: %W(
-          status:batch_error
-          topic:#{metadata[:topic]}
+            status:batch_error
+            topic:#{metadata[:topic]}
           ))
         Deimos.config.logger.warn(
           message: 'Error consuming message batch',
@@ -91,10 +91,12 @@ module Deimos
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]
       def _handle_batch_success(time_taken, payloads, metadata)
-        Deimos.config.metrics&.histogram('handler', time_taken, tags: %W(
-                                         time:consume_batch
-                                         topic:#{metadata[:topic]}
-        ))
+        Deimos.config.metrics&.histogram('handler',
+                                         time_taken,
+                                         tags: %W(
+                                           time:consume_batch
+                                           topic:#{metadata[:topic]}
+                                         ))
         Deimos.config.metrics&.increment(
           'handler',
           tags: %W(
@@ -119,7 +121,7 @@ module Deimos
       # Get payload identifiers (key and message_id if present) for logging.
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]
-      # @return [Array<Hash>] the identifiers.
+      # @return [Array<Array>] the identifiers.
       def _payload_identifiers(payloads, metadata)
         message_ids = payloads&.map do |payload|
           if payload.is_a?(Hash) && payload.key?('message_id')

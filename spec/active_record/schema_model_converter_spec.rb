@@ -28,7 +28,7 @@ module SchemaModelConverterTest
       ActiveRecord::Base.connection.drop_table(:wibbles)
     end
 
-    let(:schema) { Deimos::SchemaBackends::AvroLocal.new(schema: 'Wibble', namespace: 'com.my-namespace')}
+    let(:schema) { Deimos::SchemaBackends::AvroLocal.new(schema: 'Wibble', namespace: 'com.my-namespace') }
     let(:inst) { described_class.new(schema, Wibble) }
 
     describe '#convert' do

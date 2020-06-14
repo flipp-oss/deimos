@@ -21,9 +21,9 @@ module Deimos
 
       # Assign a key to a new record.
       # @param record [ActiveRecord::Base]
-      # @param payload [Hash]
+      # @param _payload [Hash]
       # @param key [Object]
-      def assign_key(record, payload, key)
+      def assign_key(record, _payload, key)
         key_attributes = record_key(key)
 
         key_attributes.each do |k, v|

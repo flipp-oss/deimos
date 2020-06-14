@@ -39,9 +39,9 @@ module Deimos
           metadata: metadata
         )
         Deimos.config.metrics&.increment('handler', tags: %W(
-                                         status:received
-                                         topic:#{metadata[:topic]}
-        ))
+                                           status:received
+                                           topic:#{metadata[:topic]}
+                                         ))
         _report_time_delayed(payload, metadata)
       end
 

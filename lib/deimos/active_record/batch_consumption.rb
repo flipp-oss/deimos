@@ -23,8 +23,8 @@ module Deimos
               slices.each do |slice|
                 removed, upserted = slice.partition { |_, v| v.nil? }
 
-                upsert_records(upserted) unless upserted.empty?
-                remove_records(removed) unless removed.empty?
+                upsert_records(upserted) if upserted.any?
+                remove_records(removed) if removed.any?
               end
             end
           end
@@ -53,7 +53,8 @@ module Deimos
                     {
                       on_duplicate_key_update: {
                         # conflict_target must explicitly list the columns for
-                        # Postgres and SQLite
+                        # Postgres and SQLite. Not required for MySQL,
+                        # but it will behave the same as being unset
                         conflict_target: key_cols,
                         columns: :all
                       }

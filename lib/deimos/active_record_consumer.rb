@@ -62,9 +62,9 @@ module Deimos
     # @param payload [Hash]
     # @param key [String]
     def record_attributes(payload, key=nil)
-      @converter
-        .convert(payload)
-        .merge(record_key(key))
+      @converter.
+        convert(payload).
+        merge(record_key(key))
     end
   end
 end
