@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'deimos/activerecord/batch_consumption'
-require 'deimos/activerecord/message_consumption'
-require 'deimos/activerecord/schema_model_converter'
+require 'deimos/active_record/batch_consumption'
+require 'deimos/active_record/message_consumption'
+require 'deimos/active_record/schema_model_converter'
 require 'deimos/consumer'
 
 module Deimos

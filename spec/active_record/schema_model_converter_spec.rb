@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'deimos/activerecord/schema_model_converter'
+require 'deimos/active_record/schema_model_converter'
 require 'deimos/schema_backends/avro_local'
 
 # Wrapped in a module to prevent class leakage
