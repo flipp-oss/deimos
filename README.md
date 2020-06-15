@@ -580,6 +580,9 @@ skip `destroy` callbacks.
 
 Batch consumption is used when the `delivery` setting for your consumer is set to `inline_batch`.
 
+**Note**: Currently, batch consumption only supports only primary keys as identifiers out of the box. See
+[the specs](spec/active_record_batch_consumer_spec.rb) for an example of how to use compound keys.
+
 A sample batch consumer would look as follows:
 
 ```ruby
@@ -587,6 +590,14 @@ class MyConsumer < Deimos::ActiveRecordConsumer
   schema 'MySchema'
   key_config field: 'my_field'
   record_class Widget
+
+  # Controls whether the batch is compacted before consuming.
+  # If true, only the last message for each unique key in a batch will be
+  # processed.
+  # If false, each message will be processed in order.
+  compacted false
+
+
   # Optional override of the default behavior, which is to call `delete_all`
   # on the associated records - e.g. you can replace this with setting a deleted
   # flag on the record. 

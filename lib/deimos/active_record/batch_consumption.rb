@@ -31,6 +31,23 @@ module Deimos
         end
       end
 
+      # Get unique key for the ActiveRecord instance from the incoming key.
+      # Override this method (with super) to customize the set of attributes that
+      # uniquely identifies each record in the database.
+      # @param key [String] The encoded key.
+      # @return [Hash] The key attributes.
+      def record_key(key)
+        decoded_key = decode_key(key)
+
+        if decoded_key.nil?
+          {}
+        elsif decoded_key.is_a?(Hash)
+          @key_converter.convert(decoded_key)
+        else
+          { @klass.primary_key => decoded_key }
+        end
+      end
+
     protected
 
       # Upsert any non-deleted records
@@ -40,8 +57,8 @@ module Deimos
         key_cols = key_columns(records)
 
         messages = records.map do |k, v|
-          record = record_attributes(v, k)
-          record.merge(record_key(k))
+          record_attributes(v, k).
+            merge(record_key(k))
         end
 
         # If record_attributes indicated no record, skip it
@@ -53,8 +70,8 @@ module Deimos
                     {
                       on_duplicate_key_update: {
                         # conflict_target must explicitly list the columns for
-                        # Postgres and SQLite. Not required for MySQL,
-                        # but it will behave the same as being unset
+                        # Postgres and SQLite. Not required for MySQL, but this
+                        # ensures consistent behaviour.
                         conflict_target: key_cols,
                         columns: :all
                       }
@@ -79,12 +96,10 @@ module Deimos
       # @return ActiveRecord::Relation Matching relation.
       def deleted_query(records)
         keys = records.
-          map { |k, _| record_key(k) }.
-          reject(&:empty?)
+          map { |k, _| record_key(k)[@klass.primary_key] }.
+          reject(&:nil?)
 
-        keys.reduce(@klass.none) do |query, key|
-          query.or(@klass.unscoped.where(key))
-        end
+        @klass.unscoped.where(@klass.primary_key => keys)
       end
 
       # Get the set of attribute names that uniquely identify messages in the
@@ -117,6 +132,11 @@ module Deimos
         end
 
         ops = messages.group_by { |k, _| k }
+
+        # Take the most recent for each key if consumer is set to `compacted`
+        if self.class.config[:compacted]
+          return [ops.values.map(&:last)]
+        end
 
         # Find maximum depth
         depth = ops.values.map(&:length).max || 0

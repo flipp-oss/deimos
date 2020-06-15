@@ -196,6 +196,52 @@ module ActiveRecordBatchConsumerTest
         )
     end
 
+    describe 'compacted mode' do
+      # Create a compacted consumer
+      let(:consumer_class) do
+        Class.new(described_class) do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          record_class Widget
+          compacted true
+
+          # :no-doc:
+          def deleted_query(_records)
+            raise 'Should not have anything to delete!'
+          end
+        end
+      end
+
+      it 'should allow for compacted batches' do
+        expect(Widget).to receive(:import!).once.and_call_original
+
+        publish_batch(
+          [
+            { key: 1,
+              payload: nil },
+            { key: 2,
+              payload: { test_id: 'xyz', some_int: 5 } },
+            { key: 1,
+              payload: { test_id: 'abc', some_int: 3 } },
+            { key: 2,
+              payload: { test_id: 'def', some_int: 4 } },
+            { key: 3,
+              payload: { test_id: 'hij', some_int: 9 } }
+          ]
+        )
+
+        expect(all_widgets).
+          to match_array(
+            [
+              have_attributes(id: 1, test_id: 'abc', some_int: 3),
+              have_attributes(id: 2, test_id: 'def', some_int: 4),
+              have_attributes(id: 3, test_id: 'hij', some_int: 9)
+            ]
+          )
+      end
+    end
+
     describe 'batch atomicity' do
       it 'should roll back if there was an exception while deleting' do
         Widget.create!(id: 1, test_id: 'abc', some_int: 2)
@@ -261,6 +307,18 @@ module ActiveRecordBatchConsumerTest
           namespace 'com.my-namespace'
           key_config schema: 'MySchemaCompound-key'
           record_class Widget
+
+          # :no-doc:
+          def deleted_query(records)
+            keys = records.
+              map { |k, _| record_key(k) }.
+              reject(&:empty?)
+
+            # Only supported on Rails 5+
+            keys.reduce(@klass.none) do |query, key|
+              query.or(@klass.unscoped.where(key))
+            end
+          end
         end
       end
 
@@ -373,10 +431,14 @@ module ActiveRecordBatchConsumerTest
         expect(all_widgets).
           to match_array(
             [
-              have_attributes(id: 1, test_id: 'abc', some_int: 2, deleted: true, created_at: start, updated_at: Time.zone.now),
-              have_attributes(id: 2, test_id: 'def', some_int: 3, deleted: true, created_at: Time.zone.now, updated_at: Time.zone.now),
-              have_attributes(id: 3, test_id: 'ghi', some_int: 4, deleted: false, created_at: start, updated_at: Time.zone.now),
-              have_attributes(id: 4, test_id: 'uvw', some_int: 5, deleted: false, created_at: start, updated_at: Time.zone.now)
+              have_attributes(id: 1, test_id: 'abc', some_int: 2, deleted: true,
+                              created_at: start, updated_at: Time.zone.now),
+              have_attributes(id: 2, test_id: 'def', some_int: 3, deleted: true,
+                              created_at: Time.zone.now, updated_at: Time.zone.now),
+              have_attributes(id: 3, test_id: 'ghi', some_int: 4, deleted: false,
+                              created_at: start, updated_at: Time.zone.now),
+              have_attributes(id: 4, test_id: 'uvw', some_int: 5, deleted: false,
+                              created_at: start, updated_at: Time.zone.now)
             ]
           )
       end

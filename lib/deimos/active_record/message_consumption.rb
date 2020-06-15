@@ -12,11 +12,7 @@ module Deimos
       # @param key [Object]
       # @return [ActiveRecord::Base]
       def fetch_record(klass, _payload, key)
-        key = record_key(key)
-
-        raise 'No record key' if key.nil?
-
-        klass.unscoped.where(key).first
+        klass.unscoped.where(klass.primary_key => key).first
       end
 
       # Assign a key to a new record.
@@ -24,11 +20,7 @@ module Deimos
       # @param _payload [Hash]
       # @param key [Object]
       def assign_key(record, _payload, key)
-        key_attributes = record_key(key)
-
-        key_attributes.each do |k, v|
-          record.send("#{k}=", v)
-        end
+        record[record.class.primary_key] = key
       end
 
       # :nodoc:

@@ -28,6 +28,12 @@ module Deimos
       def record_class(klass)
         config[:record_class] = klass
       end
+
+      # param val [Boolean] Turn pre-compaction of the batch on or off. If true,
+      # only the last message for each unique key in a batch is processed.
+      def compacted(val)
+        config[:compacted] = val
+      end
     end
 
     # Setup
@@ -40,31 +46,12 @@ module Deimos
       end
     end
 
-    # Get unique key for the ActiveRecord instance from the incoming key.
-    # Override this method (with super) to customize the set of attributes that
-    # uniquely identifies each record in the database.
-    # @param key [String] The encoded key.
-    # @return [Hash] The key attributes.
-    def record_key(key)
-      decoded_key = decode_key(key)
-
-      if decoded_key.nil?
-        {}
-      elsif decoded_key.is_a?(Hash)
-        @key_converter.convert(decoded_key)
-      else
-        { @klass.primary_key => decoded_key }
-      end
-    end
-
     # Override this method (with `super`) if you want to add/change the default
     # attributes set to the new/existing record.
     # @param payload [Hash]
-    # @param key [String]
-    def record_attributes(payload, key=nil)
-      @converter.
-        convert(payload).
-        merge(record_key(key))
+    # @param _key [String]
+    def record_attributes(payload, _key=nil)
+      @converter.convert(payload)
     end
   end
 end
