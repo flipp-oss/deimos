@@ -38,7 +38,7 @@ describe Deimos::Utils::LagReporter do
     )
     ActiveSupport::Notifications.instrument(
       'start_process_message.consumer.kafka',
-      offset_lag: 80, topic: 'my-topic', group_id: 'group1', partition: 2
+      offset: 20, topic: 'my-topic', group_id: 'group1', partition: 2
     )
     ActiveSupport::Notifications.instrument(
       'heartbeat.consumer.kafka',
@@ -46,7 +46,7 @@ describe Deimos::Utils::LagReporter do
     )
     ActiveSupport::Notifications.instrument(
       'start_process_batch.consumer.kafka',
-      offset_lag: 0, topic: 'my-topic', group_id: 'group1', partition: 2
+      last_offset: 100, topic: 'my-topic', group_id: 'group1', partition: 2
     )
     ActiveSupport::Notifications.instrument(
       'heartbeat.consumer.kafka',
