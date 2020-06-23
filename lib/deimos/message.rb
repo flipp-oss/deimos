@@ -10,7 +10,7 @@ module Deimos
     # @param producer [Class]
     def initialize(payload, producer, topic: nil, key: nil, partition_key: nil)
       @payload = payload&.with_indifferent_access
-      @producer_name = producer.name
+      @producer_name = producer&.name
       @topic = topic
       @key = key
       @partition_key = partition_key
@@ -69,6 +69,11 @@ module Deimos
     # @return [Boolean]
     def ==(other)
       self.to_h == other.to_h
+    end
+
+    # @return [Boolean] True if this message is a tombstone
+    def tombstone?
+      payload.nil?
     end
   end
 end

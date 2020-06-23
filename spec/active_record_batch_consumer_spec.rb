@@ -311,7 +311,7 @@ module ActiveRecordBatchConsumerTest
           # :no-doc:
           def deleted_query(records)
             keys = records.
-              map { |k, _| record_key(k) }.
+              map { |m| record_key(m.key) }.
               reject(&:empty?)
 
             # Only supported on Rails 5+
@@ -444,48 +444,35 @@ module ActiveRecordBatchConsumerTest
       end
     end
 
-    describe 'deadlock handling' do
-      let(:batch) { [{ key: 1, payload: { test_id: 'abc', some_int: 3 } }] }
+    describe 'skipping records' do
+      let(:consumer_class) do
+        Class.new(described_class) do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          record_class Widget
 
-      it 'should retry deadlocks 3 times' do
-        # Should receive original attempt + 2 retries
-        expect(Widget).
-          to receive(:import!).
-          and_raise(ActiveRecord::Deadlocked.new).
-          exactly(3).times
+          # Sample customization: Skipping records
+          def record_attributes(payload, key)
+            return nil if payload[:test_id] == 'skipme'
 
-        # After 3 tries, should let it bubble up
-        expect { publish_batch(batch) }.to raise_error(ActiveRecord::Deadlocked)
+            super
+          end
+        end
       end
 
-      it 'should stop retrying deadlocks after success' do
-        # Fail on first attempt, succeed on second
-        expect(Widget).
-          to receive(:import!).
-          and_raise(ActiveRecord::Deadlocked.new).
-          once.
-          ordered
+      it 'should allow overriding to skip any unwanted records' do
+        publish_batch(
+          [
+            { key: 1, # Record that consumer can decide to skip
+              payload: { test_id: 'skipme' } },
+            { key: 2,
+              payload: { test_id: 'abc123' } },
+          ]
+        )
 
-        expect(Widget).
-          to receive(:import!).
-          once.
-          ordered.
-          and_call_original
-
-        # Should not raise anything
-        publish_batch(batch)
-
-        expect(all_widgets.length).to eq(1)
-      end
-
-      it 'should not retry non-deadlock exceptions' do
-        expect(Widget).
-          to receive(:import!).
-          and_raise(ActiveRecord::StatementInvalid.new('Oops!!')).
-          once
-
-        expect { publish_batch(batch) }.
-          to raise_error(ActiveRecord::StatementInvalid, 'Oops!!')
+        expect(all_widgets).
+          to match_array([have_attributes(id: 2, test_id: 'abc123')])
       end
     end
   end

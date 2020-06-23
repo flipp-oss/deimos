@@ -2,7 +2,8 @@
 
 module Deimos
   module Consume
-    # Methods used by message-by-message (non-batch) consumers.
+    # Methods used by message-by-message (non-batch) consumers. These consumers
+    # are invoked for every individual message.
     module MessageConsumption
       include Phobos::Handler
 

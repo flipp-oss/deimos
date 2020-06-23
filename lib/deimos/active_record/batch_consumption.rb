@@ -1,31 +1,45 @@
 # frozen_string_literal: true
 
+require 'deimos/active_record/batch_slicer'
+require 'deimos/utils/deadlock_retry'
+require 'deimos/message'
+
 module Deimos
   module ActiveRecord
-    # Batch consume methods
+    # Methods for consuming batches of messages and saving them to the database
+    # in bulk ActiveRecord operations.
     module BatchConsumption
-      # Handle a batch of Kafka messages
+      # Handle a batch of Kafka messages. Batches are split into "slices",
+      # which are groups of independent messages that can be processed together
+      # in a single database operation.
+      # If two messages in a batch have the same key, we cannot process them
+      # in the same operation as they would interfere with each other. Thus
+      # they are split
       # @param payloads [Array<Hash>] Decoded payloads.
       # @param metadata [Hash] Information about batch, including keys.
       def consume_batch(payloads, metadata)
-        # Create [key, value] pairs, even if no keys are decoded
         messages = payloads.
           zip(metadata[:keys]).
-          map { |p, k| [k, p] }
+          map { |p, k| Deimos::Message.new(p, nil, key: k) }
 
-        Deimos.instrument('ar_consumer.consume_batch', topic: metadata[:topic], messages: messages) do
-          slices = _slice_batch(messages)
+        tags = %W(topic:#{metadata[:topic]})
+
+        Deimos.instrument('ar_consumer.consume_batch', tags) do
+          slices = BatchSlicer.slice(messages,
+                                     compacted: self.class.config[:compacted],
+                                     no_keys: self.class.config[:no_keys])
 
           # The entire batch should be treated as one transaction so that if
-          # any message fails, the whole thing is rolled back
-          _retry_deadlock(topic: metadata[:topic]) do
-            ::ActiveRecord::Base.transaction do
-              slices.each do |slice|
-                removed, upserted = slice.partition { |_, v| v.nil? }
+          # any message fails, the whole thing is rolled back or retried
+          # if there is deadlock
+          ::Deimos::Utils::DeadlockRetry.wrap(tags) do
+            slices.each do |slice|
+              # Find all upserted records (i.e. that have a payload) and all
+              # deleted record (no payload)
+              removed, upserted = slice.partition(&:tombstone?)
 
-                upsert_records(upserted) if upserted.any?
-                remove_records(removed) if removed.any?
-              end
+              upsert_records(upserted) if upserted.any?
+              remove_records(removed) if removed.any?
             end
           end
         end
@@ -51,18 +65,19 @@ module Deimos
     protected
 
       # Upsert any non-deleted records
-      # @param records [Array<Array>] List of [key, value] pairs for a group of
-      # non-tombstone records.
-      def upsert_records(records)
-        key_cols = key_columns(records)
+      # @param messages [Array<Message>] List of messages for a group of
+      # records to either be updated or inserted.
+      def upsert_records(messages)
+        key_cols = key_columns(messages)
 
-        messages = records.map do |k, v|
-          record_attributes(v, k).
-            merge(record_key(k))
+        # Create payloads with payload + key attributes
+        upserts = messages.map do |m|
+          record_attributes(m.payload, m.key)&.
+            merge(record_key(m.key))
         end
 
-        # If record_attributes indicated no record, skip it
-        messages.compact!
+        # If overridden record_attributes indicated no record, skip
+        upserts.compact!
 
         options = if key_cols.empty?
                     {} # Can't upsert with no key, just do regular insert
@@ -78,25 +93,25 @@ module Deimos
                     }
                   end
 
-        @klass.import!(messages, options)
+        @klass.import!(upserts, options)
       end
 
       # Delete any records with a tombstone.
-      # @param records [Array<Array>] List of [key, nil] pairs for a group of
+      # @param messages [Array<Message>] List of messages for a group of
       # deleted records.
-      def remove_records(records)
-        clause = deleted_query(records)
+      def remove_records(messages)
+        clause = deleted_query(messages)
 
         clause.delete_all
       end
 
       # Create an ActiveRecord relation that matches all of the passed
       # records. Used for bulk deletion.
-      # @param records [Array<Array>] List of [key, nil] pairs.
+      # @param records [Array<Message>] List of messages.
       # @return ActiveRecord::Relation Matching relation.
       def deleted_query(records)
         keys = records.
-          map { |k, _| record_key(k)[@klass.primary_key] }.
+          map { |m| record_key(m.key)[@klass.primary_key] }.
           reject(&:nil?)
 
         @klass.unscoped.where(@klass.primary_key => keys)
@@ -104,75 +119,14 @@ module Deimos
 
       # Get the set of attribute names that uniquely identify messages in the
       # batch. Requires at least one record.
-      # @param records [Array<Array>] Non-empty list of [key, value] pairs.
+      # @param records [Array<Message>] Non-empty list of messages.
       # @return [Array<String>] List of attribute names.
       # @raise If records is empty.
       def key_columns(records)
         raise 'Cannot determine key from empty batch' if records.empty?
 
-        first_key, = records.first
+        first_key = records.first.key
         record_key(first_key).keys
-      end
-
-    private
-
-      # Maximum number of times to retry a block after encountering a deadlock
-      RETRY_COUNT = 2
-
-      # Split the batch into a series of independent slices. Each slice contains
-      # messages that can be processed in any order (i.e. they have distinct
-      # keys). Messages with the same key will be separated into different
-      # slices that maintain the correct order.
-      # E.g. Given messages A1, A2, B1, C1, C2, C3, they will be sliced as:
-      # [[A1, B1, C1], [A2, C2], [C3]]
-      def _slice_batch(messages)
-        # If no keys, just one big slice
-        if self.class.config[:no_keys]
-          return [messages]
-        end
-
-        ops = messages.group_by { |k, _| k }
-
-        # Take the most recent for each key if consumer is set to `compacted`
-        if self.class.config[:compacted]
-          return [ops.values.map(&:last)]
-        end
-
-        # Find maximum depth
-        depth = ops.values.map(&:length).max || 0
-
-        # Generate slices for each depth
-        depth.times.map do |i|
-          ops.values.map { |arr| arr.dig(i) }.compact
-        end
-      end
-
-      # Retry the given block when encountering a deadlock. For any other
-      # exceptions, they are reraised. This is used to handle cases where
-      # the database may be busy but the transaction would succeed if
-      # retried later.
-      def _retry_deadlock(tags=[])
-        count = RETRY_COUNT
-
-        begin
-          yield
-        rescue ::ActiveRecord::Deadlocked => e
-          raise e if count <= 0
-
-          Rails.logger.warn(
-            message: 'Deadlock encountered when trying to execute query. '\
-              "Retrying. #{count} attempt(s) remaining",
-            tags: tags
-          )
-
-          Deimos.config.metrics&.increment(
-            'deadlock',
-            tags: tags
-          )
-
-          count -= 1
-          retry
-        end
       end
     end
   end

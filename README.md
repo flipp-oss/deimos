@@ -314,18 +314,8 @@ messages as an array and then process them together. This can improve
 consumer throughput, depending on the use case. Batch consumers behave like
 other consumers in regards to key and payload decoding, etc.
 
-To enable batch consumption, ensure that the `delivery` property is set to `inline_batch`. For example:
-
-```ruby
-Deimos.configure do
-  consumer do
-    class_name 'Consumers::MyBatchConsumer'
-    topic 'my_batched_topic'
-    group_id 'my_group_id'
-    delivery :inline_batch
-  end
-end
-```
+To enable batch consumption, ensure that the `delivery` property of your
+consumer is set to `inline_batch`.
 
 Batch consumers will invoke the `consume_batch` method instead of `consume`
 as in this example:

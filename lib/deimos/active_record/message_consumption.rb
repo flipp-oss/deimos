@@ -2,7 +2,8 @@
 
 module Deimos
   module ActiveRecord
-    # Consumption methods
+    # Methods for consuming individual messages and saving them to the database
+    # as ActiveRecord instances.
     module MessageConsumption
       # Find the record specified by the given payload and key.
       # Default is to use the primary key column and the value of the first

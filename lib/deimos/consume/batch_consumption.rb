@@ -2,7 +2,9 @@
 
 module Deimos
   module Consume
-    # Methods used by batch consumers
+    # Helper methods used by batch consumers, i.e. those with "inline_batch"
+    # delivery. Payloads are decoded then consumers are invoked with arrays
+    # of messages to be handled at once
     module BatchConsumption
       include Phobos::BatchHandler
 
