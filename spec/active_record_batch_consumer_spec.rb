@@ -467,7 +467,7 @@ module ActiveRecordBatchConsumerTest
             { key: 1, # Record that consumer can decide to skip
               payload: { test_id: 'skipme' } },
             { key: 2,
-              payload: { test_id: 'abc123' } },
+              payload: { test_id: 'abc123' } }
           ]
         )
 

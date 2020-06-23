@@ -3,6 +3,8 @@
 module Deimos
   module ActiveRecord
     module BatchConsumption
+      # Helper class for breaking down batches into independent groups for
+      # processing
       class BatchSlicer
         # Split the batch into a series of independent slices. Each slice contains
         # messages that can be processed in any order (i.e. they have distinct
