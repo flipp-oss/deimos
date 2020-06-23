@@ -31,28 +31,19 @@ module Deimos
 
         # @param topic [String]
         # @param partition [Integer]
-        # @param lag [Integer]
-        def assign_lag(topic, partition, lag)
-          self.topics[topic.to_s] ||= Topic.new(topic, self)
-          self.topics[topic.to_s].assign_lag(partition, lag)
-        end
-
-        # Figure out the current lag by asking Kafka based on the current offset.
-        # @param topic [String]
-        # @param partition [Integer]
         # @param offset [Integer]
-        def compute_lag(topic, partition, offset)
+        def assign_current_offset(topic, partition, offset)
           self.topics[topic.to_s] ||= Topic.new(topic, self)
-          self.topics[topic.to_s].compute_lag(partition, offset)
+          self.topics[topic.to_s].assign_current_offset(partition, offset)
         end
       end
 
-      # Topic which has a hash of partition => last known offset lag
+      # Topic which has a hash of partition => last known current offsets
       class Topic
         # @return [String]
         attr_accessor :topic_name
         # @return [Hash<Integer, Integer>]
-        attr_accessor :partition_offset_lags
+        attr_accessor :partition_current_offsets
         # @return [ConsumerGroup]
         attr_accessor :consumer_group
 
@@ -61,35 +52,33 @@ module Deimos
         def initialize(topic_name, group)
           self.topic_name = topic_name
           self.consumer_group = group
-          self.partition_offset_lags = {}
+          self.partition_current_offsets = {}
         end
 
         # @param partition [Integer]
-        # @param lag [Integer]
-        def assign_lag(partition, lag)
-          self.partition_offset_lags[partition.to_i] = lag
+        def assign_current_offset(partition, offset)
+          self.partition_current_offsets[partition.to_i] = offset
         end
 
         # @param partition [Integer]
-        # @param offset [Integer]
         def compute_lag(partition, offset)
-          return if self.partition_offset_lags[partition.to_i]
-
           begin
             client = Phobos.create_kafka_client
             last_offset = client.last_offset_for(self.topic_name, partition)
-            assign_lag(partition, [last_offset - offset, 0].max)
+            lag = last_offset - offset
           rescue StandardError # don't do anything, just wait
             Deimos.config.logger.
               debug("Error computing lag for #{self.topic_name}, will retry")
           end
+          lag || 0
         end
 
         # @param partition [Integer]
         def report_lag(partition)
-          lag = self.partition_offset_lags[partition.to_i]
-          return unless lag
+          current_offset = self.partition_current_offsets[partition.to_i]
+          return unless current_offset
 
+          lag = compute_lag(partition, current_offset)
           group = self.consumer_group.id
           Deimos.config.logger.
             debug("Sending lag: #{group}/#{partition}: #{lag}")
@@ -109,16 +98,20 @@ module Deimos
           @groups = {}
         end
 
+        # offset_lag = event.payload.fetch(:offset_lag)
+        # group_id = event.payload.fetch(:group_id)
+        # topic = event.payload.fetch(:topic)
+        # partition = event.payload.fetch(:partition)
         # @param payload [Hash]
         def message_processed(payload)
-          lag = payload[:offset_lag]
+          offset = payload[:offset] || payload[:last_offset]
           topic = payload[:topic]
           group = payload[:group_id]
           partition = payload[:partition]
 
           synchronize do
             @groups[group.to_s] ||= ConsumerGroup.new(group)
-            @groups[group.to_s].assign_lag(topic, partition, lag)
+            @groups[group.to_s].assign_current_offset(topic, partition, offset)
           end
         end
 
@@ -131,7 +124,7 @@ module Deimos
 
           synchronize do
             @groups[group.to_s] ||= ConsumerGroup.new(group)
-            @groups[group.to_s].compute_lag(topic, partition, offset)
+            @groups[group.to_s].assign_current_offset(topic, partition, offset)
           end
         end
 
