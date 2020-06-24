@@ -44,6 +44,8 @@ module Deimos
       if self.class.config[:key_schema]
         @key_converter = ActiveRecord::SchemaModelConverter.new(self.class.key_decoder, @klass)
       end
+
+      @compacted = self.class.config[:compacted] != false
     end
 
     # Override this method (with `super`) if you want to add/change the default

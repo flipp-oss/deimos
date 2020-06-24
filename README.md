@@ -573,6 +573,10 @@ Batch consumption is used when the `delivery` setting for your consumer is set t
 **Note**: Currently, batch consumption only supports only primary keys as identifiers out of the box. See
 [the specs](spec/active_record_batch_consumer_spec.rb) for an example of how to use compound keys.
 
+By default, batches will be compacted before processing, i.e. only the last
+message for each unique key in a batch will actually be processed. To change
+this behaviour, call `compacted false` inside of your consumer definition.
+
 A sample batch consumer would look as follows:
 
 ```ruby
@@ -584,8 +588,10 @@ class MyConsumer < Deimos::ActiveRecordConsumer
   # Controls whether the batch is compacted before consuming.
   # If true, only the last message for each unique key in a batch will be
   # processed.
-  # If false, each message will be processed in order.
-  compacted false
+  # If false, messages will be grouped into "slices" of independent keys
+  # and each slice will be imported separately.
+  #
+  # compacted false
 
 
   # Optional override of the default behavior, which is to call `delete_all`

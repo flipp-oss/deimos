@@ -12,14 +12,8 @@ module Deimos
         # slices that maintain the correct order.
         # E.g. Given messages A1, A2, B1, C1, C2, C3, they will be sliced as:
         # [[A1, B1, C1], [A2, C2], [C3]]
-        def self.slice(messages, compacted: false, no_keys: false)
-          # If no keys, just one big slice
-          return [messages] if no_keys
-
+        def self.slice(messages)
           ops = messages.group_by(&:key)
-
-          # Take the last message for each key if consumer is set to `compacted`
-          return [ops.values.map(&:last)] if compacted
 
           # Find maximum depth
           depth = ops.values.map(&:length).max || 0

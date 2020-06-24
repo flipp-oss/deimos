@@ -44,13 +44,14 @@ module ActiveRecordBatchConsumerTest
     # Default starting time
     let(:start) { Time.zone.local(2019, 1, 1, 10, 30, 0) }
 
-    # Basic consumer
+    # Basic uncompacted consumer
     let(:consumer_class) do
       Class.new(described_class) do
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config plain: true
         record_class Widget
+        compacted false
       end
     end
 
@@ -204,7 +205,6 @@ module ActiveRecordBatchConsumerTest
           namespace 'com.my-namespace'
           key_config plain: true
           record_class Widget
-          compacted true
 
           # :no-doc:
           def deleted_query(_records)
@@ -307,6 +307,7 @@ module ActiveRecordBatchConsumerTest
           namespace 'com.my-namespace'
           key_config schema: 'MySchemaCompound-key'
           record_class Widget
+          compacted false
 
           # :no-doc:
           def deleted_query(records)
@@ -386,6 +387,7 @@ module ActiveRecordBatchConsumerTest
           namespace 'com.my-namespace'
           key_config plain: true
           record_class Widget
+          compacted false
 
           # Sample customization: Soft delete
           def remove_records(records)
