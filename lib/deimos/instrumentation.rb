@@ -48,11 +48,17 @@ module Deimos
       messages.group_by(&:topic).each do |topic, batch|
         next if batch.empty?
 
-        producer = batch.first.metadata[:producer_name]
-        payloads = batch.map { |m| m.metadata[:decoded_payload] }
+        producer = Deimos::Producer.descendants.find { |c| c.topic == topic }
+        decoder = Deimos::KafkaMessage.decoder(topic)
+        payloads = batch.map do |m|
+          decoder&.decoder&.decode(m.value)
+        end
 
-        Deimos.config.metrics&.count('publish_error', payloads.size,
-                                     tags: %W(topic:#{topic}))
+        Deimos.config.metrics&.increment(
+          'publish_error',
+          tags: %W(topic:#{topic}),
+          by: payloads.size
+        )
         Deimos.instrument(
           'produce_error',
           producer: producer,
