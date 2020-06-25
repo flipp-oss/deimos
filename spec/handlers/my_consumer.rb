@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
 module ConsumerTest
-  class MyConsumer < Deimos::Consumer; end
+  # Mock consumer
+  class MyConsumer < Deimos::Consumer
+    # :no-doc:
+    def consume
+    end
+  end
 end

@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
 module ConsumerTest
-  class MyBatchConsumer < Deimos::BatchConsumer; end
+  # Mock consumer
+  class MyBatchConsumer < Deimos::Consumer
+    # :no-doc:
+    def consume_batch
+    end
+  end
 end

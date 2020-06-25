@@ -2,11 +2,11 @@
 
 # :nodoc:
 module ConsumerTest
-  describe Deimos::Consumer do
+  describe Deimos::Consumer, 'Message Consumer' do
 
     prepend_before(:each) do
       # :nodoc:
-      consumer_class = Class.new(Deimos::Consumer) do
+      consumer_class = Class.new(described_class) do
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config field: 'test_id'
@@ -121,7 +121,7 @@ module ConsumerTest
       end
 
       it 'should use the key schema if set' do
-        consumer_class = Class.new(Deimos::Consumer) do
+        consumer_class = Class.new(described_class) do
           schema 'MySchema'
           namespace 'com.my-namespace'
           key_config schema: 'MySchema_key'
@@ -132,7 +132,7 @@ module ConsumerTest
       end
 
       it 'should not decode if plain is set' do
-        consumer_class = Class.new(Deimos::Consumer) do
+        consumer_class = Class.new(described_class) do
           schema 'MySchema'
           namespace 'com.my-namespace'
           key_config plain: true
@@ -142,7 +142,7 @@ module ConsumerTest
       end
 
       it 'should error with nothing set' do
-        consumer_class = Class.new(Deimos::Consumer) do
+        consumer_class = Class.new(described_class) do
           schema 'MySchema'
           namespace 'com.my-namespace'
         end
@@ -156,7 +156,7 @@ module ConsumerTest
     describe 'timestamps' do
       before(:each) do
         # :nodoc:
-        consumer_class = Class.new(Deimos::Consumer) do
+        consumer_class = Class.new(described_class) do
           schema 'MySchemaWithDateTimes'
           namespace 'com.my-namespace'
           key_config plain: true

@@ -58,6 +58,10 @@ Deimos.configure do
     namespace 'my.namespace'
     key_config field: :id
 
+    # Setting to :inline_batch will invoke consume_batch instead of consume
+    # for each batch of messages.
+    delivery :batch
+
   # If config.schema.path is app/schemas, assumes there is a file in
   # app/schemas/my/namespace/MyTopicSchema.avsc
   end

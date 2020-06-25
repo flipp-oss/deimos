@@ -2,6 +2,7 @@
 
 $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'active_record'
+require 'database_cleaner'
 require 'deimos'
 require 'deimos/metrics/mock'
 require 'deimos/tracing/mock'
@@ -147,6 +148,9 @@ RSpec.configure do |config|
   # true by default for RSpec 4.0
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
+  config.filter_run(focus: true)
+  config.run_all_when_everything_filtered = true
+
   config.before(:all) do
     Time.zone = 'Eastern Time (US & Canada)'
     ActiveRecord::Base.logger = Logger.new('/dev/null')
@@ -159,6 +163,9 @@ RSpec.configure do |config|
   config.include ActiveSupport::Testing::TimeHelpers
   config.before(:suite) do
     setup_db(DbConfigs::DB_OPTIONS.last)
+
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
   end
 
   config.mock_with(:rspec) do |mocks|
@@ -178,6 +185,12 @@ RSpec.configure do |config|
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
     end
+
+    DatabaseCleaner.start
+  end
+
+  config.after(:each) do
+    DatabaseCleaner.clean
   end
 end
 

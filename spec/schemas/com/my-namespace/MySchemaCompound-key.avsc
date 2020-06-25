@@ -1,0 +1,18 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "MySchemaCompound-key",
+  "type": "record",
+  "doc": "Test schema",
+  "fields": [
+    {
+      "name": "part_one",
+      "type": "string",
+      "doc": "test string one"
+    },
+    {
+      "name": "part_two",
+      "type": "string",
+      "doc": "test string two"
+    }
+  ]
+}

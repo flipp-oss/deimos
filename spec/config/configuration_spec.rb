@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
+# Mock consumer
 class MyConfigConsumer < Deimos::Consumer
+  # :no-doc:
+  def consume
+  end
 end
 describe Deimos, 'configuration' do
   it 'should configure with deprecated fields' do
