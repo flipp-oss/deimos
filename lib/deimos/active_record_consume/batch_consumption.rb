@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'deimos/active_record/batch_slicer'
+require 'deimos/active_record_consume/batch_slicer'
 require 'deimos/utils/deadlock_retry'
 require 'deimos/message'
 
 module Deimos
-  module ActiveRecord
+  module ActiveRecordConsume
     # Methods for consuming batches of messages and saving them to the database
     # in bulk ActiveRecord operations.
     module BatchConsumption
@@ -28,7 +28,7 @@ module Deimos
           # The entire batch should be treated as one transaction so that if
           # any message fails, the whole thing is rolled back or retried
           # if there is deadlock
-          ::Deimos::Utils::DeadlockRetry.wrap(tags) do
+          Deimos::Utils::DeadlockRetry.wrap(tags) do
             if @compacted || self.class.config[:no_keys]
               update_database(compact_messages(messages))
             else

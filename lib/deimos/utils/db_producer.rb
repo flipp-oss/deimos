@@ -133,7 +133,11 @@ module Deimos
           metrics.gauge('pending_db_messages_max_wait', 0)
         end
         messages.each do |record|
-          time_diff = Time.zone.now - record.earliest
+          earliest = record.earliest
+          # SQLite gives a string here
+          earliest = Time.zone.parse(earliest) if earliest.is_a?(String)
+
+          time_diff = Time.zone.now - earliest
           metrics.gauge('pending_db_messages_max_wait', time_diff,
                         tags: ["topic:#{record.topic}"])
         end

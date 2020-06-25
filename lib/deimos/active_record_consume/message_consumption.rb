@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Deimos
-  module ActiveRecord
+  module ActiveRecordConsume
     # Methods for consuming individual messages and saving them to the database
     # as ActiveRecord instances.
     module MessageConsumption

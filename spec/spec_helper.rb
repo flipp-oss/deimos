@@ -185,12 +185,16 @@ RSpec.configure do |config|
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
     end
-
-    DatabaseCleaner.start
   end
 
-  config.after(:each) do
-    DatabaseCleaner.clean
+  config.around(:each) do |example|
+    use_cleaner = !example.metadata[:integration]
+
+    DatabaseCleaner.start if use_cleaner
+
+    example.run
+
+    DatabaseCleaner.clean if use_cleaner
   end
 end
 

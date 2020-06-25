@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Deimos
-  module ActiveRecord
+  module ActiveRecordConsume
     # Convert a message with a schema to an ActiveRecord model
     class SchemaModelConverter
       # Create new converter

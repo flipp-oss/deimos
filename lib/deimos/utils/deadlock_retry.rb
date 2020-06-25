@@ -32,10 +32,10 @@ module Deimos
           count = RETRY_COUNT
 
           begin
-            ::ActiveRecord::Base.transaction do
+            ActiveRecord::Base.transaction do
               yield
             end
-          rescue ::ActiveRecord::StatementInvalid => e
+          rescue ActiveRecord::StatementInvalid => e
             # Reraise if not a known deadlock
             raise if DEADLOCK_MESSAGES.none? { |m| e.message.include?(m) }
 
