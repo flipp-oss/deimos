@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `ActiveRecordConsumer` batch mode
 
 ### Fixes :wrench:
+- Fixes #19 - Fixes `send_produce_error` to decode `failed_messages` with built-in decoder. 
 - Lag calculation can be incorrect if no messages are being consumed.
 - Fixed bug where printing messages on a MessageSizeTooLarge
   error didn't work.
