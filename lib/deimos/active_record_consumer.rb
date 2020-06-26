@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'deimos/active_record/batch_consumption'
-require 'deimos/active_record/message_consumption'
-require 'deimos/active_record/schema_model_converter'
+require 'deimos/active_record_consume/batch_consumption'
+require 'deimos/active_record_consume/message_consumption'
+require 'deimos/active_record_consume/schema_model_converter'
 require 'deimos/consumer'
 
 module Deimos
@@ -19,8 +19,8 @@ module Deimos
   # Message-by-message -> use `delivery: message` or `delivery: batch`
   # Batch -> use `delivery: inline_batch`
   class ActiveRecordConsumer < Consumer
-    include ActiveRecord::MessageConsumption
-    include ActiveRecord::BatchConsumption
+    include ActiveRecordConsume::MessageConsumption
+    include ActiveRecordConsume::BatchConsumption
 
     class << self
       # param klass [Class < ActiveRecord::Base] the class used to save to the
@@ -39,10 +39,10 @@ module Deimos
     # Setup
     def initialize
       @klass = self.class.config[:record_class]
-      @converter = ActiveRecord::SchemaModelConverter.new(self.class.decoder, @klass)
+      @converter = ActiveRecordConsume::SchemaModelConverter.new(self.class.decoder, @klass)
 
       if self.class.config[:key_schema]
-        @key_converter = ActiveRecord::SchemaModelConverter.new(self.class.key_decoder, @klass)
+        @key_converter = ActiveRecordConsume::SchemaModelConverter.new(self.class.key_decoder, @klass)
       end
 
       @compacted = self.class.config[:compacted] != false

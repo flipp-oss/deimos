@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'deimos/active_record/schema_model_converter'
+require 'deimos/active_record_consume/schema_model_converter'
 require 'deimos/schema_backends/avro_local'
 
 # Wrapped in a module to prevent class leakage
 module SchemaModelConverterTest
-  describe Deimos::ActiveRecord::SchemaModelConverter do
+  describe Deimos::ActiveRecordConsume::SchemaModelConverter do
     # Create ActiveRecord table and model
     before(:all) do
       ActiveRecord::Base.connection.create_table(:wibbles, force: true) do |t|

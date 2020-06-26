@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Deimos::ActiveRecord::BatchConsumption::BatchSlicer do
+RSpec.describe Deimos::ActiveRecordConsume::BatchSlicer do
   describe '#slice' do
     let(:batch) do
       [
