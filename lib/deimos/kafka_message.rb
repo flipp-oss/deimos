@@ -42,7 +42,7 @@ module Deimos
       messages.map do |m|
         {
           key: m.key.present? ? decoder&.decode_key(m.key) || m.key : nil,
-          payload: decoder&.decoder&.decode(self.message) || self.message
+          payload: decoder&.decoder&.decode(m.message) || m.message
         }
       end
     end

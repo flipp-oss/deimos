@@ -87,9 +87,9 @@ module Deimos
           begin
             produce_messages(compacted_messages.map(&:phobos_message))
           rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
-            Deimos::KafkaMessage.where(id: messages.map(&:id)).delete_all
             @logger.error('Message batch too large, deleting...')
             @logger.error(Deimos::KafkaMessage.decoded(messages))
+            Deimos::KafkaMessage.where(id: messages.map(&:id)).delete_all
             raise
           end
         end
