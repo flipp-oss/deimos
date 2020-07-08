@@ -18,7 +18,7 @@ module Deimos
               decode_key(message.key)
             end
           end
-          metadata[:first_offset] = batch.first.offset
+          metadata[:first_offset] = batch.first&.offset
 
           payloads = batch.map do |message|
             message.payload ? self.class.decoder.decode(message.payload) : nil
