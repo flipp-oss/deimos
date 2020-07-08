@@ -325,7 +325,8 @@ class MyBatchConsumer < Deimos::Consumer
 
   def consume_batch(payloads, metadata)
     # payloads is an array of schema-decoded hashes.
-    # metadata is a hash that contains information like :keys and :topic.
+    # metadata is a hash that contains information like :keys, :topic, 
+    # and :first_offset.
     # Keys are automatically decoded and available as an array with
     # the same cardinality as the payloads. If you need to iterate
     # over payloads and keys together, you can use something like this:

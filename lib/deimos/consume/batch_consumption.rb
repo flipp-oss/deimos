@@ -6,6 +6,7 @@ module Deimos
     # delivery. Payloads are decoded then consumers are invoked with arrays
     # of messages to be handled at once
     module BatchConsumption
+      extend ActiveSupport::Concern
       include Phobos::BatchHandler
 
       # :nodoc:
@@ -17,6 +18,7 @@ module Deimos
               decode_key(message.key)
             end
           end
+          metadata[:first_offset] = batch.first.offset
 
           payloads = batch.map do |message|
             message.payload ? self.class.decoder.decode(message.payload) : nil

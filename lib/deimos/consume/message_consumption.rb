@@ -5,6 +5,7 @@ module Deimos
     # Methods used by message-by-message (non-batch) consumers. These consumers
     # are invoked for every individual message.
     module MessageConsumption
+      extend ActiveSupport::Concern
       include Phobos::Handler
 
       # :nodoc:
