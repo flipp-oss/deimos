@@ -111,6 +111,7 @@ module ConsumerTest
         test_consume_batch('my_batch_consume_topic', batch, keys: keys) do |_received, metadata|
           # Mock decode_key extracts the value of the first field as the key
           expect(metadata[:keys]).to eq(%w(foo bar))
+          expect(metadata[:first_offset]).to eq(1)
         end
       end
 

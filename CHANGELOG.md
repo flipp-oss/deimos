@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Fixes :wrench:
+- Fix crash with batch consumption due to not having ActiveSupport::Concern
+
+### Features :star:
+- Add `first_offset` to the metadata sent via the batch
+
 ## 1.8.0-beta1 - 2020-07-06
 ### Features :star:
 - Added `ActiveRecordConsumer` batch mode
