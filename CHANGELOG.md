@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.0-beta2 - 2020-07-08
+
 ### Fixes :wrench:
 - Fix crash with batch consumption due to not having ActiveSupport::Concern
 
