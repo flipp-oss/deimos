@@ -16,11 +16,13 @@ each_db_config(Deimos::Utils::DbProducer) do
 
   before(:each) do
     stub_const('Deimos::Utils::DbProducer::BATCH_SIZE', 2)
+    stub_const('Deimos::Utils::DbProducer::DELETE_BATCH_SIZE', 1)
   end
 
   specify '#process_next_messages' do
     expect(producer).to receive(:retrieve_topics).and_return(%w(topic1 topic2))
     expect(producer).to receive(:process_topic).twice
+    expect(Deimos::KafkaTopicInfo).to receive(:ping_empty_topics).with(%w(topic1 topic2))
     expect(producer).to receive(:sleep).with(0.5)
     producer.process_next_messages
   end
@@ -38,6 +40,9 @@ each_db_config(Deimos::Utils::DbProducer) do
   specify '#retrieve_messages' do
     (1..3).each do |i|
       Deimos::KafkaMessage.create!(topic: 'topic1',
+                                   message: 'blah',
+                                   key: "key#{i}")
+      Deimos::KafkaMessage.create!(topic: 'topic2',
                                    message: 'blah',
                                    key: "key#{i}")
     end
@@ -280,6 +285,12 @@ each_db_config(Deimos::Utils::DbProducer) do
           message: "mess#{i}",
           partition_key: "key#{i}"
         )
+        Deimos::KafkaMessage.create!(
+          id: i,
+          topic: 'my-topic2',
+          message: "mess#{i}",
+          partition_key: "key#{i}"
+        )
       end
 
       expect(Deimos::KafkaTopicInfo).to receive(:lock).
@@ -288,9 +299,60 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect(producer).to receive(:retrieve_messages).and_return(messages)
       expect(Deimos::KafkaTopicInfo).to receive(:register_error)
 
-      expect(Deimos::KafkaMessage.count).to eq(4)
+      expect(Deimos::KafkaMessage.count).to eq(8)
       producer.process_topic('my-topic')
-      expect(Deimos::KafkaMessage.count).to eq(0)
+      expect(Deimos::KafkaMessage.count).to eq(4)
+    end
+
+    it 'should retry deletes and not re-publish' do
+      messages = (1..4).map do |i|
+        Deimos::KafkaMessage.create!(
+          id: i,
+          topic: 'my-topic',
+          message: "mess#{i}",
+          partition_key: "key#{i}"
+        )
+      end
+      (5..8).each do |i|
+        Deimos::KafkaMessage.create!(
+          id: i,
+          topic: 'my-topic2',
+          message: "mess#{i}",
+          partition_key: "key#{i}"
+        )
+      end
+
+      raise_error = true
+      expect(Deimos::KafkaMessage).to receive(:where).exactly(5).times.and_wrap_original do |m, *args|
+        if raise_error
+          raise_error = false
+          raise 'Lock wait timeout'
+        end
+        m.call(*args)
+      end
+
+      expect(Deimos::KafkaTopicInfo).to receive(:lock).
+        with('my-topic', 'abc').and_return(true)
+      expect(producer).to receive(:retrieve_messages).ordered.and_return(messages)
+      expect(producer).to receive(:retrieve_messages).ordered.and_return([])
+      expect(phobos_producer).to receive(:publish_list).once.with(messages.map(&:phobos_message))
+
+      expect(Deimos::KafkaMessage.count).to eq(8)
+      producer.process_topic('my-topic')
+      expect(Deimos::KafkaMessage.count).to eq(4)
+    end
+
+    it 'should re-raise misc errors on delete' do
+      messages = (1..3).map do |i|
+        Deimos::KafkaMessage.create!(
+          id: i,
+          topic: 'my-topic',
+          message: "mess#{i}",
+          partition_key: "key#{i}"
+        )
+      end
+      expect(Deimos::KafkaMessage).to receive(:where).once.and_raise('OH NOES')
+      expect { producer.delete_messages(messages) }.to raise_exception('OH NOES')
     end
 
   end
@@ -309,20 +371,33 @@ each_db_config(Deimos::Utils::DbProducer) do
           Deimos::KafkaMessage.create!(topic: "topic#{i}", message: nil,
                                        created_at: (1 + i).minute.ago)
         end
+        Deimos::KafkaTopicInfo.create!(topic: 'topic1',
+                                       last_processed_at: 6.minutes.ago)
+        Deimos::KafkaTopicInfo.create!(topic: 'topic2',
+                                       last_processed_at: 3.minutes.ago)
+        Deimos::KafkaTopicInfo.create!(topic: 'topic3',
+                                       last_processed_at: 5.minutes.ago)
         allow(Deimos.config.metrics).to receive(:gauge)
         producer.send_pending_metrics
-        expect(Deimos.config.metrics).to have_received(:gauge).twice
+        expect(Deimos.config.metrics).to have_received(:gauge).exactly(6).times
+        # topic1 has the earliest message 4 minutes ago and last processed 6
+        # minutes ago, so the most amount of time we've seen nothing is 4 minutes
         expect(Deimos.config.metrics).to have_received(:gauge).
           with('pending_db_messages_max_wait', 4.minutes.to_i, tags: ['topic:topic1'])
+        # topic2 has earliest message 5 minutes ago and last processed 3 minutes
+        # ago, so we should give it 3 minutes
         expect(Deimos.config.metrics).to have_received(:gauge).
-          with('pending_db_messages_max_wait', 5.minutes.to_i, tags: ['topic:topic2'])
+          with('pending_db_messages_max_wait', 3.minutes.to_i, tags: ['topic:topic2'])
+        # topic3 has no messages, so should get 0
+        expect(Deimos.config.metrics).to have_received(:gauge).
+          with('pending_db_messages_max_wait', 0, tags: ['topic:topic3'])
+        expect(Deimos.config.metrics).to have_received(:gauge).
+          with('pending_db_messages_count', 3, tags: ['topic:topic1'])
+        expect(Deimos.config.metrics).to have_received(:gauge).
+          with('pending_db_messages_count', 3, tags: ['topic:topic2'])
+        expect(Deimos.config.metrics).to have_received(:gauge).
+          with('pending_db_messages_count', 0, tags: ['topic:topic3'])
       end
-    end
-
-    it 'should send 0 if no messages' do
-      expect(Deimos.config.metrics).to receive(:gauge).
-        with('pending_db_messages_max_wait', 0)
-      producer.send_pending_metrics
     end
   end
 
@@ -403,5 +478,4 @@ each_db_config(Deimos::Utils::DbProducer) do
                                                                 }
                                                               ])
   end
-
 end
