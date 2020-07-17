@@ -32,6 +32,7 @@ module TestRunners
   # Test runner
   class TestRunner
     attr_accessor :id, :started, :stopped, :should_error
+
     # :nodoc:
     def initialize(id=nil)
       @id = id

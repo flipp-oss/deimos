@@ -28,9 +28,9 @@ if defined?(ActiveRecord)
   require 'deimos/kafka_source'
   require 'deimos/kafka_topic_info'
   require 'deimos/backends/db'
-  require 'sigurd/signal_handler.rb'
-  require 'sigurd/executor.rb'
-  require 'deimos/utils/db_producer.rb'
+  require 'sigurd/signal_handler'
+  require 'sigurd/executor'
+  require 'deimos/utils/db_producer'
   require 'deimos/utils/db_poller'
 end
 
