@@ -16,6 +16,7 @@ class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version
       t.datetime :locked_at
       t.boolean :error, null: false, default: false
       t.integer :retries, null: false, default: 0
+      t.datetime :last_processed_at
     end
     add_index :kafka_topic_info, :topic, unique: true
     add_index :kafka_topic_info, [:locked_by, :error]

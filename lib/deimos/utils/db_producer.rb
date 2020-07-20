@@ -9,6 +9,8 @@ module Deimos
       attr_accessor :id, :current_topic
 
       BATCH_SIZE = 1000
+      DELETE_BATCH_SIZE = 10
+      MAX_DELETE_ATTEMPTS = 3
 
       # @param logger [Logger]
       def initialize(logger=Logger.new(STDOUT))
@@ -48,6 +50,7 @@ module Deimos
         topics = retrieve_topics
         @logger.info("Found topics: #{topics}")
         topics.each(&method(:process_topic))
+        KafkaTopicInfo.ping_empty_topics(topics)
         sleep(0.5)
       end
 
@@ -87,13 +90,13 @@ module Deimos
           begin
             produce_messages(compacted_messages.map(&:phobos_message))
           rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
+            delete_messages(messages)
             @logger.error('Message batch too large, deleting...')
             @logger.error(Deimos::KafkaMessage.decoded(messages))
-            Deimos::KafkaMessage.where(id: messages.map(&:id)).delete_all
             raise
           end
         end
-        Deimos::KafkaMessage.where(id: messages.map(&:id)).delete_all
+        delete_messages(messages)
         Deimos.config.metrics&.increment(
           'db_producer.process',
           tags: %W(topic:#{@current_topic}),
@@ -104,6 +107,27 @@ module Deimos
         KafkaTopicInfo.heartbeat(@current_topic, @id) # keep alive
         send_pending_metrics
         true
+      end
+
+      # @param messages [Array<Deimos::KafkaMessage>]
+      def delete_messages(messages)
+        attempts = 1
+        begin
+          messages.in_groups_of(DELETE_BATCH_SIZE, false).each do |batch|
+            Deimos::KafkaMessage.where(topic: batch.first.topic,
+                                       id: batch.map(&:id)).
+              delete_all
+          end
+        rescue StandardError => e
+          if (e.message =~ /Lock wait/i || e.message =~ /Lost connection/i) &&
+             attempts <= MAX_DELETE_ATTEMPTS
+            attempts += 1
+            ActiveRecord::Base.connection.verify!
+            sleep(1)
+            retry
+          end
+          raise
+        end
       end
 
       # @return [Array<Deimos::KafkaMessage>]
@@ -126,19 +150,33 @@ module Deimos
         metrics = Deimos.config.metrics
         return unless metrics
 
+        topics = KafkaTopicInfo.select(%w(topic last_processed_at))
         messages = Deimos::KafkaMessage.
           select('count(*) as num_messages, min(created_at) as earliest, topic').
-          group(:topic)
-        if messages.none?
-          metrics.gauge('pending_db_messages_max_wait', 0)
-        end
-        messages.each do |record|
-          earliest = record.earliest
-          # SQLite gives a string here
-          earliest = Time.zone.parse(earliest) if earliest.is_a?(String)
+          group(:topic).
+          index_by(&:topic)
+        topics.each do |record|
+          message_record = messages[record.topic]
+          # We want to record the last time we saw any activity, meaning either
+          # the oldest message, or the last time we processed, whichever comes
+          # last.
+          if message_record
+            record_earliest = record.earliest
+            # SQLite gives a string here
+            if record_earliest.is_a?(String)
+              record_earliest = Time.zone.parse(record_earliest)
+            end
 
-          time_diff = Time.zone.now - earliest
-          metrics.gauge('pending_db_messages_max_wait', time_diff,
+            earliest = [record.last_processed_at, record_earliest].max
+            time_diff = Time.zone.now - earliest
+            metrics.gauge('pending_db_messages_max_wait', time_diff,
+                          tags: ["topic:#{record.topic}"])
+          else
+            # no messages waiting
+            metrics.gauge('pending_db_messages_max_wait', 0,
+                          tags: ["topic:#{record.topic}"])
+          end
+          metrics.gauge('pending_db_messages_count', message_record&.num_messages || 0,
                         tags: ["topic:#{record.topic}"])
         end
       end
@@ -174,11 +212,11 @@ module Deimos
           end
 
           @logger.error("Got error #{e.class.name} when publishing #{batch.size} in groups of #{batch_size}, retrying...")
-          if batch_size < 10
-            batch_size = 1
-          else
-            batch_size /= 10
-          end
+          batch_size = if batch_size < 10
+                         1
+                       else
+                         (batch_size / 10).to_i
+                       end
           shutdown_producer
           retry
         end
@@ -187,7 +225,7 @@ module Deimos
       # @param batch [Array<Deimos::KafkaMessage>]
       # @return [Array<Deimos::KafkaMessage>]
       def compact_messages(batch)
-        return batch unless batch.first&.key.present?
+        return batch if batch.first&.key.blank?
 
         topic = batch.first.topic
         return batch if config.compact_topics != :all &&

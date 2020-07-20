@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Fixes :wrench:
+- Retry deleting messages without resending the batch if the
+  delete fails (fixes [#34](https://github.com/flipp-oss/deimos/issues/34))
+- Delete messages in batches rather than all at once to
+  cut down on the chance of a deadlock.
+
+### Features :star:
+- Add `last_processed_at` to `kafka_topic_info` to ensure
+  that wait metrics are accurate in cases where records
+  get created with an old `created_at` time (e.g. for
+  long-running transactions).
+
 ## 1.8.0-beta2 - 2020-07-08
 
 ### Fixes :wrench:
