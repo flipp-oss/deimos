@@ -109,6 +109,16 @@ module Deimos
         raise NotImplementedError
       end
 
+      # Given a field definition, return the SQL type that might be used in
+      # ActiveRecord table creation - e.g. for Avro, a `long` type would
+      # return `:bigint`. There are also special values that need to be returned:
+      # `:array`, `:map` and `:record`, for types representing those structures.
+      # @param field [SchemaField]
+      # @return [Symbol]
+      def sql_type(field)
+        raise NotImplementedError
+      end
+
       # Encode a message key. To be defined by subclass.
       # @param key [String|Hash] the value to use as the key.
       # @param key_id [Symbol|String] the field name of the key.

@@ -33,6 +33,20 @@ module Deimos
         decode(payload, schema: @key_schema['name'])[field_name]
       end
 
+      # :nodoc:
+      def sql_type(field)
+        type = field.type.type
+        return type if %w(array map record).include?(type)
+        if type == :union
+          type = field.type.schemas.find { |f| f.type != :null }.type
+        end
+        return type.to_sym if %w(float boolean).include?(type)
+        return :integer if type == 'int'
+        return :bigint if type == 'long'
+
+        :string
+      end
+
       # @override
       def coerce_field(field, value)
         AvroSchemaCoercer.new(avro_schema).coerce_type(field.type, value)
