@@ -3,13 +3,15 @@
 module Deimos
   # Represents a field in the schema.
   class SchemaField
-    attr_accessor :name, :type
+    attr_accessor :name, :type, :enum_values
 
     # @param name [String]
     # @param type [Object]
-    def initialize(name, type)
+    # @param enum_values [Array<String>]
+    def initialize(name, type, enum_values=[])
       @name = name
       @type = type
+      @enum_values = enum_values
     end
   end
 
@@ -113,6 +115,7 @@ module Deimos
       # ActiveRecord table creation - e.g. for Avro, a `long` type would
       # return `:bigint`. There are also special values that need to be returned:
       # `:array`, `:map` and `:record`, for types representing those structures.
+      # `:enum` is also recognized.
       # @param field [SchemaField]
       # @return [Symbol]
       def sql_type(field)

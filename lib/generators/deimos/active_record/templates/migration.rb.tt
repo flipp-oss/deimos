@@ -2,10 +2,7 @@ class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version
   def up
     return if table_exists?(:<%= table_name %>)
     create_table :<%= table_name %> do |t|
-      <%-
-      schema_base = Deimos.schema_backend_class.new(schema: schema, namespace: namespace)
-      keys = schema_base.schema_fields
-      keys.each do |key| -%>
+      <%- fields.each do |key| -%>
       <%- next if %w(id message_id timestamp).include?(key.name) -%>
       <%- sql_type = schema_base.sql_type(key)
          if %w(record array map).include?(sql_type)

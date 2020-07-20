@@ -37,6 +37,7 @@ module Deimos
       def sql_type(field)
         type = field.type.type
         return type if %w(array map record).include?(type)
+
         if type == :union
           type = field.type.schemas.find { |f| f.type != :null }.type
         end
@@ -54,7 +55,10 @@ module Deimos
 
       # @override
       def schema_fields
-        avro_schema.fields.map { |field| SchemaField.new(field.name, field.type) }
+        avro_schema.fields.map do |field|
+          enum_values = field.type.type == 'enum' ? field.type.symbols : []
+          SchemaField.new(field.name, field.type, enum_values)
+        end
       end
 
       # @override

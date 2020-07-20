@@ -7,6 +7,7 @@ require 'rails/version'
 # Generates a new consumer.
 module Deimos
   module Generators
+    # Generator for ActiveRecord model and migration.
     class ActiveRecordGenerator < Rails::Generators::Base
       include Rails::Generators::Migration
       if Rails.version < '4'
@@ -55,6 +56,16 @@ module Deimos
           self.full_schema[0...last_dot]
         end
 
+        # @return [Deimos::SchemaBackends::Base]
+        def schema_base
+          @schema_base ||= Deimos.schema_backend_class.new(schema: schema, namespace: namespace)
+        end
+
+        # @return [Array<SchemaField>]
+        def fields
+          schema_base.schema_fields
+        end
+
       end
 
       desc 'Generate migration for a table based on an existing schema.'
@@ -65,5 +76,4 @@ module Deimos
       end
     end
   end
-
 end

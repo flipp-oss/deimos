@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that wait metrics are accurate in cases where records
   get created with an old `created_at` time (e.g. for
   long-running transactions).
+- Add generator for ActiveRecord models and migrations (fixes [#6](https://github.com/flipp-oss/deimos/issues/6))
 
 ## 1.8.0-beta2 - 2020-07-08
 
