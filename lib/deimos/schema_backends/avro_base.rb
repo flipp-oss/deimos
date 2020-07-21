@@ -39,17 +39,18 @@ module Deimos
         return type if %w(array map record).include?(type)
 
         if type == :union
-          non_null = field.type.schemas.select { |f| f.type != :null }
+          non_null = field.type.schemas.reject { |f| f.type == :null }
           if non_null.size > 1
-            warn "WARNING: #{field.name} has more than one non-null type. Picking the first for the SQL type."
+            warn("WARNING: #{field.name} has more than one non-null type. Picking the first for the SQL type.")
           end
           return non_null.first.type
         end
         return type.to_sym if %w(float boolean).include?(type)
         return :integer if type == 'int'
         return :bigint if type == 'long'
+
         if type == 'double'
-          warn "Avro `double` type turns into SQL `float` type. Please ensure you have the correct `limit` set."
+          warn('Avro `double` type turns into SQL `float` type. Please ensure you have the correct `limit` set.')
           return :float
         end
 
