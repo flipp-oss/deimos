@@ -18,11 +18,16 @@ RSpec.describe Deimos::Generators::ActiveRecordGenerator do
     results = <<~MIGRATION
       class CreateGeneratedTable < ActiveRecord::Migration[6.0]
         def up
-          return if table_exists?(:generated_table)
+          if table_exists?(:generated_table)
+            warn "generated_table already exists, exiting"
+            return
+          end
           create_table :generated_table do |t|
             t.string :a_string
             t.integer :a_int
             t.bigint :a_long
+            t.float :a_float
+            t.float :a_double
             t.string :an_enum
             t.json :an_array
             t.json :a_map

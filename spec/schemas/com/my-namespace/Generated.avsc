@@ -17,6 +17,14 @@
       "type": "long"
     },
     {
+      "name": "a_float",
+      "type": "float"
+    },
+    {
+      "name": "a_double",
+      "type": "double"
+    },
+    {
       "name": "an_enum",
       "type": {
         "type": "enum",

@@ -1,12 +1,16 @@
 class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version %>
   def up
-    return if table_exists?(:<%= table_name %>)
+    if table_exists?(:<%= table_name %>)
+      warn "<%= table_name %> already exists, exiting"
+      return
+    end
     create_table :<%= table_name %> do |t|
       <%- fields.each do |key| -%>
       <%- next if %w(id message_id timestamp).include?(key.name) -%>
       <%- sql_type = schema_base.sql_type(key)
          if %w(record array map).include?(sql_type)
-           sql_type = ActiveRecord::Base.connection.supports_json? ? :json : :string
+           conn = ActiveRecord::Base.connection
+           sql_type = conn.respond_to?(:supports_json?) && conn.supports_json? ? :json : :string
          end
       -%>
       t.<%= sql_type %> :<%= key.name %>
