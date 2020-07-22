@@ -5,6 +5,7 @@ AllCops:
   Exclude:
     - lib/deimos/monkey_patches/*.rb
     - vendor/**/*
+    - Guardfile
   NewCops: enable
 
 # class Plumbus
@@ -36,7 +37,7 @@ Layout/EmptyLinesAroundBlockBody:
   Enabled: false
 
 Layout/LineLength:
-  Max: 100
+  Max: 120
   Severity: refactor
   Exclude:
   - 'spec/**/*'
@@ -77,13 +78,14 @@ Lint/UnusedMethodArgument:
 
 Metrics/AbcSize:
   Severity: refactor
-  Max: 20
+  Max: 25
 
 Metrics/BlockLength:
-  Severity: refactor
+  Enabled: false
 
 Metrics/ClassLength:
   Severity: refactor
+  Max: 500
 
 Metrics/CyclomaticComplexity:
   Severity: refactor
@@ -91,10 +93,11 @@ Metrics/CyclomaticComplexity:
 
 Metrics/MethodLength:
   Severity: refactor
-  Max: 30
+  Max: 50
 
 Metrics/ModuleLength:
   Severity: refactor
+  Max: 200
 
 Metrics/ParameterLists:
   Max: 5
@@ -102,6 +105,7 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Severity: refactor
+  Max: 10
 
 # Use alias_method instead of alias
 Style/Alias:

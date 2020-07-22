@@ -557,6 +557,29 @@ class MyConsumer < Deimos::ActiveRecordConsumer
 end
 ```
 
+#### Generating Tables and Models
+
+Deimos provides a generator that takes an existing schema and generates a 
+database table based on its fields. By default, any complex sub-types (such as 
+records or arrays) are turned into JSON (if supported) or string columns.
+
+Before running this migration, you must first copy the schema into your repo
+in the correct path (in the example above, you would need to have a file
+`{SCHEMA_ROOT}/com/my-namespace/MySchema.avsc`).
+
+To generate a model and migration, run the following:
+
+    rails g deimos:active_record TABLE_NAME FULL_SCHEMA_NAME
+    
+Example:
+
+    rails g deimos:active_record my_table com.my-namespace.MySchema
+    
+...would generate:
+
+    db/migrate/1234_create_my_table.rb
+    app/models/my_table.rb
+
 #### Batch Consumers
 
 Deimos also provides a batch consumption mode for `ActiveRecordConsumer` which

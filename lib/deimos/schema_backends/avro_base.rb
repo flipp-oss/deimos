@@ -33,6 +33,30 @@ module Deimos
         decode(payload, schema: @key_schema['name'])[field_name]
       end
 
+      # :nodoc:
+      def sql_type(field)
+        type = field.type.type
+        return type if %w(array map record).include?(type)
+
+        if type == :union
+          non_null = field.type.schemas.reject { |f| f.type == :null }
+          if non_null.size > 1
+            warn("WARNING: #{field.name} has more than one non-null type. Picking the first for the SQL type.")
+          end
+          return non_null.first.type
+        end
+        return type.to_sym if %w(float boolean).include?(type)
+        return :integer if type == 'int'
+        return :bigint if type == 'long'
+
+        if type == 'double'
+          warn('Avro `double` type turns into SQL `float` type. Please ensure you have the correct `limit` set.')
+          return :float
+        end
+
+        :string
+      end
+
       # @override
       def coerce_field(field, value)
         AvroSchemaCoercer.new(avro_schema).coerce_type(field.type, value)
@@ -40,7 +64,10 @@ module Deimos
 
       # @override
       def schema_fields
-        avro_schema.fields.map { |field| SchemaField.new(field.name, field.type) }
+        avro_schema.fields.map do |field|
+          enum_values = field.type.type == 'enum' ? field.type.symbols : []
+          SchemaField.new(field.name, field.type, enum_values)
+        end
       end
 
       # @override

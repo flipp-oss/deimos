@@ -1,0 +1,71 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "Generated",
+  "type": "record",
+  "doc": "Test schema",
+  "fields": [
+    {
+      "name": "a_string",
+      "type": "string"
+    },
+    {
+      "name": "a_int",
+      "type": "int"
+    },
+    {
+      "name": "a_long",
+      "type": "long"
+    },
+    {
+      "name": "a_float",
+      "type": "float"
+    },
+    {
+      "name": "a_double",
+      "type": "double"
+    },
+    {
+      "name": "an_enum",
+      "type": {
+        "type": "enum",
+        "name": "AnEnum",
+        "symbols": ["sym1", "sym2"]
+      }
+    },
+    {
+      "name": "an_array",
+      "type": {
+        "type": "array",
+        "items": "int"
+      }
+    },
+    {
+      "name": "a_map",
+      "type": {
+        "type": "map",
+        "values": "string"
+      }
+    },
+    {
+      "name": "timestamp",
+      "type": "string"
+    },
+    {
+      "name": "message_id",
+      "type": "string"
+    },
+    {
+      "name": "a_record",
+      "type": {
+        "type": "record",
+        "name": "ARecord",
+        "fields": [
+          {
+            "name": "a_record_field",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}
