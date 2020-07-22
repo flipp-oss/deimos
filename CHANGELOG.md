@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.1-beta1 - 2020-07-22
+
 ### Fixes :wrench:
 - Retry deleting messages without resending the batch if the
   delete fails (fixes [#34](https://github.com/flipp-oss/deimos/issues/34))
