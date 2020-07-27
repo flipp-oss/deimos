@@ -2,7 +2,7 @@
 
 $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'active_record'
-require "action_controller/railtie"
+require 'action_controller/railtie'
 require 'database_cleaner'
 require 'deimos'
 require 'deimos/metrics/mock'

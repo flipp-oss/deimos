@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Deimos
   module Utils
     # Mixin to automatically decode schema-encoded payloads when given the correct content type,
@@ -9,15 +11,16 @@ module Deimos
         Mime::Type.register('avro/binary', :avro)
 
         attr_accessor :payload
+
         if respond_to?(:before_filter)
-          before_filter :decode_schema, if: :schema_format?
+          before_filter(:decode_schema, if: :schema_format?)
         else
-          before_action :decode_schema, if: :schema_format?
+          before_action(:decode_schema, if: :schema_format?)
         end
       end
 
+      # :nodoc:
       module ClassMethods
-
         # @return [Hash<Symbol, Hash<Symbol, String>>]
         def schema_mapping
           @schema_mapping ||= {}
@@ -31,7 +34,7 @@ module Deimos
           actions.each do |action|
             request ||= action.to_s.titleize
             response ||= action.to_s.titleize
-            schema_mapping[action.to_s] = { request: request, response: response}
+            schema_mapping[action.to_s] = { request: request, response: response }
           end
         end
 
@@ -41,22 +44,22 @@ module Deimos
         end
 
         # Set the namespace for both requests and responses.
-        # @param ns [String]
-        def namespace(ns)
-          request_namespace(ns)
-          response_namespace(ns)
+        # @param name [String]
+        def namespace(name)
+          request_namespace(name)
+          response_namespace(name)
         end
 
         # Set the namespace for requests.
-        # @param ns [String]
-        def request_namespace(ns)
-          namespaces[:request] = ns
+        # @param name [String]
+        def request_namespace(name)
+          namespaces[:request] = name
         end
 
         # Set the namespace for repsonses.
-        # @param ns [String]
-        def response_namespace(ns)
-          namespaces[:response] = ns
+        # @param name [String]
+        def response_namespace(name)
+          namespaces[:response] = name
         end
       end
 
@@ -74,6 +77,7 @@ module Deimos
         if schema.nil?
           raise "No #{type} schema defined for #{params[:controller]}##{params[:action]}!"
         end
+
         if namespace.nil?
           last_period = schema.rindex('.')
           namespace, schema = schema.split(last_period)
@@ -81,6 +85,7 @@ module Deimos
         if namespace.nil? || schema.nil?
           raise "No request namespace defined for #{params[:controller]}##{params[:action]}!"
         end
+
         [namespace, schema]
       end
 
