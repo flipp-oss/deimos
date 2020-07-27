@@ -1,0 +1,11 @@
+{
+  "namespace": "com.my-namespace.request",
+  "name": "Index",
+  "type": "record",
+  "fields": [
+    {
+      "name": "request_id",
+      "type": "string"
+    }
+  ]
+}

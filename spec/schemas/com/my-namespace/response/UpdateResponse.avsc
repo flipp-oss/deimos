@@ -1,0 +1,11 @@
+{
+  "namespace": "com.my-namespace.response",
+  "name": "UpdateResponse",
+  "type": "record",
+  "fields": [
+    {
+      "name": "update_response_id",
+      "type": "string"
+    }
+  ]
+}
