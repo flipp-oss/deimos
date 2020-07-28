@@ -1,0 +1,11 @@
+{
+  "namespace": "com.my-namespace.response",
+  "name": "Index",
+  "type": "record",
+  "fields": [
+    {
+      "name": "response_id",
+      "type": "string"
+    }
+  ]
+}

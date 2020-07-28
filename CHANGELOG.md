@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Features :star:
+- Add `SchemaControllerMixin` to encode and decode schema-encoded
+  payloads in Rails controllers.
+
 ## 1.8.1-beta1 - 2020-07-22
 
 ### Fixes :wrench:

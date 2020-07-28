@@ -71,6 +71,12 @@ module Deimos
         :mock
       end
 
+      # The content type to use when encoding / decoding requests over HTTP via ActionController.
+      # @return [String]
+      def self.content_type
+        raise NotImplementedError
+      end
+
       # Encode a payload. To be defined by subclass.
       # @param payload [Hash]
       # @param schema [Symbol|String]

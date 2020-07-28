@@ -2,6 +2,7 @@
 
 $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'active_record'
+require 'action_controller/railtie'
 require 'database_cleaner'
 require 'deimos'
 require 'deimos/metrics/mock'
@@ -11,6 +12,11 @@ require 'active_support/testing/time_helpers'
 require 'activerecord-import'
 require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
+require 'rspec/rails'
+
+class DeimosApp < Rails::Application
+end
+DeimosApp.initialize!
 
 # Helpers for Executor/DbProducer
 module TestRunners

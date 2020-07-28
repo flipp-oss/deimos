@@ -22,6 +22,7 @@ Built on Phobos and hence Ruby-Kafka.
         * [Kafka Message Keys](#kafka-message-keys)
    * [Consumers](#consumers)
    * [Rails Integration](#rails-integration)
+        * [Controller Mixin](#controller-mixin)
    * [Database Backend](#database-backend)
    * [Database Poller](#database-poller)
    * [Running Consumers](#running-consumers)
@@ -446,6 +447,58 @@ class Widget < ActiveRecord::Base
   
 end
 ```
+
+### Controller Mixin
+
+Deimos comes with a mixin for `ActionController` which automatically encodes and decodes schema
+payloads. There are some advantages to encoding your data in e.g. Avro rather than straight JSON,
+particularly if your service is talking to another backend service rather than the front-end
+browser:
+
+* It enforces a contract between services. Solutions like [OpenAPI](https://swagger.io/specification/) 
+  do this as well, but in order for the client to know the contract, usually some kind of code 
+  generation has to happen. Using schemas ensures both sides know the contract without having to change code.
+  In addition, OpenAPI is now a huge and confusing format, and using simpler schema formats
+  can be beneficial.
+* Using Avro or Protobuf ensures both forwards and backwards compatibility,
+  which reduces the need for versioning since both sides can simply ignore fields they aren't aware
+  of.
+* Encoding and decoding using Avro or Protobuf is generally faster than straight JSON, and
+  results in smaller payloads and therefore less network traffic.
+
+To use the mixin, add the following to your `WhateverController`:
+
+```ruby
+class WhateverController < ApplicationController
+  include Deimos::Utils::SchemaControllerMixin
+
+  request_namespace 'my.namespace.requests'
+  response_namespace 'my.namespace.responses'
+  
+  # Add a "schemas" line for all routes that should encode/decode schemas.
+  # Default is to match the schema name to the route name.
+  schemas :index
+  # will look for: my.namespace.requests.Index.avsc
+  #                my.namespace.responses.Index.avsc 
+  
+  # If all routes use the default, you can add them all at once
+  schemas :index, :show, :update
+
+  # Different schemas can be specified as well
+  schemas :index, :show, request: 'IndexRequest', response: 'IndexResponse'
+
+  # To access the encoded data, use the `payload` helper method, and to render it back,
+  # use the `render_schema` method.
+  
+  def index
+    response = { 'response_id' => payload['request_id'] + 'hi mom' }
+    render_schema(response)
+  end
+end
+```
+
+To make use of this feature, your requests and responses need to have the correct content type.
+For Avro content, this is the `avro/binary` content type.
 
 # Database Backend
 

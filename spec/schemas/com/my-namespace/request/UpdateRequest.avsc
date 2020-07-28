@@ -1,0 +1,11 @@
+{
+  "namespace": "com.my-namespace.request",
+  "name": "UpdateRequest",
+  "type": "record",
+  "fields": [
+    {
+      "name": "update_request_id",
+      "type": "string"
+    }
+  ]
+}

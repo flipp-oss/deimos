@@ -23,6 +23,7 @@ require 'deimos/monkey_patches/phobos_producer'
 require 'deimos/monkey_patches/phobos_cli'
 
 require 'deimos/railtie' if defined?(Rails)
+require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
 
 if defined?(ActiveRecord)
   require 'deimos/kafka_source'

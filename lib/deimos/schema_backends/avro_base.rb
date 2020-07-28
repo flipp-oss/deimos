@@ -82,6 +82,11 @@ module Deimos
         :avro_validation
       end
 
+      # @override
+      def self.content_type
+        'avro/binary'
+      end
+
     private
 
       # @param schema [String]
