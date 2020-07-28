@@ -21,7 +21,7 @@ module Deimos
 
       # :nodoc:
       module ClassMethods
-        # @return [Hash<Symbol, Hash<Symbol, String>>]
+        # @return [Hash<String, Hash<Symbol, String>>]
         def schema_mapping
           @schema_mapping ||= {}
         end
