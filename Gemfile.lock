@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deimos-ruby (1.8.1.pre.beta1)
+    deimos-ruby (1.8.1.pre.beta2)
       avro_turf (~> 0.11)
       phobos (~> 1.9)
       ruby-kafka (~> 0.7)
@@ -87,7 +87,7 @@ GEM
       rake (~> 13.0)
     dogstatsd-ruby (4.8.1)
     erubi (1.9.0)
-    excon (0.75.0)
+    excon (0.76.0)
     exponential-backoff (0.0.4)
     ffi (1.13.1)
     formatador (0.2.5)
