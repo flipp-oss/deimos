@@ -46,13 +46,12 @@ module Deimos
 
       messages = exception.failed_messages
       messages.group_by(&:topic).each do |topic, batch|
-        next if batch.empty?
-
         producer = Deimos::Producer.descendants.find { |c| c.topic == topic }
-        decoder = Deimos::KafkaMessage.decoder(topic)
-        payloads = batch.map do |m|
-          decoder&.decoder&.decode(m.value)
-        end
+        next unless batch.any? && producer
+
+        decoder = Deimos.schema_backend(schema: producer.config[:schema],
+                                        namespace: producer.config[:namespace])
+        payloads = batch.map { |m| decoder.decode(m.value) }
 
         Deimos.config.metrics&.increment(
           'publish_error',
