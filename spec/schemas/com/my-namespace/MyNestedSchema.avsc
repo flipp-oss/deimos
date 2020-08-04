@@ -1,0 +1,55 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "MyNestedSchema",
+  "type": "record",
+  "doc": "Test schema",
+  "fields": [
+    {
+      "name": "test_id",
+      "type": "string",
+      "doc": "test string"
+    },
+    {
+      "name": "test_float",
+      "type": "float",
+      "doc": "test float"
+    },
+    {
+      "name": "some_nested_record",
+      "doc": "some nested record",
+      "type": {
+        "name": "MyNestedRecord",
+        "type": "record",
+        "fields": [
+          {
+            "name": "some_int",
+            "type": "int",
+            "doc": "some int"
+          },
+          {
+            "name": "some_float",
+            "type": "float",
+            "doc": "some float"
+          },
+          {
+            "name": "some_string",
+            "type": "string",
+            "doc": "some string"
+          },
+          {
+            "name": "some_optional_int",
+            "type": [ "null", "int" ],
+            "doc": "some optional int",
+            "default": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "some_optional_record",
+      "doc": "some optional record",
+      "type": [ "null", "MyNestedRecord" ],
+      "default": null
+    }
+  ]
+}

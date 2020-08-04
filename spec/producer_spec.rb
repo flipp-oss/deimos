@@ -42,6 +42,14 @@ module ProducerTest
       stub_const('MyNoKeyProducer', producer_class)
 
       producer_class = Class.new(Deimos::Producer) do
+        schema 'MyNestedSchema'
+        namespace 'com.my-namespace'
+        topic 'my-topic'
+        key_config field: 'test_id'
+      end
+      stub_const('MyNestedSchemaProducer', producer_class)
+
+      producer_class = Class.new(Deimos::Producer) do
         schema 'MySchema'
         namespace 'com.my-namespace'
         topic 'my-topic2'
@@ -230,6 +238,32 @@ module ProducerTest
            :payload_key => { 'test_id' => 'foo_key' } },
          { 'test_id' => 'bar', 'some_int' => 124,
            :payload_key => { 'test_id' => 'bar_key' } }]
+      )
+    end
+
+    it 'should properly encode and coerce values with a nested record' do
+      expect(MyNestedSchemaProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
+      MyNestedSchemaProducer.publish(
+        'test_id' => 'foo',
+        'test_float' => BigDecimal('123.456'),
+        'some_nested_record' => {
+          'some_int' => 123,
+          'some_float' => BigDecimal('456.789'),
+          'some_string' => '123',
+          'some_optional_int' => nil
+        },
+        'some_optional_record' => nil
+      )
+      expect(MyNestedSchemaProducer.topic).to have_sent(
+        'test_id' => 'foo',
+        'test_float' => 123.456,
+        'some_nested_record' => {
+          'some_int' => 123,
+          'some_float' => 456.789,
+          'some_string' => '123',
+          'some_optional_int' => nil
+        },
+        'some_optional_record' => nil
       )
     end
 
