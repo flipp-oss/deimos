@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Fixes :wrench:
+- Consolidate types in sub-records recursively
+  (fixes [#72](https://github.com/flipp-oss/deimos/issues/72))
+
 ## 1.8.1-beta2 - 2020-07-28
 
 ### Features :star:
