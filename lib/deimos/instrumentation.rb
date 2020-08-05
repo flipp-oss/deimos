@@ -47,7 +47,7 @@ module Deimos
       messages = exception.failed_messages
       messages.group_by(&:topic).each do |topic, batch|
         producer = Deimos::Producer.descendants.find { |c| c.topic == topic }
-        next unless batch.any? && producer
+        next if batch.empty? || !producer
 
         decoder = Deimos.schema_backend(schema: producer.config[:schema],
                                         namespace: producer.config[:namespace])
