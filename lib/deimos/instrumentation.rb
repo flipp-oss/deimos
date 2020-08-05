@@ -46,13 +46,18 @@ module Deimos
 
       messages = exception.failed_messages
       messages.group_by(&:topic).each do |topic, batch|
-        next if batch.empty?
+        producer = Deimos::Producer.descendants.find { |c| c.topic == topic }
+        next if batch.empty? || !producer
 
-        producer = batch.first.metadata[:producer_name]
-        payloads = batch.map { |m| m.metadata[:decoded_payload] }
+        decoder = Deimos.schema_backend(schema: producer.config[:schema],
+                                        namespace: producer.config[:namespace])
+        payloads = batch.map { |m| decoder.decode(m.value) }
 
-        Deimos.config.metrics&.count('publish_error', payloads.size,
-                                     tags: %W(topic:#{topic}))
+        Deimos.config.metrics&.increment(
+          'publish_error',
+          tags: %W(topic:#{topic}),
+          by: payloads.size
+        )
         Deimos.instrument(
           'produce_error',
           producer: producer,
