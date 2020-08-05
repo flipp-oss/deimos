@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.1-beta3 - 2020-08-05
+
 ### Fixes :wrench:
+- Simplify decoding messages and handle producer not found
 - Consolidate types in sub-records recursively
   (fixes [#72](https://github.com/flipp-oss/deimos/issues/72))
 
