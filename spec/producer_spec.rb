@@ -246,6 +246,7 @@ module ProducerTest
       MyNestedSchemaProducer.publish(
         'test_id' => 'foo',
         'test_float' => BigDecimal('123.456'),
+        'test_array' => ['1'],
         'some_nested_record' => {
           'some_int' => 123,
           'some_float' => BigDecimal('456.789'),
@@ -257,6 +258,7 @@ module ProducerTest
       expect(MyNestedSchemaProducer.topic).to have_sent(
         'test_id' => 'foo',
         'test_float' => 123.456,
+        'test_array' => ['1'],
         'some_nested_record' => {
           'some_int' => 123,
           'some_float' => 456.789,

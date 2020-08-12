@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.1-beta4 - 2020-08-12
+
+### Fixes :wrench:
+- Fix regression bug where arrays were not being encoded
+
 ## 1.8.1-beta3 - 2020-08-05
 
 ### Fixes :wrench:

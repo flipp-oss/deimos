@@ -75,6 +75,8 @@ module Deimos
         coerce_union(type, val)
       when :record
         coerce_record(type, val)
+      else
+        val
       end
     end
 

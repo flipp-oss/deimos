@@ -15,6 +15,13 @@
       "doc": "test float"
     },
     {
+      "name": "test_array",
+      "type": {
+        "type": "array",
+        "items": "string"
+      }
+    },
+    {
       "name": "some_nested_record",
       "doc": "some nested record",
       "type": {
