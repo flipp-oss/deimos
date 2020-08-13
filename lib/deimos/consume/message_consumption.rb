@@ -10,7 +10,7 @@ module Deimos
 
       # :nodoc:
       def around_consume(payload, metadata)
-        decoded_payload = payload.dup
+        decoded_payload = payload.nil? ? nil : payload.dup
         new_metadata = metadata.dup
         benchmark = Benchmark.measure do
           _with_span do

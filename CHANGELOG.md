@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.1-beta6 - 2020-08-13
+- Fix for consuming nil payloads with Ruby 2.3.
+
 ## 1.8.1-beta5 - 2020-08-13
 
 ### Fixes :wrench:
