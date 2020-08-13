@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.1-beta5 - 2020-08-13
+
+### Fixes :wrench:
+- Fix regression bug which introduces backwards incompatibility
+  with ActiveRecordProducer's `record_attributes` method.
+
 ## 1.8.1-beta4 - 2020-08-12
 
 ### Fixes :wrench:

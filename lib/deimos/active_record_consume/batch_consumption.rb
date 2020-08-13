@@ -88,8 +88,13 @@ module Deimos
 
         # Create payloads with payload + key attributes
         upserts = messages.map do |m|
-          record_attributes(m.payload, m.key)&.
-            merge(record_key(m.key))
+          attrs = if self.method(:record_attributes).parameters.size == 2
+                    record_attributes(m.payload, m.key)
+                  else
+                    record_attributes(m.payload)
+                  end
+
+          attrs&.merge(record_key(m.key))
         end
 
         # If overridden record_attributes indicated no record, skip

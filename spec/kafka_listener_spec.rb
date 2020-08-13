@@ -30,6 +30,7 @@ describe Deimos::KafkaListener do
     end
 
     it 'should listen to publishing errors and republish as Deimos events' do
+      allow(Deimos::Producer).to receive(:descendants).and_return([MyProducer])
       Deimos.subscribe('produce_error') do |event|
         expect(event.payload).to include(
           producer: MyProducer,

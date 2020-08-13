@@ -37,7 +37,14 @@ module Deimos
           record = klass.new
           assign_key(record, payload, key)
         end
-        attrs = record_attributes(payload.with_indifferent_access, key)
+
+        # for backwards compatibility
+        # TODO next major release we should deprecate this
+        attrs = if self.method(:record_attributes).parameters.size == 2
+                  record_attributes(payload.with_indifferent_access, key)
+                else
+                  record_attributes(payload.with_indifferent_access)
+                end
         # don't use attributes= - bypass Rails < 5 attr_protected
         attrs.each do |k, v|
           record.send("#{k}=", v)

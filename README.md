@@ -599,7 +599,7 @@ class MyConsumer < Deimos::ActiveRecordConsumer
  
   # Optional override to change the attributes of the record before they
   # are saved.
-  def record_attributes(payload)
+  def record_attributes(payload, key)
     super.merge(:some_field => 'some_value')
   end
 
@@ -680,7 +680,7 @@ class MyConsumer < Deimos::ActiveRecordConsumer
  
   # Optional override to change the attributes of the record before they
   # are saved.
-  def record_attributes(payload)
+  def record_attributes(payload, key)
     super.merge(:some_field => 'some_value')
   end
 end
