@@ -34,8 +34,8 @@ module ConsumerTest
 
     it 'should consume a nil message' do
       test_consume_message(MyConsumer, nil) do |payload, _metadata|
-                             expect(payload).to be_nil
-                           end
+        expect(payload).to be_nil
+      end
     end
 
     it 'should consume a message idempotently' do
