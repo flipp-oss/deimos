@@ -157,7 +157,7 @@ each_db_config(Deimos::Utils::DbProducer) do
 
       it 'should not raise NoMethodError if all the keys are unique' do
         Deimos.configure { |c| c.db_producer.compact_topics = %w(my-topic my-topic2) }
-        expect{ producer.compact_messages(deduped_batch) }.to_not raise_error(NoMethodError)
+        expect { producer.compact_messages(deduped_batch) }.not_to raise_error(NoMethodError)
       end
     end
   end
