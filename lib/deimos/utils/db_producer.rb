@@ -231,7 +231,7 @@ module Deimos
         return batch if config.compact_topics != :all &&
                         !config.compact_topics.include?(topic)
 
-        batch.reverse.uniq!(&:key).reverse!
+        batch.reverse.uniq(&:key).reverse!
       end
     end
   end
