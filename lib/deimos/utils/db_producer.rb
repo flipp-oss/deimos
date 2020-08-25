@@ -161,7 +161,7 @@ module Deimos
           # the oldest message, or the last time we processed, whichever comes
           # last.
           if message_record
-            record_earliest = record.earliest
+            record_earliest = message_record.earliest
             # SQLite gives a string here
             if record_earliest.is_a?(String)
               record_earliest = Time.zone.parse(record_earliest)

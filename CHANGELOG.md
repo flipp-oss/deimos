@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.1-beta7 - 2020-08-25
+
 ### Fixes :wrench:
+- Fix for crash when sending pending metrics with DB producer.
 - Fix for compacting messages if all the keys are already unique
   (fixes [#75](https://github.com/flipp-oss/deimos/issues/75))
 
 ## 1.8.1-beta6 - 2020-08-13
+
+### Fixes :wrench:
+
 - Fix for consuming nil payloads with Ruby 2.3.
 
 ## 1.8.1-beta5 - 2020-08-13
