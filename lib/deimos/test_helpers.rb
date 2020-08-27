@@ -30,18 +30,19 @@ module Deimos
             d_config.consumers.reraise_errors = true
             d_config.kafka.seed_brokers ||= ['test_broker']
             d_config.schema.backend = Deimos.schema_backend_class.mock_backend
+            d_config.producers.backend = :test
           end
+        end
+
+        config.before(:each) do
+          client = double('client').as_null_object
+          allow(client).to receive(:time) do |*_args, &block|
+            block.call
+          end
+          Deimos::Backends::Test.sent_messages.clear
         end
       end
 
-      prepend_before(:each) do
-        client = double('client').as_null_object
-        allow(client).to receive(:time) do |*_args, &block|
-          block.call
-        end
-        Deimos.configure { |c| c.producers.backend = :test }
-        Deimos::Backends::Test.sent_messages.clear
-      end
     end
 
     # @deprecated

@@ -183,6 +183,7 @@ RSpec.configure do |config|
   config.before(:each) do
     Deimos.config.reset!
     Deimos.configure do |deimos_config|
+      deimos_config.producers.backend = :test
       deimos_config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.yml')
       deimos_config.schema.path = File.join(File.expand_path(__dir__), 'schemas')
       deimos_config.consumers.reraise_errors = true
