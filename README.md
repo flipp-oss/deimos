@@ -921,6 +921,17 @@ Deimos::TestHelpers.schemas_compatible?(schema1, schema2)
 
 ### Integration Test Helpers
 
+When running integration tests, you'll want to override the default test helper settings:
+
+```ruby
+config.before(:each, :my_integration_metadata) do
+  Deimos.configure do
+    producers.backend :kafka
+    schema.backend :avro_schema_registry
+  end
+end
+```
+
 You can use the `InlineConsumer` class to help with integration testing,
 with a full external Kafka running.
 

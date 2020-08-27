@@ -34,7 +34,7 @@ module Deimos
         end
       end
 
-      before(:each) do
+      prepend_before(:each) do
         client = double('client').as_null_object
         allow(client).to receive(:time) do |*_args, &block|
           block.call

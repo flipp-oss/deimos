@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.1-beta8 - 2020-08-27
+### Fixes :wrench:
+- Moved the TestHelpers hook to `prepend_before` to allow for
+  overriding e.g. in integration tests.
+
 ## 1.8.1-beta7 - 2020-08-25
 
 ### Fixes :wrench:
