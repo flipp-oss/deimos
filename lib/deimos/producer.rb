@@ -87,6 +87,7 @@ module Deimos
 
       # Publish the payload to the topic.
       # @param payload [Hash] with an optional payload_key hash key.
+      # @param topic [String] if specifying the topic
       def publish(payload, topic: self.topic)
         publish_list([payload], topic: topic)
       end
@@ -97,6 +98,7 @@ module Deimos
       # whether to publish synchronously.
       # @param force_send [Boolean] if true, ignore the configured backend
       # and send immediately to Kafka.
+      # @param topic [String] if specifying the topic
       def publish_list(payloads, sync: nil, force_send: false, topic: self.topic)
         return if Deimos.config.kafka.seed_brokers.blank? ||
                   Deimos.config.producers.disabled ||
@@ -163,6 +165,7 @@ module Deimos
     private
 
       # @param message [Message]
+      # @param topic [String]
       def _process_message(message, topic)
         # this violates the Law of Demeter but it has to happen in a very
         # specific order and requires a bunch of methods on the producer

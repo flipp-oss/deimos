@@ -108,6 +108,7 @@ class MyProducer < Deimos::Producer
         'some-key2' => an_object.bar
       }
       # You can also publish an array with self.publish_list(payloads)
+      # You may specify the topic here with self.publish(payload, topic: 'my-topic')
       self.publish(payload)
     end
     

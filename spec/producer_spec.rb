@@ -104,19 +104,19 @@ module ProducerTest
 
     it 'should allow setting the topic from publish_list' do
       expect(described_class).to receive(:produce_batch).once.with(
-          Deimos::Backends::Test,
-          [
-              Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
-                                  MyProducer,
-                                  topic: 'a-new-topic',
-                                  partition_key: 'foo',
-                                  key: 'foo'),
-              Deimos::Message.new({ 'test_id' => 'bar', 'some_int' => 124 },
-                                  MyProducer,
-                                  topic: 'a-new-topic',
-                                  partition_key: 'bar',
-                                  key: 'bar')
-          ]
+        Deimos::Backends::Test,
+        [
+          Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
+                              MyProducer,
+                              topic: 'a-new-topic',
+                              partition_key: 'foo',
+                              key: 'foo'),
+          Deimos::Message.new({ 'test_id' => 'bar', 'some_int' => 124 },
+                              MyProducer,
+                              topic: 'a-new-topic',
+                              partition_key: 'bar',
+                              key: 'bar')
+        ]
       ).and_call_original
 
       MyProducer.publish_list(
