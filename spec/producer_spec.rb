@@ -102,6 +102,33 @@ module ProducerTest
       expect('my-topic').not_to have_sent('test_id' => 'foo2', 'some_int' => 123)
     end
 
+    it 'should allow setting the topic from publish_list' do
+      expect(described_class).to receive(:produce_batch).once.with(
+        Deimos::Backends::Test,
+        [
+          Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
+                              MyProducer,
+                              topic: 'a-new-topic',
+                              partition_key: 'foo',
+                              key: 'foo'),
+          Deimos::Message.new({ 'test_id' => 'bar', 'some_int' => 124 },
+                              MyProducer,
+                              topic: 'a-new-topic',
+                              partition_key: 'bar',
+                              key: 'bar')
+        ]
+      ).and_call_original
+
+      MyProducer.publish_list(
+        [{ 'test_id' => 'foo', 'some_int' => 123 },
+         { 'test_id' => 'bar', 'some_int' => 124 }],
+        topic: 'a-new-topic'
+      )
+      expect('a-new-topic').to have_sent('test_id' => 'foo', 'some_int' => 123)
+      expect('my-topic').not_to have_sent('test_id' => 'foo', 'some_int' => 123)
+      expect('my-topic').not_to have_sent('test_id' => 'foo2', 'some_int' => 123)
+    end
+
     it 'should add a message ID' do
       payload = { 'test_id' => 'foo',
                   'some_int' => 123,
