@@ -11,6 +11,7 @@ a useful toolbox of goodies for Ruby-based Kafka development.
 Built on Phobos and hence Ruby-Kafka.
 
 <!--ts-->
+   * [Additional Documentation](#additional-documentation)
    * [Installation](#installation)
    * [Versioning](#versioning)
    * [Configuration](#configuration)
@@ -31,6 +32,15 @@ Built on Phobos and hence Ruby-Kafka.
         * [Integration Test Helpers](#integration-test-helpers)
    * [Contributing](#contributing) 
 <!--te-->
+
+# Additional Documentation
+
+Please see the following for further information not covered by this readme:
+
+* [Architecture Design](docs/ARCHITECTURE.md)
+* [Configuration Reference](docs/CONFIGURATION.md)
+* [Database Backend Feature](docs/DATABASE_BACKEND.md)
+* [Upgrading Deimos](docs/UPGRADING.md)
 
 # Installation
 
@@ -992,9 +1002,6 @@ Deimos::Utils::InlineConsumer.get_messages_for(
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/flipp-oss/deimos .
-
-We have more information on the [internal architecture](docs/ARCHITECTURE.md) of Deimos
-for contributors!
 
 ### Linting
 
