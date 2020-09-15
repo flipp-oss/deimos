@@ -493,6 +493,12 @@ class WhateverController < ApplicationController
   # will look for: my.namespace.requests.Index.avsc
   #                my.namespace.responses.Index.avsc 
   
+  # Can use mapping to change the schema but keep the namespaces,
+  # i.e. use the same schema name across the two namespaces
+  schemas create: 'CreateTopic'
+  # will look for: my.namespace.requests.CreateTopic.avsc
+  #                my.namespace.responses.CreateTopic.avsc 
+
   # If all routes use the default, you can add them all at once
   schemas :index, :show, :update
 

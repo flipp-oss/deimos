@@ -1,0 +1,11 @@
+{
+  "namespace": "com.my-namespace.response",
+  "name": "CreateTopic",
+  "type": "record",
+  "fields": [
+    {
+      "name": "response_id",
+      "type": "string"
+    }
+  ]
+}

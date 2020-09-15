@@ -1,0 +1,11 @@
+{
+  "namespace": "com.my-namespace.request",
+  "name": "CreateTopic",
+  "type": "record",
+  "fields": [
+    {
+      "name": "request_id",
+      "type": "string"
+    }
+  ]
+}

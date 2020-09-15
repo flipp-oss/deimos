@@ -28,13 +28,17 @@ module Deimos
 
         # Indicate which schemas should be assigned to actions.
         # @param actions [Symbol]
+        # @param kwactions [String]
         # @param request [String]
         # @param response [String]
-        def schemas(*actions, request: nil, response: nil)
+        def schemas(*actions, request: nil, response: nil, **kwactions)
           actions.each do |action|
             request ||= action.to_s.titleize
             response ||= action.to_s.titleize
             schema_mapping[action.to_s] = { request: request, response: response }
+          end
+          kwactions.each do |key, val|
+            schema_mapping[key.to_s] = { request: val, response: val }
           end
         end
 

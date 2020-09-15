@@ -17,6 +17,7 @@ RSpec.describe Deimos::Utils::SchemaControllerMixin, type: :controller do
     request_namespace 'com.my-namespace.request'
     response_namespace 'com.my-namespace.response'
     schemas :index, :show
+    schemas create: 'CreateTopic'
     schemas :update, request: 'UpdateRequest', response: 'UpdateResponse'
 
     # :nodoc:
@@ -27,6 +28,10 @@ RSpec.describe Deimos::Utils::SchemaControllerMixin, type: :controller do
     # :nodoc:
     def show
       render_schema({ 'response_id' => payload[:request_id] + ' dad' })
+    end
+
+    def create
+      render_schema({ 'response_id' => payload[:request_id] + ' bro' })
     end
 
     # :nodoc:
@@ -63,6 +68,16 @@ RSpec.describe Deimos::Utils::SchemaControllerMixin, type: :controller do
     request.content_type = 'avro/binary'
     post :update, params: { id: 1 }, body: request_backend.encode({ 'update_request_id' => 'hi' })
     expect(response_backend.decode(response.body)).to eq({ 'update_response_id' => 'hi sis' })
+  end
+
+  it 'should render the correct response for create' do
+    request_backend = Deimos.schema_backend(schema: 'CreateTopic',
+                                            namespace: 'com.my-namespace.request')
+    response_backend = Deimos.schema_backend(schema: 'CreateTopic',
+                                             namespace: 'com.my-namespace.response')
+    request.content_type = 'avro/binary'
+    post :create, params: { id: 1 }, body: request_backend.encode({ 'request_id' => 'hi' })
+    expect(response_backend.decode(response.body)).to eq({ 'response_id' => 'hi bro' })
   end
 
 end
