@@ -30,6 +30,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Metrics](#metrics)
    * [Testing](#testing)
         * [Integration Test Helpers](#integration-test-helpers)
+   * [Utilities](#utilities)
    * [Contributing](#contributing) 
 <!--te-->
 
@@ -997,6 +998,20 @@ Deimos::Utils::InlineConsumer.get_messages_for(
   config_class: MyProducerClass,
   num_messages: 5
 )
+```
+
+## Utilities
+
+You can use your configured schema backend directly if you want to
+encode and decode payloads outside of the context of sending messages.
+
+```ruby
+backend = Deimos.schema_backend(schema: 'MySchema', namespace: 'com.my-namespace')
+encoded = backend.encode(my_payload)
+decoded = backend.decode(my_encoded_payload)
+coerced = backend.coerce(my_payload) # coerce to correct types
+backend.validate(my_payload) # throws an error if not valid
+fields = backend.schema_fields # list of fields defined in the schema
 ```
 
 ## Contributing
