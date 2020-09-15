@@ -30,6 +30,7 @@ RSpec.describe Deimos::Utils::SchemaControllerMixin, type: :controller do
       render_schema({ 'response_id' => payload[:request_id] + ' dad' })
     end
 
+    # :nodoc:
     def create
       render_schema({ 'response_id' => payload[:request_id] + ' bro' })
     end

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.2-beta2 - 2020-09-15
+
+### Features :star:
+
 - Add details on using schema backend directly in README.
 - Default to the provided schema if topic is not provided when
   encoding to `AvroSchemaRegistry`.
