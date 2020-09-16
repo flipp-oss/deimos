@@ -104,6 +104,8 @@ module Deimos
                   Deimos.config.producers.disabled ||
                   Deimos.producers_disabled?(self)
 
+        raise 'Topic not given! Please specify the topic.' if topic.blank?
+
         backend_class = determine_backend_class(sync, force_send)
         Deimos.instrument(
           'encode_messages',

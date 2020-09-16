@@ -296,6 +296,16 @@ module ProducerTest
       )
     end
 
+    it 'should error if no topic is given' do
+      expect { MyProducer.publish_list(
+          [{ 'test_id' => 'foo', 'some_int' => 123 },
+           { 'test_id' => 'bar', 'some_int' => 124 }],
+          topic: ""
+      ) }.to raise_error(RuntimeError,
+                             'Topic not given! Please specify the topic.')
+
+    end
+
     it 'should error with nothing set' do
       expect {
         MyErrorProducer.publish_list(
