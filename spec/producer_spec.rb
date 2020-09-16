@@ -307,39 +307,26 @@ module ProducerTest
     it 'should raise error if blank topic is passed in explicitly' do
       expect {
         MyProducer.publish_list(
-          [{
-               'test_id' => 'foo',
-               'some_int' => 123
-           },
-           {
-               'test_id' => 'bar',
-               'some_int' => 124
-           }],
+          [{  'test_id' => 'foo',
+              'some_int' => 123 },
+           {  'test_id' => 'bar',
+              'some_int' => 124 }],
           topic: ''
         )
-      }.to raise_error(
-               RuntimeError,
-               'Topic not specified. Please specify the topic.'
-           )
-
+      }.to raise_error(RuntimeError,
+                       'Topic not specified. Please specify the topic.')
     end
 
     it 'should raise error if the producer has not been initialized with a topic' do
       expect {
         MyNoTopicProducer.publish_list(
-          [{
-               'test_id' => 'foo',
-               'some_int' => 123
-           },
-           {
-               'test_id' => 'bar',
-               'some_int' => 124
-           }]
+          [{  'test_id' => 'foo',
+              'some_int' => 123 },
+           {  'test_id' => 'bar',
+              'some_int' => 124 }]
         )
-      }.to raise_error(
-               RuntimeError,
-               'Topic not specified. Please specify the topic.'
-           )
+      }.to raise_error(RuntimeError,
+                       'Topic not specified. Please specify the topic.')
     end
 
     it 'should error with nothing set' do
