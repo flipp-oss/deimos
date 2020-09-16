@@ -64,6 +64,14 @@ module ProducerTest
       end
       stub_const('MyErrorProducer', producer_class)
 
+      producer_class = Class.new(Deimos::Producer) do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        topic nil
+        key_config none: true
+      end
+      stub_const('MyNoTopicProducer', producer_class)
+
     end
 
     it 'should fail on invalid message with error handler' do
@@ -294,6 +302,31 @@ module ProducerTest
         },
         'some_optional_record' => nil
       )
+    end
+
+    it 'should raise error if blank topic is passed in explicitly' do
+      expect {
+        MyProducer.publish_list(
+          [{  'test_id' => 'foo',
+              'some_int' => 123 },
+           {  'test_id' => 'bar',
+              'some_int' => 124 }],
+          topic: ''
+        )
+      }.to raise_error(RuntimeError,
+                       'Topic not specified. Please specify the topic.')
+    end
+
+    it 'should raise error if the producer has not been initialized with a topic' do
+      expect {
+        MyNoTopicProducer.publish_list(
+          [{  'test_id' => 'foo',
+              'some_int' => 123 },
+           {  'test_id' => 'bar',
+              'some_int' => 124 }]
+        )
+      }.to raise_error(RuntimeError,
+                       'Topic not specified. Please specify the topic.')
     end
 
     it 'should error with nothing set' do

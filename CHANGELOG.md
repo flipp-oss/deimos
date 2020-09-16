@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Fixes :wrench:
+- Raise error if producing without a topic
+  (fixes [#50](https://github.com/flipp-oss/deimos/issues/50))
+
+
 ## 1.8.2-beta2 - 2020-09-15
 
 ### Features :star:
