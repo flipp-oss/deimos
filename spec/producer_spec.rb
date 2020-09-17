@@ -236,6 +236,7 @@ module ProducerTest
     end
 
     it 'should encode the key' do
+      Deimos.configure { |c| c.producers.topic_prefix = nil }
       expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
       expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'bar', topic: 'my-topic-key')
       expect(MyProducer.encoder).to receive(:encode).with({
@@ -251,6 +252,21 @@ module ProducerTest
         [{ 'test_id' => 'foo', 'some_int' => 123 },
          { 'test_id' => 'bar', 'some_int' => 124 }]
       )
+    end
+
+    it 'should encode the key with topic prefix' do
+      Deimos.configure { |c| c.producers.topic_prefix = 'prefix.' }
+      expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'prefix.my-topic-key')
+      expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'bar', topic: 'prefix.my-topic-key')
+      expect(MyProducer.encoder).to receive(:encode).with({  'test_id' => 'foo',
+                                                             'some_int' => 123 },
+                                                          { topic: 'prefix.my-topic-value' })
+      expect(MyProducer.encoder).to receive(:encode).with({  'test_id' => 'bar',
+                                                             'some_int' => 124 },
+                                                          { topic: 'prefix.my-topic-value' })
+
+      MyProducer.publish_list([{ 'test_id' => 'foo', 'some_int' => 123 },
+                               { 'test_id' => 'bar', 'some_int' => 124 }])
     end
 
     it 'should not encode with plaintext key' do

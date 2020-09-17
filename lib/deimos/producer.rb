@@ -185,7 +185,7 @@ module Deimos
                                     nil
                                   else
                                     encoder.encode(message.payload,
-                                                   topic: "#{config[:topic]}-value")
+                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-value")
                                   end
       end
 
@@ -203,9 +203,9 @@ module Deimos
         end
 
         if config[:key_field]
-          encoder.encode_key(config[:key_field], key, topic: "#{config[:topic]}-key")
+          encoder.encode_key(config[:key_field], key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
         elsif config[:key_schema]
-          key_encoder.encode(key, topic: "#{config[:topic]}-key")
+          key_encoder.encode(key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
         else
           key
         end
