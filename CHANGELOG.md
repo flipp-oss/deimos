@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 ### Fixes :wrench:
+- Prepend topic_prefix while encoding messages
+  (fixes [#37](https://github.com/flipp-oss/deimos/issues/37))
 - Raise error if producing without a topic
   (fixes [#50](https://github.com/flipp-oss/deimos/issues/50))
 
