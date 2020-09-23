@@ -64,6 +64,7 @@ module Deimos
 
       p_config[:listeners] = self.consumer_objects.map do |consumer|
         next nil if consumer.disabled
+
         hash = consumer.to_h.reject do |k, _|
           %i(class_name schema namespace key_config backoff disabled).include?(k)
         end
