@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Features :star:
+- Add "disabled" config field to consumers to allow disabling
+  individual consumers without having to comment out their
+  entries and possibly affecting unit tests.
+
 ### Fixes :wrench:
 - Prepend topic_prefix while encoding messages
   (fixes [#37](https://github.com/flipp-oss/deimos/issues/37))

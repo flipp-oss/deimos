@@ -6,6 +6,14 @@ class MyConfigConsumer < Deimos::Consumer
   def consume
   end
 end
+
+# Mock consumer 2
+class MyConfigConsumer2 < Deimos::Consumer
+  # :no-doc:
+  def consume
+  end
+end
+
 describe Deimos, 'configuration' do
   it 'should configure with deprecated fields' do
     logger = Logger.new(nil)
@@ -170,6 +178,13 @@ describe Deimos, 'configuration' do
         offset_commit_threshold 13
         offset_retention_time 13
         heartbeat_interval 13
+      end
+      consumer do
+        disabled true
+        class_name 'MyConfigConsumer2'
+        schema 'blah2'
+        topic 'blah2'
+        group_id 'myconsumerid2'
       end
     end
 

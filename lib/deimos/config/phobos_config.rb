@@ -63,8 +63,10 @@ module Deimos
       }
 
       p_config[:listeners] = self.consumer_objects.map do |consumer|
+        next nil if consumer.disabled
+
         hash = consumer.to_h.reject do |k, _|
-          %i(class_name schema namespace key_config backoff).include?(k)
+          %i(class_name schema namespace key_config backoff disabled).include?(k)
         end
         hash = hash.map { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v] }.to_h
         hash[:handler] = consumer.class_name
@@ -73,6 +75,7 @@ module Deimos
         end
         hash
       end
+      p_config[:listeners].compact!
 
       if self.kafka.ssl.enabled
         %w(ca_cert client_cert client_cert_key).each do |key|
