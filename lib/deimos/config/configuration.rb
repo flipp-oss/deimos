@@ -319,6 +319,10 @@ module Deimos
       # Key configuration (see docs).
       # @return [Hash]
       setting :key_config
+      # Set to true to ignore the consumer in the Phobos config and not actually start up a
+      # listener.
+      # @return [Boolean]
+      setting :disabled, false
 
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.

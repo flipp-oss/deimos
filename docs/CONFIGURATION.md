@@ -79,6 +79,7 @@ topic|nil|Topic to produce to.
 schema|nil|This is optional but strongly recommended for testing purposes; this will validate against a local schema file used as the reader schema, as well as being able to write tests against this schema. This is recommended since it ensures you are always getting the values  you expect.
 namespace|nil|Namespace of the schema to use when finding it locally.
 key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
+disabled|false|Set to true to skip starting an actual listener for this consumer on startup.
 group_id|nil|ID of the consumer group.
 max_concurrency|1|Number of threads created for this listener. Each thread will behave as an independent consumer. They don't share any state.
 start_from_beginning|true|Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of config. As such, this setting only applies when the consumer initially starts consuming from a topic
