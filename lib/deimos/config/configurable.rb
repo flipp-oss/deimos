@@ -245,6 +245,13 @@ module Deimos
 
       # Configure the settings with values.
       def configure(&block)
+        if defined?(Rake) && defined?(Rake.application)
+          tasks = Rake.application.top_level_tasks
+          if tasks.any? { |t| %w(assets webpacker yarn).include?(t.split(':').first) }
+            puts 'Skipping Deimos configuration since we are in JS/CSS compilation'
+            return
+          end
+        end
         config.run_callbacks(:configure) do
           config.instance_eval(&block)
         end
