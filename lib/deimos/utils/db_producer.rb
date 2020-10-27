@@ -190,11 +190,14 @@ module Deimos
         end
       end
 
+      # Produce messages in batches, reducing the size 1/10 if the batch is too
+      # large. Does not retry batches of messages that have already been sent.
       # @param batch [Array<Hash>]
       def produce_messages(batch)
         batch_size = batch.size
+        current_index = 0
         begin
-          batch.in_groups_of(batch_size, false).each do |group|
+          batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
             @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
             producer.publish_list(group)
             Deimos.config.metrics&.increment(
@@ -202,6 +205,7 @@ module Deimos
               tags: %W(status:success topic:#{@current_topic}),
               by: group.size
             )
+            current_index += group.size
             @logger.info("Sent #{group.size} messages to #{@current_topic}")
           end
         rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge,

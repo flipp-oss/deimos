@@ -9,15 +9,17 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
     && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 WORKDIR /opt/deimos
-COPY deimos.gemspec /opt/deimos/deimos.gemspec
+RUN gem update --system
+RUN gem install bundler
+COPY deimos-ruby.gemspec /opt/deimos/deimos-ruby.gemspec
 COPY lib/deimos/version.rb /opt/deimos/lib/deimos/version.rb
 COPY Gemfile /opt/deimos/Gemfile
 COPY Gemfile.lock /opt/deimos/Gemfile.lock
 
 RUN bundle install
 
-ADD . .
+COPY . /opt/deimos/
 
 ENTRYPOINT ["bundle", "exec"]
 
-CMD ["bundle", "exec", "rspec"]
+CMD ["bundle", "exec", "rspec", "--require spec_helper --tag integration"]
