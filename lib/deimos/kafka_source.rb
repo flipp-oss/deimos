@@ -89,7 +89,7 @@ module Deimos
                                                   options={})
         results = super
         if !self.kafka_config[:import] || array_of_attributes.empty?
-          return ActiveRecord::Import::Result.new([], 0, [], [])
+          return results
         end
 
         # This will contain an array of hashes, where each hash is the actual
