@@ -42,6 +42,7 @@ Please see the following for further information not covered by this readme:
 * [Configuration Reference](docs/CONFIGURATION.md)
 * [Database Backend Feature](docs/DATABASE_BACKEND.md)
 * [Upgrading Deimos](docs/UPGRADING.md)
+* [Contributing to Integration Tests](docs/INTEGRATION_TESTS.md)
 
 # Installation
 

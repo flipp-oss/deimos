@@ -96,7 +96,32 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect(phobos_producer).to have_received(:publish_list).with(['A'] * 100).once
       expect(phobos_producer).to have_received(:publish_list).with(['A'] * 10).once
       expect(phobos_producer).to have_received(:publish_list).with(['A']).once
+    end
 
+    it 'should not resend batches of sent messages' do
+      allow(phobos_producer).to receive(:publish_list) do |group|
+        raise Kafka::BufferOverflow if group.any?('A') && group.size >= 1000
+        raise Kafka::BufferOverflow if group.any?('BIG') && group.size >= 10
+      end
+      allow(Deimos.config.metrics).to receive(:increment)
+      batch = ['A'] * 450 + ['BIG'] * 550
+      producer.produce_messages(batch)
+
+      expect(phobos_producer).to have_received(:publish_list).with(batch)
+      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 100).exactly(4).times
+      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 50 + ['BIG'] * 50)
+      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 10).exactly(5).times
+      expect(phobos_producer).to have_received(:publish_list).with(['BIG'] * 1).exactly(550).times
+
+      expect(Deimos.config.metrics).to have_received(:increment).with('publish',
+                                                                      tags: %w(status:success topic:),
+                                                                      by: 100).exactly(4).times
+      expect(Deimos.config.metrics).to have_received(:increment).with('publish',
+                                                                      tags: %w(status:success topic:),
+                                                                      by: 10).exactly(5).times
+      expect(Deimos.config.metrics).to have_received(:increment).with('publish',
+                                                                      tags: %w(status:success topic:),
+                                                                      by: 1).exactly(550).times
     end
 
     describe '#compact_messages' do
@@ -289,6 +314,8 @@ each_db_config(Deimos::Utils::DbProducer) do
           message: "mess#{i}",
           partition_key: "key#{i}"
         )
+      end
+      (5..8).each do |i|
         Deimos::KafkaMessage.create!(
           id: i,
           topic: 'my-topic2',
