@@ -98,7 +98,7 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect(phobos_producer).to have_received(:publish_list).with(['A']).once
     end
 
-    it "should not resend batches of sent messages" do
+    it 'should not resend batches of sent messages' do
       allow(phobos_producer).to receive(:publish_list) do |group|
         raise Kafka::BufferOverflow if group.any?('A') && group.size >= 1000
         raise Kafka::BufferOverflow if group.any?('BIG') && group.size >= 10
