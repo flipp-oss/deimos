@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes :wrench:
 - Do not resend already sent messages when splitting up batches
   (fixes [#24](https://github.com/flipp-oss/deimos/issues/24))
+- KafkaSource crashing on bulk-imports if import hooks are disabled
+  (fixes [#73](https://github.com/flipp-oss/deimos/issues/73))
 
 ## 1.8.2 - 2020-09-25
 
