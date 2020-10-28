@@ -225,5 +225,88 @@ module KafkaSourceSpec
         expect(Deimos::KafkaMessage.count).to eq(0)
       end
     end
+
+    context 'with import hooks disabled' do
+      before(:each) do
+        # Dummy class we can include the mixin in. Has a backing table created
+        # earlier and has the import hook disabled
+        class WidgetNoImportHook < ActiveRecord::Base
+          include Deimos::KafkaSource
+          self.table_name = 'widgets'
+
+          # :nodoc:
+          def self.kafka_config
+            {
+              update: true,
+              delete: true,
+              import: false,
+              create: true
+            }
+          end
+
+          # :nodoc:
+          def self.kafka_producers
+            [WidgetProducer]
+          end
+        end
+        WidgetNoImportHook.reset_column_information
+      end
+
+      it 'should not fail when bulk-importing with existing records' do
+        widget1 = WidgetNoImportHook.create(widget_id: 1, name: 'Widget 1')
+        widget2 = WidgetNoImportHook.create(widget_id: 2, name: 'Widget 2')
+        widget1.name = 'New Widget No Import Hook 1'
+        widget2.name = 'New Widget No Import Hook 2'
+
+        expect {
+          WidgetNoImportHook.import([widget1, widget2], on_duplicate_key_update: %i(widget_id name))
+        }.not_to raise_error
+
+        expect('my-topic').not_to have_sent({
+                                              widget_id: 1,
+                                              name: 'New Widget No Import Hook 1',
+                                              id: widget1.id,
+                                              created_at: anything,
+                                              updated_at: anything
+                                            }, widget1.id)
+        expect('my-topic').not_to have_sent({
+                                              widget_id: 2,
+                                              name: 'New Widget No Import Hook 2',
+                                              id: widget2.id,
+                                              created_at: anything,
+                                              updated_at: anything
+                                            }, widget2.id)
+      end
+
+      it 'should not fail when mixing existing and new records' do
+        widget1 = WidgetNoImportHook.create(widget_id: 1, name: 'Widget 1')
+        expect('my-topic').to have_sent({
+                                          widget_id: 1,
+                                          name: 'Widget 1',
+                                          id: widget1.id,
+                                          created_at: anything,
+                                          updated_at: anything
+                                        }, widget1.id)
+
+        widget2 = WidgetNoImportHook.new(widget_id: 2, name: 'Widget 2')
+        widget1.name = 'New Widget 1'
+        WidgetNoImportHook.import([widget1, widget2], on_duplicate_key_update: %i(widget_id))
+        widgets = WidgetNoImportHook.all
+        expect('my-topic').not_to have_sent({
+                                              widget_id: 1,
+                                              name: 'New Widget 1',
+                                              id: widgets[0].id,
+                                              created_at: anything,
+                                              updated_at: anything
+                                            }, widgets[0].id)
+        expect('my-topic').not_to have_sent({
+                                              widget_id: 2,
+                                              name: 'Widget 2',
+                                              id: widgets[1].id,
+                                              created_at: anything,
+                                              updated_at: anything
+                                            }, widgets[1].id)
+      end
+    end
   end
 end

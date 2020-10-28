@@ -88,8 +88,9 @@ module Deimos
                                                   array_of_attributes,
                                                   options={})
         results = super
-        return unless self.kafka_config[:import]
-        return if array_of_attributes.empty?
+        if !self.kafka_config[:import] || array_of_attributes.empty?
+          return results
+        end
 
         # This will contain an array of hashes, where each hash is the actual
         # attribute hash that created the object.
