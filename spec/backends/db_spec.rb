@@ -43,6 +43,12 @@ each_db_config(Deimos::Backends::Db) do
     described_class.publish(producer_class: MyNoKeyProducer,
                             messages: [messages.first])
     expect(Deimos::KafkaMessage.count).to eq(4)
+  end
 
+  it 'should add messages with Hash keys with JSON encoding' do
+    described_class.publish(producer_class: MyProducer,
+                            messages: [build_message({ foo: 0 }, 'my-topic', { 'test_id' => 0 })])
+    expect(Deimos::KafkaMessage.count).to eq(1)
+    expect(Deimos::KafkaMessage.last.partition_key).to eq(%(---\ntest_id: 0\n))
   end
 end
