@@ -15,6 +15,11 @@ module Deimos
   #       enabled true
   #       ca_cert_file 'my_file'
   #     end
+  #     config.kafka do
+  #       ssl do
+  #         enabled true
+  #       end
+  #     end
   #   end
   # - Allows for arrays of configurations:
   #   Deimos.configure do |config|
