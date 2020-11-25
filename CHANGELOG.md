@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Fixes :wrench:
+
+- Do not apply type coercion to `timestamp-millis` and `timestamp-micros` logical types (fixes [#97](https://github.com/flipp-oss/deimos/issues/97))
+
 ## 1.8.3 - 2020-11-18
 
 ### Fixes :wrench:
