@@ -51,8 +51,8 @@ module Deimos
       end
     end
 
-    # Override this message to conditionally process messages based on a condition
-    # @return [Boolean] if true, message is processed. If false, message is skipped.
+    # Override this message to conditionally process messages
+    # @return [Boolean] if true, message is processed. If false, message processing is skipped but offset is still committed.
     def process_message?(payload)
       true
     end
