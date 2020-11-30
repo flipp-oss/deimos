@@ -51,6 +51,12 @@ module Deimos
       end
     end
 
+    # Override this message to conditionally process messages based on a condition
+    # @return [Boolean] if true, message is processed. If false, message is skipped.
+    def process_message?(payload)
+      true
+    end
+
   private
 
     def _with_span
