@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - KafkaSource crashing on bulk-imports if import hooks are disabled
   (fixes [#73](https://github.com/flipp-oss/deimos/issues/73))
 - #96 Use string-safe encoding for partition keys
+- Retry on offset seek failures in inline consumer
+  (fixes [#5](Inline consumer should use retries when seeking))
 
 ## 1.8.2 - 2020-09-25
 
