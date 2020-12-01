@@ -26,7 +26,14 @@ module Deimos
 
       # :nodoc:
       def consume(payload, metadata)
-        return unless process_message?(payload)
+        unless process_message?(payload)
+          Deimos.config.logger.debug(
+            message: 'Skipping processing of message',
+            payload: decoded_payload,
+            metadata: metadata
+          )
+          return
+        end
 
         key = metadata.with_indifferent_access[:key]
         klass = self.class.config[:record_class]
