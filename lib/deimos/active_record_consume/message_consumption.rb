@@ -26,6 +26,8 @@ module Deimos
 
       # :nodoc:
       def consume(payload, metadata)
+        return unless process_message?(payload)
+
         key = metadata.with_indifferent_access[:key]
         klass = self.class.config[:record_class]
         record = fetch_record(klass, (payload || {}).with_indifferent_access, key)

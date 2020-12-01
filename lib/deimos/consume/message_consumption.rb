@@ -17,18 +17,7 @@ module Deimos
             new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
             decoded_payload = payload ? self.class.decoder.decode(payload) : nil
             _received_message(decoded_payload, new_metadata)
-
-            if process_message?(decoded_payload)
-              # Yield to the consume method
-              yield decoded_payload, new_metadata
-            else
-              Deimos.config.logger.debug(
-                message: 'Skipped processing of message',
-                payload: decoded_payload,
-                metadata: metadata
-              )
-            end
-
+            yield decoded_payload, new_metadata
           end
         end
         _handle_success(benchmark.real, decoded_payload, new_metadata)
