@@ -59,7 +59,7 @@ module Deimos
     # Override this message to conditionally save records
     # @return [Boolean] if true, record is created/update.
     #   If false, record processing is skipped but message offset is still committed.
-    def process_message?(payload)
+    def process_message?(_payload)
       true
     end
   end
