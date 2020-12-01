@@ -142,12 +142,12 @@ module ActiveRecordConsumerTest
       MyConsumer.stub(:process_message?).and_return(false)
       expect(Widget.count).to eq(0)
       test_consume_message(MyConsumer, {
-                               test_id: 'abc',
-                               some_int: 3,
-                               updated_at: 1.day.ago.to_i,
-                               some_datetime_int: Time.zone.now.to_i,
-                               timestamp: 2.minutes.ago.to_s
-                             }, { call_original: true, key: 5 })
+                             test_id: 'abc',
+                             some_int: 3,
+                             updated_at: 1.day.ago.to_i,
+                             some_datetime_int: Time.zone.now.to_i,
+                             timestamp: 2.minutes.ago.to_s
+                           }, { call_original: true, key: 5 })
       expect(Widget.count).to eq(0)
     end
   end
