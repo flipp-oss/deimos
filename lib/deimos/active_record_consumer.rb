@@ -34,13 +34,6 @@ module Deimos
       def compacted(val)
         config[:compacted] = val
       end
-
-      # Override this message to conditionally save records
-      # @return [Boolean] if true, record is created/update.
-      #   If false, record processing is skipped but message offset is still committed.
-      def process_message?(_payload)
-        true
-      end
     end
 
     # Setup
@@ -61,6 +54,14 @@ module Deimos
     # @param _key [String]
     def record_attributes(payload, _key=nil)
       @converter.convert(payload)
+    end
+
+    # Override this message to conditionally save records
+    # @param payload [Hash] The kafka message as a hash
+    # @return [Boolean] if true, record is created/update.
+    #   If false, record processing is skipped but message offset is still committed.
+    def process_message?(_payload)
+      true
     end
   end
 end

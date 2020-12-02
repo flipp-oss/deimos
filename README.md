@@ -594,17 +594,6 @@ A sample consumer would look as follows:
 class MyConsumer < Deimos::ActiveRecordConsumer
   record_class Widget
 
-  class << self
-    # Optional override, returns true by default.
-    # When this method returns true, a record corresponding to the message
-    # is created/updated.
-    # When this method returns false, message processing is skipped and a
-    # corresponding record will NOT be created/updated.
-    def process_message?(payload)
-      super
-    end
-  end
-
   # Optional override of the way to fetch records based on payload and
   # key. Default is to use the key to search the primary key of the table.
   # Only used in non-batch mode.
@@ -635,6 +624,15 @@ class MyConsumer < Deimos::ActiveRecordConsumer
 
   # Optional override to change the attributes used for identifying records
   def record_key(payload)
+    super
+  end
+
+  # Optional override, returns true by default.
+  # When this method returns true, a record corresponding to the message
+  # is created/updated.
+  # When this method returns false, message processing is skipped and a
+  # corresponding record will NOT be created/updated.
+  def process_message?(payload)
     super
   end
 end

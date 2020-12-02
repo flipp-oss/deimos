@@ -26,7 +26,7 @@ module Deimos
 
       # :nodoc:
       def consume(payload, metadata)
-        unless self.class.process_message?(payload)
+        unless self.process_message?(payload)
           Deimos.config.logger.debug(
             message: 'Skipping processing of message',
             payload: payload,
