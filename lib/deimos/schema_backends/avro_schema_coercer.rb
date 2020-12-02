@@ -44,9 +44,11 @@ module Deimos
 
       case field_type
       when :int, :long
-        if val.is_a?(Integer) ||
-           _is_integer_string?(val) ||
-           int_classes.any? { |klass| val.is_a?(klass) }
+        if %w(timestamp-millis timestamp-micros).include?(type.logical_type)
+          val
+        elsif val.is_a?(Integer) ||
+              _is_integer_string?(val) ||
+              int_classes.any? { |klass| val.is_a?(klass) }
           val.to_i
         else
           val # this will fail

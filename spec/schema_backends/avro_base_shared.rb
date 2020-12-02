@@ -42,6 +42,20 @@ RSpec.shared_examples_for('an Avro backend') do
         {
           'name' => 'union-int-field',
           'type' => %w(null int)
+        },
+        {
+          'name' => 'timestamp-millis-field',
+          'type' => {
+            'type' => 'long',
+            'logicalType' => 'timestamp-millis'
+          }
+        },
+        {
+          'name' => 'timestamp-micros-field',
+          'type' => {
+            'type' => 'long',
+            'logicalType' => 'timestamp-micros'
+          }
         }
       ]
     }
@@ -95,7 +109,9 @@ RSpec.shared_examples_for('an Avro backend') do
         'string-field' => 'hi mom',
         'boolean-field' => true,
         'union-field' => nil,
-        'union-int-field' => nil
+        'union-int-field' => nil,
+        'timestamp-millis-field' => Time.utc(2020, 11, 12, 13, 14, 15, 909_090),
+        'timestamp-micros-field' => Time.utc(2020, 11, 12, 13, 14, 15, 909_090)
       }
     end
 
@@ -169,6 +185,15 @@ RSpec.shared_examples_for('an Avro backend') do
       expect(result['union-field']).to eq('itsme')
     end
 
+    it 'should not convert timestamp-millis' do
+      result = backend.coerce(payload)
+      expect(result['timestamp-millis-field']).to eq(Time.utc(2020, 11, 12, 13, 14, 15, 909_090))
+    end
+
+    it 'should not convert timestamp-micros' do
+      result = backend.coerce(payload)
+      expect(result['timestamp-micros-field']).to eq(Time.utc(2020, 11, 12, 13, 14, 15, 909_090))
+    end
   end
 
 end
