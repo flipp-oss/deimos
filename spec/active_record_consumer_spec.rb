@@ -139,7 +139,7 @@ module ActiveRecordConsumerTest
     end
 
     it 'should not create record of process_message returns false' do
-      MyConsumer.stub(:process_message?).and_return(false)
+      MyConsumer.any_instance.stub(:process_message?).and_return(false)
       expect(Widget.count).to eq(0)
       test_consume_message(MyConsumer, {
                              test_id: 'abc',
