@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.4 - 2020-12-02
+
 ### Features :star:
 - Add overridable "process_message?" method to ActiveRecordConsumer to allow for skipping of saving/updating records
 
