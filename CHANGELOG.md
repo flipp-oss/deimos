@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Features :star:
+- Add overridable "process_message?" method to ActiveRecordConsumer to allow for skipping of saving/updating records
+
 ### Fixes :wrench:
 
 - Do not apply type coercion to `timestamp-millis` and `timestamp-micros` logical types (fixes [#97](https://github.com/flipp-oss/deimos/issues/97))

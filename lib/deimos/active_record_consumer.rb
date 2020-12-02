@@ -55,5 +55,13 @@ module Deimos
     def record_attributes(payload, _key=nil)
       @converter.convert(payload)
     end
+
+    # Override this message to conditionally save records
+    # @param payload [Hash] The kafka message as a hash
+    # @return [Boolean] if true, record is created/update.
+    #   If false, record processing is skipped but message offset is still committed.
+    def process_message?(_payload)
+      true
+    end
   end
 end

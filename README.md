@@ -626,6 +626,15 @@ class MyConsumer < Deimos::ActiveRecordConsumer
   def record_key(payload)
     super
   end
+
+  # Optional override, returns true by default.
+  # When this method returns true, a record corresponding to the message
+  # is created/updated.
+  # When this method returns false, message processing is skipped and a
+  # corresponding record will NOT be created/updated.
+  def process_message?(payload)
+    super
+  end
 end
 ```
 
