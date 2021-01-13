@@ -88,8 +88,7 @@ module Deimos
         if ActiveRecord::VERSION::MAJOR >= 4
           record.update!(attr_hash)
         else
-          record.attributes = attr_hash
-          record.save!
+          record.update_attributes!(attr_hash)
         end
       end
 

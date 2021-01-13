@@ -87,7 +87,7 @@ module DbConfigs
       port: 3306,
       username: 'root',
       database: 'test',
-      host: ENV['MYSQL_HOST'] || '127.0.0.1'
+      host: ENV['MYSQL_HOST'] || 'localhost'
     },
     {
       adapter: 'sqlite3',
