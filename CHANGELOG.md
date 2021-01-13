@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- ### Fixes :wrench:
+- Fixes for Rails 6.1 (remove usage of `update_attributes!`)
+
 ## 1.8.4 - 2020-12-02
 
 ### Features :star:
