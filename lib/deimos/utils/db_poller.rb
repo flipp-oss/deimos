@@ -142,7 +142,8 @@ module Deimos
         last_id = record.public_send(id_method)
         last_updated_at = last_updated(record)
         @producer.send_events(batch)
-        @info.update_attributes!(last_sent: last_updated_at, last_sent_id: last_id)
+        @info.attributes = { last_sent: last_updated_at, last_sent_id: last_id }
+        @info.save!
       end
     end
   end

@@ -51,13 +51,13 @@ each_db_config(Deimos::KafkaTopicInfo) do
       expect(record.locked_at).to eq(nil)
       expect(record.error).to eq(false)
       expect(record.retries).to eq(0)
-      expect(record.last_processed_at.to_s).to eq(Time.zone.now.to_s)
+      expect(record.last_processed_at.in_time_zone.to_s).to eq(Time.zone.now.to_s)
       record = Deimos::KafkaTopicInfo.last
       expect(record.locked_by).not_to eq(nil)
       expect(record.locked_at).not_to eq(nil)
       expect(record.error).not_to eq(false)
       expect(record.retries).not_to eq(0)
-      expect(record.last_processed_at.to_s).to eq(20.seconds.ago.to_s)
+      expect(record.last_processed_at.in_time_zone.to_s).to eq(20.seconds.ago.to_s)
     end
   end
 
@@ -70,11 +70,13 @@ each_db_config(Deimos::KafkaTopicInfo) do
                                           locked_by: 'me', locked_at: 1.minute.ago)
 
       expect(Deimos::KafkaTopicInfo.count).to eq(3)
-      Deimos::KafkaTopicInfo.all.each { |t| expect(t.last_processed_at.to_s).to eq(old_time) }
+      Deimos::KafkaTopicInfo.all.each do |t|
+        expect(t.last_processed_at.in_time_zone.to_s).to eq(old_time)
+      end
       Deimos::KafkaTopicInfo.ping_empty_topics(%w(topic1))
-      expect(t1.reload.last_processed_at.to_s).to eq(old_time) # was passed as an exception
-      expect(t2.reload.last_processed_at.to_s).to eq(Time.zone.now.to_s)
-      expect(t3.reload.last_processed_at.to_s).to eq(old_time) # is locked
+      expect(t1.reload.last_processed_at.in_time_zone.to_s).to eq(old_time) # was passed as an exception
+      expect(t2.reload.last_processed_at.in_time_zone.to_s).to eq(Time.zone.now.to_s)
+      expect(t3.reload.last_processed_at.in_time_zone.to_s).to eq(old_time) # is locked
     end
   end
 
