@@ -85,11 +85,8 @@ module Deimos
                       locked_at: Time.zone.now,
                       error: true,
                       retries: record.retries + 1 }
-        if ActiveRecord::VERSION::MAJOR >= 4
-          record.update!(attr_hash)
-        else
-          record.update_attributes!(attr_hash)
-        end
+        record.attributes = attr_hash
+        record.save!
       end
 
       # Update the locked_at timestamp to indicate that the producer is still
