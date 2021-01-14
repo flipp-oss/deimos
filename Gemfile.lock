@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deimos-ruby (1.8.4)
+    deimos-ruby (1.8.5)
       avro_turf (~> 0.11)
       phobos (~> 1.9)
       ruby-kafka (~> 0.7)
@@ -87,11 +87,11 @@ GEM
     ddtrace (0.37.0)
       msgpack
     diff-lcs (1.4.4)
-    digest-crc (0.6.1)
-      rake (~> 13.0)
+    digest-crc (0.6.3)
+      rake (>= 12.0.0, < 14.0.0)
     dogstatsd-ruby (4.8.1)
     erubi (1.10.0)
-    excon (0.76.0)
+    excon (0.78.1)
     exponential-backoff (0.0.4)
     ffi (1.13.1)
     formatador (0.2.5)
