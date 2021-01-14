@@ -67,7 +67,7 @@ module Deimos
       topic(kafka_config.topic) if kafka_config.topic.present? && klass.respond_to?(:topic)
       schema(kafka_config.schema) if kafka_config.schema.present?
       namespace(kafka_config.namespace) if kafka_config.namespace.present?
-      key_config(kafka_config.key_config) if kafka_config.key_config.present?
+      key_config(**kafka_config.key_config) if kafka_config.key_config.present?
     end
   end
 

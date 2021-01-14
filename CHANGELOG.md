@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 - ### Fixes :wrench:
+- Fix for configuration bug with Ruby 3.0 (** instead of passing hash)
+
+## 1.8.5 - 2021-01-13
+
+- ### Fixes :wrench:
 - Fixes for Rails 6.1 (remove usage of `update_attributes!`)
 
 ## 1.8.4 - 2020-12-02
