@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- ### Roadmap :car:
+- Update Phobos version to allow version 1.9 or 2.x.
+
 ## 1.8.6 - 2021-01-14
 
 - ### Fixes :wrench:
