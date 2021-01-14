@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.8.6 - 2021-01-14
+
 - ### Fixes :wrench:
 - Fix for configuration bug with Ruby 3.0 (** instead of passing hash)
 
