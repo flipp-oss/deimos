@@ -308,5 +308,74 @@ module KafkaSourceSpec
                                             }, widgets[1].id)
       end
     end
+
+    context 'with AR models that implement the kafka_producer interface' do
+      before(:each) do
+        # Dummy class we can include the mixin in. Has a backing table created
+        # earlier and has the import hook disabled
+        deprecated_class = Class.new(ActiveRecord::Base) do
+          include Deimos::KafkaSource
+          self.table_name = 'widgets'
+
+          # :nodoc:
+          def self.kafka_config
+            {
+              update: true,
+              delete: true,
+              import: false,
+              create: true
+            }
+          end
+
+          # :nodoc:
+          def self.kafka_producer
+            WidgetProducer
+          end
+        end
+        stub_const('WidgetDeprecated', deprecated_class)
+        WidgetDeprecated.reset_column_information
+      end
+
+      it 'logs a warning and sends the message as usual' do
+        expect(Deimos.config.logger).to receive(:warn).with({ message: WidgetDeprecated::DEPRECATION_WARNING })
+        widget = WidgetDeprecated.create(widget_id: 1, name: 'Widget 1')
+        expect('my-topic').to have_sent({
+                                          widget_id: 1,
+                                          name: 'Widget 1',
+                                          id: widget.id,
+                                          created_at: anything,
+                                          updated_at: anything
+                                        }, widget.id)
+      end
+    end
+
+    context 'with AR models that do not implement any producer interface' do
+      before(:each) do
+        # Dummy class we can include the mixin in. Has a backing table created
+        # earlier and has the import hook disabled
+        buggy_class = Class.new(ActiveRecord::Base) do
+          include Deimos::KafkaSource
+          self.table_name = 'widgets'
+
+          # :nodoc:
+          def self.kafka_config
+            {
+              update: true,
+              delete: true,
+              import: false,
+              create: true
+            }
+          end
+        end
+        stub_const('WidgetBuggy', buggy_class)
+        WidgetBuggy.reset_column_information
+      end
+
+      it 'raises a NotImplementedError exception' do
+        expect {
+          WidgetBuggy.create(widget_id: 1, name: 'Widget 1')
+        }.to raise_error(NotImplementedError)
+      end
+    end
   end
 end
