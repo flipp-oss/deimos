@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 - Replaces `before` by `prepend_before` for more consistent test setups.
+- Adds validation in the `kafka_producers` method (fixes [#90](https://github.com/flipp-oss/deimos/issues/90))
 
 ## 1.8.7 - 2021-01-14
 

@@ -6,6 +6,9 @@ module Deimos
   module KafkaSource
     extend ActiveSupport::Concern
 
+    DEPRECATION_WARNING = 'The kafka_producer interface will be deprecated ' \
+        'in future releases. Please use kafka_producers instead.'
+
     included do
       after_create(:send_kafka_event_on_create)
       after_update(:send_kafka_event_on_update)
@@ -64,19 +67,12 @@ module Deimos
 
       # @return [Array<Deimos::ActiveRecordProducer>] the producers to run.
       def kafka_producers
-        raise NotImplementedError if self.method(:kafka_producer).
-          owner == Deimos::KafkaSource
+        if self.respond_to?(:kafka_producer)
+          Deimos.config.logger.warn(message: DEPRECATION_WARNING)
+          return [self.kafka_producer]
+        end
 
-        [self.kafka_producer]
-      end
-
-      # Deprecated - use #kafka_producers instead.
-      # @return [Deimos::ActiveRecordProducer] the producer to use.
-      def kafka_producer
-        raise NotImplementedError if self.method(:kafka_producers).
-          owner == Deimos::KafkaSource
-
-        self.kafka_producers.first
+        raise NotImplementedError
       end
 
       # This is an internal method, part of the activerecord_import gem. It's
