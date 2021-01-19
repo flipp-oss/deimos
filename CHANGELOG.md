@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Replaces `before` by `prepend_before` for more consistent test setups.
+
 ## 1.8.7 - 2021-01-14
 
 - ### Roadmap :car:
