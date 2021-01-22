@@ -68,7 +68,7 @@ module Deimos
 
       # Grab the PollInfo or create if it doesn't exist.
       def retrieve_poll_info
-        ActiveRecord::Base.connection.reconnect!
+        ActiveRecord::Base.connection.reconnect! unless ActiveRecord::Base.connection.open_transactions.positive?
         new_time = @config.start_from_beginning ? Time.new(0) : Time.zone.now
         @info = Deimos::PollInfo.find_by_producer(@config.producer_class) ||
                 Deimos::PollInfo.create!(producer: @config.producer_class,
