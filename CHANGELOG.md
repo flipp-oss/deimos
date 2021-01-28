@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## UNRELEASED
+
+## 1.9.0 - 2021-01-28
+
+- ### Roadmap :car:
+
+- Bumped the version of ruby-kafka to latest
+
+- ### Fixes :wrench:
+
 - Prevents DB Poller from reconnecting to DB if there is an open transaction
 - Replaces `before` by `prepend_before` for more consistent test setups.
 - Adds validation in the `kafka_producers` method (fixes [#90](https://github.com/flipp-oss/deimos/issues/90))
