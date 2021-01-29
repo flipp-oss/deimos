@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'active_support'
+
 require 'phobos'
 require 'deimos/version'
 require 'deimos/config/configuration'

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.9.1 - 2021-01-29
+
+- ### Fixes :wrench:
+
+Fix for `uninitialized constant ActiveSupport::Autoload` in certain circumstances
+
 ## 1.9.0 - 2021-01-28
 
 - ### Roadmap :car:
