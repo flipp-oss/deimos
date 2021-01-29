@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deimos-ruby (1.9.0)
+    deimos-ruby (1.9.1)
       avro_turf (~> 0.11)
       phobos (>= 1.9, < 3.0)
       ruby-kafka (< 2)

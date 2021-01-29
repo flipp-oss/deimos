@@ -20,7 +20,6 @@ require 'deimos/backends/test'
 
 require 'deimos/schema_backends/base'
 
-require 'deimos/monkey_patches/ruby_kafka_heartbeat'
 require 'deimos/monkey_patches/phobos_producer'
 require 'deimos/monkey_patches/phobos_cli'
 

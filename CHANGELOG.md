@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-## 1.9.1 - 2021-01-29
+
+## 1.9.2 - 2021-01-29
 
 - ### Fixes :wrench:
 
-Fix for `uninitialized constant ActiveSupport::Autoload` in certain circumstances
+- Fix for `uninitialized constant ActiveSupport::Autoload` in certain circumstances
+- Removed unnecessary monkey patch which was crashing on newer versions of ruby-kafka
 
 ## 1.9.0 - 2021-01-28
 
