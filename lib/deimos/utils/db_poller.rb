@@ -131,8 +131,8 @@ module Deimos
                              time_to: time_to,
                              column_name: @config.timestamp_column,
                              min_id: @info.last_sent_id).
-            limit(BATCH_SIZE).
-            order("#{@producer.config[:record_class].table_name}.#{quoted_timestamp}, #{quoted_id}")
+          limit(BATCH_SIZE).
+          order("#{@producer.config[:record_class].table_name}.#{quoted_timestamp}, #{quoted_id}")
       end
 
       # @param batch [Array<ActiveRecord::Base>]
