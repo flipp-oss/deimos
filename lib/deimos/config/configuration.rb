@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
+require 'fig_tree'
 require_relative 'phobos_config'
-require_relative 'configurable'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
 require 'active_support/core_ext/numeric'
 
 # :nodoc:
 module Deimos
-  include Configurable
+  include FigTree
 
   # :nodoc:
-  class Configurable::ConfigStruct
+  class FigTree::ConfigStruct
     include Deimos::PhobosConfig
   end
 
@@ -60,7 +60,7 @@ module Deimos
     end
   end
 
-  # @param kafka_config [Configurable::ConfigStruct]
+  # @param kafka_config [FigTree::ConfigStruct]
   def self.configure_producer_or_consumer(kafka_config)
     klass = kafka_config.class_name.constantize
     klass.class_eval do
