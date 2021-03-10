@@ -327,19 +327,19 @@ module Deimos
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.
       setting :group_id
-      setting :max_concurrency
-      setting :start_from_beginning
+      setting :max_concurrency, 1
+      setting :start_from_beginning, true
       setting :max_bytes_per_partition, 500.kilobytes
-      setting :min_bytes
-      setting :max_wait_time
+      setting :min_bytes, 1
+      setting :max_wait_time, 5
       setting :force_encoding
-      setting :delivery
+      setting :delivery, :batch
       setting :backoff
-      setting :session_timeout
-      setting :offset_commit_interval
-      setting :offset_commit_threshold
+      setting :session_timeout, 300
+      setting :offset_commit_interval, 10
+      setting :offset_commit_threshold, 0
       setting :offset_retention_time
-      setting :heartbeat_interval
+      setting :heartbeat_interval, 10
     end
 
     setting_object :db_poller do

@@ -91,6 +91,7 @@ delivery|`:batch`|The delivery mode for the consumer. Possible values: `:message
 session_timeout|300|Number of seconds after which, if a client hasn't contacted the Kafka cluster, it will be kicked out of the group.
 offset_commit_interval|10|Interval between offset commits, in seconds.
 offset_commit_threshold|0|Number of messages that can be processed before their offsets are committed. If zero, offset commits are not triggered by message processing
+offset_retention_time|nil|The time period that committed offsets will be retained, in seconds. Defaults to the broker setting.
 heartbeat_interval|10|Interval between heartbeats; must be less than the session window.
 backoff|`(1000..60_000)`|Range representing the minimum and maximum number of milliseconds to back off after a consumer error.
 
