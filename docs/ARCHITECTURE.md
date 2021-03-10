@@ -74,11 +74,7 @@ must define methods such as:
   
 ### Configuration
 
-Deimos has its own `Configurable` module that makes heavy use of `method_missing`
-to provide a very succinct but powerful configuration format (including
-default values, procs, print out as hash, reset, etc.). It also
-allows for multiple blocks to define different objects of the same time
-(like producers, consumers, pollers etc.).
+Deimos uses the [https://www.github.com/flipp_oss/fig_tree](fig_tree) gem for configuration.
 
 The configuration definition for Deimos is in `config/configuration.rb`. In
 addition, there are methods in `config/phobos_config.rb` which translate to/from

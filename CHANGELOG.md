@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- ### Roadmap :car:
+
+- Extracted the configuration piece into a separate gem, [fig_tree](https://www.github.com/flipp-oss/fig_tree).
+
 - ### Fixes :wrench:
 
 - Fixed a regression where the default values for consumer / Phobos listener configs were not correct (they were all nil). This is technically a breaking change, but it puts the configs back the way they were at version 1.4 and matches the documentation.

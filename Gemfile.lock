@@ -3,9 +3,10 @@ PATH
   specs:
     deimos-ruby (1.9.2)
       avro_turf (~> 0.11)
+      fig_tree (~> 0.0.2)
       phobos (>= 1.9, < 3.0)
       ruby-kafka (< 2)
-      sigurd (= 0.0.1)
+      sigurd (~> 0.0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -94,6 +95,8 @@ GEM
     excon (0.79.0)
     exponential-backoff (0.0.4)
     ffi (1.15.0)
+    fig_tree (0.0.2)
+      activesupport (>= 3.0.0)
     formatador (0.2.5)
     globalid (0.4.2)
       activesupport (>= 4.2.0)
@@ -239,7 +242,7 @@ GEM
       digest-crc
     ruby-progressbar (1.11.0)
     shellany (0.0.1)
-    sigurd (0.0.1)
+    sigurd (0.0.3)
       concurrent-ruby (~> 1)
       exponential-backoff
     sprockets (4.0.2)
