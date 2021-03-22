@@ -58,6 +58,11 @@ module Deimos
         attrs.each do |k, v|
           record.send("#{k}=", v)
         end
+        save_record(record)
+      end
+
+      # @param record [ActiveRecord::Base]
+      def save_record(record)
         record.created_at ||= Time.zone.now if record.respond_to?(:created_at)
         record.updated_at = Time.zone.now if record.respond_to?(:updated_at)
         record.save!

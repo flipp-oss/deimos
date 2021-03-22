@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ### Roadmap :car:
 
 - Extracted the configuration piece into a separate gem, [fig_tree](https://www.github.com/flipp-oss/fig_tree).
+- Added a `save_record` method to ActiveRecordConsumer in case calling code wants to work with the record before saving.
 
 - ### Fixes :wrench:
 
