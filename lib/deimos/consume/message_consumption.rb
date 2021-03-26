@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'deimos/utils/schema_model_mixin'
+
 module Deimos
   module Consume
     # Methods used by message-by-message (non-batch) consumers. These consumers
@@ -7,6 +9,8 @@ module Deimos
     module MessageConsumption
       extend ActiveSupport::Concern
       include Phobos::Handler
+      include SharedConfig
+      include Utils::SchemaModelMixin
 
       # :nodoc:
       def around_consume(payload, metadata)
@@ -16,6 +20,14 @@ module Deimos
           _with_span do
             new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
             decoded_payload = payload ? self.class.decoder.decode(payload) : nil
+            if Deimos.config.consumers.use_schema_class
+              # this 'config' comes from SharedConfig
+              current_schema = self.class.config[:namespace] + '.' + self.class.config[:schema]
+              class_name = classified_schema(current_schema, nil)
+              klass = class_name.constantize
+              # want to init klass with payload. Should make this instance the decoded_payload!
+              return true
+            end
             _received_message(decoded_payload, new_metadata)
             yield decoded_payload, new_metadata
           end
