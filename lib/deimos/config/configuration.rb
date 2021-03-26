@@ -126,6 +126,11 @@ module Deimos
 
     setting :consumers do
 
+      # Whether or not to use the generated schema classes in consumers
+      # rather than raw hashes
+      # @return [Boolean]
+      setting :use_schema_class, false
+
       # Number of seconds after which, if a client hasn't contacted the Kafka cluster,
       # it will be kicked out of the group.
       # @return [Integer]
@@ -165,6 +170,12 @@ module Deimos
     end
 
     setting :producers do
+
+      # Whether or not to use the generated schema classes in producers
+      # rather than raw hashes
+      # @return [Boolean]
+      setting :use_schema_class, false
+
       # Number of seconds a broker can wait for replicas to acknowledge
       # a write before responding with a timeout.
       # @return [Integer]

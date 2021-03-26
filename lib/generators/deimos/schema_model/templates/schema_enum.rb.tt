@@ -1,0 +1,24 @@
+module Deimos
+  # :nodoc:
+  class <%= classified_enum(@current_schema, @current_enum) %> < SchemaModelEnum
+    # @!attribute [rw] status
+    # @return [<%= enum_return_values(@current_enum) %>]
+    attr_accessor :<%= @current_enum.type.name.underscore %>
+
+    # :nodoc:
+    def initialize(<%= @current_enum.type.name.underscore %>:)
+      @<%= @current_enum.type.name.underscore %> = <%= @current_enum.type.name.underscore %>
+    end
+
+    # @override
+    def symbols
+      %w(<%= enum_symbols(@current_enum).join(' ') %>)
+    end
+
+    # @override
+    def as_json(options={})
+      @<%= @current_enum.type.name.underscore %>
+    end
+
+  end
+end

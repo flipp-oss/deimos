@@ -32,6 +32,7 @@ describe Deimos, 'configuration' do
       ssl_client_cert_key 'key'
       publish_backend 'db'
       report_lag true
+      consumers.use_schema_class true
     end
 
     expect(described_class.config.kafka.logger).to eq(logger)
@@ -47,6 +48,7 @@ describe Deimos, 'configuration' do
     expect(described_class.config.kafka.ssl.client_cert_key).to eq('key')
     expect(described_class.config.producers.backend).to eq('db')
     expect(described_class.config.consumers.report_lag).to eq(true)
+    expect(described_class.config.consumers.use_schema_class).to eq(true)
   end
 
   it 'reads existing Phobos config YML files' do
