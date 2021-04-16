@@ -1,0 +1,8 @@
+class <%= "#{table_class}Consumer" %> < Deimos::Consumer
+
+  # Consume the incoming topic
+  # @param payload [Hash]
+  # @param metadata [Hash]
+  def consume(payload, metadata)
+  end
+end
