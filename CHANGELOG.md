@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ### Roadmap :car:
 
+- Generator for dumping data from kafka into database - Creates a migration, model and consumer class - Updates kafka configuration file
+
+- ### Roadmap :car:
+
 - Extracted the configuration piece into a separate gem, [fig_tree](https://www.github.com/flipp-oss/fig_tree).
 
 - ### Fixes :wrench:

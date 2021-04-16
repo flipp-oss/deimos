@@ -41,8 +41,9 @@ module Deimos
           self.full_schema[0...last_dot]
         end
 
+        # @return [String]
         def consumer_block
-          "consumer do\n  topic '#{topic_name}'\n  class_name '#{table_class}Consumer'\n  namespace '#{namespace}'\n  schema '#{schema}'\n  group_id 'PLEASE FILL THIS'\nend"
+          "consumer do\n  topic '#{topic_name}'\n  class_name '#{table_class}Consumer'\n  namespace '#{namespace}'\n  schema '#{schema}'\n  group_id 'PLEASE FILL THIS'\nend\n"
         end
       end
 

@@ -661,6 +661,31 @@ Example:
     db/migrate/1234_create_my_table.rb
     app/models/my_table.rb
 
+#### Generating Tables, Models and Consumer classes from schema
+
+Deimos provides a generator that takes an existing schema and generates a
+database table based on its fields, updates the specified kafka configuration file,
+and creates a consumer class.
+
+Before running this migration, you must first copy the schema into your repo
+in the correct path (in the example above, you would need to have a file
+`{SCHEMA_ROOT}/com/my-namespace/MySchema.avsc`).
+
+To generate a model and migration, run the following:
+
+    rails g deimos:kafka_consumer TABLE_NAME FULL_SCHEMA_NAME TOPIC_NAME KAFKA_CONFIG_FILE_PATH
+
+Example:
+
+    rails g deimos:kafka_consumer bullwhip Bullwhip.JobStatus JoBStatusTopic config/initializers/flipp_ruby_kafka.rb
+
+...would generate:
+
+      create  db/migrate/20210416172258_create_bullwhip.rb
+      create  app/models/bullwhip.rb
+      create  app/lib/kafka/bullwhip_consumer.rb
+      append  config/initializers/flipp_ruby_kafka.rb
+
 #### Batch Consumers
 
 Deimos also provides a batch consumption mode for `ActiveRecordConsumer` which
