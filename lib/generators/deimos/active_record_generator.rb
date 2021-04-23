@@ -73,6 +73,37 @@ module Deimos
       def generate
         migration_template('migration.rb', "db/migrate/create_#{table_name.underscore}.rb")
         template('model.rb', "app/models/#{table_name.underscore}.rb")
+        say("\n")
+        say(
+          "Migration and model added! To consume this data, add the following class to your Kafka folder:",
+          :green)
+        say("\n")
+        say(<<-RUBY, :blue)
+  class #{table_name.classify}Consumer < Deimos::ActiveRecordConsumer
+    # can override this to make changes to the hash that is passed to the record
+    def generate_payload(attrs, class)
+      super
+    end
+  end
+RUBY
+        say("\n")
+        say("...and add the following to your Deimos configuration:")
+        say("\n")
+        say(<<-RUBY, :blue)
+  Deimos.configure do
+
+    ...
+
+    consumer do
+      class_name '#{table_name.classify}Consumer'
+      namespace '#{namespace}'
+      schema '#{schema}'
+      group_id 'my_app_#{table_name}' # replace with name of the app
+      topic "NewTopicName" # replace with name of the topic
+      key_config none: true # change this if using a key schema or field
+    end
+  end
+        RUBY
       end
     end
   end
