@@ -24,6 +24,14 @@ each_db_config(Deimos::Utils::DbPoller) do
       stub_const('MyProducer', producer_class)
 
       producer_class = Class.new(Deimos::Producer) do
+        schema 'MySchemaJointWidgets'
+        namespace 'com.my-namespace'
+        topic 'my-topic'
+        key_config field: 'test_id'
+      end
+      stub_const('MyProducerWithJoins', producer_class)
+
+      producer_class = Class.new(Deimos::Producer) do
         schema 'MySchemaWithId'
         namespace 'com.my-namespace'
         topic 'my-topic'
@@ -44,6 +52,9 @@ each_db_config(Deimos::Utils::DbPoller) do
         end
         db_poller do
           producer_class 'MyProducerWithID'
+        end
+        db_poller do
+          producer_class 'MyProducerWithJoins'
         end
       end
 
@@ -197,6 +208,14 @@ each_db_config(Deimos::Utils::DbPoller) do
         end
       end
 
+      let!(:joint_widgets) do
+        (1..3).map do |i|
+          JointWidget.create!(widget_id: widgets[i].id,
+                              some_other_int: i,
+                              updated_at: time_value(secs: -1))
+        end
+      end
+
       it 'should update the full table' do
         info = Deimos::PollInfo.last
         config.full_table = true
@@ -273,6 +292,46 @@ each_db_config(Deimos::Utils::DbPoller) do
                time_to: time_value(secs: 120), # plus 122 seconds minus 2 seconds
                column_name: :updated_at,
                min_id: last_widget.id)
+      end
+
+      it 'should be able to handle queries including joins' do
+        config.producer_class = 'MyProducerWithJoins'
+        MyProducer.stub(:poll_query) do |args|
+          Widget.joins(:joint_widget).
+            select('widgets.id, widgets.some_int, widgets.test_id, joint_widgets.some_other_int').
+              where('widgets.updated_at BETWEEN ? AND ?', args[:time_from], args[:time_to])
+        end
+        expect(MyProducer).to receive(:poll_query).at_least(:once)
+        expect(poller).to receive(:process_batch).ordered.
+          with([old_widget, widgets[0], widgets[1]]).and_wrap_original do |m, *args|
+          m.call(*args)
+          expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 32))
+          expect(info.last_sent_id).to eq(widgets[1].id)
+        end
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[2], widgets[3], widgets[4]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[5], widgets[6]]).and_call_original
+        poller.process_updates
+
+        # this is the updated_at of widgets[6]
+        expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
+        expect(info.last_sent_id).to eq(widgets[6].id)
+
+        last_widget.update_attribute(:updated_at, time_value(mins: -250))
+
+        travel 61.seconds
+        # should reprocess the table
+        expect(poller).to receive(:process_batch).ordered.
+          with([last_widget, old_widget, widgets[0]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[1], widgets[2], widgets[3]]).and_call_original
+        expect(poller).to receive(:process_batch).ordered.
+          with([widgets[4], widgets[5], widgets[6]]).and_call_original
+        poller.process_updates
+
+        expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
+        expect(info.last_sent_id).to eq(widgets[6].id)
       end
 
       it 'should recover correctly with errors and save the right ID' do
