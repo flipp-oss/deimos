@@ -24,16 +24,6 @@ module Deimos
 
       RSpec.configure do |config|
 
-        config.before(:suite) do
-          Deimos.configure do |d_config|
-            d_config.logger = Logger.new(STDOUT)
-            d_config.consumers.reraise_errors = true
-            d_config.kafka.seed_brokers ||= ['test_broker']
-            d_config.schema.backend = Deimos.schema_backend_class.mock_backend
-            d_config.producers.backend = :test
-          end
-        end
-
         config.prepend_before(:each) do
           client = double('client').as_null_object
           allow(client).to receive(:time) do |*_args, &block|
@@ -45,9 +35,21 @@ module Deimos
 
     end
 
+    # Test default for Deimos
+    DEFAULT_TEST_CONFIG = {
+      logger: Logger.new(STDOUT),
+      consumers: { reraise_errors: true },
+      kafka: { seed_brokers: ['test_broker'] },
+      schema: { backend: Deimos.schema_backend_class.mock_backend },
+      producers: { backend: :test }
+    }.freeze
+
     # Call in your examples to configure Deimos
     # @param options <Hash>
-    def configure_deimos(options)
+    def configure_deimos(options={})
+      # Merge with the test defaults
+      options = DEFAULT_TEST_CONFIG.deep_merge(options)
+
       Deimos.configure do |d_config|
         options.each do |key, value|
           # If the config options are nested.
