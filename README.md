@@ -935,6 +935,18 @@ expect(message).to eq({
   topic: 'my-topic',
   key: 'my-id'
 })
+
+## Configuring Deimos to test settings
+
+# You can reset Deimos to default test config by calling this method.
+configure_deimos
+
+# The same method can be used to override settings while still using
+# deafults for other fields.
+configure_deimos(consumers: { reraise_errors: false },
+                 producers: { topic_prefix: nil },
+                 db_producer: { compact_topics: %w(my-topic my-topic2) },
+                 logger: Rails.logger)
 ```
 
 There is also a helper method that will let you test if an existing schema
