@@ -958,6 +958,28 @@ require 'deimos/test_helpers'
 # Can pass a file path, a string or a hash into this:
 Deimos::TestHelpers.schemas_compatible?(schema1, schema2)
 ```
+### Default Deimos config for testing
+
+The test helper class provides the default settings for Deimos config.
+```ruby
+# The following are the test defaults for Deimos that are set
+# by calling `configure_deimos` 
+DEFAULT_TEST_CONFIG = {
+  logger: Logger.new(STDOUT),
+  consumers: { reraise_errors: true },
+  kafka: { seed_brokers: ['test_broker'] },
+  schema: { backend: Deimos.schema_backend_class.mock_backend },
+  producers: { backend: :test }
+}
+```
+`:test` is the default backend for producers that saves messages
+to an in-memory hash. You can access the sent messages by calling 
+the following function
+```ruby
+Deimos::Backends::Test.sent_messages
+```
+Mock schema backend will perform all the validations but not actually encode any messages.
+
 
 ### Integration Test Helpers
 
