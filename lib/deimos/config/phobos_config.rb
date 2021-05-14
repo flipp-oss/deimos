@@ -62,20 +62,46 @@ module Deimos
         backoff: _backoff(self.consumers.backoff.to_a)
       }
 
-      p_config[:listeners] = self.consumer_objects.map do |consumer|
+      # Phobos will support multiple topics subscriptions per listener
+      topics = self.consumer_objects.map do |consumer|
         next nil if consumer.disabled
+        consumer.topic
+      end.compact
 
-        hash = consumer.to_h.reject do |k, _|
-          %i(class_name schema namespace key_config backoff disabled).include?(k)
-        end
-        hash = hash.map { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v] }.to_h
-        hash[:handler] = consumer.class_name
-        if consumer.backoff
-          hash[:backoff] = _backoff(consumer.backoff.to_a)
-        end
-        hash
-      end
-      p_config[:listeners].compact!
+      # The following settings must move up to app level configs.These are just 
+      # placeholders names / values for now but we'll probably would want to move them
+      # to the Deimos.config object
+      max_bytes_per_partition = 524_288
+      delivery = 'message'
+      backoff = { "min_ms"=> 500, "max_ms"=>10000 }
+      group_id = 'DeimosGroup'
+      handler = 'Deimos::Handler'
+      max_concurrency = 1 # very relevant now since we'll probably need to scale this up
+
+      p_config[:listeners] = [{
+        handler: handler, 
+        group_id: group_id,
+        topic: topics, # 'topic' key kept for backwards compatibility.
+        delivery: delivery,
+        max_bytes_per_partition: max_bytes_per_partition,
+        backoff: backoff,
+        max_concurrency: max_concurrency
+      }]
+
+      # Don't make sense anymore since we'll only gonna have 1 (type of) listener per app
+      # p_config[:listeners] = self.consumer_objects.map do |consumer|
+      #   next nil if consumer.disabled
+
+      #   hash = consumer.to_h.reject do |k, _|
+      #     %i(class_name schema namespace key_config backoff disabled).include?(k)
+      #   end
+      #   hash = hash.map { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v] }.to_h
+      #   if consumer.backoff
+      #     hash[:backoff] = _backoff(consumer.backoff.to_a)
+      #   end
+      #   hash
+      # end
+      # p_config[:listeners].compact!
 
       if self.kafka.ssl.enabled
         %w(ca_cert client_cert client_cert_key).each do |key|
