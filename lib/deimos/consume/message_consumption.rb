@@ -12,10 +12,13 @@ module Deimos
       def around_consume(payload, metadata)
         decoded_payload = payload.nil? ? nil : payload.dup
         new_metadata = metadata.dup
+
+        @klass = consumer_class(metadata[:topic])
+
         benchmark = Benchmark.measure do
           _with_span do
-            new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
-            decoded_payload = payload ? self.class.decoder.decode(payload) : nil
+            new_metadata[:key] = @klass.decode_key(metadata[:key]) if @klass.config[:key_configured]
+            decoded_payload = payload ? @klass.decoder.decode(payload) : nil
             _received_message(decoded_payload, new_metadata)
             yield decoded_payload, new_metadata
           end
@@ -28,11 +31,19 @@ module Deimos
       # Consume incoming messages.
       # @param _payload [String]
       # @param _metadata [Hash]
-      def consume(_payload, _metadata)
-        raise NotImplementedError
+      def consume(payload, metadata)
+        @klass.new.consume(payload, metadata)
       end
 
     private
+
+      def consumer_class(topic)
+        consumer_object = Deimos.config.consumer_objects.find do |object| 
+          object.topic == topic
+        end
+
+        consumer_object.class_name.constantize
+      end
 
       def _received_message(payload, metadata)
         Deimos.config.logger.info(
