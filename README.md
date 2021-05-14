@@ -29,6 +29,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Running Consumers](#running-consumers)
    * [Metrics](#metrics)
    * [Testing](#testing)
+        * [Default Deimos config for testing](#default-deimos-config-for-testing)
         * [Integration Test Helpers](#integration-test-helpers)
    * [Utilities](#utilities)
    * [Contributing](#contributing) 
