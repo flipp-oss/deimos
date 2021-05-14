@@ -29,6 +29,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Running Consumers](#running-consumers)
    * [Metrics](#metrics)
    * [Testing](#testing)
+        * [Default Deimos config for testing](#default-deimos-config-for-testing)
         * [Integration Test Helpers](#integration-test-helpers)
    * [Utilities](#utilities)
    * [Contributing](#contributing) 
@@ -935,6 +936,18 @@ expect(message).to eq({
   topic: 'my-topic',
   key: 'my-id'
 })
+
+## Configuring Deimos to test settings
+
+# You can reset Deimos to default test config by calling this method.
+configure_deimos
+
+# The same method can be used to override settings while still using
+# deafults for other fields.
+configure_deimos(consumers: { reraise_errors: false },
+                 producers: { topic_prefix: nil },
+                 db_producer: { compact_topics: %w(my-topic my-topic2) },
+                 logger: Rails.logger)
 ```
 
 There is also a helper method that will let you test if an existing schema
@@ -946,6 +959,28 @@ require 'deimos/test_helpers'
 # Can pass a file path, a string or a hash into this:
 Deimos::TestHelpers.schemas_compatible?(schema1, schema2)
 ```
+### Default Deimos config for testing
+
+The test helper class provides the default settings for Deimos config.
+```ruby
+# The following are the test defaults for Deimos that are set
+# by calling `configure_deimos` 
+DEFAULT_TEST_CONFIG = {
+  logger: Logger.new(STDOUT),
+  consumers: { reraise_errors: true },
+  kafka: { seed_brokers: ['test_broker'] },
+  schema: { backend: Deimos.schema_backend_class.mock_backend },
+  producers: { backend: :test }
+}
+```
+`:test` is the default backend for producers that saves messages
+to an in-memory hash. You can access the sent messages by calling 
+the following function
+```ruby
+Deimos::Backends::Test.sent_messages
+```
+Mock schema backend will perform all the validations but not actually encode any messages.
+
 
 ### Integration Test Helpers
 
