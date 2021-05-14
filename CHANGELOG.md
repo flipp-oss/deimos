@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 ### Roadmap :car:
 
-- TestHelper does not automatically reset Deimos config before each test. #120
+- TestHelper does not automatically reset Deimos config before each test. [#120](https://github.com/flipp-oss/deimos/pull/120)
 
 ## 1.10.0 - 2021-03-22
 
