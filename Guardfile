@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'generators/deimos/schema_model_generator'
-require 'deimos/config/configuration'
-
 # A sample Guardfile
 # More info at https://github.com/guard/guard#readme
 
@@ -23,18 +20,3 @@ require 'deimos/config/configuration'
 #   watch(/.+\.rb$/)
 #   watch(%r{(?:.+/)?\.rubocop\.yml$}) { |m| File.dirname(m[0]) }
 # end
-
-run = proc do
-  Deimos::Generators::SchemaModelGenerator.start([])
-end
-
-yield_commands = {
-  run_all: run,
-  run_on_additions: run,
-  run_on_modifications: run
-}
-guard :yield, yield_commands do
-  watch(%r{^#{Deimos.config.schema.path}/*})
-  watch("#{Deimos.config.schema.path}/*")
-  # add the file path HERE
-end
