@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require 'rails/generators'
-require 'rails/version'
+require 'deimos'
 require 'deimos/utils/schema_model_mixin'
+require 'deimos/config/configuration'
 
 module Deimos
   module Generators
@@ -15,44 +16,7 @@ module Deimos
 
       no_commands do
 
-        # @param file_prefix [String] the name of the generated file, prepended to '_schema.rb'.
-        def generate_class(file_prefix)
-          template('schema.rb',
-                   "app/lib/schema_models/#{namespace_path(@current_schema)}/#{file_prefix}_schema.rb")
-          # for every record class, generate a new schema.
-          fields.each { |field| generate_record_class(field) if field.type.type == 'record' }
-          fields.each { |field| generate_enum_class(field) if field.enum_values.any? }
-        end
-
-        # @param record [Object] a field of type 'record'.
-        def generate_record_class(record)
-          # don't change @current_schema.
-          @current_record = record.type
-          generate_class(record_filename(@current_schema, record))
-          @current_record = nil
-        end
-
-        # @param enum [Object] a field of type 'enum'.
-        def generate_enum_class(enum)
-          @current_enum = enum
-          file_prefix = enum_filename(@current_schema, enum)
-          template('schema_enum.rb',
-                   "app/lib/schema_models/#{namespace_path(@current_schema)}/#{file_prefix}_enum.rb")
-          @current_enum = nil
-        end
-
-        # @param union [Deimos::SchemaField]
-        # @return [String]
-        def parse_union(union)
-          Avro::Schema::PrimitiveSchema
-          types = union.type.schemas.map do |t|
-            field_type(Deimos::SchemaField.new('n/a', t))
-          end
-          types.join(', ')
-        end
-
-        ### START Used in template file ###
-
+        # Retrieve the fields from this Avro Schema
         # @return [Array<SchemaField>]
         def fields
           if @current_record.nil?
@@ -62,8 +26,14 @@ module Deimos
           end
         end
 
+        # @return [Deimos::SchemaBackends::Base]
+        def schema_base
+          Deimos.schema_backend_class.new(schema: schema(@current_schema), namespace: namespace(@current_schema))
+        end
+
+        # Converts Deimos::SchemaField's to String form for generated YARD docs
         # @param schema_field [Deimos::SchemaField]
-        # @return [String] a string to use in the YARD doc for the field.
+        # @return [String] A string representation of the Type of this SchemaField
         def field_type(schema_field)
           t = schema_field.type.type
           if %w(string boolean).include?(t)
@@ -83,7 +53,7 @@ module Deimos
           elsif t == 'enum'
             t = "Deimos::#{enum_classname(@current_schema, schema_field)}"
           elsif t == 'union'
-            # TODO
+            # TODO Check or add specs for this
             t = parse_union(schema_field)
           elsif t == 'null'
             t = 'nil'
@@ -91,31 +61,73 @@ module Deimos
           t
         end
 
-        ### END Used in template file ###
+        # TODO: Looks like this is not completed yet? Might have to do some extra work here.
+        # TODO: Potentially do Union of null with Record, doesn't look like that is covered as of yet?
+        # Parse a Union of two or more Deimos::SchemaField's
+        # @param union [Deimos::SchemaField]
+        # @return [String]
+        def parse_union(union)
+          # What does this do..? Can remove i guess...?
+          Avro::Schema::PrimitiveSchema
+          types = union.type.schemas.map do |t|
+            field_type(Deimos::SchemaField.new('n/a', t))
+          end
+          types.join(', ')
+        end
 
+        # Generate a Schema Model Class and all of its Nested Records from an Avro Schema
+        # @param file_prefix [String] the name of the generated file, prepended to '_schema.rb'.
+        def generate_class(file_prefix)
+          template('schema.rb',
+                   "app/lib/schema_models/#{namespace_path(@current_schema)}/#{file_prefix}_schema.rb",
+                   force: true)
+
+          # for every Nested record or Complex class, generate a new schema.
+          # TODO: Are Unions handled here?
+          fields.each do |field|
+            generate_record_class(field) if field.type.type == 'record'
+            generate_enum_class(field) if field.enum_values.any?
+          end
+        end
+
+        # Generate a Record Schema Class from Avro Schema
+        # @param record [Object] a field of type 'record'.
+        def generate_record_class(record)
+          # don't change @current_schema.
+          @current_record = record.type
+          generate_class(record_filename(@current_schema, record))
+          @current_record = nil
+        end
+
+        # Generate an Enum Schema Class from Avro Schema
+        # @param enum [Object] a field of type 'enum'.
+        def generate_enum_class(enum)
+          @current_enum = enum
+          file_prefix = enum_filename(@current_schema, enum)
+          template('schema_enum.rb',
+                   "app/lib/schema_models/#{namespace_path(@current_schema)}/#{file_prefix}_enum.rb",
+                   force: true)
+          @current_enum = nil
+        end
+
+        # Retrieve all Avro Schemas under the configured Schema path
         # @return [Array<String>] array of the full path to each schema in schema.path.
         def find_schemas
-          @schemas = Dir["#{Deimos.config.schema.path}/**/*.avsc"]
+          # TODO: Hack for now... Figure out how to properly load the Deimos Configuration ._.
+          @schemas = Dir["#{_schema_path}/**/*.avsc"]
         end
 
-        # @param s [String] the current schema.
+        # @param schema [String] the current schema.
         # @return [String]
-        def namespace_path(s)
-          namespace(s).gsub('.', '/')
+        def namespace_path(schema)
+          namespace(schema).gsub('.', '/')
         end
 
-        # @return [Deimos::SchemaBackends::Base]
-        def schema_base
-          Deimos.schema_backend_class.new(schema: schema(@current_schema), namespace: namespace(@current_schema))
-        end
-
-        ### For the Enum Generator ###
-
-        # @param s [String] the current schema.
+        # @param schema [String] the current schema.
         # @param enum [Object] a field of type 'enum'.
         # @return [String] the name of the current schema enum, as a class.
-        def classified_enum(s, enum)
-          "#{schema(s).gsub('-', '_').classify}#{enum.name.gsub('-', '_').classify}Enum"
+        def classified_enum(schema, enum)
+          "#{schema(schema).gsub('-', '_').classify}#{enum.name.gsub('-', '_').classify}Enum"
         end
 
         # @param enum [Object] a field of type 'enum'.
@@ -124,6 +136,8 @@ module Deimos
           enum.enum_values
         end
 
+        # @param enum [Object] a field of type 'enum'.
+        # @return [String] the possible return values for this Enum type
         def enum_return_values(enum)
           "'#{enum.enum_values.join("', '")}'"
         end
@@ -131,23 +145,42 @@ module Deimos
       end
 
       desc 'Generate a class based on an existing schema.'
-      # :nodoc:
+      # Main method to create all the necessary files for Schema Models
       def generate
-        if full_schema.nil?  # do all schemas
-          find_schemas
-          @schemas.each do |s|
-            @full_schema_path = s
-            schema = File.basename(@full_schema_path, '.avsc')
-            namespace_dir = File.dirname(@full_schema_path)
-            namespace_dir.slice!(Deimos.config.schema.path + '/')
-            namespace_dir = namespace_dir.gsub('/', '.')
-            @current_schema = namespace_dir + '.' + schema
+        _with_desired_bundler_env do
+          if full_schema.nil?  # do all schemas
+            find_schemas
+            @schemas.each do |s|
+              @full_schema_path = s
+              schema = File.basename(@full_schema_path, '.avsc')
+              namespace_dir = File.dirname(@full_schema_path)
+              namespace_dir.slice!("#{_schema_path}/")
+              namespace_dir = namespace_dir.gsub('/', '.')
+              @current_schema = namespace_dir + '.' + schema
+              generate_class("#{schema(@current_schema).underscore}")
+            end
+          else  # do just the specified schema
+            @current_schema = full_schema
             generate_class("#{schema(@current_schema).underscore}")
           end
-        else  # do just the specified schema
-          @current_schema = full_schema
-          generate_class("#{schema(@current_schema).underscore}")
         end
+      end
+
+      private
+
+      def _with_desired_bundler_env
+        desired_bundler_env = options[:bundler_env]
+        if !defined?(::Bundler) || desired_bundler_env == :inherit
+          yield
+        elsif desired_bundler_env == :clean_env
+          ::Bundler.with_clean_env { yield }
+        else
+          ::Bundler.with_original_env { yield }
+        end
+      end
+
+      def _schema_path
+        Deimos.config.schema.path || 'app/schemas'
       end
 
     end
