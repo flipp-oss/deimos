@@ -40,6 +40,8 @@ require 'deimos/utils/inline_consumer'
 require 'yaml'
 require 'erb'
 
+require 'generators/deimos/schema_model_generator'
+
 # Parent module.
 module Deimos
   class << self

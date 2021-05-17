@@ -4,6 +4,7 @@ require 'generators/deimos/schema_model_generator'
 
 RSpec.describe Deimos::Generators::SchemaModelGenerator do
   after(:each) do
+    # make this app/lib/deimos/schema_models
     FileUtils.rm_rf('app') if File.exist?('app')
   end
 

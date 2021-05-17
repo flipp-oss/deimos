@@ -31,4 +31,11 @@ namespace :deimos do
     Deimos::Utils::DbPoller.start!
   end
 
+  # TODO
+  desc 'Run Schema Model Generate'
+  task :generate_schema_models do
+    require 'generators/deimos/schema_model_generator'
+    Deimos::Generators::SchemaModelGenerator.start([])
+  end
+
 end
