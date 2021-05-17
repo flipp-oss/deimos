@@ -110,13 +110,6 @@ module Deimos
           @current_enum = nil
         end
 
-        # Retrieve all Avro Schemas under the configured Schema path
-        # @return [Array<String>] array of the full path to each schema in schema.path.
-        def find_schemas
-          # TODO: Hack for now... Figure out how to properly load the Deimos Configuration ._.
-          @schemas = Dir["#{_schema_path}/**/*.avsc"]
-        end
-
         # @param schema [String] the current schema.
         # @return [String]
         def namespace_path(schema)
@@ -145,42 +138,49 @@ module Deimos
       end
 
       desc 'Generate a class based on an existing schema.'
-      # Main method to create all the necessary files for Schema Models
       def generate
-        _with_desired_bundler_env do
-          if full_schema.nil?  # do all schemas
-            find_schemas
-            @schemas.each do |s|
-              @full_schema_path = s
-              schema = File.basename(@full_schema_path, '.avsc')
-              namespace_dir = File.dirname(@full_schema_path)
-              namespace_dir.slice!("#{_schema_path}/")
-              namespace_dir = namespace_dir.gsub('/', '.')
-              @current_schema = namespace_dir + '.' + schema
-              generate_class("#{schema(@current_schema).underscore}")
-            end
-          else  # do just the specified schema
-            @current_schema = full_schema
+        Rails.logger.info(Deimos.config.schema.path)
+        if full_schema.nil?  # do all schemas
+          _find_schemas
+          @schemas.each do |schema|
+            full_schema_path = schema
+            @current_schema = _parse_schema(schema)
             generate_class("#{schema(@current_schema).underscore}")
           end
+        else  # do just the specified schema
+          @current_schema = _parse_schema(full_schema)
+          generate_class("#{schema(@current_schema).underscore}")
         end
       end
 
       private
 
-      def _with_desired_bundler_env
-        desired_bundler_env = options[:bundler_env]
-        if !defined?(::Bundler) || desired_bundler_env == :inherit
-          yield
-        elsif desired_bundler_env == :clean_env
-          ::Bundler.with_clean_env { yield }
-        else
-          ::Bundler.with_original_env { yield }
-        end
+      # Retrieve all Avro Schemas under the configured Schema path
+      # @return [Array<String>] array of the full path to each schema in schema.path.
+      def _find_schemas
+        # TODO: Hack for now... Figure out how to properly load the Deimos Configuration ._.
+        @schemas = Dir["#{_schema_path}/**/*.avsc"]
       end
 
       def _schema_path
-        Deimos.config.schema.path || 'app/schemas'
+        Deimos.config.schema.path || File.expand_path('app/schemas', __dir__)
+      end
+
+      # This function is important. Must handle different cases for File/Schema names
+      # "Schema" given from GuardFile is -> in the format of "com/flipp/test_rails_service/MySchema"
+      def _parse_schema(schema)
+        return schema unless schema =~ /\//
+
+        full_schema_path = File.absolute_path(schema)
+        schema_name = File.basename(full_schema_path, '.avsc')
+        namespace_dir = File.dirname(full_schema_path)
+        namespace_dir.slice!("#{_schema_path}/")
+        namespace_dir = namespace_dir.gsub('/', '.')
+        "#{namespace_dir}.#{schema_name}"
+      end
+
+      def _setup_guardfile
+        Rails.logger.info('Setting up Guardfile')
       end
 
     end
