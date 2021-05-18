@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails/generators'
-require 'deimos'
 require 'deimos/config/configuration'
 
 module Deimos
@@ -18,7 +17,6 @@ module Deimos
       no_commands do
         # Transforms a given path to the relative path of the Schemas in your application
         # proper format for Guardfile to detect changes
-        #
         def parsed_schema_path
           path = schema_path.delete_prefix("#{Dir.pwd}/")
           Rails.logger.info("Generated Guardfile for path #{path}")

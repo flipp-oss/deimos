@@ -2,60 +2,67 @@
 
 module Deimos
   module Utils
-    # Module with methods used in SchemaModelGenerator but also need elsewhere
+    # Module with Quality of Life methods used in SchemaModelGenerator and Consumer/Producer interfaces
     module SchemaModelMixin
 
-      # @param s [String] the current schema.
+      # @param schema [String] the current schema.
       # @return [String] the schema name, no namespace.
-      def schema(s)
-        last_dot = s.rindex('.')
-        s[last_dot + 1..-1] || 'ERROR'
+      def schema(schema)
+        last_dot = schema.rindex('.')
+        schema[last_dot + 1..-1] || 'ERROR'
       end
 
-      # @param s [String] the current schema.
+      # @param schema [String] the current schema.
       # @return [String] the schema namespace, without its name.
-      def namespace(s)
-        last_dot = s.rindex('.')
-        s[0...last_dot] || 'ERROR'
+      def namespace(schema)
+        last_dot = schema.rindex('.')
+        schema[0...last_dot] || 'ERROR'
       end
 
-      # @param s [String] the current schema.
+      # @param schema [String] the current schema.
       # @param record [Object] a field of type 'record'.
       # @return [String] the name of the current schema, as a class.
-      def classified_schema(s, record)
+      def classified_schema(schema, record)
         if record.nil?
-          "#{schema(s).gsub('-', '_').classify}Schema"
+          "#{schema(schema).gsub('-', '_').classify}"
         else
-          record_classname(s, record)
+          record_classname(schema, record)
         end
       end
 
-      # @param s [String] the current schema.
+      # @param schema [String] the current schema.
       # @param record [Object] a field of type 'record'.
       # @return [String]
-      def record_filename(s, record)
-        "#{schema(s).underscore}_#{record.type.name.underscore}"
+      def record_filename(schema, record)
+        "#{schema(schema).underscore}_#{record.type.name.underscore}"
       end
 
-      # @param s [String] the current schema.
+      # @param schema [String] the current schema.
       # @param record [Object] a field of type 'record'.
       # @return [String]
-      def record_classname(s, record)
-        "#{schema(s).gsub('-', '_').classify}#{record.name.gsub('-', '_').classify}Schema"
+      def record_classname(schema, record)
+        "#{schema(schema).gsub('-', '_').classify}#{record.name.gsub('-', '_').classify}"
       end
 
-      # @param s [String] the current schema.
+      # @param schema [String] the current schema.
       # @param enum [Object] a field of type 'enum'.
-      # @return [String]
-      def enum_filename(s, enum)
-        "#{schema(s).underscore}_#{enum.type.name.underscore}"
+      # @return [String] the name of the current schema enum, as a class.
+      def classified_enum(schema, enum)
+        "#{schema(schema).gsub('-', '_').classify}#{enum.name.gsub('-', '_').classify}"
       end
 
-      # @param s [String] the current schema.
+      # @param schema [String] the current schema.
       # @param enum [Object] a field of type 'enum'.
       # @return [String]
-      def enum_classname(s, enum)
-        "#{schema(s).gsub('-', '_').classify}#{enum.type.name.gsub('-', '_').classify}Enum"
+      def enum_filename(schema, enum)
+        "#{schema(schema).underscore}_#{enum.type.name.underscore}"
+      end
+
+      # @param schema [String] the current schema.
+      # @param enum [Object] a field of type 'enum'.
+      # @return [String]
+      def enum_classname(schema, enum)
+        "#{schema(schema).gsub('-', '_').classify}#{enum.type.name.gsub('-', '_').classify}"
       end
 
     end

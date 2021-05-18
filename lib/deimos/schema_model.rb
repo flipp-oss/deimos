@@ -3,7 +3,7 @@
 require 'json'
 
 module Deimos
-  # base class of the schema classes generated from the schema backend.
+  # Base Class of Record Classes generated from Avro.
   class SchemaModel
 
     # :nodoc:
