@@ -3,7 +3,7 @@
 require 'json'
 
 module Deimos
-  # base class of the schema class enums generated from the schema backend
+  # Base Class for Enum Classes generated from Avro.
   class SchemaModelEnum
 
     # Returns all the valid symbols for this enum.

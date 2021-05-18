@@ -10,12 +10,16 @@ module Deimos
     class SchemaModelGenerator < Rails::Generators::Base
       include Deimos::Utils::SchemaModelMixin
 
+      GENERATED_PATH = "app/lib/schema_models".freeze
+
       source_root File.expand_path('schema_model/templates', __dir__)
 
-      argument :full_schema, desc: 'The fully qualified schema name.', required: false
+      argument :full_schema,
+               desc: 'The fully qualified schema name.',
+               required: false,
+               type: :string
 
       no_commands do
-
         # Retrieve the fields from this Avro Schema
         # @return [Array<SchemaField>]
         def fields
@@ -26,6 +30,7 @@ module Deimos
           end
         end
 
+        # Load the schema from the Schema Backend
         # @return [Deimos::SchemaBackends::Base]
         def schema_base
           Deimos.schema_backend_class.new(schema: schema(@current_schema), namespace: namespace(@current_schema))
@@ -79,7 +84,7 @@ module Deimos
         # @param file_prefix [String] the name of the generated file, prepended to '_schema.rb'.
         def generate_class(file_prefix)
           template('schema.rb',
-                   "app/lib/schema_models/#{namespace_path(@current_schema)}/#{file_prefix}_schema.rb",
+                   "#{GENERATED_PATH}/#{namespace_path(@current_schema)}/#{file_prefix}.rb",
                    force: true)
 
           # for every Nested record or Complex class, generate a new schema.
@@ -105,7 +110,7 @@ module Deimos
           @current_enum = enum
           file_prefix = enum_filename(@current_schema, enum)
           template('schema_enum.rb',
-                   "app/lib/schema_models/#{namespace_path(@current_schema)}/#{file_prefix}_enum.rb",
+                   "#{GENERATED_PATH}/#{namespace_path(@current_schema)}/#{file_prefix}.rb",
                    force: true)
           @current_enum = nil
         end
@@ -114,13 +119,6 @@ module Deimos
         # @return [String]
         def namespace_path(schema)
           namespace(schema).gsub('.', '/')
-        end
-
-        # @param schema [String] the current schema.
-        # @param enum [Object] a field of type 'enum'.
-        # @return [String] the name of the current schema enum, as a class.
-        def classified_enum(schema, enum)
-          "#{schema(schema).gsub('-', '_').classify}#{enum.name.gsub('-', '_').classify}Enum"
         end
 
         # @param enum [Object] a field of type 'enum'.
@@ -158,7 +156,6 @@ module Deimos
       # Retrieve all Avro Schemas under the configured Schema path
       # @return [Array<String>] array of the full path to each schema in schema.path.
       def _find_schemas
-        # TODO: Hack for now... Figure out how to properly load the Deimos Configuration ._.
         @schemas = Dir["#{_schema_path}/**/*.avsc"]
       end
 
