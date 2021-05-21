@@ -1,8 +1,7 @@
 module Deimos
   # :nodoc:
-  class <%= classified_schema(@current_schema, @current_record) %> < SchemaModel
+  class <%= schema_classname(@current_schema) %> < SchemaModel
 <%- fields.each do |field| -%>
-    # @!attribute [rw] status
     # @return [<%= field_type(field) %>]
     attr_accessor :<%= field.name %>
 <% end -%>
@@ -17,12 +16,12 @@ module Deimos
 
     # @override
     def schema
-      '<%= schema(@current_schema) %>'
+      '<%= @current_schema.name %>'
     end
 
     # @override
     def namespace
-      '<%= namespace(@current_schema) %>'
+      '<%= @current_schema.namespace %>'
     end
 
     # @override

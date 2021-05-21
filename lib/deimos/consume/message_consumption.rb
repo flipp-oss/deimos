@@ -23,7 +23,7 @@ module Deimos
             if Deimos.config.consumers.use_schema_class
               # this 'config' comes from SharedConfig
               current_schema = self.class.config[:namespace] + '.' + self.class.config[:schema]
-              class_name = classified_schema(current_schema, nil)
+              class_name = classified_schema(current_schema)
               klass = class_name.constantize
               # want to init klass with payload. Should make this instance the decoded_payload!
               return true

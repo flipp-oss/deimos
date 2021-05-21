@@ -12,8 +12,7 @@ module Deimos
       raise NotImplementedError
     end
 
-    # @override
-    def to_json(options={})
+    def to_json()
       raise NotImplementedError
     end
 

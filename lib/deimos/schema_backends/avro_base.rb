@@ -77,6 +77,11 @@ module Deimos
                                         fail_on_extra_fields: true)
       end
 
+      # :nodoc:
+      def load_schema!
+        avro_schema
+      end
+
       # @override
       def self.mock_backend
         :avro_validation

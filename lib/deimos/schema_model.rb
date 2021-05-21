@@ -36,24 +36,26 @@ module Deimos
       end
     end
 
-    # @override
-    def to_json(options={})
+    # TODO: Look into implementing these?
+
+    # @return [String] the payload as a JSON string
+    def to_json
       to_h.to_json
     end
 
-    # @override
-    def as_json(options={})
-      to_h
+    # Returns a Hash that can be used as the JSON representation for this object
+    # @return [Hash] the payload as a hash.
+    def as_json
+      to_h.with_indifferent_access
     end
 
     # Converts the object to a hash which can be used in Kafka.
+    # @return [Hash] the payload as a hash.
     def as_hash
-      JSON.parse(to_json)
+      JSON.parse(to_json).with_indifferent_access
     end
 
-    private
-
-    # @return [Object] the payload as a hash.
+    # @return [Hash] the payload as a hash.
     def to_h
       raise NotImplementedError
     end
