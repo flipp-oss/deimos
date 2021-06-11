@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Deimos
   # :nodoc:
-  class <%= schema_classname(@current_schema) %> < SchemaModel
+  class <%= schema_classname(@current_schema) %> < SchemaRecord
 <%- fields.each do |field| -%>
     # @return [<%= field_type(field) %>]
     attr_accessor :<%= field.name %>

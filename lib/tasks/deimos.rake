@@ -2,7 +2,7 @@
 
 require 'phobos'
 require 'phobos/cli'
-require 'generators/deimos/schema_model_generator'
+require 'generators/deimos/schema_class_generator'
 require 'optparse'
 
 namespace :deimos do
@@ -37,7 +37,7 @@ namespace :deimos do
   task :generate_schema_models, [:schema] => [:environment] do |t, args|
     schema = args[:schema] || []
     Rails.logger.info("Running deimos:generate_schema_models on path #{schema}")
-    Deimos::Generators::SchemaModelGenerator.start(schema)
+    Deimos::Generators::SchemaClassGenerator.start(schema)
   end
 
 end

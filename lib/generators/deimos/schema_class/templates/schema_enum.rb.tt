@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Deimos
   # :nodoc:
-  class <%= schema_classname(@current_schema) %> < SchemaModelEnum
+  class <%= schema_classname(@current_schema) %> < SchemaEnum
     # @return [<%= enum_return_values(@current_schema) %>]
     attr_accessor :<%= @current_schema.name.underscore %>
 

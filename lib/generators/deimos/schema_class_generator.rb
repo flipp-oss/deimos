@@ -2,17 +2,19 @@
 
 require 'rails/generators'
 require 'deimos'
-require 'deimos/utils/schema_model_mixin'
+require 'deimos/utils/schema_class_mixin'
 require 'deimos/config/configuration'
 
+# Generates new schema classes.
 module Deimos
   module Generators
-    class SchemaModelGenerator < Rails::Generators::Base
-      include Deimos::Utils::SchemaModelMixin
+    # Generator for Schema Classes used for the IDE and consumer/producer interfaces
+    class SchemaClassGenerator < Rails::Generators::Base
+      include Deimos::Utils::SchemaClassMixin
 
-      GENERATED_PATH = "app/lib/schema_models".freeze
+      GENERATED_PATH = 'app/lib/schema_classes'
 
-      source_root File.expand_path('schema_model/templates', __dir__)
+      source_root File.expand_path('schema_class/templates', __dir__)
 
       argument :full_schema,
                desc: 'The fully qualified schema name or path.',
@@ -25,7 +27,8 @@ module Deimos
         # @param schema [String] the Schemas name
         # @return [Deimos::SchemaBackends::Base]
         def schema_base(schema=nil)
-          @schema_base ||= Deimos.schema_backend_class.new(schema: extract_schema(schema), namespace: extract_namespace(schema))
+          @schema_base ||= Deimos.schema_backend_class.new(schema: extract_schema(schema),
+                                                           namespace: extract_namespace(schema))
         end
 
         # Unload the schema
@@ -37,7 +40,7 @@ module Deimos
         # @param schema_name [String] the name of the Avro Schema in Dot Syntax
         def generate_classes_from_schema(schema_name)
           schema_base(schema_name).load_schema!
-          schema_base.schema_store.schemas.values.each do |schema|
+          schema_base.schema_store.schemas.each_value do |schema|
             @current_schema = schema
             file_prefix = schema.name.underscore
             namespace_path = schema.namespace.tr('.', '/')
@@ -100,9 +103,10 @@ module Deimos
       end
 
       desc 'Generate a class based on an existing schema.'
+      # :nodoc:
       def generate
         Rails.logger.info(Deimos.config.schema.path)
-        if full_schema.nil?  # do all schemas
+        if full_schema.nil? # do all schemas
           _find_schema_paths.each do |schema_path|
             current_schema = _parse_schema_from_path(schema_path)
 
@@ -114,7 +118,7 @@ module Deimos
         end
       end
 
-      private
+    private
 
       # Retrieve all Avro Schemas under the configured Schema path
       # @return [Array<String>] array of the full path to each schema in schema.path.
@@ -130,7 +134,7 @@ module Deimos
       # Handles different cases for File/Schema names.
       # @return [String] The name of the schema in the format of com.my.namespace.MySchema
       def _parse_schema_from_path(schema_path)
-        return schema_path unless schema_path =~ /\//
+        return schema_path unless schema_path =~ %r{/}
 
         full_schema_path = File.absolute_path(schema_path)
         schema_name = File.basename(full_schema_path, '.avsc')
@@ -140,7 +144,6 @@ module Deimos
 
         "#{namespace_dir}.#{schema_name}"
       end
-
     end
   end
 end

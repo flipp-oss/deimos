@@ -41,10 +41,10 @@ require 'yaml'
 require 'erb'
 
 # TODO: Move these requires to another file that gets required? Temporarily here...!
-require 'generators/deimos/schema_model_generator'
-require 'deimos/schema_model'
-require 'deimos/schema_model_enum'
-Dir["./#{Deimos::Generators::SchemaModelGenerator::GENERATED_PATH}/**/*.rb"].each { |f| require f }
+require 'generators/deimos/schema_class_generator'
+require 'deimos/schema_record'
+require 'deimos/schema_enum'
+Dir["./#{Deimos::Generators::SchemaClassGenerator::GENERATED_PATH}/**/*.rb"].each { |f| require f }
 
 # Parent module.
 module Deimos

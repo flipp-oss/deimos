@@ -1,9 +1,8 @@
-require 'deimos/schema_model_enum'
+# frozen_string_literal: true
 
 module Deimos
   # :nodoc:
-  class GeneratedAnEnumEnum < SchemaModelEnum
-    # @!attribute [rw] status
+  class AnEnum < SchemaEnum
     # @return ['sym1', 'sym2']
     attr_accessor :an_enum
 

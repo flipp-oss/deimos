@@ -4,17 +4,16 @@ require 'json'
 
 module Deimos
   # Base Class for Enum Classes generated from Avro.
-  class SchemaModelEnum
-
+  class SchemaEnum
     # Returns all the valid symbols for this enum.
     # @return [Array<String>]
     def symbols
       raise NotImplementedError
     end
 
-    def to_json()
+    # @return [String] the payload as a JSON string
+    def to_json(*_args)
       raise NotImplementedError
     end
-
   end
 end

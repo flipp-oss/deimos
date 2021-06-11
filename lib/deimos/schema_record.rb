@@ -4,8 +4,7 @@ require 'json'
 
 module Deimos
   # Base Class of Record Classes generated from Avro.
-  class SchemaModel
-
+  class SchemaRecord
     # :nodoc:
     def initialize
       @validator = Deimos.schema_backend(schema: schema, namespace: namespace)
@@ -26,39 +25,37 @@ module Deimos
     # Returns the full schema name of the inheriting class.
     # @return [String]
     def full_schema
-      namespace + '.' + schema
+      "#{namespace}.#{schema}"
     end
 
     # @return [Array<String>] an array of fields names in the schema.
     def schema_fields
-      @validator.schema_fields.map do |field|
-        field.name
-      end
+      @validator.schema_fields.map(&:name)
     end
 
-    # TODO: Look into implementing these?
-
-    # @return [String] the payload as a JSON string
+    # @override
     def to_json
       to_h.to_json
     end
 
-    # Returns a Hash that can be used as the JSON representation for this object
-    # @return [Hash] the payload as a hash.
-    def as_json
-      to_h.with_indifferent_access
+    # @override
+    def as_json(opts={})
+      to_h
     end
 
     # Converts the object to a hash which can be used in Kafka.
     # @return [Hash] the payload as a hash.
+    # TODO: Figure out if this is the best way to convert this to a usable hash... seems kind of silly to take the Hash
+    # and convert it to JSON string, and parse it again.. I guess it covers the objects inside of it and converts them properly
     def as_hash
-      JSON.parse(to_json).with_indifferent_access
+      JSON.parse(to_json)
     end
+
+    private # TODO: Look into why this is needed
 
     # @return [Hash] the payload as a hash.
     def to_h
       raise NotImplementedError
     end
-
   end
 end

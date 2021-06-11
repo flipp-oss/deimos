@@ -3,10 +3,12 @@
 require 'rails/generators'
 require 'deimos/config/configuration'
 
+# Generates a Guardfile for automatic SchemaClass generation
 module Deimos
   module Generators
-    class SchemaModelGuardfileGenerator < Rails::Generators::Base
-      source_root File.expand_path('schema_model/templates', __dir__)
+    # Generator the Guardfile used in SchemaClass generation
+    class SchemaClassGuardfileGenerator < Rails::Generators::Base
+      source_root File.expand_path('schema_class/templates', __dir__)
 
       argument :schema_path,
                desc: 'The relative path to Schemas in your application.',
@@ -25,11 +27,12 @@ module Deimos
       end
 
       desc 'Generate a class based on an existing schema.'
+      # :nodoc:
       def generate
+        # TODO: Create new, OR add to existing if not exists
         Rails.logger.info(Deimos.config.schema.path)
-        template('Guardfile', "Guardfile", force: true)
+        template('Guardfile', 'Guardfile', force: true)
       end
-
     end
   end
 end
