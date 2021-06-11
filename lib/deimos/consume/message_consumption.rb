@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'deimos/utils/schema_model_mixin'
+require 'deimos/utils/schema_class_mixin'
 
 module Deimos
   module Consume
@@ -10,7 +10,7 @@ module Deimos
       extend ActiveSupport::Concern
       include Phobos::Handler
       include SharedConfig
-      include Utils::SchemaModelMixin
+      include Utils::SchemaClassMixin
 
       # :nodoc:
       def around_consume(payload, metadata)
@@ -23,6 +23,7 @@ module Deimos
             if Deimos.config.consumers.use_schema_class
               # this 'config' comes from SharedConfig
               current_schema = self.class.config[:namespace] + '.' + self.class.config[:schema]
+              # TODO Look into this :( - Camelize is wrong, it might need to take the self.class.config[:schema] and not current_schema
               class_name = classified_schema(current_schema)
               klass = class_name.constantize
               # want to init klass with payload. Should make this instance the decoded_payload!

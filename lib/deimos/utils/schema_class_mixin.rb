@@ -2,8 +2,8 @@
 
 module Deimos
   module Utils
-    # Module with Quality of Life methods used in SchemaModelGenerator and Consumer/Producer interfaces
-    module SchemaModelMixin
+    # Module with Quality of Life methods used in SchemaClassGenerator and Consumer/Producer interfaces
+    module SchemaClassMixin
 
       # @param schema [String] the current schema.
       # @return [String] the schema name, without its namespace.
@@ -19,7 +19,7 @@ module Deimos
         schema[0...last_dot] || 'ERROR'
       end
 
-      # @param schema [String] the current schema.
+      # @param schema [String] the current schema name as a string
       # @return [String] the name of the current schema, as a class.
       def classified_schema(schema)
         "#{schema.underscore.classify}"
@@ -28,7 +28,7 @@ module Deimos
       # @param schema [Avro::Schema::NamedSchema] A named schema
       # @return [String]
       def schema_classname(schema)
-        "#{schema.name.underscore.classify}"
+        "#{schema.name.underscore.camelize}"
       end
 
     end

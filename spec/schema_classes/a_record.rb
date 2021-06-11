@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 module Deimos
   # :nodoc:
-  class GeneratedARecordSchema < SchemaModel
-    # @!attribute [rw] status
+  class ARecord < SchemaRecord
     # @return [String]
     attr_accessor :a_record_field
 
@@ -13,7 +14,7 @@ module Deimos
 
     # @override
     def schema
-      'Generated'
+      'ARecord'
     end
 
     # @override
