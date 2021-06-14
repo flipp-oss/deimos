@@ -27,6 +27,8 @@ module Deimos
     attr_accessor :message_id
     # @return [Deimos::ARecord]
     attr_accessor :a_record
+    # @return [nil, Deimos::ARecord]
+    attr_accessor :some_optional_record
 
     # @override
     def initialize(a_string:, a_int:, a_long:, a_float:, a_double:, an_optional_int:, an_enum:, an_array:, a_map:, timestamp:, message_id:, a_record:)
@@ -43,6 +45,24 @@ module Deimos
       @timestamp = timestamp
       @message_id = message_id
       @a_record = a_record
+    end
+
+    # @override
+    def self.initialize_from_hash(hash)
+      return unless hash.any?
+
+      payload = {}
+      hash.each do |key, value|
+        payload[key.to_sym] = case key.to_sym
+                              when :an_enum
+                                Deimos::AnEnum.initialize_from_value(value)
+                              when :a_record
+                                Deimos::ARecord.initialize_from_hash(value)
+                              else
+                                value
+                              end
+      end
+      self.new(payload)
     end
 
     # @override
@@ -69,9 +89,8 @@ module Deimos
         'a_map' => @a_map,
         'timestamp' => @timestamp,
         'message_id' => @message_id,
-        'a_record' => @a_record,
+        'a_record' => @a_record
       }
     end
-
   end
 end

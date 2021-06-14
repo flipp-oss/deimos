@@ -41,7 +41,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
             attr_accessor :message_id
             # @return [Deimos::ARecord]
             attr_accessor :a_record
-
+        
             # @override
             def initialize(a_string:, a_int:, a_long:, a_float:, a_double:, an_optional_int:, an_enum:, an_array:, a_map:, timestamp:, message_id:, a_record:)
               super()
@@ -58,17 +58,35 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
               @message_id = message_id
               @a_record = a_record
             end
+        
+            # @override
+            def self.initialize_from_hash(hash)
+              return unless hash.any?
 
+              payload = {}
+              hash.each do |key, value|
+                payload[key.to_sym] = case key.to_sym
+                                      when :an_enum
+                                        Deimos::AnEnum.initialize_from_value(value)
+                                      when :a_record
+                                        Deimos::ARecord.initialize_from_hash(value)
+                                      else
+                                        value
+                                      end
+              end
+              self.new(payload)
+            end
+        
             # @override
             def schema
               'Generated'
             end
-
+        
             # @override
             def namespace
               'com.my-namespace'
             end
-
+        
             # @override
             def to_h
               {
@@ -83,10 +101,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
                 'a_map' => @a_map,
                 'timestamp' => @timestamp,
                 'message_id' => @message_id,
-                'a_record' => @a_record,
+                'a_record' => @a_record
               }
             end
-
           end
         end
       CLASS
@@ -100,30 +117,40 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           class ARecord < SchemaRecord
             # @return [String]
             attr_accessor :a_record_field
-
+        
             # @override
             def initialize(a_record_field:)
               super()
               @a_record_field = a_record_field
             end
+        
+            # @override
+            def self.initialize_from_hash(hash)
+              return unless hash.any?
 
+              payload = {}
+              hash.each do |key, value|
+                payload[key.to_sym] = value
+              end
+              self.new(payload)
+            end
+        
             # @override
             def schema
               'ARecord'
             end
-
+        
             # @override
             def namespace
               'com.my-namespace'
             end
-
+        
             # @override
             def to_h
               {
-                'a_record_field' => @a_record_field,
+                'a_record_field' => @a_record_field
               }
             end
-
           end
         end
       RECORD
@@ -137,22 +164,27 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           class AnEnum < SchemaEnum
             # @return ['sym1', 'sym2']
             attr_accessor :an_enum
-
+        
             # :nodoc:
             def initialize(an_enum:)
+              super()
               @an_enum = an_enum
             end
-
+        
+            # :nodoc:
+            def self.initialize_from_value(value)
+              self.new(@an_enum: value)
+            end
+        
             # @override
             def symbols
               %w(sym1 sym2)
             end
-
+        
             # @override
-            def as_json(options={})
+            def as_json(_options={})
               @an_enum
             end
-
           end
         end
       ENUM
@@ -213,6 +245,22 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
             end
 
             # @override
+            def self.initialize_from_hash(hash)
+              return unless hash.any?
+
+              payload = {}
+              hash.each do |key, value|
+                payload[key.to_sym] = case key.to_sym
+                                      when :some_nested_record, :some_optional_record
+                                        Deimos::MyNestedRecord.initialize_from_hash(value)
+                                      else
+                                        value
+                                      end
+              end
+              self.new(payload)
+            end
+
+            # @override
             def schema
               'MyNestedSchema'
             end
@@ -229,10 +277,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
                 'test_float' => @test_float,
                 'test_array' => @test_array,
                 'some_nested_record' => @some_nested_record,
-                'some_optional_record' => @some_optional_record,
+                'some_optional_record' => @some_optional_record
               }
             end
-
           end
         end
       CLASS
@@ -261,7 +308,18 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
               @some_string = some_string
               @some_optional_int = some_optional_int
             end
-        
+
+            # @override
+            def self.initialize_from_hash(hash)
+              return unless hash.any?
+
+              payload = {}
+              hash.each do |key, value|
+                payload[key.to_sym] = value
+              end
+              self.new(payload)
+            end
+
             # @override
             def schema
               'MyNestedRecord'
@@ -278,10 +336,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
                 'some_int' => @some_int,
                 'some_float' => @some_float,
                 'some_string' => @some_string,
-                'some_optional_int' => @some_optional_int,
+                'some_optional_int' => @some_optional_int
               }
             end
-        
           end
         end
       CLASS

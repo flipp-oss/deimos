@@ -22,7 +22,7 @@ module Deimos
       # @param schema [String] the current schema name as a string
       # @return [String] the name of the current schema, as a class.
       def classified_schema(schema)
-        "#{schema.underscore.classify}"
+        "#{schema.underscore.camelize}"
       end
 
       # @param schema [Avro::Schema::NamedSchema] A named schema
