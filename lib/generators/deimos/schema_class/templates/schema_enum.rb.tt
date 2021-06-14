@@ -8,7 +8,13 @@ module Deimos
 
     # :nodoc:
     def initialize(<%= @current_schema.name.underscore %>:)
+      super()
       @<%= @current_schema.name.underscore %> = <%= @current_schema.name.underscore %>
+    end
+
+    # :nodoc:
+    def self.initialize_from_value(value)
+      self.new(@<%= @current_schema.name.underscore %>: value)
     end
 
     # @override
@@ -17,9 +23,8 @@ module Deimos
     end
 
     # @override
-    def as_json(options={})
+    def as_json(_options={})
       @<%= @current_schema.name.underscore %>
     end
-
   end
 end

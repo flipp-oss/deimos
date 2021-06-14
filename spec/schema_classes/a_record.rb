@@ -13,6 +13,17 @@ module Deimos
     end
 
     # @override
+    def self.initialize_from_hash(hash)
+      return unless hash.any?
+
+      payload = {}
+      hash.each do |key, value|
+        payload[key.to_sym] = value
+      end
+      self.new(payload)
+    end
+
+    # @override
     def schema
       'ARecord'
     end
@@ -25,9 +36,8 @@ module Deimos
     # @override
     def to_h
       {
-        'a_record_field' => @a_record_field,
+        'a_record_field' => @a_record_field
       }
     end
-
   end
 end

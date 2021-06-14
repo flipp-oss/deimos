@@ -13,6 +13,7 @@ module Deimos
       include Deimos::Utils::SchemaClassMixin
 
       GENERATED_PATH = 'app/lib/schema_classes'
+      SPECIAL_TYPES = %i(record enum).freeze
 
       source_root File.expand_path('schema_class/templates', __dir__)
 
@@ -42,6 +43,7 @@ module Deimos
           schema_base(schema_name).load_schema!
           schema_base.schema_store.schemas.each_value do |schema|
             @current_schema = schema
+            @special_field_formatting = schema.type_sym == :record ? special_field_formatting : {}
             file_prefix = schema.name.underscore
             namespace_path = schema.namespace.tr('.', '/')
             schema_template = "schema_#{schema.type}.rb"
@@ -57,11 +59,45 @@ module Deimos
           @current_schema.fields.map { |field| Deimos::SchemaField.new(field.name, field.type) }
         end
 
+        # Retrieve any special formatting needed for this current schema's fields
+        # Includes additional initialization methods for Records and Enums and covers unions.
+        # @return [Hash<String, Hash>]
+        def special_field_formatting
+          result = Hash.new { |h, k| h[k] = { field_names: [], method: nil } }
+          fields.each do |field|
+            possible_schemas = field.type.type_sym == :union ? field.type.schemas : [field.type]
+            avro_schema = possible_schemas.find { |schema| SPECIAL_TYPES.include?(schema.type_sym) }
+
+            next unless avro_schema.present?
+
+            avro_type = field_type(avro_schema)
+            result[avro_type][:field_names] << ":#{field.name}"
+            result[avro_type][:method] = if avro_schema.type_sym == :record
+                                           'initialize_from_hash'
+                                         else
+                                           'initialize_from_value'
+                                         end
+          end
+          result
+        end
+
+        # Converts a given Union into the most-likely String form of its special type
+        # @param field [Deimos::SchemaField]
+        # @return [String] A string representation of the Type of this Union
+        def union_special_field_type(field)
+          # Return a union's most likely type
+          field.type.schemas.each do |schema|
+            return field_type(schema) if SPECIAL_TYPES.include?(schema.type_sym)
+          end
+          nil
+        end
+
         # Converts Deimos::SchemaField's to String form for generated YARD docs
-        # @param schema_field [Deimos::SchemaField]
+        # @param schema_field [Deimos::SchemaField||Avro::Schema::NamedSchema]
         # @return [String] A string representation of the Type of this SchemaField
         def field_type(schema_field)
-          field_type = schema_field.type.type.to_sym
+          schema = schema_field.is_a?(Deimos::SchemaField) ? schema_field.type : schema_field
+          field_type = schema.type_sym
 
           case field_type
           when :string, :boolean
@@ -71,15 +107,15 @@ module Deimos
           when :float, :double
             'Float'
           when :record, :enum
-            "Deimos::#{schema_classname(schema_field.type)}"
+            "Deimos::#{schema_classname(schema)}"
           when :array
-            arr_t = field_type(Deimos::SchemaField.new('n/a', schema_field.type.items))
+            arr_t = field_type(Deimos::SchemaField.new('n/a', schema.items))
             "Array<#{arr_t}>"
           when :map
-            map_t = field_type(Deimos::SchemaField.new('n/a', schema_field.type.values))
+            map_t = field_type(Deimos::SchemaField.new('n/a', schema.values))
             "Hash<String, #{map_t}>"
           when :union
-            types = schema_field.type.schemas.map do |t|
+            types = schema.schemas.map do |t|
               field_type(Deimos::SchemaField.new('n/a', t))
             end
             types.join(', ')

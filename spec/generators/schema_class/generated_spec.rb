@@ -43,10 +43,19 @@ RSpec.describe Deimos::Generated do
       expect(klass).to be_instance_of(described_class)
     end
 
-    it 'should initialize the class from a hash' do
+    it 'should initialize the class from a hash with symbols as keys' do
       klass = described_class.new(payload_hash)
       expect(klass).to be_instance_of(described_class)
       expect(klass.a_float).to eq(1.2)
+    end
+
+    it 'should initialize the class from a hash with strings as keys' do
+      string_payload = described_class.new(payload_hash).as_json
+      klass = described_class.initialize_from_hash(string_payload)
+      expect(klass).to be_instance_of(described_class)
+      expect(klass.a_float).to eq(1.2)
+      expect(klass.a_record).to be_instance_of(Deimos::ARecord)
+      expect(klass.a_record.a_record_field).to eq("the actual field")
     end
 
   end
@@ -85,7 +94,7 @@ RSpec.describe Deimos::Generated do
         'message_id' => '73d9551b212128f0f2a9a5038239e646',
         'a_record' => { 'a_record_field' => 'the actual field' }
       }
-      expect(klass.as_hash).to eq(payload_h)
+      expect(klass.as_json).to eq(payload_h)
     end
 
     it 'should return a JSON string of the payload' do
@@ -129,7 +138,7 @@ RSpec.describe Deimos::Generated do
       record = klass.a_record
       expect(record).to be_instance_of(Deimos::ARecord)
       expect(record.a_record_field).to eq('the actual field')
-      expect(record.as_hash).to eq({ 'a_record_field' => 'the actual field' })
+      expect(record.as_json).to eq({ 'a_record_field' => 'the actual field' })
     end
 
     it 'should modify the value of a_string' do
@@ -156,10 +165,10 @@ RSpec.describe Deimos::Generated do
       record = klass.a_record
       expect(record).to be_instance_of(Deimos::ARecord)
       expect(record.a_record_field).to eq('the actual field')
-      expect(record.as_hash).to eq({ 'a_record_field' => 'the actual field' })
+      expect(record.as_json).to eq({ 'a_record_field' => 'the actual field' })
       klass.a_record = Deimos::ARecord.new(a_record_field: 'the new field')
       expect(klass.a_record.a_record_field).to eq('the new field')
-      expect(klass.a_record.as_hash).to eq({ 'a_record_field' => 'the new field' })
+      expect(klass.a_record.as_json).to eq({ 'a_record_field' => 'the new field' })
     end
 
   end

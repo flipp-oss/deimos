@@ -11,6 +11,7 @@ module Deimos
       include SharedConfig
 
       # :nodoc:
+      # TODO: need to handle decoding logic here..! Use the Schema Classes
       def around_consume_batch(batch, metadata)
         payloads = []
         benchmark = Benchmark.measure do

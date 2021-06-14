@@ -10,6 +10,13 @@ module Deimos
       @validator = Deimos.schema_backend(schema: schema, namespace: namespace)
     end
 
+    # Recursively initializes the SchemaRecord from a raw hash
+    # @param _hash[Hash]
+    # @return [Deimos::SchemaRecord]
+    def self.initialize_from_hash(_hash)
+      raise NotImplementedError
+    end
+
     # Returns the schema name of the inheriting class.
     # @return [String]
     def schema
@@ -33,26 +40,20 @@ module Deimos
       @validator.schema_fields.map(&:name)
     end
 
-    # @override
-    def to_json
+    # Converts the object to a string that represents a JSON object
+    # @return [String] a JSON
+    def to_json(*_args)
       to_h.to_json
     end
 
-    # @override
-    def as_json(opts={})
-      to_h
-    end
-
     # Converts the object to a hash which can be used in Kafka.
-    # @return [Hash] the payload as a hash.
-    # TODO: Figure out if this is the best way to convert this to a usable hash... seems kind of silly to take the Hash
-    # and convert it to JSON string, and parse it again.. I guess it covers the objects inside of it and converts them properly
-    def as_hash
+    # @return [Hash] a hash representation of the payload
+    def as_json(_opts={})
       JSON.parse(to_json)
     end
 
-    private # TODO: Look into why this is needed
-
+    # Converts the object attributes to a hash
+    # TODO: Decide if this should do recursion to call class to_h's too
     # @return [Hash] the payload as a hash.
     def to_h
       raise NotImplementedError

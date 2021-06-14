@@ -8,7 +8,13 @@ module Deimos
 
     # :nodoc:
     def initialize(an_enum:)
+      super()
       @an_enum = an_enum
+    end
+
+    # :nodoc:
+    def self.initialize_from_value(value)
+      self.new(an_enum: value)
     end
 
     # @override
@@ -17,9 +23,8 @@ module Deimos
     end
 
     # @override
-    def as_json(options={})
+    def as_json(_options={})
       @an_enum
     end
-
   end
 end

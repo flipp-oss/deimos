@@ -17,6 +17,28 @@ module Deimos
     end
 
     # @override
+    def self.initialize_from_hash(hash)
+      return unless hash.any?
+
+      payload = {}
+      hash.each do |key, value|
+<%- unless @special_field_formatting.present? -%>
+        payload[key.to_sym] = value
+<%- else -%>
+        payload[key.to_sym] = case key.to_sym
+<%- @special_field_formatting.each do |klass, format| -%>
+                              when <%= format[:field_names].join(', ') %>
+                                <%= klass %>.<%= format[:method] %>(value)
+<% end -%>
+                              else
+                                value
+                              end
+<%- end -%>
+      end
+      self.new(payload)
+    end
+
+    # @override
     def schema
       '<%= @current_schema.name %>'
     end
@@ -30,10 +52,9 @@ module Deimos
     def to_h
       {
 <%- fields.each do |field| -%>
-        '<%= field.name %>' => @<%= field.name %>,
+        '<%= field.name %>' => @<%= field.name %><%= field.name == fields.last.name ? '' : ',' %>
 <% end -%>
       }
     end
-
   end
 end
