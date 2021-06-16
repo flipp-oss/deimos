@@ -30,7 +30,6 @@ module Deimos
       def schema_classname(schema)
         "#{schema.name.underscore.camelize}"
       end
-
     end
   end
 end

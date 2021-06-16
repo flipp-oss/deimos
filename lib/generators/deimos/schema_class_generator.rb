@@ -93,30 +93,35 @@ module Deimos
         end
 
         # Converts Deimos::SchemaField's to String form for generated YARD docs
-        # @param schema_field [Deimos::SchemaField||Avro::Schema::NamedSchema]
+        # @param schema_field [Deimos::SchemaField]
         # @return [String] A string representation of the Type of this SchemaField
-        def field_type(schema_field)
-          schema = schema_field.is_a?(Deimos::SchemaField) ? schema_field.type : schema_field
-          field_type = schema.type_sym
+        def deimos_field_type(schema_field)
+          field_type(schema_field.type)
+        end
 
-          case field_type
+        # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.
+        # Recursively handles the typing for Arrays, Maps and Unions.
+        # @param avro_schema [Avro::Schema::NamedSchema]
+        # @return [String] A string representation of the Type of this SchemaField
+        def field_type(avro_schema)
+          case avro_schema.type_sym
           when :string, :boolean
-            field_type.to_s.titleize
+            avro_schema.type_sym.to_s.titleize
           when :int, :long
             'Integer'
           when :float, :double
             'Float'
           when :record, :enum
-            "Deimos::#{schema_classname(schema)}"
+            "Deimos::#{schema_classname(avro_schema)}"
           when :array
-            arr_t = field_type(Deimos::SchemaField.new('n/a', schema.items))
+            arr_t = deimos_field_type(Deimos::SchemaField.new('n/a', avro_schema.items))
             "Array<#{arr_t}>"
           when :map
-            map_t = field_type(Deimos::SchemaField.new('n/a', schema.values))
+            map_t = deimos_field_type(Deimos::SchemaField.new('n/a', avro_schema.values))
             "Hash<String, #{map_t}>"
           when :union
-            types = schema.schemas.map do |t|
-              field_type(Deimos::SchemaField.new('n/a', t))
+            types = avro_schema.schemas.map do |t|
+              deimos_field_type(Deimos::SchemaField.new('n/a', t))
             end
             types.join(', ')
           when :null
@@ -142,7 +147,7 @@ module Deimos
       # :nodoc:
       def generate
         Rails.logger.info(Deimos.config.schema.path)
-        if full_schema.nil? # do all schemas
+        if full_schema.nil?
           _find_schema_paths.each do |schema_path|
             current_schema = _parse_schema_from_path(schema_path)
 
