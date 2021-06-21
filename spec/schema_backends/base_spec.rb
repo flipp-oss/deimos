@@ -26,4 +26,8 @@ describe Deimos::SchemaBackends::Base do
     backend.decode(payload, schema: 'schema2')
   end
 
+  it 'should return nil if passed nil' do
+    expect(backend.decode(nil, schema: 'schema2')).to be_nil
+  end
+
 end

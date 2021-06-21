@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 1.10.1 - 2021-06-21
+
+- ### Fixes :wrench:
+
+- Fixed crash when trying to decode a nil payload (e.g. during instrumentation of `send_produce_error`.)
+
 ## 1.10.0 - 2021-03-22
 
 - ### Roadmap :car:
