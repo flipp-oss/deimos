@@ -215,8 +215,20 @@ RSpec.shared_context('with widgets') do
       t.timestamps
     end
 
+    ActiveRecord::Base.connection.create_table(:joint_widgets, force: true) do |t|
+      t.integer(:widget_id)
+      t.integer(:some_other_int)
+      t.timestamps
+    end
+
+    class JointWidget < ActiveRecord::Base
+      belongs_to :widget
+    end
+
     # :nodoc:
     class Widget < ActiveRecord::Base
+      has_one :joint_widget
+
       # @return [String]
       def generated_id
         'generated_id'
