@@ -319,39 +319,48 @@ each_db_config(Deimos::Utils::DbPoller) do
           allow(MyProducerWithJoins).to receive(:poll_query) do |args|
             Widget.joins(:joint_widget).
               select('widgets.id, widgets.some_int, widgets.test_id, joint_widgets.some_other_int, widgets.updated_at').
-                where('widgets.updated_at BETWEEN ? AND ?', args[:time_from], args[:time_to])
+                where('((widgets.updated_at = ? AND widgets.id > ?) OR widgets.updated_at > ?) AND widgets.updated_at <= ?',
+                      args[:time_from], args[:min_id], args[:time_from], args[:time_to])
           end
 
           allow(poller).to receive(:process_batch).and_call_original
 
           poller.process_updates
 
+
+          expect(poller).to have_received(:process_batch) do |batch|
+            expect(batch.to_json).to eq(
+                                       [
+                                         {
+                                           "id":4,
+                                          "some_int":2,
+                                           "test_id":"some_id",
+                                           "some_other_int":1,
+                                           "updated_at":"2015-05-05T03:59:32.000Z"
+                                         },
+                                         {
+                                           "id":5,
+                                           "some_int":3,
+                                           "test_id":"some_id",
+                                           "some_other_int":2,
+                                           "updated_at":"2015-05-05T03:59:33.000Z"
+                                         },
+                                         {
+                                           "id":6,
+                                           "some_int":4,
+                                           "test_id":"some_id",
+                                           "some_other_int":3,
+                                           "updated_at":"2015-05-05T03:59:34.000Z"
+                                         }
+                                       ].to_json
+                                     )
+          end
+
           expect(MyProducerWithJoins).to have_received(:poll_query).at_least(:once)
-          expect(poller).to have_received(:process_batch).ordered.
-            with([old_widget, widgets[0], widgets[1]])
-          expect(poller).to have_received(:process_batch).ordered.
-            with([widgets[2], widgets[3], widgets[4]])
-          expect(poller).to have_received(:process_batch).ordered.
-            with([widgets[5], widgets[6]])
 
-          # this is the updated_at of widgets[6]
-          expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
-          expect(info.last_sent_id).to eq(widgets[6].id)
-
-          last_widget.update_attribute(:updated_at, time_value(mins: -250))
-
-          travel 61.seconds
-          # should reprocess the table
-          expect(poller).to receive(:process_batch).ordered.
-            with([last_widget, old_widget, widgets[0]]).and_call_original
-          expect(poller).to receive(:process_batch).ordered.
-            with([widgets[1], widgets[2], widgets[3]]).and_call_original
-          expect(poller).to receive(:process_batch).ordered.
-            with([widgets[4], widgets[5], widgets[6]]).and_call_original
-          poller.process_updates
-
-          expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
-          expect(info.last_sent_id).to eq(widgets[6].id)
+          info = Deimos::PollInfo.last
+          expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 34))
+          expect(info.last_sent_id).to eq(6)
         end
       end
 
