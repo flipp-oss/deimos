@@ -12,7 +12,6 @@ module Deimos
     class SchemaClassGenerator < Rails::Generators::Base
       include Deimos::Utils::SchemaClassMixin
 
-      GENERATED_PATH = 'app/lib/schema_classes'
       SPECIAL_TYPES = %i(record enum).freeze
 
       source_root File.expand_path('schema_class/templates', __dir__)
@@ -47,7 +46,7 @@ module Deimos
             file_prefix = schema.name.underscore
             namespace_path = schema.namespace.tr('.', '/')
             schema_template = "schema_#{schema.type}.rb"
-            filename = "#{GENERATED_PATH}/#{namespace_path}/#{file_prefix}.rb"
+            filename = "#{Deimos.config.schema.generated_class_path}/#{namespace_path}/#{file_prefix}.rb"
             template(schema_template, filename, force: true)
           end
           clear_schema_base!

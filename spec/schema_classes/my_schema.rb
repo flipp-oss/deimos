@@ -16,6 +16,17 @@ module Deimos
     end
 
     # @override
+    def self.initialize_from_hash(hash)
+      return unless hash.any?
+
+      payload = {}
+      hash.each do |key, value|
+        payload[key.to_sym] = value
+      end
+      self.new(payload)
+    end
+
+    # @override
     def schema
       'MySchema'
     end

@@ -13,6 +13,8 @@ require 'activerecord-import'
 require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
+# TODO: Hardcode for now, figure out if this can be done in a better way
+Dir["./spec/schema_classes/**/*.rb"].each { |f| require f }
 
 class DeimosApp < Rails::Application
 end
@@ -192,6 +194,7 @@ RSpec.configure do |config|
       deimos_config.logger = Logger.new('/dev/null')
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
+      deimos_config.schema.generated_class_path = 'spec/schema_classes'
     end
   end
 

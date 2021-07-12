@@ -271,6 +271,10 @@ module Deimos
       # Local path to look for schemas in.
       # @return [String]
       setting :path
+
+      # Local path for schema classes to be generated in.
+      # @return [String]
+      setting :generated_class_path, 'app/lib/schema_classes'
     end
 
     # The configured metrics provider.
