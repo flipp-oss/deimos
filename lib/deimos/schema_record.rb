@@ -7,7 +7,6 @@ module Deimos
   class SchemaRecord
     # :nodoc:
     def initialize
-      @validator = Deimos.schema_backend(schema: schema, namespace: namespace)
     end
 
     # Recursively initializes the SchemaRecord from a raw hash
@@ -35,9 +34,13 @@ module Deimos
       "#{namespace}.#{schema}"
     end
 
+    def validator
+      Deimos.schema_backend(schema: schema, namespace: namespace)
+    end
+
     # @return [Array<String>] an array of fields names in the schema.
     def schema_fields
-      @validator.schema_fields.map(&:name)
+      validator.schema_fields.map(&:name)
     end
 
     # Converts the object to a string that represents a JSON object

@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require './spec/schema_classes/generated'
-require './spec/schema_classes/a_record'
-require './spec/schema_classes/an_enum'
-
 # For testing the generated class.
 RSpec.describe Deimos::Generated do
   let(:payload_hash) do

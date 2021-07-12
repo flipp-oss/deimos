@@ -210,8 +210,15 @@ module Deimos
                        'value' => payload)
 
       unless skip_expectation
-        expectation = expect(handler).to receive(:consume).
-          with(payload, anything, &block)
+        schema_class = handler.classified_schema(handler.class.config[:schema])
+
+        expectation = if Deimos.config.consumers.use_schema_class && payload.present? && schema_class.present?
+                        expect(handler).to receive(:consume).
+                          with(an_instance_of(schema_class), anything, &block)
+                      else
+                        expect(handler).to receive(:consume).with(payload, anything, &block)
+                      end
+
         expectation.and_call_original if call_original
       end
       Phobos::Actions::ProcessMessage.new(
@@ -277,8 +284,15 @@ module Deimos
                      'partition' => 1,
                      'offset_lag' => 0)
       unless skip_expectation
-        expectation = expect(handler).to receive(:consume_batch).
-          with(payloads, anything, &block)
+        schema_class = handler.classified_schema(handler.class.config[:schema])
+
+        expectation = if Deimos.config.consumers.use_schema_class && payloads.any? && schema_class.present?
+                        expect(handler).to receive(:consume_batch).
+                          with(array_including(an_instance_of(schema_class)), anything, &block)
+                      else
+                        expect(handler).to receive(:consume_batch).with(payloads, anything, &block)
+                      end
+
         expectation.and_call_original if call_original
       end
       action = Phobos::Actions::ProcessBatchInline.new(

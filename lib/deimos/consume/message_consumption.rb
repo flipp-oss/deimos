@@ -13,27 +13,14 @@ module Deimos
       include Utils::SchemaClassMixin
 
       # :nodoc:
-      # TODO: need to handle decoding logic here..! Use the Schema Classes?
       def around_consume(payload, metadata)
         decoded_payload = payload.nil? ? nil : payload.dup
         new_metadata = metadata.dup
         benchmark = Benchmark.measure do
           _with_span do
             new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
-            decoded_payload = payload ? self.class.decoder.decode(payload) : nil
-            if Deimos.config.consumers.use_schema_class
-              # this 'config' comes from SharedConfig
-              class_name = classified_schema(self.class.config[:schema])
-              # Needs "Deimos::" in front of it for the whole namespace
-              # Might want to use safe_constantize
-              klass = "Deimos::#{class_name}".constantize
-              # Does not correctly handle some stuff around optional payloads.
-              # Does not initialize from HASH object!!!!!!!
-              # want to init klass with payload. Should make this instance the decoded_payload!
-              return true
-            end
+            decoded_payload = decode_message(payload)
             _received_message(decoded_payload, new_metadata)
-            # Would need to do some work here around the DECODED payload here...!
             yield decoded_payload, new_metadata
           end
         end

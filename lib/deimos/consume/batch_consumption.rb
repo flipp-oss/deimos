@@ -23,7 +23,7 @@ module Deimos
           metadata[:first_offset] = batch.first&.offset
 
           payloads = batch.map do |message|
-            message.payload ? self.class.decoder.decode(message.payload) : nil
+            decode_message(message.payload)
           end
           _received_batch(payloads, metadata)
           _with_span do

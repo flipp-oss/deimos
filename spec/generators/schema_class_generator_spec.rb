@@ -5,6 +5,12 @@ require 'generators/deimos/schema_class_generator'
 RSpec.describe Deimos::Generators::SchemaClassGenerator do
   let(:schema_class_path) { 'app/lib/schema_classes/com/my-namespace' }
 
+  before(:each) do
+    Deimos.configure do
+      schema.generated_class_path('app/lib/schema_classes')
+    end
+  end
+
   after(:each) do
     FileUtils.rm_rf(schema_class_path) if File.exist?(schema_class_path)
   end
