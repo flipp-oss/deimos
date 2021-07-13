@@ -4,7 +4,6 @@ module Deimos
   module Utils
     # Module with Quality of Life methods used in SchemaClassGenerator and Consumer/Producer interfaces
     module SchemaClassMixin
-
       # @param schema [String] the current schema.
       # @return [String] the schema name, without its namespace.
       def extract_schema(schema)
@@ -22,7 +21,7 @@ module Deimos
       # @param schema [Avro::Schema::NamedSchema] A named schema
       # @return [String]
       def schema_classname(schema)
-        "#{schema.name.underscore.camelize}"
+        schema.name.underscore.camelize
       end
 
       # @param schema [String] the current schema name as a string
