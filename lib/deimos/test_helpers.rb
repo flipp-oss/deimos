@@ -210,16 +210,11 @@ module Deimos
                        'value' => payload)
 
       unless skip_expectation
-        schema_class = handler.classified_schema(handler.class.config[:schema])
-
-        expectation = if Deimos.config.consumers.use_schema_class && payload.present? && schema_class.present?
-                        expect(handler).to receive(:consume).
-                          with(an_instance_of(schema_class), anything, &block)
-                      else
-                        expect(handler).to receive(:consume).with(payload, anything, &block)
-                      end
-
-        expectation.and_call_original if call_original
+        _consumer_handler_expectation(:consume,
+                                      payload,
+                                      handler,
+                                      call_original,
+                                      &block)
       end
       Phobos::Actions::ProcessMessage.new(
         listener: listener,
@@ -284,16 +279,11 @@ module Deimos
                      'partition' => 1,
                      'offset_lag' => 0)
       unless skip_expectation
-        schema_class = handler.classified_schema(handler.class.config[:schema])
-
-        expectation = if Deimos.config.consumers.use_schema_class && payloads.any? && schema_class.present?
-                        expect(handler).to receive(:consume_batch).
-                          with(array_including(an_instance_of(schema_class)), anything, &block)
-                      else
-                        expect(handler).to receive(:consume_batch).with(payloads, anything, &block)
-                      end
-
-        expectation.and_call_original if call_original
+        _consumer_handler_expectation(:consume_batch,
+                                      payloads,
+                                      handler,
+                                      call_original,
+                                      &block)
       end
       action = Phobos::Actions::ProcessBatchInline.new(
         listener: listener,
@@ -369,6 +359,24 @@ module Deimos
       raise "No consumer found in Phobos configuration for topic #{topic}!" if handler.nil?
 
       handler.handler.constantize
+    end
+
+    def _consumer_handler_expectation(method,
+                                      input,
+                                      handler,
+                                      call_original,
+                                      &block)
+      schema_class = handler.classified_schema(handler.class.config[:schema])
+
+      expectation = if Deimos.config.consumers.use_schema_class && input.present? && schema_class.present?
+                      expected = an_instance_of(schema_class)
+                      expected = input.is_a?(Array) ? array_including(expected) : expected
+                      expect(handler).to receive(method).with(expected, anything, &block)
+                    else
+                      expect(handler).to receive(method).with(input, anything, &block)
+                    end
+
+      expectation.and_call_original if call_original
     end
   end
 end
