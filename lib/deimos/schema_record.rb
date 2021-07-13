@@ -34,6 +34,8 @@ module Deimos
       "#{namespace}.#{schema}"
     end
 
+    # Returns the schema validator from the schema backend
+    # @return [Deimos::SchemaBackends::Base]
     def validator
       Deimos.schema_backend(schema: schema, namespace: namespace)
     end
