@@ -210,11 +210,11 @@ module Deimos
                        'value' => payload)
 
       unless skip_expectation
-        _consumer_handler_expectation(:consume,
-                                      payload,
-                                      handler,
-                                      call_original,
-                                      &block)
+        _handler_expectation(:consume,
+                             payload,
+                             handler,
+                             call_original,
+                             &block)
       end
       Phobos::Actions::ProcessMessage.new(
         listener: listener,
@@ -279,11 +279,11 @@ module Deimos
                      'partition' => 1,
                      'offset_lag' => 0)
       unless skip_expectation
-        _consumer_handler_expectation(:consume_batch,
-                                      payloads,
-                                      handler,
-                                      call_original,
-                                      &block)
+        _handler_expectation(:consume_batch,
+                             payloads,
+                             handler,
+                             call_original,
+                             &block)
       end
       action = Phobos::Actions::ProcessBatchInline.new(
         listener: listener,
@@ -361,14 +361,25 @@ module Deimos
       handler.handler.constantize
     end
 
-    def _consumer_handler_expectation(method,
+    # Test that a given handler will execute a `method` on an `input` correctly,
+    # If a block is given, that block will be executed when `method` is called.
+    # Otherwise it will just confirm that `method` is called at all.
+    # @param method [Symbol]
+    # @param input [Object]
+    # @param handler [Deimos::Consumer]
+    # @param call_original [Boolean]
+    def _handler_expectation(method,
                                       input,
                                       handler,
                                       call_original,
                                       &block)
       schema_class = handler.classified_schema(handler.class.config[:schema])
 
-      expectation = if Deimos.config.consumers.use_schema_class && input.present? && schema_class.present?
+      use_schema_class = Deimos.config.consumers.use_schema_class &&
+        schema_class.present? &&
+        input.present? && input.any?
+
+      expectation = if use_schema_class
                       expected = an_instance_of(schema_class)
                       expected = input.is_a?(Array) ? array_including(expected) : expected
                       expect(handler).to receive(method).with(expected, anything, &block)
