@@ -16,6 +16,9 @@ require 'rspec/rails'
 # TODO: Hardcode for now, figure out if this can be done in a better way
 Dir["./spec/schema_classes/**/*.rb"].each { |f| require f }
 
+# Constants used for consumer specs
+SCHEMA_CLASS_SETTINGS = { off: false, on: true }.freeze
+
 class DeimosApp < Rails::Application
 end
 DeimosApp.initialize!
