@@ -64,6 +64,30 @@ module ConsumerTest
       test_consume_batch_invalid_message(MyBatchConsumer, batch.concat(invalid_payloads))
     end
 
+    describe 'schema based message consumption' do
+      before(:each) do
+        Deimos.configure { |config| config.consumers.use_schema_class = true }
+      end
+
+      it 'should consume a batch of messages' do
+        test_consume_batch(MyBatchConsumer, batch) do |received, _metadata|
+          expect(received.first).to be_kind_of(Deimos::SchemaRecord)
+          expect(received.map(&:to_h)).to eq(batch)
+        end
+      end
+
+      it 'should consume a message on a topic' do
+        test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
+          expect(received.first).to be_kind_of(Deimos::SchemaRecord)
+          expect(received.map(&:to_h)).to eq(batch)
+        end
+      end
+
+      it 'should fail on an invalid message in the batch' do
+        test_consume_batch_invalid_message(MyBatchConsumer, batch.concat(invalid_payloads))
+      end
+    end
+
     describe 'when reraising errors is disabled' do
       before(:each) do
         Deimos.configure { |config| config.consumers.reraise_errors = false }

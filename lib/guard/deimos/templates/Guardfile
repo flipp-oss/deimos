@@ -1,0 +1,5 @@
+# More info at https://github.com/guard/guard#readme
+
+guard 'rake', task: "deimos:generate_schema_models" do
+  watch(%r{^app\/schemas\/(.*)\/?(.*)\.avsc$})
+end

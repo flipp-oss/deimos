@@ -1,0 +1,60 @@
+# frozen_string_literal: true
+
+module Deimos
+  # :nodoc:
+  class <%= schema_classname(@current_schema) %> < SchemaRecord
+<%- fields.each do |field| -%>
+    # @return [<%= deimos_field_type(field) %>]
+    attr_accessor :<%= field.name %>
+<% end -%>
+
+    # @override
+    def initialize(<%= fields.map { |v| "#{v.name}:"}.join(', ') %>)
+      super()
+<%- fields.map { |v| "@#{v.name} = #{v.name}"}.each do |field| -%>
+      <%= field %>
+<% end -%>
+    end
+
+    # @override
+    def self.initialize_from_hash(hash)
+      return unless hash.any?
+
+      payload = {}
+      hash.each do |key, value|
+<%- unless @special_field_formatting.present? -%>
+        payload[key.to_sym] = value
+<%- else -%>
+        payload[key.to_sym] = case key.to_sym
+<%- @special_field_formatting.each do |klass, format| -%>
+                              when <%= format[:field_names].join(', ') %>
+                                <%= klass %>.<%= format[:method] %>(value)
+<% end -%>
+                              else
+                                value
+                              end
+<%- end -%>
+      end
+      self.new(payload)
+    end
+
+    # @override
+    def schema
+      '<%= @current_schema.name %>'
+    end
+
+    # @override
+    def namespace
+      '<%= @current_schema.namespace %>'
+    end
+
+    # @override
+    def to_h
+      {
+<%- fields.each do |field| -%>
+        '<%= field.name %>' => @<%= field.name %><%= field.name == fields.last.name ? '' : ',' %>
+<% end -%>
+      }
+    end
+  end
+end

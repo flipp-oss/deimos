@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'deimos/utils/schema_class_mixin'
+
 module Deimos
   module Consume
     # Methods used by message-by-message (non-batch) consumers. These consumers
@@ -7,6 +9,8 @@ module Deimos
     module MessageConsumption
       extend ActiveSupport::Concern
       include Phobos::Handler
+      include SharedConfig
+      include Utils::SchemaClassMixin
 
       # :nodoc:
       def around_consume(payload, metadata)
@@ -15,7 +19,7 @@ module Deimos
         benchmark = Benchmark.measure do
           _with_span do
             new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
-            decoded_payload = payload ? self.class.decoder.decode(payload) : nil
+            decoded_payload = decode_message(payload)
             _received_message(decoded_payload, new_metadata)
             yield decoded_payload, new_metadata
           end

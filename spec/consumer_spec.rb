@@ -118,6 +118,36 @@ module ConsumerTest
       }.to raise_error('This should not be called unless call_original is set')
     end
 
+    context 'with Schema Class based message consumption' do
+      before(:each) do
+        Deimos.configure { |config| config.consumers.use_schema_class = true }
+      end
+
+      it 'should consume a message' do
+        test_consume_message(MyConsumer,
+                             'test_id' => 'foo',
+                             'some_int' => 123) do |payload, _metadata|
+                               expect(payload.test_id).to eq('foo')
+                               expect(payload).to be_kind_of(Deimos::SchemaRecord)
+                             end
+      end
+
+      it 'should consume a nil message' do
+        test_consume_message(MyConsumer, nil) do |payload, _metadata|
+          expect(payload).to be_nil
+        end
+      end
+
+      it 'should consume a message on a topic' do
+        test_consume_message('my_consume_topic',
+                             'test_id' => 'foo',
+                             'some_int' => 123) do |payload, _metadata|
+                               expect(payload.test_id).to eq('foo')
+                               expect(payload).to be_kind_of(Deimos::SchemaRecord)
+                             end
+      end
+    end
+
     describe 'decode_key' do
 
       it 'should use the key field in the value if set' do

@@ -8,8 +8,10 @@ module Deimos
     module BatchConsumption
       extend ActiveSupport::Concern
       include Phobos::BatchHandler
+      include SharedConfig
 
       # :nodoc:
+      # TODO: need to handle decoding logic here..! Use the Schema Classes
       def around_consume_batch(batch, metadata)
         payloads = []
         benchmark = Benchmark.measure do
@@ -21,7 +23,7 @@ module Deimos
           metadata[:first_offset] = batch.first&.offset
 
           payloads = batch.map do |message|
-            message.payload ? self.class.decoder.decode(message.payload) : nil
+            decode_message(message.payload)
           end
           _received_batch(payloads, metadata)
           _with_span do

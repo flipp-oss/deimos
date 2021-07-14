@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency('ruby-kafka', '< 2')
   spec.add_runtime_dependency('sigurd', '~> 0.0.1')
   spec.add_runtime_dependency('fig_tree', '~> 0.0.2')
+  spec.add_runtime_dependency('guard-rake', '~> 1')
 
   spec.add_development_dependency('activerecord-import')
   spec.add_development_dependency('avro', '~> 1.9')
@@ -30,6 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('ddtrace', '~> 0.11')
   spec.add_development_dependency('dogstatsd-ruby', '~> 4.2')
   spec.add_development_dependency('guard', '~> 2')
+  spec.add_development_dependency('guard-yield', '~> 0.1')
   spec.add_development_dependency('guard-rspec', '~> 4')
   spec.add_development_dependency('guard-rubocop', '~> 1')
   spec.add_development_dependency('mysql2', '~> 0.5')
@@ -39,7 +41,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rspec', '~> 3')
   spec.add_development_dependency('rspec_junit_formatter', '~>0.3')
   spec.add_development_dependency('rspec-rails', '~> 4')
-  spec.add_development_dependency('rubocop', '0.88.0')
+  spec.add_development_dependency('rubocop', '0.89.0')
   spec.add_development_dependency('rubocop-rspec', '1.42.0')
   spec.add_development_dependency('sqlite3', '~> 1.3')
 end

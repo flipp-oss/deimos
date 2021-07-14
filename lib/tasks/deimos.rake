@@ -2,6 +2,8 @@
 
 require 'phobos'
 require 'phobos/cli'
+require 'generators/deimos/schema_class_generator'
+require 'optparse'
 
 namespace :deimos do
   desc 'Starts Deimos in the rails environment'
@@ -29,6 +31,13 @@ namespace :deimos do
     STDOUT.sync = true
     Rails.logger.info('Running deimos:db_poller rake task.')
     Deimos::Utils::DbPoller.start!
+  end
+
+  desc 'Run Schema Model Generator'
+  task :generate_schema_models, [:schema] => [:environment] do |t, args|
+    schema = args[:schema] || []
+    Rails.logger.info("Running deimos:generate_schema_models on path #{schema}")
+    Deimos::Generators::SchemaClassGenerator.start(schema)
   end
 
 end
