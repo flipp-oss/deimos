@@ -3,7 +3,6 @@
 # :nodoc:
 module ConsumerTest
   describe Deimos::Consumer, 'Batch Consumer' do
-
     prepend_before(:each) do
       # :nodoc:
       consumer_class = Class.new(described_class) do
@@ -30,61 +29,47 @@ module ConsumerTest
       batch.concat([{ 'invalid' => 'key' }])
     end
 
-    it 'should provide backwards compatibility for BatchConsumer class' do
-      consumer_class = Class.new(Deimos::BatchConsumer) do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config field: 'test_id'
+    describe 'consume_batch' do
+      SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_class|
+        context "with Schema Class consumption #{setting}" do
+          before(:each) do
+            Deimos.configure { |config| config.consumers.use_schema_class = use_schema_class }
+          end
 
-        # :nodoc:
-        def consume_batch(_payloads, _metadata)
-          raise 'This should not be called unless call_original is set'
+          it 'should provide backwards compatibility for BatchConsumer class' do
+            consumer_class = Class.new(Deimos::BatchConsumer) do
+              schema 'MySchema'
+              namespace 'com.my-namespace'
+              key_config field: 'test_id'
+
+              # :nodoc:
+              def consume_batch(_payloads, _metadata)
+                raise 'This should not be called unless call_original is set'
+              end
+            end
+            stub_const('ConsumerTest::MyOldBatchConsumer', consumer_class)
+
+            test_consume_batch(MyOldBatchConsumer, batch) do |received, _metadata|
+              expect(received).to eq(batch)
+            end
+          end
+
+          it 'should consume a batch of messages' do
+            test_consume_batch(MyBatchConsumer, batch) do |received, _metadata|
+              expect(received).to eq(batch)
+            end
+          end
+
+          it 'should consume a message on a topic' do
+            test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
+              expect(received).to eq(batch)
+            end
+          end
+
+          it 'should fail on an invalid message in the batch' do
+            test_consume_batch_invalid_message(MyBatchConsumer, batch.concat(invalid_payloads))
+          end
         end
-      end
-      stub_const('ConsumerTest::MyOldBatchConsumer', consumer_class)
-
-      test_consume_batch(MyOldBatchConsumer, batch) do |received, _metadata|
-        expect(received).to eq(batch)
-      end
-    end
-
-    it 'should consume a batch of messages' do
-      test_consume_batch(MyBatchConsumer, batch) do |received, _metadata|
-        expect(received).to eq(batch)
-      end
-    end
-
-    it 'should consume a message on a topic' do
-      test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
-        expect(received).to eq(batch)
-      end
-    end
-
-    it 'should fail on an invalid message in the batch' do
-      test_consume_batch_invalid_message(MyBatchConsumer, batch.concat(invalid_payloads))
-    end
-
-    describe 'schema based message consumption' do
-      before(:each) do
-        Deimos.configure { |config| config.consumers.use_schema_class = true }
-      end
-
-      it 'should consume a batch of messages' do
-        test_consume_batch(MyBatchConsumer, batch) do |received, _metadata|
-          expect(received.first).to be_kind_of(Deimos::SchemaRecord)
-          expect(received.map(&:to_h)).to eq(batch)
-        end
-      end
-
-      it 'should consume a message on a topic' do
-        test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
-          expect(received.first).to be_kind_of(Deimos::SchemaRecord)
-          expect(received.map(&:to_h)).to eq(batch)
-        end
-      end
-
-      it 'should fail on an invalid message in the batch' do
-        test_consume_batch_invalid_message(MyBatchConsumer, batch.concat(invalid_payloads))
       end
     end
 

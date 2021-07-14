@@ -105,68 +105,79 @@ RSpec.describe Deimos::Generated do
       described_class.new(payload_hash)
     end
 
-    it 'should get of values of primitive types' do
-      expect(klass.a_string).to eq('some string')
-      expect(klass.a_int).to eq(-1)
-      expect(klass.a_long).to eq(1_000_000_000_000)
-      expect(klass.a_float).to eq(1.2)
-      expect(klass.a_double).to eq(1.123456789123)
-      expect(klass.an_array).to eq([1, 2])
-      expect(klass.timestamp).to eq('2021-03-22 17:43:41 +0000')
-      expect(klass.message_id).to eq('73d9551b212128f0f2a9a5038239e646')
+    context 'getting' do
+      it 'should get of values of primitive types' do
+        expect(klass.a_string).to eq('some string')
+        expect(klass.a_int).to eq(-1)
+        expect(klass.a_long).to eq(1_000_000_000_000)
+        expect(klass.a_float).to eq(1.2)
+        expect(klass.a_double).to eq(1.123456789123)
+        expect(klass.an_array).to eq([1, 2])
+        expect(klass.timestamp).to eq('2021-03-22 17:43:41 +0000')
+        expect(klass.message_id).to eq('73d9551b212128f0f2a9a5038239e646')
+      end
+
+      it 'should get the value of a_map' do
+        expect(klass.a_map).to eq({ 'some key' => 'some string value', 'another_key' => 's' })
+      end
+
+      it 'should get the value of an optional field' do
+        expect(klass.an_optional_int).to be_nil
+      end
+
+      it 'should get the value of an_enum' do
+        an_enum = klass.an_enum
+        expect(an_enum).to be_instance_of(Deimos::AnEnum)
+        expect(an_enum.an_enum).to eq('sym1')
+      end
+
+      it 'should get the value of a_record' do
+        record = klass.a_record
+        expect(record).to be_instance_of(Deimos::ARecord)
+        expect(record.a_record_field).to eq('the actual field')
+        expect(record.as_json).to eq({ 'a_record_field' => 'the actual field' })
+      end
+
+      it 'should support Hash-style element access of values' do
+        expect(klass['a_string']).to eq('some string')
+        expect(klass['a_int']).to eq(-1)
+        expect(klass['a_long']).to eq(1_000_000_000_000)
+        expect(klass['a_float']).to eq(1.2)
+        expect(klass['a_double']).to eq(1.123456789123)
+        expect(klass['an_array']).to eq([1, 2])
+      end
     end
 
-    it 'should get the value of a_map' do
-      expect(klass.a_map).to eq({ 'some key' => 'some string value', 'another_key' => 's' })
-    end
+    context 'setting' do
+      it 'should modify the value of a_string' do
+        expect(klass.a_string).to eq('some string')
+        klass.a_string = 'think different'
+        expect(klass.a_string).to eq('think different')
+      end
 
-    it 'should get the value of an optional field' do
-      expect(klass.an_optional_int).to be_nil
-    end
+      it 'should modify the value of an_optional_int' do
+        expect(klass.an_optional_int).to be_nil
+        klass.an_optional_int = 123_456
+        expect(klass.an_optional_int).to eq(123_456)
+      end
 
-    it 'should get the value of an_enum' do
-      an_enum = klass.an_enum
-      expect(an_enum).to be_instance_of(Deimos::AnEnum)
-      expect(an_enum.an_enum).to eq('sym1')
-    end
+      it 'should modify the value of an_enum' do
+        expect(klass.an_enum.an_enum).to eq('sym1')
+        klass.an_enum.an_enum = 'sym2'
+        expect(klass.an_enum.an_enum).to eq('sym2')
+        klass.an_enum = Deimos::AnEnum.new(an_enum: 'sym1')
+        expect(klass.an_enum.an_enum).to eq('sym1')
+      end
 
-    it 'should get the value of a_record' do
-      record = klass.a_record
-      expect(record).to be_instance_of(Deimos::ARecord)
-      expect(record.a_record_field).to eq('the actual field')
-      expect(record.as_json).to eq({ 'a_record_field' => 'the actual field' })
+      it 'should modify the value of a_record' do
+        record = klass.a_record
+        expect(record).to be_instance_of(Deimos::ARecord)
+        expect(record.a_record_field).to eq('the actual field')
+        expect(record.as_json).to eq({ 'a_record_field' => 'the actual field' })
+        klass.a_record = Deimos::ARecord.new(a_record_field: 'the new field')
+        expect(klass.a_record.a_record_field).to eq('the new field')
+        expect(klass.a_record.as_json).to eq({ 'a_record_field' => 'the new field' })
+      end
     end
-
-    it 'should modify the value of a_string' do
-      expect(klass.a_string).to eq('some string')
-      klass.a_string = 'think different'
-      expect(klass.a_string).to eq('think different')
-    end
-
-    it 'should modify the value of an_optional_int' do
-      expect(klass.an_optional_int).to be_nil
-      klass.an_optional_int = 123_456
-      expect(klass.an_optional_int).to eq(123_456)
-    end
-
-    it 'should modify the value of an_enum' do
-      expect(klass.an_enum.an_enum).to eq('sym1')
-      klass.an_enum.an_enum = 'sym2'
-      expect(klass.an_enum.an_enum).to eq('sym2')
-      klass.an_enum = Deimos::AnEnum.new(an_enum: 'sym1')
-      expect(klass.an_enum.an_enum).to eq('sym1')
-    end
-
-    it 'should modify the value of a_record' do
-      record = klass.a_record
-      expect(record).to be_instance_of(Deimos::ARecord)
-      expect(record.a_record_field).to eq('the actual field')
-      expect(record.as_json).to eq({ 'a_record_field' => 'the actual field' })
-      klass.a_record = Deimos::ARecord.new(a_record_field: 'the new field')
-      expect(klass.a_record.a_record_field).to eq('the new field')
-      expect(klass.a_record.as_json).to eq({ 'a_record_field' => 'the new field' })
-    end
-
   end
-
 end

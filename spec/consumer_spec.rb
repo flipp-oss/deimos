@@ -3,7 +3,6 @@
 # :nodoc:
 module ConsumerTest
   describe Deimos::Consumer, 'Message Consumer' do
-
     prepend_before(:each) do
       # :nodoc:
       consumer_class = Class.new(described_class) do
@@ -24,129 +23,109 @@ module ConsumerTest
       stub_const('ConsumerTest::MyConsumer', consumer_class)
     end
 
-    it 'should consume a message' do
-      test_consume_message(MyConsumer,
-                           'test_id' => 'foo',
-                           'some_int' => 123) do |payload, _metadata|
-                             expect(payload['test_id']).to eq('foo')
-                           end
-    end
+    describe 'consume' do
+      SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_class|
+        context "with Schema Class consumption #{setting}" do
+          before(:each) do
+            Deimos.configure { |config| config.consumers.use_schema_class = use_schema_class }
+          end
 
-    it 'should consume a nil message' do
-      test_consume_message(MyConsumer, nil) do |payload, _metadata|
-        expect(payload).to be_nil
-      end
-    end
+          it 'should consume a message' do
+            test_consume_message(MyConsumer,
+                                 'test_id' => 'foo',
+                                 'some_int' => 123) do |payload, _metadata|
+                                   expect(payload['test_id']).to eq('foo')
+                                   expect(payload['some_int']).to eq(123)
+                                 end
+          end
 
-    it 'should consume a message idempotently' do
-      # testing for a crash and re-consuming the same message/metadata
-      key = { 'test_id' => 'foo' }
-      test_metadata = { key: key }
-      allow_any_instance_of(MyConsumer).to(receive(:decode_key)) do |_instance, k|
-        k['test_id']
-      end
-      MyConsumer.new.around_consume({ 'test_id' => 'foo',
-                                      'some_int' => 123 }, test_metadata) do |_payload, metadata|
-                                        expect(metadata[:key]).to eq('foo')
-                                      end
-      MyConsumer.new.around_consume({ 'test_id' => 'foo',
-                                      'some_int' => 123 }, test_metadata) do |_payload, metadata|
-                                        expect(metadata[:key]).to eq('foo')
-                                      end
-    end
+          it 'should consume a nil message' do
+            test_consume_message(MyConsumer, nil) do |payload, _metadata|
+              expect(payload).to be_nil
+            end
+          end
 
-    it 'should consume a message on a topic' do
-      test_consume_message('my_consume_topic',
-                           'test_id' => 'foo',
-                           'some_int' => 123) do |payload, _metadata|
-                             expect(payload['test_id']).to eq('foo')
-                           end
-    end
+          it 'should consume a message idempotently' do
+            # testing for a crash and re-consuming the same message/metadata
+            key = { 'test_id' => 'foo' }
+            test_metadata = { key: key }
+            allow_any_instance_of(MyConsumer).to(receive(:decode_key)) do |_instance, k|
+              k['test_id']
+            end
+            MyConsumer.new.around_consume({ 'test_id' => 'foo',
+                                            'some_int' => 123 }, test_metadata) do |_payload, metadata|
+                                              expect(metadata[:key]).to eq('foo')
+                                            end
+            MyConsumer.new.around_consume({ 'test_id' => 'foo',
+                                            'some_int' => 123 }, test_metadata) do |_payload, metadata|
+                                              expect(metadata[:key]).to eq('foo')
+                                            end
+          end
 
-    it 'should fail on invalid message' do
-      test_consume_invalid_message(MyConsumer, 'invalid' => 'key')
-    end
+          it 'should consume a message on a topic' do
+            test_consume_message('my_consume_topic',
+                                 'test_id' => 'foo',
+                                 'some_int' => 123) do |payload, _metadata|
+                                   expect(payload['test_id']).to eq('foo')
+                                   expect(payload['some_int']).to eq(123)
+                                 end
+          end
 
-    it 'should fail if reraise is false but fatal_error is true' do
-      Deimos.configure { |config| config.consumers.reraise_errors = false }
-      test_consume_invalid_message(MyConsumer, 'fatal')
-    end
+          it 'should fail on invalid message' do
+            test_consume_invalid_message(MyConsumer, 'invalid' => 'key')
+          end
 
-    it 'should fail if fatal_error is true globally' do
-      Deimos.configure do |config|
-        config.consumers.fatal_error = proc { true }
-        config.consumers.reraise_errors = false
-      end
-      test_consume_invalid_message(MyConsumer, 'invalid' => 'key')
-    end
+          it 'should fail if reraise is false but fatal_error is true' do
+            Deimos.configure { |config| config.consumers.reraise_errors = false }
+            test_consume_invalid_message(MyConsumer, 'fatal')
+          end
 
-    it 'should fail on message with extra fields' do
-      test_consume_invalid_message(MyConsumer,
-                                   'test_id' => 'foo',
-                                   'some_int' => 123,
-                                   'extra_field' => 'field name')
-    end
+          it 'should fail if fatal_error is true globally' do
+            Deimos.configure do |config|
+              config.consumers.fatal_error = proc { true }
+              config.consumers.reraise_errors = false
+            end
+            test_consume_invalid_message(MyConsumer, 'invalid' => 'key')
+          end
 
-    it 'should not fail when before_consume fails without reraising errors' do
-      Deimos.configure { |config| config.consumers.reraise_errors = false }
-      expect {
-        test_consume_message(
-          MyConsumer,
-          { 'test_id' => 'foo',
-            'some_int' => 123 },
-          { skip_expectation: true }
-        ) { raise 'OH NOES' }
-      }.not_to raise_error
-    end
+          it 'should fail on message with extra fields' do
+            test_consume_invalid_message(MyConsumer,
+                                         'test_id' => 'foo',
+                                         'some_int' => 123,
+                                         'extra_field' => 'field name')
+          end
 
-    it 'should not fail when consume fails without reraising errors' do
-      Deimos.configure { |config| config.consumers.reraise_errors = false }
-      expect {
-        test_consume_message(
-          MyConsumer,
-          { 'invalid' => 'key' },
-          { skip_expectation: true }
-        )
-      }.not_to raise_error
-    end
+          it 'should not fail when before_consume fails without reraising errors' do
+            Deimos.configure { |config| config.consumers.reraise_errors = false }
+            expect {
+              test_consume_message(
+                MyConsumer,
+                { 'test_id' => 'foo',
+                  'some_int' => 123 },
+                { skip_expectation: true }
+              ) { raise 'OH NOES' }
+            }.not_to raise_error
+          end
 
-    it 'should call original' do
-      expect {
-        test_consume_message(MyConsumer,
-                             { 'test_id' => 'foo', 'some_int' => 123 },
-                             { call_original: true })
-      }.to raise_error('This should not be called unless call_original is set')
-    end
+          it 'should not fail when consume fails without reraising errors' do
+            Deimos.configure { |config| config.consumers.reraise_errors = false }
+            expect {
+              test_consume_message(
+                MyConsumer,
+                { 'invalid' => 'key' },
+                { skip_expectation: true }
+              )
+            }.not_to raise_error
+          end
 
-    context 'with Schema Class based message consumption' do
-      before(:each) do
-        Deimos.configure { |config| config.consumers.use_schema_class = true }
-      end
-
-      it 'should consume a message' do
-        test_consume_message(MyConsumer,
-                             'test_id' => 'foo',
-                             'some_int' => 123) do |payload, _metadata|
-                               expect(payload.test_id).to eq('foo')
-                               expect(payload["some_int"]).to eq(123)
-                               expect(payload).to be_kind_of(Deimos::SchemaRecord)
-                             end
-      end
-
-      it 'should consume a nil message' do
-        test_consume_message(MyConsumer, nil) do |payload, _metadata|
-          expect(payload).to be_nil
+          it 'should call original' do
+            expect {
+              test_consume_message(MyConsumer,
+                                   { 'test_id' => 'foo', 'some_int' => 123 },
+                                   { call_original: true })
+            }.to raise_error('This should not be called unless call_original is set')
+          end
         end
-      end
-
-      it 'should consume a message on a topic' do
-        test_consume_message('my_consume_topic',
-                             'test_id' => 'foo',
-                             'some_int' => 123) do |payload, _metadata|
-                               expect(payload.test_id).to eq('foo')
-                               expect(payload["some_int"]).to eq(123)
-                               expect(payload).to be_kind_of(Deimos::SchemaRecord)
-                             end
       end
     end
 

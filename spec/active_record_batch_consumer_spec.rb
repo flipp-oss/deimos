@@ -2,7 +2,7 @@
 
 # Wrapped in a module to prevent class leakage
 module ActiveRecordBatchConsumerTest
-  describe Deimos::ActiveRecordConsumer do
+  describe Deimos::ActiveRecordConsumer, 'Batch Consumer' do
     # Create ActiveRecord table and model
     before(:all) do
       ActiveRecord::Base.connection.create_table(:widgets, force: true) do |t|
@@ -68,133 +68,143 @@ module ActiveRecordBatchConsumerTest
       test_consume_batch(MyBatchConsumer, payloads, keys: keys, call_original: true)
     end
 
-    it 'should handle an empty batch' do
-      expect { publish_batch([]) }.not_to raise_error
-    end
+    describe 'consume_batch' do
+      SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_class|
+        context "with Schema Class consumption #{setting}" do
+          before(:each) do
+            Deimos.configure { |config| config.consumers.use_schema_class = use_schema_class }
+          end
 
-    it 'should create records from a batch' do
-      publish_batch(
-        [
-          { key: 1,
-            payload: { test_id: 'abc', some_int: 3 } },
-          { key: 2,
-            payload: { test_id: 'def', some_int: 4 } }
-        ]
-      )
+          it 'should handle an empty batch' do
+            expect { publish_batch([]) }.not_to raise_error
+          end
 
-      expect(all_widgets).
-        to match_array(
-          [
-            have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start, created_at: start),
-            have_attributes(id: 2, test_id: 'def', some_int: 4, updated_at: start, created_at: start)
-          ]
-        )
-    end
+          it 'should create records from a batch' do
+            publish_batch(
+              [
+                { key: 1,
+                  payload: { test_id: 'abc', some_int: 3 } },
+                { key: 2,
+                  payload: { test_id: 'def', some_int: 4 } }
+              ]
+            )
 
-    it 'should handle deleting a record that doesn\'t exist' do
-      publish_batch(
-        [
-          { key: 1,
-            payload: nil }
-        ]
-      )
+            expect(all_widgets).
+              to match_array(
+                [
+                  have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start, created_at: start),
+                  have_attributes(id: 2, test_id: 'def', some_int: 4, updated_at: start, created_at: start)
+                ]
+              )
+          end
 
-      expect(all_widgets).to be_empty
-    end
+          it 'should handle deleting a record that doesn\'t exist' do
+            publish_batch(
+              [
+                { key: 1,
+                  payload: nil }
+              ]
+            )
 
-    it 'should handle an update, followed by a delete in the correct order' do
-      Widget.create!(id: 1, test_id: 'abc', some_int: 2)
+            expect(all_widgets).to be_empty
+          end
 
-      publish_batch(
-        [
-          { key: 1,
-            payload: { test_id: 'abc', some_int: 3 } },
-          { key: 1,
-            payload: nil }
-        ]
-      )
+          it 'should handle an update, followed by a delete in the correct order' do
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2)
 
-      expect(all_widgets).to be_empty
-    end
+            publish_batch(
+              [
+                { key: 1,
+                  payload: { test_id: 'abc', some_int: 3 } },
+                { key: 1,
+                  payload: nil }
+              ]
+            )
 
-    it 'should handle a delete, followed by an update in the correct order' do
-      Widget.create!(id: 1, test_id: 'abc', some_int: 2)
+            expect(all_widgets).to be_empty
+          end
 
-      travel 1.day
+          it 'should handle a delete, followed by an update in the correct order' do
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2)
 
-      publish_batch(
-        [
-          { key: 1,
-            payload: nil },
-          { key: 1,
-            payload: { test_id: 'abc', some_int: 3 } }
-        ]
-      )
+            travel 1.day
 
-      expect(all_widgets).
-        to match_array(
-          [
-            have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: Time.zone.now, created_at: Time.zone.now)
-          ]
-        )
-    end
+            publish_batch(
+              [
+                { key: 1,
+                  payload: nil },
+                { key: 1,
+                  payload: { test_id: 'abc', some_int: 3 } }
+              ]
+            )
 
-    it 'should handle a double update' do
-      Widget.create!(id: 1, test_id: 'abc', some_int: 2)
+            expect(all_widgets).
+              to match_array(
+                [
+                  have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: Time.zone.now, created_at: Time.zone.now)
+                ]
+              )
+          end
 
-      travel 1.day
+          it 'should handle a double update' do
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2)
 
-      publish_batch(
-        [
-          { key: 1,
-            payload: { test_id: 'def', some_int: 3 } },
-          { key: 1,
-            payload: { test_id: 'ghi', some_int: 4 } }
-        ]
-      )
+            travel 1.day
 
-      expect(all_widgets).
-        to match_array(
-          [
-            have_attributes(id: 1, test_id: 'ghi', some_int: 4, updated_at: Time.zone.now, created_at: start)
-          ]
-        )
-    end
+            publish_batch(
+              [
+                { key: 1,
+                  payload: { test_id: 'def', some_int: 3 } },
+                { key: 1,
+                  payload: { test_id: 'ghi', some_int: 4 } }
+              ]
+            )
 
-    it 'should handle a double deletion' do
-      Widget.create!(id: 1, test_id: 'abc', some_int: 2)
+            expect(all_widgets).
+              to match_array(
+                [
+                  have_attributes(id: 1, test_id: 'ghi', some_int: 4, updated_at: Time.zone.now, created_at: start)
+                ]
+              )
+          end
 
-      publish_batch(
-        [
-          { key: 1,
-            payload: nil },
-          { key: 1,
-            payload: nil }
-        ]
-      )
+          it 'should handle a double deletion' do
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2)
 
-      expect(all_widgets).to be_empty
-    end
+            publish_batch(
+              [
+                { key: 1,
+                  payload: nil },
+                { key: 1,
+                  payload: nil }
+              ]
+            )
 
-    it 'should ignore default scopes' do
-      Widget.create!(id: 1, test_id: 'abc', some_int: 2, deleted: true)
-      Widget.create!(id: 2, test_id: 'def', some_int: 3, deleted: true)
+            expect(all_widgets).to be_empty
+          end
 
-      publish_batch(
-        [
-          { key: 1,
-            payload: nil },
-          { key: 2,
-            payload: { test_id: 'def', some_int: 5 } }
-        ]
-      )
+          it 'should ignore default scopes' do
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2, deleted: true)
+            Widget.create!(id: 2, test_id: 'def', some_int: 3, deleted: true)
 
-      expect(all_widgets).
-        to match_array(
-          [
-            have_attributes(id: 2, test_id: 'def', some_int: 5)
-          ]
-        )
+            publish_batch(
+              [
+                { key: 1,
+                  payload: nil },
+                { key: 2,
+                  payload: { test_id: 'def', some_int: 5 } }
+              ]
+            )
+
+            expect(all_widgets).
+              to match_array(
+                [
+                  have_attributes(id: 2, test_id: 'def', some_int: 5)
+                ]
+              )
+          end
+        end
+      end
     end
 
     describe 'compacted mode' do
@@ -475,141 +485,6 @@ module ActiveRecordBatchConsumerTest
 
         expect(all_widgets).
           to match_array([have_attributes(id: 2, test_id: 'abc123')])
-      end
-    end
-
-    context 'with Schema Class based message consumption' do
-      before(:each) do
-        Deimos.configure { |config| config.consumers.use_schema_class = true }
-      end
-
-      it 'should handle an empty batch' do
-        expect { publish_batch([]) }.not_to raise_error
-      end
-
-      it 'should create records from a batch' do
-        publish_batch(
-          [
-            { key: 1,
-              payload: { test_id: 'abc', some_int: 3 } },
-            { key: 2,
-              payload: { test_id: 'def', some_int: 4 } }
-          ]
-        )
-
-        expect(all_widgets).
-          to match_array(
-               [
-                 have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start, created_at: start),
-                 have_attributes(id: 2, test_id: 'def', some_int: 4, updated_at: start, created_at: start)
-               ]
-             )
-      end
-
-      it 'should handle deleting a record that doesn\'t exist' do
-        publish_batch(
-          [
-            { key: 1,
-              payload: nil }
-          ]
-        )
-
-        expect(all_widgets).to be_empty
-      end
-
-      it 'should handle an update, followed by a delete in the correct order' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2)
-
-        publish_batch(
-          [
-            { key: 1,
-              payload: { test_id: 'abc', some_int: 3 } },
-            { key: 1,
-              payload: nil }
-          ]
-        )
-
-        expect(all_widgets).to be_empty
-      end
-
-      it 'should handle a delete, followed by an update in the correct order' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2)
-
-        travel 1.day
-
-        publish_batch(
-          [
-            { key: 1,
-              payload: nil },
-            { key: 1,
-              payload: { test_id: 'abc', some_int: 3 } }
-          ]
-        )
-
-        expect(all_widgets).
-          to match_array(
-               [
-                 have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: Time.zone.now, created_at: Time.zone.now)
-               ]
-             )
-      end
-
-      it 'should handle a double update' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2)
-
-        travel 1.day
-
-        publish_batch(
-          [
-            { key: 1,
-              payload: { test_id: 'def', some_int: 3 } },
-            { key: 1,
-              payload: { test_id: 'ghi', some_int: 4 } }
-          ]
-        )
-
-        expect(all_widgets).
-          to match_array(
-               [
-                 have_attributes(id: 1, test_id: 'ghi', some_int: 4, updated_at: Time.zone.now, created_at: start)
-               ]
-             )
-      end
-
-      it 'should handle a double deletion' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2)
-
-        publish_batch(
-          [
-            { key: 1,
-              payload: nil },
-            { key: 1,
-              payload: nil }
-          ]
-        )
-
-        expect(all_widgets).to be_empty
-      end
-
-      it 'should ignore default scopes' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2, deleted: true)
-        Widget.create!(id: 2, test_id: 'def', some_int: 3, deleted: true)
-
-        publish_batch(
-          [
-            { key: 1,
-              payload: nil },
-            { key: 2,
-              payload: { test_id: 'def', some_int: 5 } }
-          ]
-        )
-
-        expect(all_widgets).
-          to match_array(
-               [
-                 have_attributes(id: 2, test_id: 'def', some_int: 5)
-               ]
-             )
       end
     end
   end
