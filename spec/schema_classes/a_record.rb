@@ -7,20 +7,21 @@ module Deimos
     attr_accessor :a_record_field
 
     # @override
-    def initialize(a_record_field:)
+    def initialize(**kwargs)
       super()
-      @a_record_field = a_record_field
+      args = kwargs.with_indifferent_access
+      @a_record_field = args[:a_record_field]
     end
 
     # @override
-    def self.initialize_from_hash(hash)
-      return unless hash.any?
+    def self.initialize_from_payload(payload)
+      return unless payload.any?
 
-      payload = {}
-      hash.each do |key, value|
-        payload[key.to_sym] = value
+      args = {}
+      payload.each do |key, value|
+        args[key.to_sym] = value
       end
-      self.new(payload)
+      self.new(**args)
     end
 
     # @override

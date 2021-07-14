@@ -10,10 +10,10 @@ module Deimos
       super()
     end
 
-    # Recursively initializes the SchemaRecord from a raw hash
-    # @param _hash[Hash]
+    # Recursively initializes the SchemaRecord from a raw payload
+    # @param _payload[Hash]
     # @return [Deimos::SchemaRecord]
-    def self.initialize_from_hash(_hash)
+    def self.initialize_from_payload(_payload)
       raise NotImplementedError
     end
 

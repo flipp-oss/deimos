@@ -9,21 +9,22 @@ module Deimos
     attr_accessor :some_int
 
     # @override
-    def initialize(test_id:, some_int:)
+    def initialize(**kwargs)
       super()
-      @test_id = test_id
-      @some_int = some_int
+      args = kwargs.with_indifferent_access
+      @test_id = args[:test_id]
+      @some_int = args[:some_int]
     end
 
     # @override
-    def self.initialize_from_hash(hash)
-      return unless hash.any?
+    def self.initialize_from_payload(payload)
+      return unless payload.any?
 
-      payload = {}
-      hash.each do |key, value|
-        payload[key.to_sym] = value
+      args = {}
+      payload.each do |key, value|
+        args[key.to_sym] = value
       end
-      self.new(payload)
+      self.new(**args)
     end
 
     # @override

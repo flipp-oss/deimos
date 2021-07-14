@@ -88,7 +88,8 @@ describe Deimos, 'configuration' do
           offset_commit_threshold: 0,
           offset_retention_time: nil,
           heartbeat_interval: 10,
-          handler: 'ConsumerTest::MyConsumer'
+          handler: 'ConsumerTest::MyConsumer',
+          use_schema_class: nil
         }, {
           topic: 'my_batch_consume_topic',
           group_id: 'my_batch_group_id',
@@ -104,7 +105,8 @@ describe Deimos, 'configuration' do
           offset_commit_threshold: 0,
           offset_retention_time: nil,
           heartbeat_interval: 10,
-          handler: 'ConsumerTest::MyBatchConsumer'
+          handler: 'ConsumerTest::MyBatchConsumer',
+          use_schema_class: nil
         }
       ],
       producer: {
@@ -180,6 +182,7 @@ describe Deimos, 'configuration' do
         offset_commit_threshold 13
         offset_retention_time 13
         heartbeat_interval 13
+        use_schema_class false
       end
       consumer do
         disabled true
@@ -187,6 +190,7 @@ describe Deimos, 'configuration' do
         schema 'blah2'
         topic 'blah2'
         group_id 'myconsumerid2'
+        use_schema_class false
       end
     end
 
@@ -229,7 +233,8 @@ describe Deimos, 'configuration' do
             offset_commit_threshold: 13,
             offset_retention_time: 13,
             heartbeat_interval: 13,
-            handler: 'MyConfigConsumer'
+            handler: 'MyConfigConsumer',
+            use_schema_class: false
           }
         ],
         producer: {
