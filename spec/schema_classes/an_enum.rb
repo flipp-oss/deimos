@@ -7,14 +7,9 @@ module Deimos
     attr_accessor :an_enum
 
     # :nodoc:
-    def initialize(an_enum:)
+    def initialize(an_enum)
       super()
       @an_enum = an_enum
-    end
-
-    # :nodoc:
-    def self.initialize_from_value(value)
-      self.new(an_enum: value)
     end
 
     # @override

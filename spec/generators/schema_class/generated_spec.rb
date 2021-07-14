@@ -10,7 +10,7 @@ RSpec.describe Deimos::Generated do
       a_float: 1.2,
       a_double: 1.123456789123,
       an_optional_int: nil,
-      an_enum: Deimos::AnEnum.new(an_enum: 'sym1'),
+      an_enum: Deimos::AnEnum.new('sym1'),
       an_array: [1, 2],
       a_map: { 'some key' => 'some string value', 'another_key' => 's' },
       timestamp: '2021-03-22 17:43:41 +0000',
@@ -47,7 +47,7 @@ RSpec.describe Deimos::Generated do
 
     it 'should initialize the class from a hash with strings as keys' do
       string_payload = described_class.new(payload_hash).as_json
-      klass = described_class.initialize_from_hash(string_payload)
+      klass = described_class.initialize_from_payload(string_payload)
       expect(klass).to be_instance_of(described_class)
       expect(klass.a_float).to eq(1.2)
       expect(klass.a_record).to be_instance_of(Deimos::ARecord)
@@ -58,7 +58,7 @@ RSpec.describe Deimos::Generated do
 
   describe 'base class methods' do
     let(:klass) do
-      described_class.new(payload_hash)
+      described_class.new(**payload_hash)
     end
 
     let(:schema_fields) do
@@ -76,6 +76,7 @@ RSpec.describe Deimos::Generated do
     end
 
     it 'should return a hash of the payload' do
+      described_class.new(**payload_hash)
       payload_h = {
         'a_string' => 'some string',
         'a_int' => -1,
@@ -165,7 +166,7 @@ RSpec.describe Deimos::Generated do
         expect(klass.an_enum.an_enum).to eq('sym1')
         klass.an_enum.an_enum = 'sym2'
         expect(klass.an_enum.an_enum).to eq('sym2')
-        klass.an_enum = Deimos::AnEnum.new(an_enum: 'sym1')
+        klass.an_enum = Deimos::AnEnum.new('sym1')
         expect(klass.an_enum.an_enum).to eq('sym1')
       end
 

@@ -58,20 +58,10 @@ module Deimos
       decoded_payload = payload ? self.class.decoder.decode(payload) : nil
       return decoded_payload unless Deimos.config.consumers.use_schema_class && decoded_payload.present?
 
-      _schema_class_record(decoded_payload)
+      schema_class_record(decoded_payload)
     end
 
   private
-
-    # Placeholder method for converting the decoded payload into an instance of the Schema Class
-    # @param decoded_payload [Hash]
-    # @return [Deimos::SchemaRecord]
-    def _schema_class_record(decoded_payload)
-      klass = classified_schema(self.class.config[:schema])
-      return decoded_payload if klass.nil?
-
-      klass.initialize_from_hash(decoded_payload)
-    end
 
     def _with_span
       @span = Deimos.config.tracer&.start(

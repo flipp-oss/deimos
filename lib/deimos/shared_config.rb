@@ -58,6 +58,17 @@ module Deimos
         config[:key_field] = field&.to_s
         config[:key_schema] = schema
       end
+
+    end
+
+    # Converts a raw payload into an instance of the Schema Class
+    # @param payload [Hash]
+    # @return [Deimos::SchemaRecord]
+    def schema_class_record(payload)
+      klass = classified_schema(self.class.config[:schema])
+      return payload if klass.nil?
+
+      klass.initialize_from_payload(payload)
     end
   end
 end

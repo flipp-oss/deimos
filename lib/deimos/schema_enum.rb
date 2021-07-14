@@ -6,12 +6,6 @@ module Deimos
   # Base Class for Enum Classes generated from Avro.
   class SchemaEnum
 
-    # Initializes this enum from a value
-    # @return [Deimos::SchemaEnum]
-    def initialize_from_value(_value)
-      raise NotImplementedError
-    end
-
     # Returns all the valid symbols for this enum.
     # @return [Array<String>]
     def symbols

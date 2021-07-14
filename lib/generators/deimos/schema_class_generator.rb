@@ -72,9 +72,9 @@ module Deimos
             avro_type = field_type(avro_schema)
             result[avro_type][:field_names] << ":#{field.name}"
             result[avro_type][:method] = if avro_schema.type_sym == :record
-                                           'initialize_from_hash'
+                                           'initialize_from_payload(value)'
                                          else
-                                           'initialize_from_value'
+                                           "new(value)"
                                          end
           end
           result

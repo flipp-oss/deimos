@@ -126,11 +126,6 @@ module Deimos
 
     setting :consumers do
 
-      # Whether or not to use the generated schema classes in consumers
-      # rather than raw hashes
-      # @return [Boolean]
-      setting :use_schema_class, false
-
       # Number of seconds after which, if a client hasn't contacted the Kafka cluster,
       # it will be kicked out of the group.
       # @return [Integer]
@@ -167,6 +162,11 @@ module Deimos
       # Not needed if reraise_errors is set to true.
       # @return [Block]
       setting(:fatal_error, proc { false })
+
+      # Whether or not to use the generated schema classes in consumers
+      # rather than raw hashes
+      # @return [Boolean]
+      setting :use_schema_class, false
     end
 
     setting :producers do
@@ -338,6 +338,10 @@ module Deimos
       # listener.
       # @return [Boolean]
       setting :disabled, false
+
+      # Whether or not to use the generated schema classes for this consumer
+      # @return [Boolean]
+      setting :use_schema_class
 
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.

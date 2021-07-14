@@ -27,42 +27,41 @@ module Deimos
     attr_accessor :message_id
     # @return [Deimos::ARecord]
     attr_accessor :a_record
-    # @return [nil, Deimos::ARecord]
-    attr_accessor :some_optional_record
 
     # @override
-    def initialize(a_string:, a_int:, a_long:, a_float:, a_double:, an_optional_int:, an_enum:, an_array:, a_map:, timestamp:, message_id:, a_record:)
+    def initialize(**kwargs)
       super()
-      @a_string = a_string
-      @a_int = a_int
-      @a_long = a_long
-      @a_float = a_float
-      @a_double = a_double
-      @an_optional_int = an_optional_int
-      @an_enum = an_enum
-      @an_array = an_array
-      @a_map = a_map
-      @timestamp = timestamp
-      @message_id = message_id
-      @a_record = a_record
+      args = kwargs.with_indifferent_access
+      @a_string = args[:a_string]
+      @a_int = args[:a_int]
+      @a_long = args[:a_long]
+      @a_float = args[:a_float]
+      @a_double = args[:a_double]
+      @an_optional_int = args[:an_optional_int]
+      @an_enum = args[:an_enum]
+      @an_array = args[:an_array]
+      @a_map = args[:a_map]
+      @timestamp = args[:timestamp]
+      @message_id = args[:message_id]
+      @a_record = args[:a_record]
     end
 
     # @override
-    def self.initialize_from_hash(hash)
-      return unless hash.any?
+    def self.initialize_from_payload(payload)
+      return unless payload.any?
 
-      payload = {}
-      hash.each do |key, value|
-        payload[key.to_sym] = case key.to_sym
-                              when :an_enum
-                                Deimos::AnEnum.initialize_from_value(value)
-                              when :a_record
-                                Deimos::ARecord.initialize_from_hash(value)
-                              else
-                                value
-                              end
+      args = {}
+      payload.each do |key, value|
+        args[key.to_sym] = case key.to_sym
+                           when :an_enum
+                             Deimos::AnEnum.new(value)
+                           when :a_record
+                             Deimos::ARecord.initialize_from_payload(value)
+                           else
+                             value
+                           end
       end
-      self.new(payload)
+      self.new(**args)
     end
 
     # @override

@@ -380,9 +380,9 @@ module Deimos
       use_schema_class = Deimos.config.consumers.use_schema_class && schema_class.present?
       if use_schema_class
         expected = if input.is_a?(Array)
-                     input.map { |hash| schema_class.initialize_from_hash(hash) if hash.present? }
+                     input.map { |payload| schema_class.initialize_from_payload(payload) if payload.present? }
                    else
-                     schema_class.initialize_from_hash(input) if input.present?
+                     schema_class.initialize_from_payload(input) if input.present?
                    end
       end
 
