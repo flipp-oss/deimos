@@ -84,7 +84,6 @@ module Deimos
     end
 
     def _report_time_delayed(payload, metadata)
-      payload = payload.is_a?(Deimos::SchemaRecord) ? payload.to_h : payload
       return if payload.nil? || payload['timestamp'].blank?
 
       begin

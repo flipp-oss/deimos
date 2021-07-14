@@ -18,8 +18,6 @@ module Deimos
       # @param payloads [Array<Object>] Decoded payloads as a Deimos::SchemaRecord or Hash
       # @param metadata [Hash] Information about batch, including keys.
       def consume_batch(payloads, metadata)
-        payloads = normalize_payloads(payloads)
-
         messages = payloads.
           zip(metadata[:keys]).
           map { |p, k| Deimos::Message.new(p, nil, key: k) }
@@ -160,18 +158,6 @@ module Deimos
         return batch unless batch.first&.key.present?
 
         batch.reverse.uniq(&:key).reverse!
-      end
-
-      # Normalize the payloads as Hash objects
-      # Primarily used for SchemaRecords
-      # @param payloads [Array<Object>]
-      # @return [Array<Hash>]
-      def normalize_payloads(payloads)
-        if payloads.any? {|p| p.is_a?(Deimos::SchemaRecord) }
-          payloads.map { |p| normalize_payload(p) }
-        else
-          payloads
-        end
       end
     end
   end

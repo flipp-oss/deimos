@@ -128,6 +128,7 @@ module ConsumerTest
                              'test_id' => 'foo',
                              'some_int' => 123) do |payload, _metadata|
                                expect(payload.test_id).to eq('foo')
+                               expect(payload["some_int"]).to eq(123)
                                expect(payload).to be_kind_of(Deimos::SchemaRecord)
                              end
       end
@@ -143,6 +144,7 @@ module ConsumerTest
                              'test_id' => 'foo',
                              'some_int' => 123) do |payload, _metadata|
                                expect(payload.test_id).to eq('foo')
+                               expect(payload["some_int"]).to eq(123)
                                expect(payload).to be_kind_of(Deimos::SchemaRecord)
                              end
       end

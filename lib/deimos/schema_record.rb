@@ -7,6 +7,7 @@ module Deimos
   class SchemaRecord
     # :nodoc:
     def initialize
+      super()
     end
 
     # Recursively initializes the SchemaRecord from a raw hash
@@ -14,6 +15,18 @@ module Deimos
     # @return [Deimos::SchemaRecord]
     def self.initialize_from_hash(_hash)
       raise NotImplementedError
+    end
+
+    # Element access method as if this Object were a hash
+    # @param key[String||Symbol]
+    # @return [Object] The value of the attribute if exists, nil otherwise
+    def [](key)
+      self.try(key.to_sym)
+    end
+
+    # :nodoc
+    def with_indifferent_access
+      self
     end
 
     # Returns the schema name of the inheriting class.
@@ -62,6 +75,28 @@ module Deimos
     # @return [Hash] the payload as a hash.
     def to_h
       raise NotImplementedError
+    end
+
+    # :nodoc:
+    def ==(other)
+      comparison = other
+      if other.class == self.class
+        comparison = other.state
+      end
+
+      comparison == self.state
+    end
+
+  protected
+
+    # :nodoc:
+    def state
+      as_json
+    end
+
+    # :nodoc:
+    def hash
+      state.hash
     end
   end
 end

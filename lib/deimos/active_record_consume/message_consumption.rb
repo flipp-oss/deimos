@@ -35,7 +35,6 @@ module Deimos
           return
         end
 
-        payload = normalize_payload(payload)
         key = metadata.with_indifferent_access[:key]
         klass = self.class.config[:record_class]
         record = fetch_record(klass, (payload || {}).with_indifferent_access, key)
@@ -74,14 +73,6 @@ module Deimos
       # @param record [ActiveRecord::Base]
       def destroy_record(record)
         record&.destroy
-      end
-
-      # Normalize the payload as a Hash object
-      # Primarily used for SchemaRecords
-      # @param payload [Object]
-      # @return [Hash]
-      def normalize_payload(payload)
-        payload.is_a?(Deimos::SchemaRecord) ? payload.to_h : payload
       end
     end
   end
