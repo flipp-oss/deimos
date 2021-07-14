@@ -375,17 +375,19 @@ module Deimos
                                       &block)
       schema_class = handler.classified_schema(handler.class.config[:schema])
 
-      use_schema_class = Deimos.config.consumers.use_schema_class &&
-        schema_class.present? &&
-        input.present? && input.any?
+      expected = input
 
-      expectation = if use_schema_class
-                      expected = an_instance_of(schema_class)
-                      expected = input.is_a?(Array) ? array_including(expected) : expected
-                      expect(handler).to receive(method).with(expected, anything, &block)
-                    else
-                      expect(handler).to receive(method).with(input, anything, &block)
-                    end
+      use_schema_class = Deimos.config.consumers.use_schema_class && schema_class.present?
+      if use_schema_class
+        expected = if input.is_a?(Array)
+                     input.map { |hash| schema_class.initialize_from_hash(hash) if hash.present? }
+                   else
+                     schema_class.initialize_from_hash(input) if input.present?
+                   end
+      end
+
+      expectation = expect(handler).to receive(method).with(expected, anything, &block)
+
 
       expectation.and_call_original if call_original
     end
