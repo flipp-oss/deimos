@@ -262,11 +262,13 @@ each_db_config(Deimos::Utils::DbProducer) do
     end
 
     it 'should register an error if it gets an error' do
+      allow(producer).to receive(:shutdown_producer)
       expect(producer).to receive(:retrieve_messages).and_raise('OH NOES')
       expect(Deimos::KafkaTopicInfo).to receive(:register_error).
         with('my-topic', 'abc')
       expect(producer).not_to receive(:produce_messages)
       producer.process_topic('my-topic')
+      expect(producer).to have_received(:shutdown_producer)
     end
 
     it 'should move on if it gets a partial batch' do
