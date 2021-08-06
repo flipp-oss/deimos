@@ -58,6 +58,7 @@ module Deimos
         payload.delete_if do |k, _|
           k.to_sym != :payload_key && !fields.map(&:name).include?(k)
         end
+        # WIP: Will need to update this method AND provide documentation to others using this to optionally(?) send in the SchemaRecord!
       end
 
       # Query to use when polling the database with the DbPoller. Add

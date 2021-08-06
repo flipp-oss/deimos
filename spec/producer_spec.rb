@@ -390,6 +390,104 @@ module ProducerTest
                                                       }, '456', '4561')
     end
 
+    context 'with Schema Class payloads' do
+      it 'should fail on invalid message with error handler' do
+        subscriber = Deimos.subscribe('produce') do |event|
+          expect(event.payload[:payloads]).to eq([{ 'invalid' => 'key' }])
+        end
+        expect(MyProducer.encoder).to receive(:validate).and_raise('OH NOES')
+        expect {
+          MyProducer.publish(Deimos::MySchema.new(test_id: 'foo', some_int: 'invalid'))
+        }.to raise_error('OH NOES')
+        Deimos.unsubscribe(subscriber)
+      end
+
+      it 'should produce a message' do
+        expect(described_class).to receive(:produce_batch).once.with(
+          Deimos::Backends::Test,
+          [
+            Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
+                                MyProducer,
+                                topic: 'my-topic',
+                                partition_key: 'foo',
+                                key: 'foo'),
+            Deimos::Message.new({ 'test_id' => 'bar', 'some_int' => 124 },
+                                MyProducer,
+                                topic: 'my-topic',
+                                partition_key: 'bar',
+                                key: 'bar')
+          ]
+        ).and_call_original
+
+        MyProducer.publish_list(
+          [Deimos::MySchema.new(test_id: 'foo', some_int: 123),
+           Deimos::MySchema.new(test_id: 'bar', some_int: 124)]
+        )
+        expect('my-topic').to have_sent('test_id' => 'foo', 'some_int' => 123)
+        expect('your-topic').not_to have_sent('test_id' => 'foo', 'some_int' => 123)
+        expect('my-topic').not_to have_sent('test_id' => 'foo2', 'some_int' => 123)
+      end
+
+      it 'should not publish if publish disabled' do
+        expect(described_class).not_to receive(:produce_batch)
+        Deimos.configure { |c| c.producers.disabled = true }
+        MyProducer.publish_list(
+          [Deimos::MySchema.new(test_id: 'foo', some_int: 123),
+           Deimos::MySchema.new(test_id: 'bar', some_int: 124)]
+        )
+        expect(MyProducer.topic).not_to have_sent(anything)
+      end
+
+      it 'should encode the key' do
+        Deimos.configure { |c| c.producers.topic_prefix = nil }
+        expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
+        expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'bar', topic: 'my-topic-key')
+        expect(MyProducer.encoder).to receive(:encode).with({
+                                                              'test_id' => 'foo',
+                                                              'some_int' => 123
+                                                            }, { topic: 'my-topic-value' })
+        expect(MyProducer.encoder).to receive(:encode).with({
+                                                              'test_id' => 'bar',
+                                                              'some_int' => 124
+                                                            }, { topic: 'my-topic-value' })
+
+        MyProducer.publish_list(
+          [Deimos::MySchema.new(test_id: 'foo', some_int: 123),
+           Deimos::MySchema.new(test_id: 'bar', some_int: 124)]
+        )
+      end
+
+      it 'should properly encode and coerce values with a nested record' do
+        expect(MyNestedSchemaProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
+        MyNestedSchemaProducer.publish(
+          Deimos::MyNestedSchema.new(
+            test_id: 'foo',
+            test_float: BigDecimal('123.456'),
+            test_array: ['1'],
+            some_nested_record: Deimos::MyNestedRecord.new(
+              some_int: 123,
+              some_float: BigDecimal('456.789'),
+              some_string: '123',
+              some_optional_int: nil
+            ),
+            some_optional_record: nil
+          )
+        )
+        expect(MyNestedSchemaProducer.topic).to have_sent(
+          'test_id' => 'foo',
+          'test_float' => 123.456,
+          'test_array' => ['1'],
+          'some_nested_record' => {
+            'some_int' => 123,
+            'some_float' => 456.789,
+            'some_string' => '123',
+            'some_optional_int' => nil
+          },
+          'some_optional_record' => nil
+        )
+      end
+    end
+
     describe 'disabling' do
       it 'should disable globally' do
         Deimos.disable_producers do

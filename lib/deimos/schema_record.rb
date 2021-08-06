@@ -64,14 +64,13 @@ module Deimos
       to_h.to_json
     end
 
-    # Converts the object to a hash which can be used in Kafka.
+    # Converts the object to a hash which can be used for debugging.
     # @return [Hash] a hash representation of the payload
     def as_json(_opts={})
       JSON.parse(to_json)
     end
 
-    # Converts the object attributes to a hash
-    # TODO: Decide if this should do recursion to call class to_h's too
+    # Converts the object attributes to a hash which can be used for Kafka
     # @return [Hash] the payload as a hash.
     def to_h
       raise NotImplementedError

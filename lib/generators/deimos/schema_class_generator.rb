@@ -58,6 +58,19 @@ module Deimos
           @current_schema.fields.map { |field| Deimos::SchemaField.new(field.name, field.type) }
         end
 
+        # @param avro_schema [Avro::Schema::NamedSchema]
+        # @return [Boolean]
+        def schema_is_record?(avro_schema)
+          case avro_schema.type_sym
+          when :record
+            true
+          when :union
+            avro_schema.schemas.map(&method(:schema_is_record?)).any?
+          else
+            false
+          end
+        end
+
         # Retrieve any special formatting needed for this current schema's fields
         # Includes additional initialization methods for Records and Enums and covers unions.
         # @return [Hash<String, Hash>]
@@ -74,21 +87,18 @@ module Deimos
             result[avro_type][:method] = if avro_schema.type_sym == :record
                                            'initialize_from_payload(value)'
                                          else
-                                           "new(value)"
+                                           'new(value)'
                                          end
           end
           result
         end
 
-        # Converts a given Union into the most-likely String form of its special type
-        # @param field [Deimos::SchemaField]
-        # @return [String] A string representation of the Type of this Union
-        def union_special_field_type(field)
-          # Return a union's most likely type
-          field.type.schemas.each do |schema|
-            return field_type(schema) if SPECIAL_TYPES.include?(schema.type_sym)
-          end
-          nil
+        # @param field[SchemaField]
+        # @return [String]
+        def field_to_h_formatting(field)
+          "'#{field.name}' => @#{field.name}" +
+            (schema_is_record?(field.type) ? '&.to_h' : '') +
+            (field.name == fields.last.name ? '' : ',')
         end
 
         # Converts Deimos::SchemaField's to String form for generated YARD docs

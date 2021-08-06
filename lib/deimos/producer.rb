@@ -86,14 +86,14 @@ module Deimos
       end
 
       # Publish the payload to the topic.
-      # @param payload [Hash] with an optional payload_key hash key.
+      # @param payload [Hash|SchemaRecord] with an optional payload_key hash key.
       # @param topic [String] if specifying the topic
       def publish(payload, topic: self.topic)
         publish_list([payload], topic: topic)
       end
 
       # Publish a list of messages.
-      # @param payloads [Hash|Array<Hash>] with optional payload_key hash key.
+      # @param payloads [Array<Hash|SchemaRecord>] with optional payload_key hash key.
       # @param sync [Boolean] if given, override the default setting of
       # whether to publish synchronously.
       # @param force_send [Boolean] if true, ignore the configured backend
@@ -113,7 +113,11 @@ module Deimos
           topic: topic,
           payloads: payloads
         ) do
-          messages = Array(payloads).map { |p| Deimos::Message.new(p, self) }
+          # Using #as_json as to decode a [Deimos::SchemaMessage]
+          messages = Array(payloads).map do |p|
+            payload = p.is_a?(SchemaRecord) ? p.to_h : p
+            Deimos::Message.new(payload, self)
+          end
           messages.each { |m| _process_message(m, topic) }
           messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
             self.produce_batch(backend_class, batch)
