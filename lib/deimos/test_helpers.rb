@@ -18,6 +18,25 @@ module Deimos
       def sent_messages
         Deimos::Backends::Test.sent_messages
       end
+
+      # Set the config to the right settings for a unit test
+      def unit_test!
+        Deimos.configure do |deimos_config|
+          deimos_config.logger = Logger.new(STDOUT)
+          deimos_config.consumers.reraise_errors = true
+          deimos_config.kafka.seed_brokers ||= ['test_broker']
+          deimos_config.schema.backend = Deimos.schema_backend_class.mock_backend
+          deimos_config.producers.backend = :test
+        end
+      end
+
+      # Set the config to the right settings for a kafka test
+      def kafka_test!
+        Deimos.configure do |deimos_config|
+          deimos_config.producers.backend = :kafka
+          deimos_config.schema.backend = :avro_validation
+        end
+      end
     end
 
     included do
@@ -33,37 +52,6 @@ module Deimos
         end
       end
 
-    end
-
-    # Test default for Deimos
-    DEFAULT_TEST_CONFIG = {
-      logger: Logger.new(STDOUT),
-      consumers: { reraise_errors: true },
-      kafka: { seed_brokers: ['test_broker'] },
-      schema: { backend: Deimos.schema_backend_class.mock_backend },
-      producers: { backend: :test }
-    }.freeze
-
-    # Call in your examples to configure Deimos
-    # @param options <Hash>
-    def configure_deimos(options={})
-      # Merge with the test defaults
-      options = DEFAULT_TEST_CONFIG.deep_merge(options)
-
-      Deimos.configure do |d_config|
-        options.each do |key, value|
-          # If the config options are nested.
-          # Assuming that there is only one level of nesting
-          if value.is_a?(Hash)
-            value.each do |k, v|
-              d_config.send(key.to_sym).send(k.to_sym, v)
-            end
-          #  If the values are not nested, then simply assign them
-          else
-            d_config.send(key.to_sym, value)
-          end
-        end
-      end
     end
 
     # @deprecated
