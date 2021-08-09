@@ -51,6 +51,16 @@ module Deimos
 
       RSpec.configure do |config|
 
+        config.before(:suite) do
+          Deimos.configure do |d_config|
+            d_config.logger = Logger.new($stdout)
+            d_config.consumers.reraise_errors = true
+            d_config.kafka.seed_brokers ||= ['test_broker']
+            d_config.schema.backend = Deimos.schema_backend_class.mock_backend
+            d_config.producers.backend = :test
+          end
+        end
+
         config.prepend_before(:each) do
           client = double('client').as_null_object
           allow(client).to receive(:time) do |*_args, &block|
@@ -369,26 +379,23 @@ module Deimos
     # @param handler [Deimos::Consumer]
     # @param call_original [Boolean]
     def _handler_expectation(method,
-                                      input,
-                                      handler,
-                                      call_original,
-                                      &block)
+                             input,
+                             handler,
+                             call_original,
+                             &block)
       schema_class = handler.classified_schema(handler.class.config[:schema])
-
-      expected = input
-
+      expected = input.dup
       use_schema_class = Deimos.config.consumers.use_schema_class && schema_class.present?
+
       if use_schema_class
         expected = if input.is_a?(Array)
-                     input.map { |payload| schema_class.initialize_from_payload(payload) if payload.present? }
+                     input.map { |payload| schema_class.initialize_from_payload(payload) }
                    else
-                     schema_class.initialize_from_payload(input) if input.present?
+                     schema_class.initialize_from_payload(input)
                    end
       end
 
       expectation = expect(handler).to receive(method).with(expected, anything, &block)
-
-
       expectation.and_call_original if call_original
     end
   end

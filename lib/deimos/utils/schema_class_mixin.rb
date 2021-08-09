@@ -29,6 +29,17 @@ module Deimos
       def classified_schema(schema)
         "Deimos::#{schema.underscore.camelize}".safe_constantize
       end
+
+      # Converts a raw payload into an instance of the Schema Class
+      # @param payload [Hash]
+      # @param schema [String]
+      # @return [Deimos::SchemaRecord]
+      def schema_class_record(payload, schema)
+        klass = classified_schema(schema)
+        return payload if klass.nil?
+
+        klass.initialize_from_payload(payload)
+      end
     end
   end
 end

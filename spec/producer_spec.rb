@@ -457,6 +457,18 @@ module ProducerTest
         )
       end
 
+      it 'should encode with a schema' do
+        expect(MySchemaProducer.key_encoder).to receive(:encode).with({ 'test_id' => 'foo_key' },
+                                                                      { topic: 'my-topic2-key' })
+        expect(MySchemaProducer.key_encoder).to receive(:encode).with({ 'test_id' => 'bar_key' },
+                                                                      { topic: 'my-topic2-key' })
+
+        MySchemaProducer.publish_list(
+          [Deimos::MySchema.new(test_id: 'foo', some_int: 123, payload_key: { 'test_id' => 'foo_key' }),
+           Deimos::MySchema.new(test_id: 'bar', some_int: 124, payload_key: { 'test_id' => 'bar_key' })]
+        )
+      end
+
       it 'should properly encode and coerce values with a nested record' do
         expect(MyNestedSchemaProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
         MyNestedSchemaProducer.publish(

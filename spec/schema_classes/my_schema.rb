@@ -22,7 +22,7 @@ module Deimos
 
     # @override
     def self.initialize_from_payload(payload)
-      return unless payload.any?
+      return unless payload.present?
 
       args = {}
       payload.each do |key, value|
@@ -43,10 +43,11 @@ module Deimos
 
     # @override
     def to_h
-      {
+      payload = {
         'test_id' => @test_id,
         'some_int' => @some_int
       }
+      @payload_key.present? ? payload.merge('payload_key' => @payload_key) : payload
     end
   end
 end

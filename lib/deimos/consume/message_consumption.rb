@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'deimos/utils/schema_class_mixin'
-
 module Deimos
   module Consume
     # Methods used by message-by-message (non-batch) consumers. These consumers
@@ -10,7 +8,6 @@ module Deimos
       extend ActiveSupport::Concern
       include Phobos::Handler
       include SharedConfig
-      include Utils::SchemaClassMixin
 
       # :nodoc:
       def around_consume(payload, metadata)

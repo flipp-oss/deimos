@@ -52,7 +52,7 @@ module Deimos
 
     # @override
     def self.initialize_from_payload(payload)
-      return unless payload.any?
+      return unless payload.present?
 
       args = {}
       payload.each do |key, value|
@@ -80,7 +80,7 @@ module Deimos
 
     # @override
     def to_h
-      {
+      payload = {
         'a_string' => @a_string,
         'a_int' => @a_int,
         'a_long' => @a_long,
@@ -94,6 +94,7 @@ module Deimos
         'message_id' => @message_id,
         'a_record' => @a_record&.to_h
       }
+      @payload_key.present? ? payload.merge('payload_key' => @payload_key) : payload
     end
   end
 end

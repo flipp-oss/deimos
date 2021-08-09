@@ -316,10 +316,6 @@ module Deimos
       # Key configuration (see docs).
       # @return [Hash]
       setting :key_config
-      # TODO-WIP: Do we want to make this configurable on the producer level?
-      # Whether or not to use the generated schema classes for this producer
-      # @return [Boolean]
-      setting :use_schema_class
     end
 
     setting_object :consumer do

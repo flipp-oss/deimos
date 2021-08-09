@@ -4,6 +4,7 @@ require 'deimos/message'
 require 'deimos/shared_config'
 require 'phobos/producer'
 require 'active_support/notifications'
+require 'deimos/utils/schema_class_mixin'
 
 # :nodoc:
 module Deimos
@@ -57,6 +58,8 @@ module Deimos
     MAX_BATCH_SIZE = 500
 
     class << self
+      include Utils::SchemaClassMixin
+
       # @return [Hash]
       def config
         @config ||= {
