@@ -61,7 +61,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     my_namespace_files = Dir['app/lib/schema_classes/com/my-namespace/*.rb']
     request_files = Dir['app/lib/schema_classes/com/my-namespace/request/*.rb']
     response_files = Dir['app/lib/schema_classes/com/my-namespace/response/*.rb']
-    expect(my_namespace_files.length).to eq(15)
+    expect(my_namespace_files.length).to eq(16)
     expect(request_files.length).to eq(3)
     expect(response_files.length).to eq(3)
   end

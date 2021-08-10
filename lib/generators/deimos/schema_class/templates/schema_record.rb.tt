@@ -27,13 +27,13 @@ module Deimos
 
       args = {}
       payload.each do |key, value|
-<%- unless @special_field_formatting.present? -%>
+<%- unless @special_field_initialization.present? -%>
         args[key.to_sym] = value
 <%- else -%>
         args[key.to_sym] = case key.to_sym
-<%- @special_field_formatting.each do |klass, format| -%>
-                           when <%= format[:field_names].join(', ') %>
-                             <%= klass %>.<%= format[:method] %>
+<%- @special_field_initialization.each do |initialize_string, fields| -%>
+                           when <%= fields.join(', ') %>
+                             <%= initialize_string %>
 <% end -%>
                            else
                              value

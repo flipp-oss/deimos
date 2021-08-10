@@ -19,7 +19,12 @@ module Deimos
     end
 
     # @override
-    def as_json(_options={})
+    def to_json(*_args)
+      @<%= @current_schema.name.underscore %>.to_json
+    end
+
+    # @override
+    def to_h
       @<%= @current_schema.name.underscore %>
     end
   end

@@ -29,7 +29,6 @@ module Deimos
       desc 'Generate a class based on an existing schema.'
       # :nodoc:
       def generate
-        # TODO: Create new, OR add to existing if not exists
         Rails.logger.info(Deimos.config.schema.path)
         template('Guardfile', 'Guardfile', force: true)
       end

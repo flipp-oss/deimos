@@ -42,7 +42,7 @@ module Deimos
           schema_base(schema_name).load_schema!
           schema_base.schema_store.schemas.each_value do |schema|
             @current_schema = schema
-            @special_field_formatting = schema.type_sym == :record ? special_field_formatting : {}
+            @special_field_initialization = schema.type_sym == :record ? special_field_initialization : {}
             file_prefix = schema.name.underscore
             namespace_path = schema.namespace.tr('.', '/')
             schema_template = "schema_#{schema.type}.rb"
@@ -59,55 +59,79 @@ module Deimos
         end
 
         # @param avro_schema [Avro::Schema::NamedSchema]
-        # @return [Boolean]
-        def schema_is_record?(avro_schema)
+        # @return [Symbol]
+        def schema_base_type(avro_schema)
           case avro_schema.type_sym
-          when :record
-            true
+          when :array
+            schema_base_type(avro_schema.items)
+          when :map
+            schema_base_type(avro_schema.values)
           when :union
-            avro_schema.schemas.map(&method(:schema_is_record?)).any?
+            avro_schema.schemas.map(&method(:schema_base_type)).
+              reject { |schema| schema.type_sym == :null }.first
           else
-            false
+            avro_schema
           end
         end
 
         # Retrieve any special formatting needed for this current schema's fields
-        # Includes additional initialization methods for Records and Enums and covers unions.
-        # TODO: Cover ARRAY, and MAPs -> Should rewrite this method using more recursion as it's sort of messy :(
-        # Can use Merchant + Merchant translations as an example of hash with classes inside of it.
-        # @return [Hash<String, Hash>]
-        def special_field_formatting
-          result = Hash.new { |h, k| h[k] = { field_names: [], method: nil } }
+        # @return [Hash<String, Array[Symbol]>]
+        def special_field_initialization
+          result = Hash.new { |h, k| h[k] = [] }
           fields.each do |field|
-            possible_schemas = field.type.type_sym == :union ? field.type.schemas : [field.type]
-            avro_schema = possible_schemas.find { |schema| SPECIAL_TYPES.include?(schema.type_sym) }
+            field_base_type = field.type.type_sym # Record, Union, Enum, Array or Map?
+            sub_type_schema = schema_base_type(field.type)
+            initialize_method = field_initialize_formatting(sub_type_schema)
 
-            next unless avro_schema.present?
+            next unless initialize_method.present?
 
-            avro_type = field_type(avro_schema)
-            result[avro_type][:field_names] << ":#{field.name}"
-            result[avro_type][:method] = if avro_schema.type_sym == :record
-                                           'initialize_from_payload(value)'
-                                         else
-                                           'new(value)'
-                                         end
+            initialize_string = case field_base_type
+                                when :array
+                                  "value.map { |v| #{initialize_method}(v) }"
+                                when :map
+                                  "value.transform_values { |v| #{initialize_method}(v) }"
+                                else
+                                  "#{initialize_method}(value)"
+                                end
+
+            result[initialize_string] << ":#{field.name}"
           end
           result
         end
 
-        # @param field[SchemaField]
+        # @param avro_schema [Avro::Schema::NamedSchema]
         # @return [String]
-        def field_to_h_formatting(field)
-          "'#{field.name}' => @#{field.name}" +
-            (schema_is_record?(field.type) ? '&.to_h' : '') +
-            (field.name == fields.last.name ? '' : ',')
+        def field_initialize_formatting(avro_schema)
+          field_type = field_type(avro_schema)
+          case avro_schema.type_sym
+          when :record
+            "#{field_type}.initialize_from_payload"
+          when :enum
+            "#{field_type}.new"
+          else
+            nil
+          end
         end
 
-        # Converts Deimos::SchemaField's to String form for generated YARD docs
-        # @param schema_field [Deimos::SchemaField]
-        # @return [String] A string representation of the Type of this SchemaField
-        def deimos_field_type(schema_field)
-          field_type(schema_field.type)
+        # Format a given field into it's appropriate to_h representation.
+        # @param field[Deimos::SchemaField]
+        # @return [String]
+        def field_to_h_formatting(field)
+          res = "'#{field.name}' => @#{field.name}"
+          field_base_type = schema_base_type(field.type).type_sym
+
+          if %i(record enum).include?(field_base_type)
+            res += case field.type.type_sym
+                    when :array
+                      ".map { |v| v&.to_h }"
+                    when :map
+                      ".transform_values { |v| v&.to_h }"
+                    else
+                      "&.to_h"
+                    end
+          end
+
+          res + (field.name == fields.last.name ? '' : ',')
         end
 
         # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.
@@ -138,6 +162,13 @@ module Deimos
           when :null
             'nil'
           end
+        end
+
+        # Converts Deimos::SchemaField's to String form for generated YARD docs
+        # @param schema_field [Deimos::SchemaField]
+        # @return [String] A string representation of the Type of this SchemaField
+        def deimos_field_type(schema_field)
+          field_type(schema_field.type)
         end
 
         # @param enum [Avro::Schema::EnumSchema] a field of type 'enum'.

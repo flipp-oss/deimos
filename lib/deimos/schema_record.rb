@@ -59,7 +59,7 @@ module Deimos
     end
 
     # Converts the object to a string that represents a JSON object
-    # @return [String] a JSON
+    # @return [String] a JSON string
     def to_json(*_args)
       to_h.to_json
     end

@@ -87,7 +87,7 @@ module Deimos
         'a_float' => @a_float,
         'a_double' => @a_double,
         'an_optional_int' => @an_optional_int,
-        'an_enum' => @an_enum,
+        'an_enum' => @an_enum&.to_h,
         'an_array' => @an_array,
         'a_map' => @a_map,
         'timestamp' => @timestamp,
