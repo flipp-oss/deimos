@@ -388,7 +388,7 @@ module Deimos
 
       config = handler.class.config
       use_schema_class = config[:use_schema_class]
-      use_schema_class = use_schema_class.present? ? use_schema_class : Deimos.config.consumers.use_schema_class
+      use_schema_class = use_schema_class.present? ? use_schema_class : Deimos.config.schema.use_schema_class
 
       if use_schema_class && schema_class.present?
         expected = if input.is_a?(Array)

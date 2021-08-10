@@ -45,8 +45,7 @@ module Deimos
       # @return [Boolean]
       def use_schema_class?(config)
         use_schema_class = config[:use_schema_class]
-        config_type = self.class.ancestors.include?(Consumer) ? Deimos.config.consumers : Deimos.config.producers
-        use_schema_class.present? ? use_schema_class : config_type.use_schema_class
+        use_schema_class.present? ? use_schema_class : Deimos.config.schema.use_schema_class
       end
     end
   end

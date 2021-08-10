@@ -163,20 +163,9 @@ module Deimos
       # Not needed if reraise_errors is set to true.
       # @return [Block]
       setting(:fatal_error, proc { false })
-
-      # Whether or not to use the generated schema classes in consumers
-      # rather than raw hashes
-      # @return [Boolean]
-      setting :use_schema_class, false
     end
 
     setting :producers do
-
-      # Whether or not to use the generated schema classes in producers
-      # rather than raw hashes
-      # @return [Boolean]
-      setting :use_schema_class, false
-
       # Number of seconds a broker can wait for replicas to acknowledge
       # a write before responding with a timeout.
       # @return [Integer]
@@ -276,6 +265,10 @@ module Deimos
       # Local path for schema classes to be generated in.
       # @return [String]
       setting :generated_class_path, 'app/lib/schema_classes'
+
+      # Set to true to use the generated schema classes in your application
+      # @return [Boolean]
+      setting :use_schema_class, false
     end
 
     # The configured metrics provider.
@@ -317,7 +310,7 @@ module Deimos
       # Key configuration (see docs).
       # @return [Hash]
       setting :key_config
-      # Whether or not to use the generated schema classes for this producer
+      # Configure the usage of generated schema classes for this producer
       # @return [Boolean]
       setting :use_schema_class
     end
@@ -342,7 +335,7 @@ module Deimos
       # listener.
       # @return [Boolean]
       setting :disabled, false
-      # Whether or not to use the generated schema classes for this consumer
+      # Configure the usage of generated schema classes for this consumer
       # @return [Boolean]
       setting :use_schema_class
 

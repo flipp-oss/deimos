@@ -72,7 +72,7 @@ module ActiveRecordBatchConsumerTest
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_class|
         context "with Schema Class consumption #{setting}" do
           before(:each) do
-            Deimos.configure { |config| config.consumers.use_schema_class = use_schema_class }
+            Deimos.configure { |config| config.schema.use_schema_class = use_schema_class }
           end
 
           it 'should handle an empty batch' do
