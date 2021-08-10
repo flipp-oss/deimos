@@ -122,13 +122,13 @@ module Deimos
 
           if %i(record enum).include?(field_base_type)
             res += case field.type.type_sym
-                    when :array
-                      ".map { |v| v&.to_h }"
-                    when :map
-                      ".transform_values { |v| v&.to_h }"
-                    else
-                      "&.to_h"
-                    end
+                   when :array
+                     '.map { |v| v&.to_h }'
+                   when :map
+                     '.transform_values { |v| v&.to_h }'
+                   else
+                     '&.to_h'
+                   end
           end
 
           res + (field.name == fields.last.name ? '' : ',')

@@ -5,7 +5,6 @@ require 'json'
 module Deimos
   # Base Class for Enum Classes generated from Avro.
   class SchemaEnum
-
     # Returns all the valid symbols for this enum.
     # @return [Array<String>]
     def symbols
@@ -40,7 +39,7 @@ module Deimos
       comparison == self.state
     end
 
-    protected
+  protected
 
     # :nodoc:
     def state

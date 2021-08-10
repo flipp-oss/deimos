@@ -12,8 +12,8 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       some_record_array: [Deimos::ARecord.new(a_record_field: 'field 3'),
                           Deimos::ARecord.new(a_record_field: 'field 4')],
       some_record_map: {
-        "record_1" => Deimos::ARecord.new(a_record_field: 'field 5'),
-        "record_2" => Deimos::ARecord.new(a_record_field: 'field 6')
+        'record_1' => Deimos::ARecord.new(a_record_field: 'field 5'),
+        'record_2' => Deimos::ARecord.new(a_record_field: 'field 6')
       },
       some_enum_array: [Deimos::AnEnum.new('sym1'),
                         Deimos::AnEnum.new('sym2')]
@@ -78,10 +78,11 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
         'some_optional_record' => { 'a_record_field' => 'field 2' },
         'some_record_array' => [
           { 'a_record_field' => 'field 3' },
-          { 'a_record_field' => 'field 4' }],
+          { 'a_record_field' => 'field 4' }
+        ],
         'some_record_map' => {
-          "record_1" => { 'a_record_field' => 'field 5' },
-          "record_2" => { 'a_record_field' => 'field 6' }
+          'record_1' => { 'a_record_field' => 'field 5' },
+          'record_2' => { 'a_record_field' => 'field 6' }
         },
         'some_enum_array' => %w(sym1 sym2)
       }
@@ -100,7 +101,7 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       described_class.new(payload_hash)
     end
 
-    context 'getting' do
+    context 'when getting attributes' do
       it 'should get of values of primitive types' do
         expect(klass.test_id).to eq('test id')
         expect(klass.test_float).to eq(1.2)
@@ -139,7 +140,7 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       end
     end
 
-    context 'setting' do
+    context 'when setting attributes' do
       it 'should modify the value of test_id' do
         expect(klass.test_id).to eq('test id')
         klass.test_id = 'something different'
