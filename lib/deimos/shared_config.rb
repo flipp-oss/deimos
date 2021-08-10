@@ -58,6 +58,11 @@ module Deimos
         config[:key_field] = field&.to_s
         config[:key_schema] = schema
       end
+
+      # @param enabled [Boolean]
+      def schema_class_config(use_schema_class)
+        config[:use_schema_class] = use_schema_class
+      end
     end
   end
 end

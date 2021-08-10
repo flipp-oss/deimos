@@ -73,6 +73,8 @@ module Deimos
 
         # Retrieve any special formatting needed for this current schema's fields
         # Includes additional initialization methods for Records and Enums and covers unions.
+        # TODO: Cover ARRAY, and MAPs -> Should rewrite this method using more recursion as it's sort of messy :(
+        # Can use Merchant + Merchant translations as an example of hash with classes inside of it.
         # @return [Hash<String, Hash>]
         def special_field_formatting
           result = Hash.new { |h, k| h[k] = { field_names: [], method: nil } }

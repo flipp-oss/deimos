@@ -40,6 +40,14 @@ module Deimos
 
         klass.initialize_from_payload(payload)
       end
+
+      # @param config [FigTree::ConfigStruct] Producer or Consumer config
+      # @return [Boolean]
+      def use_schema_class?(config)
+        use_schema_class = config[:use_schema_class]
+        config_type = self.class.ancestors.include?(Consumer) ? Deimos.config.consumers : Deimos.config.producers
+        use_schema_class.present? ? use_schema_class : config_type.use_schema_class
+      end
     end
   end
 end

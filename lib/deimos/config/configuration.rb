@@ -68,6 +68,7 @@ module Deimos
       schema(kafka_config.schema) if kafka_config.schema.present?
       namespace(kafka_config.namespace) if kafka_config.namespace.present?
       key_config(**kafka_config.key_config) if kafka_config.key_config.present?
+      schema_class_config(kafka_config.use_schema_class) if kafka_config.use_schema_class.present?
     end
   end
 
@@ -316,6 +317,9 @@ module Deimos
       # Key configuration (see docs).
       # @return [Hash]
       setting :key_config
+      # Whether or not to use the generated schema classes for this producer
+      # @return [Boolean]
+      setting :use_schema_class
     end
 
     setting_object :consumer do
@@ -338,8 +342,6 @@ module Deimos
       # listener.
       # @return [Boolean]
       setting :disabled, false
-
-      # TODO-WIP: Do we want to make this configurable on the consumer level?
       # Whether or not to use the generated schema classes for this consumer
       # @return [Boolean]
       setting :use_schema_class
