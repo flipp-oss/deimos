@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deimos-ruby (1.10.0)
+    deimos-ruby (1.10.1)
       avro_turf (~> 0.11)
       fig_tree (~> 0.0.2)
       phobos (>= 1.9, < 3.0)
@@ -92,7 +92,7 @@ GEM
       rake (>= 12.0.0, < 14.0.0)
     dogstatsd-ruby (4.8.3)
     erubi (1.10.0)
-    excon (0.79.0)
+    excon (0.81.0)
     exponential-backoff (0.0.4)
     ffi (1.15.0)
     fig_tree (0.0.2)
@@ -139,14 +139,14 @@ GEM
       nokogiri (~> 1)
       rake
     mini_mime (1.0.2)
-    mini_portile2 (2.5.0)
+    mini_portile2 (2.5.1)
     minitest (5.14.4)
     msgpack (1.4.2)
     multi_json (1.15.0)
     mysql2 (0.5.3)
     nenv (0.3.0)
     nio4r (2.5.7)
-    nokogiri (1.11.1)
+    nokogiri (1.11.5)
       mini_portile2 (~> 2.5.0)
       racc (~> 1.4)
     notiffany (0.1.3)
@@ -289,4 +289,4 @@ DEPENDENCIES
   sqlite3 (~> 1.3)
 
 BUNDLED WITH
-   2.2.5
+   2.2.17

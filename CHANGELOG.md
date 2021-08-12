@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TestHelper does not automatically reset Deimos config before each test. [#120](https://github.com/flipp-oss/deimos/pull/120).
   **Please note that this is a breaking change**
 
+## 1.10.2 - 2021-07-20
+
+- ### Fixes :wrench:
+
+- Fixed issue where producers would stay in an error state after e.g. authorization failures for one topic that wouldn't apply to other topics.
+
+## 1.10.1 - 2021-06-21
+
+- ### Fixes :wrench:
+
+- Fixed crash when trying to decode a nil payload (e.g. during instrumentation of `send_produce_error`.)
+
 ## 1.10.0 - 2021-03-22
 
 - ### Roadmap :car:

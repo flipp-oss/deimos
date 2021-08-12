@@ -40,8 +40,9 @@ module Deimos
       # Decode a payload with a schema. Public method.
       # @param payload [String]
       # @param schema [Symbol|String]
-      # @return [Hash]
+      # @return [Hash,nil]
       def decode(payload, schema: nil)
+        return nil if payload.nil?
         decode_payload(payload, schema: schema || @schema)
       end
 
