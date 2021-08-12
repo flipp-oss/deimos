@@ -31,7 +31,7 @@ module Deimos
       end
 
       # Kafka test config with avro schema registry
-      def kafka_schema_registry_test!
+      def full_integration_test!
         Deimos.configure do |deimos_config|
           deimos_config.producers.backend = :kafka
           deimos_config.schema.backend = :avro_schema_registry

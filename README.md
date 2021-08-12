@@ -958,21 +958,21 @@ Currently there are helpers defined for unit tests and for testing Kafka related
 around(:each) do |example|
   Deimos::TestHelpers.unit_test!
   example.run
-  Deimos.config.reset
+  Deimos.config.reset!
 end
 
 # Similarly you can use the Kafka test helper
 around(:each) do |example|
   Deimos::TestHelpers.kafka_test!
   example.run
-  Deimos.config.reset
+  Deimos.config.reset!
 end
 
 # Kakfa test helper using schema registry
 around(:each) do |example|
-  Deimos::TestHelpers.kafka_schema_registry_test!
+  Deimos::TestHelpers.full_integration_test!
   example.run
-  Deimos.config.reset
+  Deimos.config.reset!
 end
 ```
 
@@ -990,6 +990,7 @@ This does not take away the ability to configure Deimos manually in individual e
       ...
       expect(some_object).to be_truthy
       ...
+      Deimos.config.reset!
     end
 ```
 If you are using one of the test helpers in an `around(:each)` block and want to override few settings for one example, 
