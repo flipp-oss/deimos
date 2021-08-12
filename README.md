@@ -29,7 +29,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Running Consumers](#running-consumers)
    * [Metrics](#metrics)
    * [Testing](#testing)
-        * [Default Deimos config for testing](#default-deimos-config-for-testing)
+        * [Test Helpers](#test-helpers)
         * [Integration Test Helpers](#integration-test-helpers)
    * [Utilities](#utilities)
    * [Contributing](#contributing) 
@@ -936,18 +936,6 @@ expect(message).to eq({
   topic: 'my-topic',
   key: 'my-id'
 })
-
-## Configuring Deimos to test settings
-
-# You can reset Deimos to default test config by calling this method.
-configure_deimos
-
-# The same method can be used to override settings while still using
-# deafults for other fields.
-configure_deimos(consumers: { reraise_errors: false },
-                 producers: { topic_prefix: nil },
-                 db_producer: { compact_topics: %w(my-topic my-topic2) },
-                 logger: Rails.logger)
 ```
 
 There is also a helper method that will let you test if an existing schema
@@ -959,27 +947,31 @@ require 'deimos/test_helpers'
 # Can pass a file path, a string or a hash into this:
 Deimos::TestHelpers.schemas_compatible?(schema1, schema2)
 ```
-### Default Deimos config for testing
+### Test Helpers
 
-The test helper class provides the default settings for Deimos config.
+There are helper methods available to configure Deimos for different types of testing scenarios. 
+Currently there is a helper defined for unit tests and for testing Kafka releated code. You can use it as follows:
+
 ```ruby
-# The following are the test defaults for Deimos that are set
-# by calling `configure_deimos` 
-DEFAULT_TEST_CONFIG = {
-  logger: Logger.new(STDOUT),
-  consumers: { reraise_errors: true },
-  kafka: { seed_brokers: ['test_broker'] },
-  schema: { backend: Deimos.schema_backend_class.mock_backend },
-  producers: { backend: :test }
-}
+# The following can be added to a rpsec file so that each unit 
+# test can have the same settings every time it is run
+around(:each) do |example|
+  Deimos::TestHelpers.unit_test!
+  example.run
+  Deimos.config.reset
+end
+
+
+# Similarly you can use the Kafka test helper
+around(:each) do |example|
+  Deimos::TestHelpers.kafka_test
+  example.run
+  Deimos.config.reset
+end
 ```
-`:test` is the default backend for producers that saves messages
-to an in-memory hash. You can access the sent messages by calling 
-the following function
-```ruby
-Deimos::Backends::Test.sent_messages
-```
-Mock schema backend will perform all the validations but not actually encode any messages.
+
+With the help of these helper methods, rspec examples can be written without having to tinker with Deimos settings.
+This also prevents Deimos setting changes from leaking in to other examples.
 
 
 ### Integration Test Helpers
