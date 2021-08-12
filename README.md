@@ -29,6 +29,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Running Consumers](#running-consumers)
    * [Metrics](#metrics)
    * [Testing](#testing)
+        * [Test Helpers](#test-helpers)
         * [Integration Test Helpers](#integration-test-helpers)
    * [Utilities](#utilities)
    * [Contributing](#contributing) 
@@ -946,6 +947,56 @@ require 'deimos/test_helpers'
 # Can pass a file path, a string or a hash into this:
 Deimos::TestHelpers.schemas_compatible?(schema1, schema2)
 ```
+### Test Helpers
+
+There are helper methods available to configure Deimos for different types of testing scenarios. 
+Currently there are helpers defined for unit tests and for testing Kafka related code. You can use it as follows:
+
+```ruby
+# The following can be added to a rpsec file so that each unit 
+# test can have the same settings every time it is run
+around(:each) do |example|
+  Deimos::TestHelpers.unit_test!
+  example.run
+  Deimos.config.reset!
+end
+
+# Similarly you can use the Kafka test helper
+around(:each) do |example|
+  Deimos::TestHelpers.kafka_test!
+  example.run
+  Deimos.config.reset!
+end
+
+# Kakfa test helper using schema registry
+around(:each) do |example|
+  Deimos::TestHelpers.full_integration_test!
+  example.run
+  Deimos.config.reset!
+end
+```
+
+With the help of these helper methods, rspec examples can be written without having to tinker with Deimos settings.
+This also prevents Deimos setting changes from leaking in to other examples.
+
+This does not take away the ability to configure Deimos manually in individual examples. Deimos can still be configured like so:
+```ruby
+    it 'should not fail this random test' do
+      
+      Deimos.configure do |config|
+        config.consumers.fatal_error = proc { true }
+        config.consumers.reraise_errors = false
+      end
+      ...
+      expect(some_object).to be_truthy
+      ...
+      Deimos.config.reset!
+    end
+```
+If you are using one of the test helpers in an `around(:each)` block and want to override few settings for one example, 
+you can do it like in the example shown above. These settings would only apply to that specific example and the Deimos conifg should
+reset once the example has finished running.
+
 
 ### Integration Test Helpers
 
