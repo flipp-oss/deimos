@@ -880,8 +880,7 @@ Also see [deimos.rb](lib/deimos.rb) under `Configure tracing` to see how the tra
 
 # Testing
 
-Deimos comes with a test helper class which sets the various backends
-to mock versions, and provides useful methods for testing consumers.
+Deimos comes with a test helper class which provides useful methods for testing consumers.
 
 In `spec_helper.rb`:
 ```ruby
@@ -890,7 +889,56 @@ RSpec.configure do |config|
 end
 ```
 
-In your test, you now have the following methods available:
+## Test Configuration
+
+```ruby
+# The following can be added to a rpsec file so that each unit 
+# test can have the same settings every time it is run
+around(:each) do |example|
+  Deimos::TestHelpers.unit_test!
+  example.run
+  Deimos.config.reset!
+end
+
+# Similarly you can use the Kafka test helper
+around(:each) do |example|
+  Deimos::TestHelpers.kafka_test!
+  example.run
+  Deimos.config.reset!
+end
+
+# Kakfa test helper using schema registry
+around(:each) do |example|
+  Deimos::TestHelpers.full_integration_test!
+  example.run
+  Deimos.config.reset!
+end
+```
+
+With the help of these helper methods, rspec examples can be written without having to tinker with Deimos settings.
+This also prevents Deimos setting changes from leaking in to other examples.
+
+This does not take away the ability to configure Deimos manually in individual examples. Deimos can still be configured like so:
+```ruby
+    it 'should not fail this random test' do
+      
+      Deimos.configure do |config|
+        config.consumers.fatal_error = proc { true }
+        config.consumers.reraise_errors = false
+      end
+      ...
+      expect(some_object).to be_truthy
+      ...
+      Deimos.config.reset!
+    end
+```
+If you are using one of the test helpers in an `around(:each)` block and want to override few settings for one example, 
+you can do it like in the example shown above. These settings would only apply to that specific example and the Deimos config should
+reset once the example has finished running.
+
+## Test Usage
+
+In your tests, you now have the following methods available:
 ```ruby
 # Pass a consumer class (not instance) to validate a payload against it.
 # This will fail if the payload does not match the schema the consumer
@@ -938,6 +986,8 @@ expect(message).to eq({
 })
 ```
 
+### Test Utilities
+
 There is also a helper method that will let you test if an existing schema
 would be compatible with a new version of it. You can use this in your 
 Ruby console but it would likely not be part of your RSpec test:
@@ -946,69 +996,6 @@ Ruby console but it would likely not be part of your RSpec test:
 require 'deimos/test_helpers'
 # Can pass a file path, a string or a hash into this:
 Deimos::TestHelpers.schemas_compatible?(schema1, schema2)
-```
-### Test Helpers
-
-There are helper methods available to configure Deimos for different types of testing scenarios. 
-Currently there are helpers defined for unit tests and for testing Kafka related code. You can use it as follows:
-
-```ruby
-# The following can be added to a rpsec file so that each unit 
-# test can have the same settings every time it is run
-around(:each) do |example|
-  Deimos::TestHelpers.unit_test!
-  example.run
-  Deimos.config.reset!
-end
-
-# Similarly you can use the Kafka test helper
-around(:each) do |example|
-  Deimos::TestHelpers.kafka_test!
-  example.run
-  Deimos.config.reset!
-end
-
-# Kakfa test helper using schema registry
-around(:each) do |example|
-  Deimos::TestHelpers.full_integration_test!
-  example.run
-  Deimos.config.reset!
-end
-```
-
-With the help of these helper methods, rspec examples can be written without having to tinker with Deimos settings.
-This also prevents Deimos setting changes from leaking in to other examples.
-
-This does not take away the ability to configure Deimos manually in individual examples. Deimos can still be configured like so:
-```ruby
-    it 'should not fail this random test' do
-      
-      Deimos.configure do |config|
-        config.consumers.fatal_error = proc { true }
-        config.consumers.reraise_errors = false
-      end
-      ...
-      expect(some_object).to be_truthy
-      ...
-      Deimos.config.reset!
-    end
-```
-If you are using one of the test helpers in an `around(:each)` block and want to override few settings for one example, 
-you can do it like in the example shown above. These settings would only apply to that specific example and the Deimos conifg should
-reset once the example has finished running.
-
-
-### Integration Test Helpers
-
-When running integration tests, you'll want to override the default test helper settings:
-
-```ruby
-config.before(:each, :my_integration_metadata) do
-  Deimos.configure do
-    producers.backend :kafka
-    schema.backend :avro_schema_registry
-  end
-end
 ```
 
 You can use the `InlineConsumer` class to help with integration testing,
