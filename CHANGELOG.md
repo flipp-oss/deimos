@@ -6,10 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## UNRELEASED
-### Roadmap :car:
 
+## 1.11.0 - 2021-08-27
+
+- ### Fixes :wrench:
+- Fixed issue where ActiveRecord batch consumption could fail when decoding keys.
+
+- ### Roadmap :car:
 - TestHelper does not automatically reset Deimos config before each test. [#120](https://github.com/flipp-oss/deimos/pull/120).
   **Please note that this is a breaking change**
+
 
 ## 1.10.2 - 2021-07-20
 
