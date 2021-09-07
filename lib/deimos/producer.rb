@@ -116,10 +116,9 @@ module Deimos
           topic: topic,
           payloads: payloads
         ) do
-          # Using #as_json as to decode a [Deimos::SchemaMessage]
-          messages = Array(payloads).map do |p|
-            payload = p.is_a?(SchemaRecord) ? p.to_h : p
-            Deimos::Message.new(payload, self)
+          messages = Array(payloads).map do |payload|
+            p = payload.is_a?(SchemaRecord) ? payload.to_h : payload
+            Deimos::Message.new(p, self)
           end
           messages.each { |m| _process_message(m, topic) }
           messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|

@@ -8,7 +8,7 @@ module Deimos
     attr_accessor :test_id
     # @return [Integer]
     attr_accessor :some_int
-    # @return [Object]
+    # @return [Object] An optional payload key
     attr_accessor :payload_key
 
     # @override

@@ -13,7 +13,6 @@ require 'activerecord-import'
 require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
-# TODO: Hardcode for now, figure out if this can be done in a better way
 Dir["./spec/schema_classes/**/*.rb"].each { |f| require f }
 
 # Constants used for consumer specs

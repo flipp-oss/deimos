@@ -8,8 +8,10 @@ module Deimos
     # @return [<%= deimos_field_type(field) %>]
     attr_accessor :<%= field.name %>
 <% end -%>
-    # @return [Object]
+<%- unless @current_schema.name =~ /\-key$/ -%>
+    # @return [Object] An optional payload key
     attr_accessor :payload_key
+<% end -%>
 
     # @override
     def initialize(**kwargs)

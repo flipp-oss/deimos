@@ -28,7 +28,7 @@ module Deimos
     attr_accessor :message_id
     # @return [Deimos::ARecord]
     attr_accessor :a_record
-    # @return [Object]
+    # @return [Object] An optional payload key
     attr_accessor :payload_key
 
     # @override

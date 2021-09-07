@@ -18,6 +18,9 @@ module Deimos
   # :nodoc:
   after_configure do
     Phobos.configure(self.config.phobos_config)
+    if self.config.schema.use_schema_class
+      load_generated_schema_classes
+    end
     self.config.producer_objects.each do |producer|
       configure_producer_or_consumer(producer)
     end
@@ -26,6 +29,17 @@ module Deimos
     end
     validate_consumers
     validate_db_backend if self.config.producers.backend == :db
+  end
+
+  # Loads generated classes
+  # TODO: Consider _generating_ from within here..? (Development only???)
+  def self.load_generated_schema_classes
+    if Deimos.config.schema.generated_class_path.nil?
+      raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
+    end
+    Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].each { |f| require f }
+  rescue LoadError
+    raise 'Cannot load schema classes. Please regenerate classes with rake deimos:generate_schema_models.'
   end
 
   # Ensure everything is set up correctly for the DB backend.

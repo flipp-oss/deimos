@@ -6,7 +6,7 @@ module Deimos
   class ARecord < SchemaRecord
     # @return [String]
     attr_accessor :a_record_field
-    # @return [Object]
+    # @return [Object] An optional payload key
     attr_accessor :payload_key
 
     # @override

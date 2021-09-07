@@ -20,7 +20,7 @@ module Deimos
     attr_accessor :some_record_map
     # @return [Array<Deimos::AnEnum>]
     attr_accessor :some_enum_array
-    # @return [Object]
+    # @return [Object] An optional payload key
     attr_accessor :payload_key
 
     # @override

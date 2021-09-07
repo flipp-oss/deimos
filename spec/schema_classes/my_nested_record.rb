@@ -12,7 +12,7 @@ module Deimos
     attr_accessor :some_string
     # @return [nil, Integer]
     attr_accessor :some_optional_int
-    # @return [Object]
+    # @return [Object] An optional payload key
     attr_accessor :payload_key
 
     # @override

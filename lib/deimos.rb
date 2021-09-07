@@ -19,6 +19,8 @@ require 'deimos/backends/kafka_async'
 require 'deimos/backends/test'
 
 require 'deimos/schema_backends/base'
+require 'deimos/schema_enum'
+require 'deimos/schema_record'
 
 require 'deimos/monkey_patches/phobos_producer'
 require 'deimos/monkey_patches/phobos_cli'
@@ -39,11 +41,6 @@ end
 require 'deimos/utils/inline_consumer'
 require 'yaml'
 require 'erb'
-
-# TODO: Move these requires to another file that gets required? Temporarily here...!
-require 'deimos/schema_record'
-require 'deimos/schema_enum'
-Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].each { |f| require f }
 
 # Parent module.
 module Deimos

@@ -14,7 +14,7 @@ module Deimos
     attr_accessor :some_nested_record
     # @return [nil, Deimos::MyNestedRecord]
     attr_accessor :some_optional_record
-    # @return [Object]
+    # @return [Object] An optional payload key
     attr_accessor :payload_key
 
     # @override
