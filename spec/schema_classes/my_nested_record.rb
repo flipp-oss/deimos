@@ -17,7 +17,6 @@ module Deimos
 
     # @override
     def initialize(**kwargs)
-      super()
       args = kwargs.with_indifferent_access
       @some_int = args[:some_int]
       @some_float = args[:some_float]

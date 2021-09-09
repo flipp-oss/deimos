@@ -60,8 +60,8 @@ module Deimos
       end
 
       # @param enabled [Boolean]
-      def schema_class_config(use_schema_class)
-        config[:use_schema_class] = use_schema_class
+      def schema_class_config(use_schema_classes)
+        config[:use_schema_classes] = use_schema_classes
       end
     end
   end

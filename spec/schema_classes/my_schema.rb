@@ -13,7 +13,6 @@ module Deimos
 
     # @override
     def initialize(**kwargs)
-      super()
       args = kwargs.with_indifferent_access
       @test_id = args[:test_id]
       @some_int = args[:some_int]

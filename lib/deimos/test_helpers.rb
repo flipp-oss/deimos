@@ -50,17 +50,6 @@ module Deimos
     included do
 
       RSpec.configure do |config|
-
-        config.before(:suite) do
-          Deimos.configure do |d_config|
-            d_config.logger = Logger.new($stdout)
-            d_config.consumers.reraise_errors = true
-            d_config.kafka.seed_brokers ||= ['test_broker']
-            d_config.schema.backend = Deimos.schema_backend_class.mock_backend
-            d_config.producers.backend = :test
-          end
-        end
-
         config.prepend_before(:each) do
           client = double('client').as_null_object
           allow(client).to receive(:time) do |*_args, &block|
@@ -387,10 +376,10 @@ module Deimos
       expected = input.dup
 
       config = handler.class.config
-      use_schema_class = config[:use_schema_class]
-      use_schema_class = use_schema_class.present? ? use_schema_class : Deimos.config.schema.use_schema_class
+      use_schema_classes = config[:use_schema_classes]
+      use_schema_classes = use_schema_classes.present? ? use_schema_classes : Deimos.config.schema.use_schema_classes
 
-      if use_schema_class && schema_class.present?
+      if use_schema_classes && schema_class.present?
         expected = if input.is_a?(Array)
                      input.map { |payload| schema_class.initialize_from_payload(payload) }
                    else

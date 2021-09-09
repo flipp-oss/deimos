@@ -4,18 +4,17 @@
 module Deimos
   # :nodoc:
   class <%= schema_classname(@current_schema) %> < SchemaEnum
-    # @return [<%= enum_return_values(@current_schema) %>]
+    # @return ['<%= @current_schema.symbols.join("', '") %>']
     attr_accessor :<%= @current_schema.name.underscore %>
 
     # :nodoc:
     def initialize(<%= @current_schema.name.underscore %>)
-      super()
       @<%= @current_schema.name.underscore %> = <%= @current_schema.name.underscore %>
     end
 
     # @override
     def symbols
-      %w(<%= enum_symbols(@current_schema).join(' ') %>)
+      %w(<%= @current_schema.symbols.join(' ') %>)
     end
 
     # @override

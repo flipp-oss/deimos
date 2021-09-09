@@ -814,11 +814,11 @@ Run the following command to generate schema classes in your application:
 
 Add the following configurations to start using generated schema classes in your application:
 
-    config.schema.use_schema_class true
+    config.schema.use_schema_classes true
 
 
-Disable the usage of schema classes for a particular consumer or producer with the
-`use_schema_class` config. See [Configuration](./docs/CONFIGURATION.md#defining-producers)
+Alternatively, enable or disable the usage of schema classes for a particular consumer or producer with the
+`use_schema_classes` config. See [Configuration](./docs/CONFIGURATION.md#defining-producers).
 
 ### Consumer
 
@@ -841,14 +841,11 @@ end
 ```ruby
 class MyActiveRecordConsumer < Deimos::ActiveRecordConsumer
   record_class Widget
-  # The following methods will treat payload as an instance of Deimos::SchemaRecord rather than a hash.
-  def fetch_record(klass, payload, key) ; super end
-  def assign_key(record, payload, key) ; super end
+  # Any method that expects a message payload as a hash will instead
+  # receive an instance of Deimos::SchemaRecord.
   def record_attributes(payload, key)
     super.merge(:some_field => "some_value-#{payload.test_id}")
   end
-  def record_key(payload) ; super end
-  def process_message?(payload) ; super end
 end
 ```
 

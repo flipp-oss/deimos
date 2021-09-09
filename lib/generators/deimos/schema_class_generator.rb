@@ -36,12 +36,6 @@ module Deimos
         end
 
         # @param enum [Avro::Schema::EnumSchema] a field of type 'enum'.
-        # @return [Array<String>] of symbols valid for the enum.
-        def enum_symbols(enum)
-          enum.symbols
-        end
-
-        # @param enum [Avro::Schema::EnumSchema] a field of type 'enum'.
         # @return [String] the possible return values for this Enum type
         def enum_return_values(enum)
           "'#{enum.symbols.join("', '")}'"
@@ -67,6 +61,7 @@ module Deimos
         # @return [Hash<String, Array[Symbol]>]
         def special_field_initialization
           result = Hash.new { |h, k| h[k] = [] }
+          # result = Hash.new([])
           fields.each do |field|
             field_base_type = field.type.type_sym # Record, Union, Enum, Array or Map?
             sub_type_schema = _schema_base_type(field.type)
@@ -88,7 +83,7 @@ module Deimos
           result
         end
 
-        # Format a given field into it's appropriate to_h representation.
+        # Format a given field into its appropriate to_h representation.
         # @param field[Deimos::SchemaField]
         # @return [String]
         def field_to_h(field)

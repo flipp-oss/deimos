@@ -5,11 +5,6 @@ require 'json'
 module Deimos
   # Base Class of Record Classes generated from Avro.
   class SchemaRecord
-    # :nodoc:
-    def initialize
-      super()
-    end
-
     # Recursively initializes the SchemaRecord from a raw payload
     # @param _payload[Hash]
     # @return [Deimos::SchemaRecord]

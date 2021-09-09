@@ -15,7 +15,6 @@ module Deimos
 
     # @override
     def initialize(**kwargs)
-      super()
       args = kwargs.with_indifferent_access
 <%- fields.each do |field| -%>
       <%= "@#{field.name} = args[:#{field.name}]" %>
@@ -29,7 +28,7 @@ module Deimos
 
       args = {}
       payload.each do |key, value|
-<%- unless @special_field_initialization.present? -%>
+<%- if @special_field_initialization.empty? -%>
         args[key.to_sym] = value
 <%- else -%>
         args[key.to_sym] = case key.to_sym

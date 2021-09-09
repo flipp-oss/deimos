@@ -11,7 +11,6 @@ module Deimos
 
     # @override
     def initialize(**kwargs)
-      super()
       args = kwargs.with_indifferent_access
       @a_record_field = args[:a_record_field]
       @payload_key = args[:payload_key]

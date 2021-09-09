@@ -44,7 +44,7 @@ topic|nil|Topic to produce to.
 schema|nil|Name of the schema to use to encode data before producing.
 namespace|nil|Namespace of the schema to use when finding it locally.
 key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
-use_schema_class|nil|Set to false to disable using the producers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes)
+use_schema_classes|nil|Set to true or false to enable or disable using the producers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes)
 
 ## Defining Consumers
 
@@ -82,7 +82,7 @@ namespace|nil|Namespace of the schema to use when finding it locally.
 key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
 disabled|false|Set to true to skip starting an actual listener for this consumer on startup.
 group_id|nil|ID of the consumer group.
-use_schema_class|nil|Set to false to disable using the consumers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes)
+use_schema_classes|nil|Set to true or false to enable or disable using the consumers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes)
 max_concurrency|1|Number of threads created for this listener. Each thread will behave as an independent consumer. They don't share any state.
 start_from_beginning|true|Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of config. As such, this setting only applies when the consumer initially starts consuming from a topic
 max_bytes_per_partition|512.kilobytes|Maximum amount of data fetched from a single partition at a time.
@@ -178,7 +178,7 @@ Config name|Default|Description
 schema.backend|`:mock`|Backend representing the schema encoder/decoder. You can see a full list [here](../lib/deimos/schema_backends).
 schema.registry_url|`http://localhost:8081`|URL of the Confluent schema registry.
 schema.path|nil|Local path to find your schemas.
-schema.use_schema_class|false|Set this to true to use generated schema classes in your application.
+schema.use_schema_classes|false|Set this to true to use generated schema classes in your application.
 schema.generated_schema_path|`app/lib/schema_classes`|Local path to generated schema classes.
 
 ## Database Producer Configuration

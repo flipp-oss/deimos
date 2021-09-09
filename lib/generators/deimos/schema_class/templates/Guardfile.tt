@@ -1,6 +1,0 @@
-# frozen_string_literal: true
-
-# More info at https://github.com/guard/guard#readme
-guard 'rake', task: "deimos:generate_schema_classes" do
-  watch(%r{^<%= parsed_schema_path %>\/(.*)\/?(.*)\.avsc$})
-end

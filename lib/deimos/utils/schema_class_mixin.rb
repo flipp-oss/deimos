@@ -43,9 +43,9 @@ module Deimos
 
       # @param config [FigTree::ConfigStruct] Producer or Consumer config
       # @return [Boolean]
-      def use_schema_class?(config)
-        use_schema_class = config[:use_schema_class]
-        use_schema_class.present? ? use_schema_class : Deimos.config.schema.use_schema_class
+      def use_schema_classes?(config)
+        use_schema_classes = config[:use_schema_classes]
+        use_schema_classes.present? ? use_schema_classes : Deimos.config.schema.use_schema_classes
       end
     end
   end

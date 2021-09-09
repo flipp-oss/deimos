@@ -58,7 +58,7 @@ module Deimos
     # @return [Object] the decoded message.
     def decode_message(payload)
       decoded_payload = payload ? self.class.decoder.decode(payload) : nil
-      return decoded_payload unless use_schema_class?(self.class.config) && decoded_payload.present?
+      return decoded_payload if not use_schema_classes?(self.class.config)
 
       schema_class_record(decoded_payload, self.class.config[:schema])
     end

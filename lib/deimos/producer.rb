@@ -116,10 +116,7 @@ module Deimos
           topic: topic,
           payloads: payloads
         ) do
-          messages = Array(payloads).map do |payload|
-            p = payload.is_a?(SchemaRecord) ? payload.to_h : payload
-            Deimos::Message.new(p, self)
-          end
+          messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, self) }
           messages.each { |m| _process_message(m, topic) }
           messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
             self.produce_batch(backend_class, batch)

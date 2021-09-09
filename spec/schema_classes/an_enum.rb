@@ -9,7 +9,6 @@ module Deimos
 
     # :nodoc:
     def initialize(an_enum)
-      super()
       @an_enum = an_enum
     end
 

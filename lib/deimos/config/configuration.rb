@@ -18,7 +18,7 @@ module Deimos
   # :nodoc:
   after_configure do
     Phobos.configure(self.config.phobos_config)
-    if self.config.schema.use_schema_class
+    if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
     self.config.producer_objects.each do |producer|
@@ -82,7 +82,7 @@ module Deimos
       schema(kafka_config.schema) if kafka_config.schema.present?
       namespace(kafka_config.namespace) if kafka_config.namespace.present?
       key_config(**kafka_config.key_config) if kafka_config.key_config.present?
-      schema_class_config(kafka_config.use_schema_class) if kafka_config.use_schema_class.present?
+      schema_class_config(kafka_config.use_schema_classes) if kafka_config.use_schema_classes.present?
     end
   end
 
@@ -282,7 +282,7 @@ module Deimos
 
       # Set to true to use the generated schema classes in your application
       # @return [Boolean]
-      setting :use_schema_class, false
+      setting :use_schema_classes, false
     end
 
     # The configured metrics provider.
@@ -326,7 +326,7 @@ module Deimos
       setting :key_config
       # Configure the usage of generated schema classes for this producer
       # @return [Boolean]
-      setting :use_schema_class
+      setting :use_schema_classes
     end
 
     setting_object :consumer do
@@ -351,7 +351,7 @@ module Deimos
       setting :disabled, false
       # Configure the usage of generated schema classes for this consumer
       # @return [Boolean]
-      setting :use_schema_class
+      setting :use_schema_classes
 
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.

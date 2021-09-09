@@ -48,10 +48,10 @@ describe Deimos::ActiveRecordProducer do
   end
 
   describe 'produce' do
-    SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_class|
+    SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
       context "with Schema Class consumption #{setting}" do
         before(:each) do
-          Deimos.configure { |config| config.schema.use_schema_class = use_schema_class }
+          Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
         end
 
         it 'should send events correctly' do

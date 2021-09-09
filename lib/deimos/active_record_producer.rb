@@ -58,7 +58,7 @@ module Deimos
         payload.delete_if do |k, _|
           k.to_sym != :payload_key && !fields.map(&:name).include?(k)
         end
-        return payload unless use_schema_class?(config)
+        return payload if not use_schema_classes?(config)
 
         schema_class_record(payload, config[:schema])
       end
