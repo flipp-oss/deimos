@@ -34,7 +34,7 @@ namespace :deimos do
   end
 
   desc 'Run Schema Model Generator'
-  task :generate_schema_classes, [:schema] => [:environment] do |t, args|
+  task :generate_schema_classes, [:schema] => [:environment] do |_t, args|
     schema = args[:schema] || []
     Rails.logger.info("Running deimos:generate_schema_classes on path #{schema}")
     Deimos::Generators::SchemaClassGenerator.start(schema)

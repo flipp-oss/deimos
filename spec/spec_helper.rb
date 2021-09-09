@@ -13,7 +13,7 @@ require 'activerecord-import'
 require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
-Dir["./spec/schema_classes/**/*.rb"].each { |f| require f }
+Dir['./spec/schema_classes/**/*.rb'].sort.each { |f| require f }
 
 # Constants used for consumer specs
 SCHEMA_CLASS_SETTINGS = { off: false, on: true }.freeze
@@ -104,7 +104,7 @@ module DbConfigs
     DB_OPTIONS.each do |options|
       describe subject, :integration, db_config: options do
 
-        include_context 'with DB'
+        include_context('with DB')
         describe options[:adapter] do # rubocop:disable RSpec/EmptyExampleGroup
           self.instance_eval(&block)
         end

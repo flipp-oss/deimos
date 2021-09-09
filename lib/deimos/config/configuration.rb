@@ -37,7 +37,8 @@ module Deimos
     if Deimos.config.schema.generated_class_path.nil?
       raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
     end
-    Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].each { |f| require f }
+
+    Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.each { |f| require f }
   rescue LoadError
     raise 'Cannot load schema classes. Please regenerate classes with rake deimos:generate_schema_models.'
   end

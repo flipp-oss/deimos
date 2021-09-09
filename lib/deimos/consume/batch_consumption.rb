@@ -25,7 +25,7 @@ module Deimos
           end
           _received_batch(payloads, metadata)
           _with_span do
-            yield payloads, metadata
+            yield(payloads, metadata)
           end
         end
         _handle_batch_success(benchmark.real, payloads, metadata)

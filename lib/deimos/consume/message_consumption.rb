@@ -17,7 +17,7 @@ module Deimos
             new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
             decoded_payload = decode_message(payload)
             _received_message(decoded_payload, new_metadata)
-            yield decoded_payload, new_metadata
+            yield(decoded_payload, new_metadata)
           end
         end
         _handle_success(benchmark.real, decoded_payload, new_metadata)
