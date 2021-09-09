@@ -8,7 +8,6 @@ module Deimos
     module BatchConsumption
       extend ActiveSupport::Concern
       include Phobos::BatchHandler
-      include SharedConfig
 
       # :nodoc:
       def around_consume_batch(batch, metadata)

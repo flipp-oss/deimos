@@ -7,7 +7,6 @@ module Deimos
     module MessageConsumption
       extend ActiveSupport::Concern
       include Phobos::Handler
-      include SharedConfig
 
       # :nodoc:
       def around_consume(payload, metadata)

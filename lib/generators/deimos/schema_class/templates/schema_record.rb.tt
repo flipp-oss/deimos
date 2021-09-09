@@ -59,7 +59,7 @@ module Deimos
     def to_h
       payload = {
 <%- fields.each do |field| -%>
-        <%= field_to_h_formatting(field) %>
+        <%= field_to_h(field) %>
 <% end -%>
       }
       @payload_key.present? ? payload.merge('payload_key' => @payload_key) : payload

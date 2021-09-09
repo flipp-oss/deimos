@@ -27,6 +27,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Database Backend](#database-backend)
    * [Database Poller](#database-poller)
    * [Running Consumers](#running-consumers)
+   * [Generated Schema Classes](#generated-schema-classes)
    * [Metrics](#metrics)
    * [Testing](#testing)
         * [Test Helpers](#test-helpers)
@@ -794,6 +795,104 @@ This will automatically set an environment variable called `DEIMOS_RAKE_TASK`,
 which can be useful if you want to figure out if you're inside the task
 as opposed to running your Rails server or console. E.g. you could start your 
 DB backend only when your rake task is running.
+
+## Generated Schema Classes
+
+Deimos offers a way to generate classes from Avro schemas. These classes are documented
+with YARD to aid in IDE auto-complete, and will help to move errors closer to the code.
+
+Add the following configurations for schema class generation: 
+
+```ruby
+config.schema.path 'path/to/schemas'
+config.schema.generated_class_path 'path/to/generated/classes' # Defaults to 'app/lib/schema_classes'
+```
+
+Run the following command to generate schema classes in your application:
+
+    bundle exec rake deimos:generate_schema_classes
+
+Add the following configurations to start using generated schema classes in your application:
+
+    config.schema.use_schema_class true
+
+
+Disable the usage of schema classes for a particular consumer or producer with the
+`use_schema_class` config. See [Configuration](./docs/CONFIGURATION.md#defining-producers)
+
+### Consumer
+
+The consumer interface relies on the `decode_message` method to turn JSON hash into the Schemas
+generated Class and provides it to the `consume`/`consume_batch` methods for their use.
+
+Examples of consumers would look like this:
+```ruby
+class MyConsumer < Deimos::Consumer
+  def consume(payload, metadata)
+    # Same method as Phobos consumers. payload is an instance of Deimos::SchemaRecord rather than a hash.
+    # metadata is a hash that contains information like :key and :topic. 
+    # You can interact with the schema class instance in the following way: 
+    # payload.test_id 
+    # payload.some_int
+  end
+end
+```
+
+```ruby
+class MyActiveRecordConsumer < Deimos::ActiveRecordConsumer
+  record_class Widget
+  # The following methods will treat payload as an instance of Deimos::SchemaRecord rather than a hash.
+  def fetch_record(klass, payload, key) ; super end
+  def assign_key(record, payload, key) ; super end
+  def record_attributes(payload, key)
+    super.merge(:some_field => "some_value-#{payload.test_id}")
+  end
+  def record_key(payload) ; super end
+  def process_message?(payload) ; super end
+end
+```
+
+### Producer
+Similarly to the consumer interface, the producer interface for using Schema Classes in your app
+relies on the `publish`/`publish_list` methods to convert a _provided_ instance of a Schema Class
+into a hash that can be used freely by the Kafka client.
+
+Examples of producers would look like this:
+```ruby
+# Producer
+class MyProducer < Deimos::Producer
+  class << self 
+    # @param test_id [String]
+    # @param some_int [Integer]
+    def self.send_a_message(test_id, some_int)
+      # Instead of sending in a Hash object to the publish or publish_list method,      
+      # you can initialize an instance of your schema class and send that in.
+      message = Deimos::MySchema.new(
+        test_id: test_id,
+        some_int: some_int
+      )
+      self.publish(message)
+      self.publish_list([message])
+    end
+  end
+end
+```
+
+```ruby
+# ActiveRecordProducer
+class MyActiveRecordProducer < Deimos::ActiveRecordProducer
+  record_class Widget
+  # @param payload [Deimos::SchemaRecord]
+  # @param _record [Widget]
+  def self.generate_payload(attributes, _record)
+    # This method converts your ActiveRecord into a SchemaRecord. You will be able to use super
+    # as an instance of Deimos::MySchema and set values that are not on your ActiveRecord schema.
+    res = super
+    res.some_value = "some_value-#{payload.test_id}"
+    res
+  end
+end
+```
 
 # Metrics
 
