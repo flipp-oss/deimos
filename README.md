@@ -859,7 +859,6 @@ into a hash that can be used freely by the Kafka client.
 
 Examples of producers would look like this:
 ```ruby
-# Producer
 class MyProducer < Deimos::Producer
   class << self 
     # @param test_id [String]
@@ -879,7 +878,6 @@ end
 ```
 
 ```ruby
-# ActiveRecordProducer
 class MyActiveRecordProducer < Deimos::ActiveRecordProducer
   record_class Widget
   # @param payload [Deimos::SchemaRecord]

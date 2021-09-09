@@ -32,7 +32,6 @@ module Deimos
   end
 
   # Loads generated classes
-  # TODO: Consider _generating_ from within here..? (Development only???)
   def self.load_generated_schema_classes
     if Deimos.config.schema.generated_class_path.nil?
       raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
