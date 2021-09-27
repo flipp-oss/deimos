@@ -51,8 +51,7 @@ module Deimos
             @current_schema = schema
             @schema_is_key = schema_base.is_key_schema?
             @initialization_definition = _initialization_definition if schema.type_sym == :record
-            @special_field_initialization = schema.type_sym == :record ? _special_field_initialization : {}
-            @field_assignment_overrides = schema.type_sym == :record ? _field_assignment_overrides : {}
+            @field_assignments = schema.type_sym == :record ? _field_assignments : {}
             file_prefix = schema.name.underscore
             namespace_path = schema.namespace.tr('.', '/')
             schema_template = "schema_#{schema.type}.rb"
@@ -150,7 +149,7 @@ module Deimos
       # @return [String] A string which defines the method signature for the initialize method
       def _initialization_definition
         arguments = fields.map { |v| "#{v.name}:"}
-        arguments += ['payload_key:nil'] unless @schema_is_key
+        arguments += ['payload_key: nil'] unless @schema_is_key
         remaining_arguments = arguments.join(', ')
 
         wrapped_arguments = []
@@ -171,53 +170,31 @@ module Deimos
 
       # Overrides default attr accessor methods
       # @return [Array<String>]
-      def _field_assignment_overrides
+      def _field_assignments
         # TODO: Handle default values here too..!
         result = []
         fields.each do |field|
           field_type = field.type.type_sym # Record, Union, Enum, Array or Map
           schema_base_type = _schema_base_type(field.type)
           field_base_type = _field_type(schema_base_type)
-
-          next unless %i(record enum).include? schema_base_type.type_sym
-
-          value_prefix = schema_base_type.type_sym == :record ? '**' : ''
-          field_initialization = "value.present? && !value.is_a?(#{field_base_type}) ? #{field_base_type}.new(#{value_prefix}value) : value"
           method_argument = %i(array map).include?(field_type) ? 'values' : 'value'
+          field_initialization = 'value'
+
+          if %i(record enum).include? schema_base_type.type_sym
+            value_prefix = schema_base_type.type_sym == :record ? '**' : ''
+            field_initialization = "value.present? && !value.is_a?(#{field_base_type}) ? #{field_base_type}.new(#{value_prefix}value) : value"
+          end
 
           result << {
-            field_name: field.name,
+            field: field,
             field_type: field_type,
+            schema_base_type: schema_base_type,
             method_argument: method_argument,
+            deimos_type: deimos_field_type(field),
             field_initialization: field_initialization
           }
         end
 
-        result
-      end
-
-      # Retrieve any special formatting needed for this current schema's fields
-      # @return [Hash<String, Array[Symbol]>]
-      def _special_field_initialization
-        result = Hash.new { |h, k| h[k] = [] }
-        fields.each do |field|
-          field_base_type = field.type.type_sym # Record, Union, Enum, Array or Map?
-          sub_type_schema = _schema_base_type(field.type)
-          initialize_method = _field_initialize_formatting(sub_type_schema)
-
-          next unless initialize_method.present?
-
-          initialize_string = case field_base_type
-                              when :array
-                                "value.map { |v| #{initialize_method}(v) }"
-                              when :map
-                                "value.transform_values { |v| #{initialize_method}(v) }"
-                              else
-                                "#{initialize_method}(value)"
-                              end
-
-          result[initialize_string] << ":#{field.name}"
-        end
         result
       end
 

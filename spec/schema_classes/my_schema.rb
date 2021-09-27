@@ -4,15 +4,29 @@
 module Deimos
   # :nodoc:
   class MySchema < SchemaRecord
+    ### Attribute Readers ###
     # @return [String]
-    attr_accessor :test_id
+    attr_reader :test_id
     # @return [Integer]
-    attr_accessor :some_int
+    attr_reader :some_int
+
     # @return [Object] An optional payload key
     attr_accessor :payload_key
 
+    ### Attribute Setters ###
+    # @param value [String]
+    def test_id=(value)
+      @test_id = value
+    end
+
+    # @param value [Integer]
+    def some_int=(value)
+      @some_int = value
+    end
+
     # @override
-    def initialize(test_id:, some_int:, payload_key:nil)
+    def initialize(test_id:, some_int:, payload_key: nil)
+      super()
       self.test_id = test_id
       self.some_int = some_int
       self.payload_key = payload_key

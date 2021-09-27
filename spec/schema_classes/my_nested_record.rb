@@ -4,19 +4,43 @@
 module Deimos
   # :nodoc:
   class MyNestedRecord < SchemaRecord
+    ### Attribute Readers ###
     # @return [Integer]
-    attr_accessor :some_int
+    attr_reader :some_int
     # @return [Float]
-    attr_accessor :some_float
+    attr_reader :some_float
     # @return [String]
-    attr_accessor :some_string
+    attr_reader :some_string
     # @return [nil, Integer]
-    attr_accessor :some_optional_int
+    attr_reader :some_optional_int
+
     # @return [Object] An optional payload key
     attr_accessor :payload_key
 
+    ### Attribute Setters ###
+    # @param value [Integer]
+    def some_int=(value)
+      @some_int = value
+    end
+
+    # @param value [Float]
+    def some_float=(value)
+      @some_float = value
+    end
+
+    # @param value [String]
+    def some_string=(value)
+      @some_string = value
+    end
+
+    # @param value [nil, Integer]
+    def some_optional_int=(value)
+      @some_optional_int = value
+    end
+
     # @override
-    def initialize(some_int:, some_float:, some_string:, some_optional_int:, payload_key:nil)
+    def initialize(some_int:, some_float:, some_string:, some_optional_int:, payload_key: nil)
+      super()
       self.some_int = some_int
       self.some_float = some_float
       self.some_string = some_string

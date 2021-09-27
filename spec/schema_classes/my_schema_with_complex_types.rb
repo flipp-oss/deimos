@@ -4,28 +4,80 @@
 module Deimos
   # :nodoc:
   class MySchemaWithComplexTypes < SchemaRecord
+    ### Attribute Readers ###
     # @return [String]
-    attr_accessor :test_id
+    attr_reader :test_id
     # @return [Float]
-    attr_accessor :test_float
+    attr_reader :test_float
     # @return [Array<String>]
-    attr_accessor :test_array
+    attr_reader :test_array
     # @return [Deimos::ARecord]
-    attr_accessor :some_record
+    attr_reader :some_record
     # @return [nil, Deimos::ARecord]
-    attr_accessor :some_optional_record
+    attr_reader :some_optional_record
     # @return [Array<Deimos::ARecord>]
-    attr_accessor :some_record_array
+    attr_reader :some_record_array
     # @return [Hash<String, Deimos::ARecord>]
-    attr_accessor :some_record_map
+    attr_reader :some_record_map
     # @return [Array<Deimos::AnEnum>]
-    attr_accessor :some_enum_array
+    attr_reader :some_enum_array
+
     # @return [Object] An optional payload key
     attr_accessor :payload_key
 
+    ### Attribute Setters ###
+    # @param value [String]
+    def test_id=(value)
+      @test_id = value
+    end
+
+    # @param value [Float]
+    def test_float=(value)
+      @test_float = value
+    end
+
+    # @param values [Array<String>]
+    def test_array=(values)
+      @test_array = values.map do |value|
+        value
+      end
+    end
+
+    # @param value [Deimos::ARecord]
+    def some_record=(value)
+      @some_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
+    end
+
+    # @param value [nil, Deimos::ARecord]
+    def some_optional_record=(value)
+      @some_optional_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
+    end
+
+    # @param values [Array<Deimos::ARecord>]
+    def some_record_array=(values)
+      @some_record_array = values.map do |value|
+        value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
+      end
+    end
+
+    # @param values [Hash<String, Deimos::ARecord>]
+    def some_record_map=(values)
+      @some_record_map = values.transform_values do |value|
+        value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
+      end
+    end
+
+    # @param values [Array<Deimos::AnEnum>]
+    def some_enum_array=(values)
+      @some_enum_array = values.map do |value|
+        value.present? && !value.is_a?(Deimos::AnEnum) ? Deimos::AnEnum.new(value) : value
+      end
+    end
+
     # @override
     def initialize(test_id:, test_float:, test_array:, some_record:, some_optional_record:,
-                   some_record_array:, some_record_map:, some_enum_array:, payload_key:nil)
+                   some_record_array:, some_record_map:, some_enum_array:, payload_key: nil)
+      super()
       self.test_id = test_id
       self.test_float = test_float
       self.test_array = test_array
@@ -35,37 +87,6 @@ module Deimos
       self.some_record_map = some_record_map
       self.some_enum_array = some_enum_array
       self.payload_key = payload_key
-    end
-
-    # @override
-    def some_record=(value)
-      @some_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
-    end
-
-    # @override
-    def some_optional_record=(value)
-      @some_optional_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
-    end
-
-    # @override
-    def some_record_array=(values)
-      @some_record_array = values.map do |value|
-        value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
-      end
-    end
-
-    # @override
-    def some_record_map=(values)
-      @some_record_map = values.transform_values do |value|
-        value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
-      end
-    end
-
-    # @override
-    def some_enum_array=(values)
-      @some_enum_array = values.map do |value|
-        value.present? && !value.is_a?(Deimos::AnEnum) ? Deimos::AnEnum.new(value) : value
-      end
     end
 
     # @override

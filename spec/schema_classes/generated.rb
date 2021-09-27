@@ -4,36 +4,104 @@
 module Deimos
   # :nodoc:
   class Generated < SchemaRecord
+    ### Attribute Readers ###
     # @return [String]
-    attr_accessor :a_string
+    attr_reader :a_string
     # @return [Integer]
-    attr_accessor :a_int
+    attr_reader :a_int
     # @return [Integer]
-    attr_accessor :a_long
+    attr_reader :a_long
     # @return [Float]
-    attr_accessor :a_float
+    attr_reader :a_float
     # @return [Float]
-    attr_accessor :a_double
+    attr_reader :a_double
     # @return [nil, Integer]
-    attr_accessor :an_optional_int
+    attr_reader :an_optional_int
     # @return [Deimos::AnEnum]
-    attr_accessor :an_enum
+    attr_reader :an_enum
     # @return [Array<Integer>]
-    attr_accessor :an_array
+    attr_reader :an_array
     # @return [Hash<String, String>]
-    attr_accessor :a_map
+    attr_reader :a_map
     # @return [String]
-    attr_accessor :timestamp
+    attr_reader :timestamp
     # @return [String]
-    attr_accessor :message_id
+    attr_reader :message_id
     # @return [Deimos::ARecord]
-    attr_accessor :a_record
+    attr_reader :a_record
+
     # @return [Object] An optional payload key
     attr_accessor :payload_key
 
+    ### Attribute Setters ###
+    # @param value [String]
+    def a_string=(value)
+      @a_string = value
+    end
+
+    # @param value [Integer]
+    def a_int=(value)
+      @a_int = value
+    end
+
+    # @param value [Integer]
+    def a_long=(value)
+      @a_long = value
+    end
+
+    # @param value [Float]
+    def a_float=(value)
+      @a_float = value
+    end
+
+    # @param value [Float]
+    def a_double=(value)
+      @a_double = value
+    end
+
+    # @param value [nil, Integer]
+    def an_optional_int=(value)
+      @an_optional_int = value
+    end
+
+    # @param value [Deimos::AnEnum]
+    def an_enum=(value)
+      @an_enum = value.present? && !value.is_a?(Deimos::AnEnum) ? Deimos::AnEnum.new(value) : value
+    end
+
+    # @param values [Array<Integer>]
+    def an_array=(values)
+      @an_array = values.map do |value|
+        value
+      end
+    end
+
+    # @param values [Hash<String, String>]
+    def a_map=(values)
+      @a_map = values.transform_values do |value|
+        value
+      end
+    end
+
+    # @param value [String]
+    def timestamp=(value)
+      @timestamp = value
+    end
+
+    # @param value [String]
+    def message_id=(value)
+      @message_id = value
+    end
+
+    # @param value [Deimos::ARecord]
+    def a_record=(value)
+      @a_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
+    end
+
     # @override
     def initialize(a_string:, a_int:, a_long:, a_float:, a_double:, an_optional_int:, an_enum:,
-                   an_array:, a_map:, timestamp:, message_id:, a_record:, payload_key:nil)
+                   an_array:, a_map:, timestamp:, message_id:, a_record:, payload_key: nil)
+      super()
       self.a_string = a_string
       self.a_int = a_int
       self.a_long = a_long
@@ -47,16 +115,6 @@ module Deimos
       self.message_id = message_id
       self.a_record = a_record
       self.payload_key = payload_key
-    end
-
-    # @override
-    def an_enum=(value)
-      @an_enum = value.present? && !value.is_a?(Deimos::AnEnum) ? Deimos::AnEnum.new(value) : value
-    end
-
-    # @override
-    def a_record=(value)
-      @a_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
     end
 
     # @override

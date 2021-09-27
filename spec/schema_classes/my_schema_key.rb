@@ -4,11 +4,19 @@
 module Deimos
   # :nodoc:
   class MySchemaKey < SchemaRecord
+    ### Attribute Readers ###
     # @return [String]
-    attr_accessor :test_id
+    attr_reader :test_id
+
+    ### Attribute Setters ###
+    # @param value [String]
+    def test_id=(value)
+      @test_id = value
+    end
 
     # @override
     def initialize(test_id:)
+      super()
       self.test_id = test_id
     end
 

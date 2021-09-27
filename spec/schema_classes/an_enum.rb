@@ -9,6 +9,7 @@ module Deimos
 
     # :nodoc:
     def initialize(an_enum)
+      super()
       self.an_enum = an_enum
     end
 

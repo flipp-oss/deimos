@@ -9,6 +9,7 @@ module Deimos
 
     # :nodoc:
     def initialize(<%= @current_schema.name.underscore %>)
+      super()
       self.<%= @current_schema.name.underscore %> = <%= @current_schema.name.underscore %>
     end
 

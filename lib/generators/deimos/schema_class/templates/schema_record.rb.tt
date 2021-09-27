@@ -4,17 +4,38 @@
 module Deimos
   # :nodoc:
   class <%= schema_classname(@current_schema) %> < SchemaRecord
-<%- fields.each do |field| -%>
-    # @return [<%= deimos_field_type(field) %>]
-    attr_accessor :<%= field.name %>
+    ### Attribute Readers ###
+<%- @field_assignments.each do |method_definition| -%>
+    # @return [<%= method_definition[:deimos_type] %>]
+    attr_reader :<%= method_definition[:field].name %>
 <% end -%>
 <%- unless @schema_is_key -%>
+
     # @return [Object] An optional payload key
     attr_accessor :payload_key
 <% end -%>
 
+    ### Attribute Setters ###
+<%- @field_assignments.each do |method_definition| -%>
+    # @param <%= method_definition[:method_argument] %> [<%= method_definition[:deimos_type] %>]
+    def <%= method_definition[:field].name %>=(<%= method_definition[:method_argument] %>)
+<%- if method_definition[:field_type] == :array -%>
+      @<%= method_definition[:field].name %> = values.map do |value|
+        <%= method_definition[:field_initialization] %>
+      end
+<%- elsif method_definition[:field_type] == :map -%>
+      @<%= method_definition[:field].name %> = values.transform_values do |value|
+        <%= method_definition[:field_initialization] %>
+      end
+<%- else -%>
+      @<%= method_definition[:field].name %> = <%= method_definition[:field_initialization] %>
+<% end -%>
+    end
+
+<% end -%>
     # @override
     <%= @initialization_definition %>
+      super()
 <%- fields.map { |v| "self.#{v.name} = #{v.name}"}.each do |field| -%>
       <%= field %>
 <% end -%>
@@ -23,23 +44,6 @@ module Deimos
 <% end -%>
     end
 
-<%- @field_assignment_overrides.each do |method_definition| -%>
-    # @override
-    def <%= method_definition[:field_name] %>=(<%= method_definition[:method_argument] %>)
-<%- if method_definition[:field_type] == :array -%>
-      @<%= method_definition[:field_name] %> = values.map do |value|
-        <%= method_definition[:field_initialization] %>
-      end
-<%- elsif method_definition[:field_type] == :map -%>
-      @<%= method_definition[:field_name] %> = values.transform_values do |value|
-        <%= method_definition[:field_initialization] %>
-      end
-<%- else -%>
-      @<%= method_definition[:field_name] %> = <%= method_definition[:field_initialization] %>
-<% end -%>
-    end
-
-<% end -%>
     # @override
     def schema
       '<%= @current_schema.name %>'
