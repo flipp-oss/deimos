@@ -35,6 +35,12 @@ module Deimos
           _field_type(schema_field.type)
         end
 
+        # @param schema [Avro::Schema::NamedSchema] A named schema
+        # @return [String]
+        def schema_classname(schema)
+          schema.name.underscore.camelize
+        end
+
         # Generate a Schema Model Class and all of its Nested Records from an Avro Schema
         # @param schema_name [String] the name of the Avro Schema in Dot Syntax
         def generate_classes_from_schema(schema_name)
@@ -137,11 +143,12 @@ module Deimos
       end
 
       # Load the schema from the Schema Backend
-      # @param schema [String] the Schemas name
+      # @param full_schema [String] the Schemas Full name
       # @return [Deimos::SchemaBackends::AvroBase]
-      def _schema_base(schema=nil)
-        Deimos.schema_backend_class.new(schema: extract_schema(schema),
-                                        namespace: extract_namespace(schema))
+      def _schema_base(full_schema=nil)
+        schema = Deimos::SchemaBackends::AvroBase.extract_schema(full_schema)
+        namespace = Deimos::SchemaBackends::AvroBase.extract_namespace(full_schema)
+        Deimos::SchemaBackends::AvroBase.new(schema: schema, namespace: namespace)
       end
 
       # Parses the schema in dot syntax from a given Schema Path.

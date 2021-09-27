@@ -83,6 +83,22 @@ module Deimos
         avro_schema
       end
 
+      # @param full_schema [String] the name of the current schema.
+      # @return [String] the schema name, without its namespace. e.g. MySchema
+      def self.extract_schema(full_schema)
+        last_dot = full_schema.rindex('.')
+        return full_schema if last_dot.nil?
+        full_schema[last_dot + 1..-1]
+      end
+
+      # @param full_schema [String] the name of the current schema.
+      # @return [String] the schema namespace, without its name. e.g. com.my-namespace
+      def self.extract_namespace(full_schema)
+        last_dot = full_schema.rindex('.')
+        return full_schema if last_dot.nil?
+        full_schema[0...last_dot]
+      end
+
       # @override
       def self.mock_backend
         :avro_validation
@@ -141,6 +157,7 @@ module Deimos
       def _key_schema_name(schema)
         "#{schema}_key"
       end
+
     end
   end
 end
