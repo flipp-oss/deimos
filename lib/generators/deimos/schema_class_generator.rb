@@ -178,9 +178,11 @@ module Deimos
           schema_base_type = _schema_base_type(field.type)
           field_base_type = _field_type(schema_base_type)
           method_argument = %i(array map).include?(field_type) ? 'values' : 'value'
-          field_initialization = 'value'
+          is_schema_class = %i(record enum).include? schema_base_type.type_sym
 
-          if %i(record enum).include? schema_base_type.type_sym
+          field_initialization = method_argument
+
+          if is_schema_class
             value_prefix = schema_base_type.type_sym == :record ? '**' : ''
             field_initialization = "value.present? && !value.is_a?(#{field_base_type}) ? #{field_base_type}.new(#{value_prefix}value) : value"
           end
@@ -188,7 +190,7 @@ module Deimos
           result << {
             field: field,
             field_type: field_type,
-            schema_base_type: schema_base_type,
+            is_schema_class: is_schema_class,
             method_argument: method_argument,
             deimos_type: deimos_field_type(field),
             field_initialization: field_initialization
