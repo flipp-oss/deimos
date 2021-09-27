@@ -37,6 +37,28 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
+  describe 'A Schema Key' do
+
+    before(:each) do
+      allow_any_instance_of(Deimos::SchemaBackends::AvroBase).to receive(:is_key_schema?).and_return(true)
+
+      described_class.start(['com.my-namespace.MySchema-key'])
+    end
+
+    it 'should generate the correct number of classes' do
+      expect(files.length).to eq(1)
+    end
+
+    %w(my_schema_key).each do |klass|
+      it "should generate a schema class for #{klass}" do
+        generated_path = files.select { |f| f =~ /#{klass}/ }.first
+        expected_path = expected_files.select { |f| f =~ /#{klass}/ }.first
+
+        expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
+      end
+    end
+  end
+
   describe 'A Nested Schema' do
     before(:each) do
       described_class.start(['com.my-namespace.MyNestedSchema'])

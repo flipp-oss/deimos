@@ -147,9 +147,14 @@ module Deimos
         raise NotImplementedError
       end
 
-      # Forcefully loads the schema into memory. To be defined by subclass.
+      # Forcefully loads the schema into memory.
       # @return [Object] The schema that is of use.
       def load_schema
+        raise NotImplementedError
+      end
+
+      # @return [Boolean] If the schema is being used as a key schema
+      def is_key_schema?
         raise NotImplementedError
       end
     end

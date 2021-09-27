@@ -83,6 +83,11 @@ module Deimos
         avro_schema
       end
 
+      # @return [Boolean] If the schema is being used as a key schema
+      def is_key_schema?
+        is_consumer_key_schema? || is_producer_key_schema?
+      end
+
       # @param full_schema [String] the name of the current schema.
       # @return [String] the schema name, without its namespace. e.g. MySchema
       def self.extract_schema(full_schema)
@@ -156,6 +161,20 @@ module Deimos
       # @return [String]
       def _key_schema_name(schema)
         "#{schema}_key"
+      end
+
+      # @return [Boolean] If the schema is being used in a Consumer
+      def is_consumer_key_schema?
+        @consumer_key_schemas ||= Deimos.config.consumer_objects.map { |c| c.try(:key_schema) }.
+          uniq.compact
+        @consumer_key_schemas.include? avro_schema.name
+      end
+
+      # @return [Boolean] If the schema is being used in a Producer
+      def is_producer_key_schema?
+        @producer_key_schemas ||= Deimos.config.producer_objects.map { |c| c.try(:key_schema) }.
+          uniq.compact
+        @producer_key_schemas.include? avro_schema.name
       end
 
     end

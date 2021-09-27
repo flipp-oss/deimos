@@ -3,6 +3,7 @@
 require 'rails/generators'
 require 'deimos'
 require 'deimos/utils/schema_class_mixin'
+require 'deimos/schema_backends/avro_base'
 require 'deimos/config/configuration'
 
 # Generates new schema classes.
@@ -49,6 +50,7 @@ module Deimos
           schema_base.schema_store.schemas.each_value do |schema|
             @current_schema = schema
             @special_field_initialization = schema.type_sym == :record ? special_field_initialization : {}
+            @schema_is_key = schema_base.is_key_schema?
             file_prefix = schema.name.underscore
             namespace_path = schema.namespace.tr('.', '/')
             schema_template = "schema_#{schema.type}.rb"

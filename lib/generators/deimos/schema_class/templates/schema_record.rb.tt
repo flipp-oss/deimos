@@ -8,7 +8,7 @@ module Deimos
     # @return [<%= deimos_field_type(field) %>]
     attr_accessor :<%= field.name %>
 <% end -%>
-<%- unless @current_schema.name =~ /\-key$/ -%>
+<%- if !@schema_is_key -%>
     # @return [Object] An optional payload key
     attr_accessor :payload_key
 <% end -%>
@@ -19,7 +19,9 @@ module Deimos
 <%- fields.each do |field| -%>
       <%= "@#{field.name} = args[:#{field.name}]" %>
 <% end -%>
+<%- if !@schema_is_key -%>
       @payload_key = args[:payload_key]
+<% end -%>
     end
 
     # @override
@@ -56,12 +58,18 @@ module Deimos
 
     # @override
     def to_h
+<%- if !@schema_is_key -%>
       payload = {
+<% else -%>
+      {
+<% end -%>
 <%- fields.each do |field| -%>
         <%= field_to_h(field) %>
 <% end -%>
       }
+<%- if !@schema_is_key -%>
       @payload_key.present? ? payload.merge('payload_key' => @payload_key) : payload
+<% end -%>
     end
   end
 end
