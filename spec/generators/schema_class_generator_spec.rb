@@ -38,7 +38,6 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
   end
 
   describe 'A Schema Key' do
-
     before(:each) do
       allow_any_instance_of(Deimos::SchemaBackends::AvroBase).to receive(:is_key_schema?).and_return(true)
 

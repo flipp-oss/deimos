@@ -144,7 +144,9 @@ module Deimos
         "#{namespace_dir}.#{schema_name}"
       end
 
-      # @return [Array[String]]
+      # Defines the initialization method for Schema Records. Handles wrapping when the list of
+      # arguments is too long.
+      # @return [String] A string which defines the method signature for the initialize method
       def _initialization_definition
         arguments = fields.map { |v| "#{v.name}:"}
         arguments += ['payload_key:nil'] if !@schema_is_key
