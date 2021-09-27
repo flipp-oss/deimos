@@ -66,7 +66,7 @@ module Deimos
       def schema_fields
         avro_schema.fields.map do |field|
           enum_values = field.type.type == 'enum' ? field.type.symbols : []
-          SchemaField.new(field.name, field.type, enum_values)
+          SchemaField.new(field.name, field.type, enum_values, field.default)
         end
       end
 
@@ -112,6 +112,42 @@ module Deimos
       # @override
       def self.content_type
         'avro/binary'
+      end
+
+      # @param schema [Avro::Schema::NamedSchema] A named schema
+      # @return [String]
+      def self.schema_classname(schema)
+        schema.name.underscore.camelize
+      end
+
+      # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.
+      # Recursively handles the typing for Arrays, Maps and Unions.
+      # @param avro_schema [Avro::Schema::NamedSchema]
+      # @return [String] A string representation of the Type of this SchemaField
+      def self.field_type(avro_schema)
+        case avro_schema.type_sym
+        when :string, :boolean
+          avro_schema.type_sym.to_s.titleize
+        when :int, :long
+          'Integer'
+        when :float, :double
+          'Float'
+        when :record, :enum
+          "Deimos::#{schema_classname(avro_schema)}"
+        when :array
+          arr_t = field_type(Deimos::SchemaField.new('n/a', avro_schema.items).type)
+          "Array<#{arr_t}>"
+        when :map
+          map_t = field_type(Deimos::SchemaField.new('n/a', avro_schema.values).type)
+          "Hash<String, #{map_t}>"
+        when :union
+          types = avro_schema.schemas.map do |t|
+            field_type(Deimos::SchemaField.new('n/a', t).type)
+          end
+          types.join(', ')
+        when :null
+          'nil'
+        end
       end
 
     private

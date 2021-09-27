@@ -26,7 +26,9 @@ module Deimos
         # Retrieve the fields from this Avro Schema
         # @return [Array<SchemaField>]
         def fields
-          @current_schema.fields.map { |field| Deimos::SchemaField.new(field.name, field.type) }
+          @current_schema.fields.map do |field|
+            Deimos::SchemaField.new(field.name, field.type, [], field.default)
+          end
         end
 
         # Converts Deimos::SchemaField's to String form for generated YARD docs
@@ -34,12 +36,6 @@ module Deimos
         # @return [String] A string representation of the Type of this SchemaField
         def deimos_field_type(schema_field)
           _field_type(schema_field.type)
-        end
-
-        # @param schema [Avro::Schema::NamedSchema] A named schema
-        # @return [String]
-        def schema_classname(schema)
-          schema.name.underscore.camelize
         end
 
         # Generate a Schema Model Class and all of its Nested Records from an Avro Schema
@@ -169,9 +165,9 @@ module Deimos
       end
 
       # Overrides default attr accessor methods
+      # TODO: Handle default values here too!
       # @return [Array<String>]
       def _field_assignments
-        # TODO: Handle default values here too..!
         result = []
         fields.each do |field|
           field_type = field.type.type_sym # Record, Union, Enum, Array or Map
@@ -205,31 +201,10 @@ module Deimos
       # @param avro_schema [Avro::Schema::NamedSchema]
       # @return [String] A string representation of the Type of this SchemaField
       def _field_type(avro_schema)
-        case avro_schema.type_sym
-        when :string, :boolean
-          avro_schema.type_sym.to_s.titleize
-        when :int, :long
-          'Integer'
-        when :float, :double
-          'Float'
-        when :record, :enum
-          "Deimos::#{schema_classname(avro_schema)}"
-        when :array
-          arr_t = deimos_field_type(Deimos::SchemaField.new('n/a', avro_schema.items))
-          "Array<#{arr_t}>"
-        when :map
-          map_t = deimos_field_type(Deimos::SchemaField.new('n/a', avro_schema.values))
-          "Hash<String, #{map_t}>"
-        when :union
-          types = avro_schema.schemas.map do |t|
-            deimos_field_type(Deimos::SchemaField.new('n/a', t))
-          end
-          types.join(', ')
-        when :null
-          'nil'
-        end
+        Deimos::SchemaBackends::AvroBase.field_type(avro_schema)
       end
 
+      # Returns the base type of this schema. Decodes Arrays, Maps and Unions
       # @param avro_schema [Avro::Schema::NamedSchema]
       # @return [Symbol]
       def _schema_base_type(avro_schema)
@@ -243,20 +218,6 @@ module Deimos
             reject { |schema| schema.type_sym == :null }.first
         else
           avro_schema
-        end
-      end
-
-      # @param avro_schema [Avro::Schema::NamedSchema]
-      # @return [String]
-      def _field_initialize_formatting(avro_schema)
-        field_type = _field_type(avro_schema)
-        case avro_schema.type_sym
-        when :record
-          "#{field_type}.initialize_from_json_payload"
-        when :enum
-          "#{field_type}.new"
-        else
-          nil
         end
       end
 
