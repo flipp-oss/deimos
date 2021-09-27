@@ -18,11 +18,6 @@ module Deimos
     end
 
     # @override
-    def to_json(*_args)
-      @an_enum.to_json
-    end
-
-    # @override
     def to_h
       @an_enum
     end

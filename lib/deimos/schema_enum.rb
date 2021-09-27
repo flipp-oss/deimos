@@ -14,7 +14,7 @@ module Deimos
     # Converts the object to a string that represents a JSON object
     # @return [String] a JSON string
     def to_json(*_args)
-      raise NotImplementedError
+      to_h.to_json
     end
 
     # Converts the object to a hash which can be used for debugging.
