@@ -829,11 +829,10 @@ Examples of consumers would look like this:
 ```ruby
 class MyConsumer < Deimos::Consumer
   def consume(payload, metadata)
-    # Same method as Phobos consumers. payload is an instance of Deimos::SchemaRecord rather than a hash.
-    # metadata is a hash that contains information like :key and :topic. 
+    # Same method as Phobos consumers. payload is now an instance of Deimos::SchemaRecord
+    # rather than a hash. metadata is still a hash that contains information like :key and :topic. 
     # You can interact with the schema class instance in the following way: 
-    # payload.test_id 
-    # payload.some_int
+    # do_something(payload.test_id, payload.some_int)
   end
 end
 ```
