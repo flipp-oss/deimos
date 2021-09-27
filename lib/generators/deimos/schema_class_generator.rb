@@ -35,17 +35,12 @@ module Deimos
           _field_type(schema_field.type)
         end
 
-        # @param enum [Avro::Schema::EnumSchema] a field of type 'enum'.
-        # @return [String] the possible return values for this Enum type
-        def enum_return_values(enum)
-          "'#{enum.symbols.join("', '")}'"
-        end
-
         # Generate a Schema Model Class and all of its Nested Records from an Avro Schema
         # @param schema_name [String] the name of the Avro Schema in Dot Syntax
         def generate_classes_from_schema(schema_name)
-          _schema_base(schema_name).load_schema!
-          _schema_base.schema_store.schemas.each_value do |schema|
+          schema_base = _schema_base(schema_name)
+          schema_base.load_schema
+          schema_base.schema_store.schemas.each_value do |schema|
             @current_schema = schema
             @special_field_initialization = schema.type_sym == :record ? special_field_initialization : {}
             file_prefix = schema.name.underscore
@@ -54,14 +49,12 @@ module Deimos
             filename = "#{Deimos.config.schema.generated_class_path}/#{namespace_path}/#{file_prefix}.rb"
             template(schema_template, filename, force: true)
           end
-          _clear_schema_base!
         end
 
         # Retrieve any special formatting needed for this current schema's fields
         # @return [Hash<String, Array[Symbol]>]
         def special_field_initialization
           result = Hash.new { |h, k| h[k] = [] }
-          # result = Hash.new([])
           fields.each do |field|
             field_base_type = field.type.type_sym # Record, Union, Enum, Array or Map?
             sub_type_schema = _schema_base_type(field.type)
@@ -106,10 +99,11 @@ module Deimos
 
       end
 
-      desc 'Generate a class based on an existing schema.'
+      desc 'Generate a class based on existing schema(s).'
       # :nodoc:
       def generate
-        Rails.logger.info(Deimos.config.schema.path)
+        _validate
+        Rails.logger.info("Generating schemas from #{Deimos.config.schema.path}")
         if full_schema.nil?
           _find_schema_paths.each do |schema_path|
             current_schema = _parse_schema_from_path(schema_path)
@@ -124,6 +118,14 @@ module Deimos
 
     private
 
+      # TODO - Allow for overriding or extension of this generator for other Schema Backends
+      # Determines if Schema Class Generation can be run.
+      # @raise if Schema Backend is not of a Avro-based class
+      def _validate
+        backend = Deimos.config.schema.backend.to_s
+        raise 'Schema Class Generation requires an Avro-based Schema Backend' if backend !~ /^avro/
+      end
+
       # Retrieve all Avro Schemas under the configured Schema path
       # @return [Array<String>] array of the full path to each schema in schema.path.
       def _find_schema_paths
@@ -136,15 +138,10 @@ module Deimos
 
       # Load the schema from the Schema Backend
       # @param schema [String] the Schemas name
-      # @return [Deimos::SchemaBackends::Base]
+      # @return [Deimos::SchemaBackends::AvroBase]
       def _schema_base(schema=nil)
-        @schema_base ||= Deimos.schema_backend_class.new(schema: extract_schema(schema),
-                                                         namespace: extract_namespace(schema))
-      end
-
-      # Unload the schema
-      def _clear_schema_base!
-        @schema_base = nil
+        Deimos.schema_backend_class.new(schema: extract_schema(schema),
+                                        namespace: extract_namespace(schema))
       end
 
       # Parses the schema in dot syntax from a given Schema Path.

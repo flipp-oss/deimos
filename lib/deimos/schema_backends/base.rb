@@ -146,6 +146,12 @@ module Deimos
       def decode_key(_payload, _key_id)
         raise NotImplementedError
       end
+
+      # Forcefully loads the schema into memory. To be defined by subclass.
+      # @return [Object] The schema that is of use.
+      def load_schema
+        raise NotImplementedError
+      end
     end
   end
 end

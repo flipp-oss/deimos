@@ -77,8 +77,9 @@ module Deimos
                                         fail_on_extra_fields: true)
       end
 
-      # :nodoc:
-      def load_schema!
+      # @override
+      # @return [Avro::Schema]
+      def load_schema
         avro_schema
       end
 
