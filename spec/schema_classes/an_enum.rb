@@ -9,7 +9,7 @@ module Deimos
 
     # :nodoc:
     def initialize(an_enum)
-      @an_enum = an_enum
+      self.an_enum = an_enum
     end
 
     # @override

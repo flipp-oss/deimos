@@ -372,7 +372,7 @@ module Deimos
                              handler,
                              call_original,
                              &block)
-      schema_class = handler.classified_schema(handler.class.config[:schema])
+      schema_class = handler.class.config[:schema]
       expected = input.dup
 
       config = handler.class.config
@@ -381,9 +381,11 @@ module Deimos
 
       if use_schema_classes && schema_class.present?
         expected = if input.is_a?(Array)
-                     input.map { |payload| schema_class.initialize_from_payload(payload) }
+                     input.map do |payload|
+                       handler.schema_class_record(payload, schema_class)
+                     end
                    else
-                     schema_class.initialize_from_payload(input)
+                     handler.schema_class_record(input, schema_class)
                    end
       end
 

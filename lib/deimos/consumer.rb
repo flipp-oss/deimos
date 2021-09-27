@@ -57,7 +57,7 @@ module Deimos
     # @param payload [Object]
     # @return [Object] the decoded message.
     def decode_message(payload)
-      decoded_payload = payload ? self.class.decoder.decode(payload) : nil
+      decoded_payload = payload.nil? ? nil : self.class.decoder.decode(payload)
       return decoded_payload if not use_schema_classes?(self.class.config)
 
       schema_class_record(decoded_payload, self.class.config[:schema])

@@ -8,19 +8,8 @@ module Deimos
     attr_accessor :test_id
 
     # @override
-    def initialize(test_id:, payload_key:nil)
-      @test_id = test_id
-    end
-
-    # @override
-    def self.initialize_from_payload(payload)
-      return unless payload.present?
-
-      args = {}
-      payload.each do |key, value|
-        args[key.to_sym] = value
-      end
-      self.new(**args)
+    def initialize(test_id:)
+      self.test_id = test_id
     end
 
     # @override

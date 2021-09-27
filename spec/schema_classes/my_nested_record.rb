@@ -17,22 +17,11 @@ module Deimos
 
     # @override
     def initialize(some_int:, some_float:, some_string:, some_optional_int:, payload_key:nil)
-      @some_int = some_int
-      @some_float = some_float
-      @some_string = some_string
-      @some_optional_int = some_optional_int
-      @payload_key = payload_key
-    end
-
-    # @override
-    def self.initialize_from_payload(payload)
-      return unless payload.present?
-
-      args = {}
-      payload.each do |key, value|
-        args[key.to_sym] = value
-      end
-      self.new(**args)
+      self.some_int = some_int
+      self.some_float = some_float
+      self.some_string = some_string
+      self.some_optional_int = some_optional_int
+      self.payload_key = payload_key
     end
 
     # @override

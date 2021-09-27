@@ -17,9 +17,9 @@ module Deimos
       # @return [Deimos::SchemaRecord]
       def schema_class_record(payload, schema)
         klass = classified_schema(schema)
-        return payload if klass.nil?
+        return payload if klass.nil? || payload.nil?
 
-        klass.initialize_from_payload(payload)
+        klass.new(**payload.symbolize_keys)
       end
 
       # @param config [FigTree::ConfigStruct] Producer or Consumer config

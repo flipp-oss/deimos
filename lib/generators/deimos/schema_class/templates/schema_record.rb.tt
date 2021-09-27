@@ -8,43 +8,38 @@ module Deimos
     # @return [<%= deimos_field_type(field) %>]
     attr_accessor :<%= field.name %>
 <% end -%>
-<%- if !@schema_is_key -%>
+<%- unless @schema_is_key -%>
     # @return [Object] An optional payload key
     attr_accessor :payload_key
 <% end -%>
 
     # @override
     <%= @initialization_definition %>
-<%- fields.map { |v| "@#{v.name} = #{v.name}"}.each do |field| -%>
+<%- fields.map { |v| "self.#{v.name} = #{v.name}"}.each do |field| -%>
       <%= field %>
 <% end -%>
-<%- if !@schema_is_key -%>
-      @payload_key = payload_key
+<%- unless @schema_is_key -%>
+      self.payload_key = payload_key
 <% end -%>
     end
 
+<%- @field_assignment_overrides.each do |method_definition| -%>
     # @override
-    def self.initialize_from_payload(payload)
-      return unless payload.present?
-
-      args = {}
-      payload.each do |key, value|
-<%- if @special_field_initialization.empty? -%>
-        args[key.to_sym] = value
-<%- else -%>
-        args[key.to_sym] = case key.to_sym
-<%- @special_field_initialization.each do |initialize_string, fields| -%>
-                           when <%= fields.join(', ') %>
-                             <%= initialize_string %>
-<% end -%>
-                           else
-                             value
-                           end
-<%- end -%>
+    def <%= method_definition[:field_name] %>=(<%= method_definition[:method_argument] %>)
+<%- if method_definition[:field_type] == :array -%>
+      @<%= method_definition[:field_name] %> = values.map do |value|
+        <%= method_definition[:field_initialization] %>
       end
-      self.new(**args)
+<%- elsif method_definition[:field_type] == :map -%>
+      @<%= method_definition[:field_name] %> = values.transform_values do |value|
+        <%= method_definition[:field_initialization] %>
+      end
+<%- else -%>
+      @<%= method_definition[:field_name] %> = <%= method_definition[:field_initialization] %>
+<% end -%>
     end
 
+<% end -%>
     # @override
     def schema
       '<%= @current_schema.name %>'
@@ -57,7 +52,7 @@ module Deimos
 
     # @override
     def to_h
-<%- if !@schema_is_key -%>
+<%- unless @schema_is_key -%>
       payload = {
 <% else -%>
       {
@@ -66,7 +61,7 @@ module Deimos
         <%= field_to_h(field) %>
 <% end -%>
       }
-<%- if !@schema_is_key -%>
+<%- unless @schema_is_key -%>
       @payload_key.present? ? payload.merge('payload_key' => @payload_key) : payload
 <% end -%>
     end

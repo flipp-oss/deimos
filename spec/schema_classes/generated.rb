@@ -34,37 +34,29 @@ module Deimos
     # @override
     def initialize(a_string:, a_int:, a_long:, a_float:, a_double:, an_optional_int:, an_enum:,
                    an_array:, a_map:, timestamp:, message_id:, a_record:, payload_key:nil)
-      @a_string = a_string
-      @a_int = a_int
-      @a_long = a_long
-      @a_float = a_float
-      @a_double = a_double
-      @an_optional_int = an_optional_int
-      @an_enum = an_enum
-      @an_array = an_array
-      @a_map = a_map
-      @timestamp = timestamp
-      @message_id = message_id
-      @a_record = a_record
-      @payload_key = payload_key
+      self.a_string = a_string
+      self.a_int = a_int
+      self.a_long = a_long
+      self.a_float = a_float
+      self.a_double = a_double
+      self.an_optional_int = an_optional_int
+      self.an_enum = an_enum
+      self.an_array = an_array
+      self.a_map = a_map
+      self.timestamp = timestamp
+      self.message_id = message_id
+      self.a_record = a_record
+      self.payload_key = payload_key
     end
 
     # @override
-    def self.initialize_from_payload(payload)
-      return unless payload.present?
+    def an_enum=(value)
+      @an_enum = value.present? && !value.is_a?(Deimos::AnEnum) ? Deimos::AnEnum.new(value) : value
+    end
 
-      args = {}
-      payload.each do |key, value|
-        args[key.to_sym] = case key.to_sym
-                           when :an_enum
-                             Deimos::AnEnum.new(value)
-                           when :a_record
-                             Deimos::ARecord.initialize_from_payload(value)
-                           else
-                             value
-                           end
-      end
-      self.new(**args)
+    # @override
+    def a_record=(value)
+      @a_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
     end
 
     # @override

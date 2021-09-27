@@ -49,9 +49,10 @@ module Deimos
           schema_base.load_schema
           schema_base.schema_store.schemas.each_value do |schema|
             @current_schema = schema
+            @schema_is_key = schema_base.is_key_schema?
             @initialization_definition = _initialization_definition if schema.type_sym == :record
             @special_field_initialization = schema.type_sym == :record ? _special_field_initialization : {}
-            @schema_is_key = schema_base.is_key_schema?
+            @field_assignment_overrides = schema.type_sym == :record ? _field_assignment_overrides : {}
             file_prefix = schema.name.underscore
             namespace_path = schema.namespace.tr('.', '/')
             schema_template = "schema_#{schema.type}.rb"
@@ -149,7 +150,7 @@ module Deimos
       # @return [String] A string which defines the method signature for the initialize method
       def _initialization_definition
         arguments = fields.map { |v| "#{v.name}:"}
-        arguments += ['payload_key:nil'] if !@schema_is_key
+        arguments += ['payload_key:nil'] unless @schema_is_key
         remaining_arguments = arguments.join(', ')
 
         wrapped_arguments = []
@@ -165,6 +166,33 @@ module Deimos
         wrapped_arguments[1..-1].each do |args|
           result += "                   #{args}"
         end
+        result
+      end
+
+      # Overrides default attr accessor methods
+      # @return [Array<String>]
+      def _field_assignment_overrides
+        # TODO: Handle default values here too..!
+        result = []
+        fields.each do |field|
+          field_type = field.type.type_sym # Record, Union, Enum, Array or Map
+          schema_base_type = _schema_base_type(field.type)
+          field_base_type = _field_type(schema_base_type)
+
+          next unless %i(record enum).include? schema_base_type.type_sym
+
+          value_prefix = schema_base_type.type_sym == :record ? '**' : ''
+          field_initialization = "value.present? && !value.is_a?(#{field_base_type}) ? #{field_base_type}.new(#{value_prefix}value) : value"
+          method_argument = %i(array map).include?(field_type) ? 'values' : 'value'
+
+          result << {
+            field_name: field.name,
+            field_type: field_type,
+            method_argument: method_argument,
+            field_initialization: field_initialization
+          }
+        end
+
         result
       end
 
@@ -245,13 +273,14 @@ module Deimos
         field_type = _field_type(avro_schema)
         case avro_schema.type_sym
         when :record
-          "#{field_type}.initialize_from_payload"
+          "#{field_type}.initialize_from_json_payload"
         when :enum
           "#{field_type}.new"
         else
           nil
         end
       end
+
     end
   end
 end

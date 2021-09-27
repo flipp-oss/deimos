@@ -11,19 +11,8 @@ module Deimos
 
     # @override
     def initialize(a_record_field:, payload_key:nil)
-      @a_record_field = a_record_field
-      @payload_key = payload_key
-    end
-
-    # @override
-    def self.initialize_from_payload(payload)
-      return unless payload.present?
-
-      args = {}
-      payload.each do |key, value|
-        args[key.to_sym] = value
-      end
-      self.new(**args)
+      self.a_record_field = a_record_field
+      self.payload_key = payload_key
     end
 
     # @override

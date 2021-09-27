@@ -13,20 +13,9 @@ module Deimos
 
     # @override
     def initialize(test_id:, some_int:, payload_key:nil)
-      @test_id = test_id
-      @some_int = some_int
-      @payload_key = payload_key
-    end
-
-    # @override
-    def self.initialize_from_payload(payload)
-      return unless payload.present?
-
-      args = {}
-      payload.each do |key, value|
-        args[key.to_sym] = value
-      end
-      self.new(**args)
+      self.test_id = test_id
+      self.some_int = some_int
+      self.payload_key = payload_key
     end
 
     # @override

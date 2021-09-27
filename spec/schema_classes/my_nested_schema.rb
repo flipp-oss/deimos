@@ -20,28 +20,22 @@ module Deimos
     # @override
     def initialize(test_id:, test_float:, test_array:, some_nested_record:, some_optional_record:,
                    payload_key:nil)
-      @test_id = test_id
-      @test_float = test_float
-      @test_array = test_array
-      @some_nested_record = some_nested_record
-      @some_optional_record = some_optional_record
-      @payload_key = payload_key
+      self.test_id = test_id
+      self.test_float = test_float
+      self.test_array = test_array
+      self.some_nested_record = some_nested_record
+      self.some_optional_record = some_optional_record
+      self.payload_key = payload_key
     end
 
     # @override
-    def self.initialize_from_payload(payload)
-      return unless payload.present?
+    def some_nested_record=(value)
+      @some_nested_record = value.present? && !value.is_a?(Deimos::MyNestedRecord) ? Deimos::MyNestedRecord.new(**value) : value
+    end
 
-      args = {}
-      payload.each do |key, value|
-        args[key.to_sym] = case key.to_sym
-                           when :some_nested_record, :some_optional_record
-                             Deimos::MyNestedRecord.initialize_from_payload(value)
-                           else
-                             value
-                           end
-      end
-      self.new(**args)
+    # @override
+    def some_optional_record=(value)
+      @some_optional_record = value.present? && !value.is_a?(Deimos::MyNestedRecord) ? Deimos::MyNestedRecord.new(**value) : value
     end
 
     # @override

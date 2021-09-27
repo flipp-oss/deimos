@@ -26,37 +26,46 @@ module Deimos
     # @override
     def initialize(test_id:, test_float:, test_array:, some_record:, some_optional_record:,
                    some_record_array:, some_record_map:, some_enum_array:, payload_key:nil)
-      @test_id = test_id
-      @test_float = test_float
-      @test_array = test_array
-      @some_record = some_record
-      @some_optional_record = some_optional_record
-      @some_record_array = some_record_array
-      @some_record_map = some_record_map
-      @some_enum_array = some_enum_array
-      @payload_key = payload_key
+      self.test_id = test_id
+      self.test_float = test_float
+      self.test_array = test_array
+      self.some_record = some_record
+      self.some_optional_record = some_optional_record
+      self.some_record_array = some_record_array
+      self.some_record_map = some_record_map
+      self.some_enum_array = some_enum_array
+      self.payload_key = payload_key
     end
 
     # @override
-    def self.initialize_from_payload(payload)
-      return unless payload.present?
+    def some_record=(value)
+      @some_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
+    end
 
-      args = {}
-      payload.each do |key, value|
-        args[key.to_sym] = case key.to_sym
-                           when :some_record, :some_optional_record
-                             Deimos::ARecord.initialize_from_payload(value)
-                           when :some_record_array
-                             value.map { |v| Deimos::ARecord.initialize_from_payload(v) }
-                           when :some_record_map
-                             value.transform_values { |v| Deimos::ARecord.initialize_from_payload(v) }
-                           when :some_enum_array
-                             value.map { |v| Deimos::AnEnum.new(v) }
-                           else
-                             value
-                           end
+    # @override
+    def some_optional_record=(value)
+      @some_optional_record = value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
+    end
+
+    # @override
+    def some_record_array=(values)
+      @some_record_array = values.map do |value|
+        value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
       end
-      self.new(**args)
+    end
+
+    # @override
+    def some_record_map=(values)
+      @some_record_map = values.transform_values do |value|
+        value.present? && !value.is_a?(Deimos::ARecord) ? Deimos::ARecord.new(**value) : value
+      end
+    end
+
+    # @override
+    def some_enum_array=(values)
+      @some_enum_array = values.map do |value|
+        value.present? && !value.is_a?(Deimos::AnEnum) ? Deimos::AnEnum.new(value) : value
+      end
     end
 
     # @override
