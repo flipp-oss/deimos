@@ -8,9 +8,8 @@ module Deimos
     attr_accessor :test_id
 
     # @override
-    def initialize(**kwargs)
-      args = kwargs.with_indifferent_access
-      @test_id = args[:test_id]
+    def initialize(test_id:, payload_key:nil)
+      @test_id = test_id
     end
 
     # @override

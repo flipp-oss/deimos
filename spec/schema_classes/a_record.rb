@@ -10,10 +10,9 @@ module Deimos
     attr_accessor :payload_key
 
     # @override
-    def initialize(**kwargs)
-      args = kwargs.with_indifferent_access
-      @a_record_field = args[:a_record_field]
-      @payload_key = args[:payload_key]
+    def initialize(a_record_field:, payload_key:nil)
+      @a_record_field = a_record_field
+      @payload_key = payload_key
     end
 
     # @override

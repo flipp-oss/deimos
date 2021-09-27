@@ -14,13 +14,12 @@ module Deimos
 <% end -%>
 
     # @override
-    def initialize(**kwargs)
-      args = kwargs.with_indifferent_access
-<%- fields.each do |field| -%>
-      <%= "@#{field.name} = args[:#{field.name}]" %>
+    <%= @initialization_definition %>
+<%- fields.map { |v| "@#{v.name} = #{v.name}"}.each do |field| -%>
+      <%= field %>
 <% end -%>
 <%- if !@schema_is_key -%>
-      @payload_key = args[:payload_key]
+      @payload_key = payload_key
 <% end -%>
     end
 

@@ -49,7 +49,8 @@ module Deimos
           schema_base.load_schema
           schema_base.schema_store.schemas.each_value do |schema|
             @current_schema = schema
-            @special_field_initialization = schema.type_sym == :record ? special_field_initialization : {}
+            @initialization_definition = _initialization_definition if schema.type_sym == :record
+            @special_field_initialization = schema.type_sym == :record ? _special_field_initialization : {}
             @schema_is_key = schema_base.is_key_schema?
             file_prefix = schema.name.underscore
             namespace_path = schema.namespace.tr('.', '/')
@@ -57,31 +58,6 @@ module Deimos
             filename = "#{Deimos.config.schema.generated_class_path}/#{namespace_path}/#{file_prefix}.rb"
             template(schema_template, filename, force: true)
           end
-        end
-
-        # Retrieve any special formatting needed for this current schema's fields
-        # @return [Hash<String, Array[Symbol]>]
-        def special_field_initialization
-          result = Hash.new { |h, k| h[k] = [] }
-          fields.each do |field|
-            field_base_type = field.type.type_sym # Record, Union, Enum, Array or Map?
-            sub_type_schema = _schema_base_type(field.type)
-            initialize_method = _field_initialize_formatting(sub_type_schema)
-
-            next unless initialize_method.present?
-
-            initialize_string = case field_base_type
-                                when :array
-                                  "value.map { |v| #{initialize_method}(v) }"
-                                when :map
-                                  "value.transform_values { |v| #{initialize_method}(v) }"
-                                else
-                                  "#{initialize_method}(value)"
-                                end
-
-            result[initialize_string] << ":#{field.name}"
-          end
-          result
         end
 
         # Format a given field into its appropriate to_h representation.
@@ -166,6 +142,53 @@ module Deimos
           gsub('/', '.')
 
         "#{namespace_dir}.#{schema_name}"
+      end
+
+      # @return [Array[String]]
+      def _initialization_definition
+        arguments = fields.map { |v| "#{v.name}:"}
+        arguments += ['payload_key:nil'] if !@schema_is_key
+        remaining_arguments = arguments.join(', ')
+
+        wrapped_arguments = []
+        char_limit = 80
+        until remaining_arguments.length < char_limit
+          index_of_last_comma = remaining_arguments.first(char_limit).rindex(/,/)
+          wrapped_arguments << remaining_arguments[0..index_of_last_comma] + "\n"
+          remaining_arguments = remaining_arguments[(index_of_last_comma+2)..-1]
+        end
+        wrapped_arguments << remaining_arguments + ')'
+
+        result = "def initialize(#{wrapped_arguments.first}"
+        wrapped_arguments[1..-1].each do |args|
+          result += "                   #{args}"
+        end
+        result
+      end
+
+      # Retrieve any special formatting needed for this current schema's fields
+      # @return [Hash<String, Array[Symbol]>]
+      def _special_field_initialization
+        result = Hash.new { |h, k| h[k] = [] }
+        fields.each do |field|
+          field_base_type = field.type.type_sym # Record, Union, Enum, Array or Map?
+          sub_type_schema = _schema_base_type(field.type)
+          initialize_method = _field_initialize_formatting(sub_type_schema)
+
+          next unless initialize_method.present?
+
+          initialize_string = case field_base_type
+                              when :array
+                                "value.map { |v| #{initialize_method}(v) }"
+                              when :map
+                                "value.transform_values { |v| #{initialize_method}(v) }"
+                              else
+                                "#{initialize_method}(value)"
+                              end
+
+          result[initialize_string] << ":#{field.name}"
+        end
+        result
       end
 
       # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.

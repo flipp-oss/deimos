@@ -32,21 +32,21 @@ module Deimos
     attr_accessor :payload_key
 
     # @override
-    def initialize(**kwargs)
-      args = kwargs.with_indifferent_access
-      @a_string = args[:a_string]
-      @a_int = args[:a_int]
-      @a_long = args[:a_long]
-      @a_float = args[:a_float]
-      @a_double = args[:a_double]
-      @an_optional_int = args[:an_optional_int]
-      @an_enum = args[:an_enum]
-      @an_array = args[:an_array]
-      @a_map = args[:a_map]
-      @timestamp = args[:timestamp]
-      @message_id = args[:message_id]
-      @a_record = args[:a_record]
-      @payload_key = args[:payload_key]
+    def initialize(a_string:, a_int:, a_long:, a_float:, a_double:, an_optional_int:, an_enum:,
+                   an_array:, a_map:, timestamp:, message_id:, a_record:, payload_key:nil)
+      @a_string = a_string
+      @a_int = a_int
+      @a_long = a_long
+      @a_float = a_float
+      @a_double = a_double
+      @an_optional_int = an_optional_int
+      @an_enum = an_enum
+      @an_array = an_array
+      @a_map = a_map
+      @timestamp = timestamp
+      @message_id = message_id
+      @a_record = a_record
+      @payload_key = payload_key
     end
 
     # @override

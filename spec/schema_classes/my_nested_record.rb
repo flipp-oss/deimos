@@ -16,13 +16,12 @@ module Deimos
     attr_accessor :payload_key
 
     # @override
-    def initialize(**kwargs)
-      args = kwargs.with_indifferent_access
-      @some_int = args[:some_int]
-      @some_float = args[:some_float]
-      @some_string = args[:some_string]
-      @some_optional_int = args[:some_optional_int]
-      @payload_key = args[:payload_key]
+    def initialize(some_int:, some_float:, some_string:, some_optional_int:, payload_key:nil)
+      @some_int = some_int
+      @some_float = some_float
+      @some_string = some_string
+      @some_optional_int = some_optional_int
+      @payload_key = payload_key
     end
 
     # @override

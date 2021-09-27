@@ -18,14 +18,14 @@ module Deimos
     attr_accessor :payload_key
 
     # @override
-    def initialize(**kwargs)
-      args = kwargs.with_indifferent_access
-      @test_id = args[:test_id]
-      @test_float = args[:test_float]
-      @test_array = args[:test_array]
-      @some_nested_record = args[:some_nested_record]
-      @some_optional_record = args[:some_optional_record]
-      @payload_key = args[:payload_key]
+    def initialize(test_id:, test_float:, test_array:, some_nested_record:, some_optional_record:,
+                   payload_key:nil)
+      @test_id = test_id
+      @test_float = test_float
+      @test_array = test_array
+      @some_nested_record = some_nested_record
+      @some_optional_record = some_optional_record
+      @payload_key = payload_key
     end
 
     # @override

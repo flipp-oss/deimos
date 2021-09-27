@@ -12,11 +12,10 @@ module Deimos
     attr_accessor :payload_key
 
     # @override
-    def initialize(**kwargs)
-      args = kwargs.with_indifferent_access
-      @test_id = args[:test_id]
-      @some_int = args[:some_int]
-      @payload_key = args[:payload_key]
+    def initialize(test_id:, some_int:, payload_key:nil)
+      @test_id = test_id
+      @some_int = some_int
+      @payload_key = payload_key
     end
 
     # @override
