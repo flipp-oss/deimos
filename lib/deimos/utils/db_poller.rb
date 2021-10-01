@@ -127,13 +127,12 @@ module Deimos
         id = @producer.config[:record_class].primary_key
         quoted_timestamp = ActiveRecord::Base.connection.quote_column_name(@config.timestamp_column)
         quoted_id = ActiveRecord::Base.connection.quote_column_name(id)
-        table = @producer.config[:record_class].table_name
         @producer.poll_query(time_from: time_from,
                              time_to: time_to,
                              column_name: @config.timestamp_column,
                              min_id: @info.last_sent_id).
           limit(BATCH_SIZE).
-          order("#{table}.#{quoted_timestamp}, #{table}.#{quoted_id}")
+          order("#{@producer.config[:record_class].table_name}.#{quoted_timestamp}, #{quoted_id}")
       end
 
       # @param batch [Array<ActiveRecord::Base>]

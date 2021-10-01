@@ -62,7 +62,7 @@ each_db_config(Deimos::Utils::DbPoller) do
       signal_double = instance_double(Sigurd::SignalHandler, run!: nil)
       allow(Sigurd::SignalHandler).to receive(:new).and_return(signal_double)
       described_class.start!
-      expect(Deimos::Utils::DbPoller).to have_received(:new).twice
+      expect(Deimos::Utils::DbPoller).to have_received(:new).exactly(3).times
       expect(Deimos::Utils::DbPoller).to have_received(:new).
         with(Deimos.config.db_poller_objects[0])
       expect(Deimos::Utils::DbPoller).to have_received(:new).
@@ -369,12 +369,19 @@ each_db_config(Deimos::Utils::DbPoller) do
           w.update_attribute(:updated_at, time_value(mins: -61, secs: 30))
         end
         allow(MyProducer).to receive(:poll_query).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
+        allow(poller).to receive(:process_batch).ordered.
           with([widgets[0], widgets[1], widgets[2]]).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
+        allow(poller).to receive(:process_batch).ordered.
           with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
 
-        expect { poller.process_updates }.to raise_exception('OH NOES')
+        poller.retrieve_poll_info
+
+        poller.process_updates
+
+        expect(poller).to have_received(:process_batch).ordered.
+          with([widgets[0], widgets[1], widgets[2]]).and_call_original
+        allow(poller).to have_received(:process_batch).ordered.
+          with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
 
         expect(MyProducer).to have_received(:poll_query).
           with(time_from: time_value(mins: -61),

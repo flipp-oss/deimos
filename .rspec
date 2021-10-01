@@ -1,1 +1,1 @@
---require spec_helper --tag ~kafka_integration --tag ~integration --format documentation
+--require spec_helper --tag ~kafka_integration --tag integration --format documentation
