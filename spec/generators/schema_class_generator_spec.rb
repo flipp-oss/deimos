@@ -9,8 +9,11 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
   let(:files) { Dir["#{schema_class_path}/*.rb"] }
 
   before(:each) do
+    Deimos.config.reset!
     Deimos.configure do
+      schema.path 'spec/schemas/'
       schema.generated_class_path('app/lib/schema_classes')
+      schema.backend :avro
     end
   end
 
@@ -18,9 +21,18 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     FileUtils.rm_rf(schema_class_path) if File.exist?(schema_class_path)
   end
 
-  describe 'A Schema' do
+  context 'A Consumers Schema' do
     before(:each) do
-      described_class.start(['com.my-namespace.Generated'])
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'Generated'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
+      end
+      described_class.start
     end
 
     it 'should generate the correct number of classes' do
@@ -37,18 +49,25 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
-  describe 'A Schema Key' do
+  context 'A Producers Schema with a Key' do
     before(:each) do
-      allow_any_instance_of(Deimos::SchemaBackends::AvroBase).to receive(:is_key_schema?).and_return(true)
-
-      described_class.start(['com.my-namespace.MySchema-key'])
+      Deimos.configure do
+        producer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config schema: 'MySchema-key'
+        end
+      end
+      described_class.start
     end
 
     it 'should generate the correct number of classes' do
-      expect(files.length).to eq(1)
+      expect(files.length).to eq(2)
     end
 
-    %w(my_schema_key).each do |klass|
+    %w(my_schema my_schema_key).each do |klass|
       it "should generate a schema class for #{klass}" do
         generated_path = files.select { |f| f =~ /#{klass}/ }.first
         expected_path = expected_files.select { |f| f =~ /#{klass}/ }.first
@@ -58,9 +77,18 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
-  describe 'A Nested Schema' do
+  context 'A Consumers Nested Schema' do
     before(:each) do
-      described_class.start(['com.my-namespace.MyNestedSchema'])
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'MyNestedSchema'
+          namespace 'com.my-namespace'
+          key_config field: :test_id
+        end
+      end
+      described_class.start
     end
 
     it 'should generate the correct number of classes' do
@@ -77,14 +105,48 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
-  it 'should generate all the schema model classes in schema.path' do
-    described_class.start([])
-    my_namespace_files = Dir['app/lib/schema_classes/com/my-namespace/*.rb']
-    request_files = Dir['app/lib/schema_classes/com/my-namespace/request/*.rb']
-    response_files = Dir['app/lib/schema_classes/com/my-namespace/response/*.rb']
-    expect(my_namespace_files.length).to eq(16)
-    expect(request_files.length).to eq(3)
-    expect(response_files.length).to eq(3)
+  context 'A mix of Consumer and Producer Schemas' do
+    before(:each) do
+      Deimos.configure do
+        producer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'Generated'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
+
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config field: :test_id
+        end
+
+        producer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'MyNestedSchema'
+          namespace 'com.my-namespace'
+          key_config field: :test_id
+        end
+      end
+      described_class.start
+    end
+
+    it 'should generate the correct number of classes' do
+      expect(files.length).to eq(6)
+    end
+
+    %w(generated a_record an_enum my_schema my_nested_schema my_nested_record).each do |klass|
+      it "should generate a schema class for #{klass}" do
+        generated_path = files.select { |f| f =~ /#{klass}\.rb/ }.first
+        expected_path = expected_files.select { |f| f =~ /#{klass}\.rb/ }.first
+
+        expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
+      end
+    end
   end
 
 end

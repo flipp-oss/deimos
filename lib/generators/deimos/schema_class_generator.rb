@@ -17,11 +17,6 @@ module Deimos
 
       source_root File.expand_path('schema_class/templates', __dir__)
 
-      argument :full_schema,
-               desc: 'The fully qualified schema name or path.',
-               required: false,
-               type: :string
-
       no_commands do
         # Retrieve the fields from this Avro Schema
         # @return [Array<SchemaField>]
@@ -38,14 +33,28 @@ module Deimos
           _field_type(schema_field.type)
         end
 
-        # Generate a Schema Model Class and all of its Nested Records from an Avro Schema
-        # @param schema_name [String] the name of the Avro Schema in Dot Syntax
-        def generate_classes_from_schema(schema_name)
-          schema_base = _schema_base(schema_name)
+        # Generate a Schema Model Class and all of its Nested Records from a
+        # Deimos Consumer or Producer Configuration object
+        # @param config [FigTree::ConfigStruct]
+        def generate_classes_from_config_object(config)
+          schema_name = config.schema
+          namespace = config.namespace
+          key_schema_name = config.key_config.dig(:schema)
+          schema_base = Deimos::SchemaBackends::AvroBase.new(schema: schema_name, namespace: namespace)
+          generate_classes_from_schema_base(schema_base)
+
+          if key_schema_name.present?
+            key_schema_base = Deimos::SchemaBackends::AvroBase.new(schema: key_schema_name, namespace: namespace)
+            generate_classes_from_schema_base(key_schema_base, is_key_schema: true)
+          end
+        end
+
+        # @param schema_base [Deimos::SchemaBackends::AvroBase]
+        def generate_classes_from_schema_base(schema_base, is_key_schema: false)
           schema_base.load_schema
           schema_base.schema_store.schemas.each_value do |schema|
             @current_schema = schema
-            @schema_is_key = schema_base.is_key_schema?
+            @schema_is_key = is_key_schema
             @initialization_definition = _initialization_definition if schema.type_sym == :record
             @field_assignments = schema.type_sym == :record ? _field_assignments : {}
             file_prefix = schema.name.underscore
@@ -79,65 +88,27 @@ module Deimos
 
       end
 
-      desc 'Generate a class based on existing schema(s).'
+      desc 'Generate a class based on configured consumer and producers.'
       # :nodoc:
       def generate
         _validate
-        Rails.logger.info("Generating schemas from #{Deimos.config.schema.path}")
-        if full_schema.nil?
-          _find_schema_paths.each do |schema_path|
-            current_schema = _parse_schema_from_path(schema_path)
+        Rails.logger.info("Generating schemas from Deimos.config to #{Deimos.config.schema.generated_class_path}")
+        Deimos.config.producer_objects.each do |config|
+          generate_classes_from_config_object(config)
+        end
 
-            generate_classes_from_schema(current_schema)
-          end
-        else
-          current_schema = _parse_schema_from_path(full_schema)
-          generate_classes_from_schema(current_schema)
+        Deimos.config.consumer_objects.each do |config|
+          generate_classes_from_config_object(config)
         end
       end
 
     private
 
-      # TODO - Allow for overriding or extension of this generator for other Schema Backends
       # Determines if Schema Class Generation can be run.
       # @raise if Schema Backend is not of a Avro-based class
       def _validate
         backend = Deimos.config.schema.backend.to_s
         raise 'Schema Class Generation requires an Avro-based Schema Backend' if backend !~ /^avro/
-      end
-
-      # Retrieve all Avro Schemas under the configured Schema path
-      # @return [Array<String>] array of the full path to each schema in schema.path.
-      def _find_schema_paths
-        Dir["#{_schema_path}/**/*.avsc"]
-      end
-
-      def _schema_path
-        Deimos.config.schema.path || File.expand_path('app/schemas', __dir__)
-      end
-
-      # Load the schema from the Schema Backend
-      # @param full_schema [String] the Schemas Full name
-      # @return [Deimos::SchemaBackends::AvroBase]
-      def _schema_base(full_schema=nil)
-        schema = Deimos::SchemaBackends::AvroBase.extract_schema(full_schema)
-        namespace = Deimos::SchemaBackends::AvroBase.extract_namespace(full_schema)
-        Deimos::SchemaBackends::AvroBase.new(schema: schema, namespace: namespace)
-      end
-
-      # Parses the schema in dot syntax from a given Schema Path.
-      # Handles different cases for File/Schema names.
-      # @return [String] The name of the schema in the format of com.my.namespace.MySchema
-      def _parse_schema_from_path(schema_path)
-        return schema_path unless schema_path =~ %r{/}
-
-        full_schema_path = File.absolute_path(schema_path)
-        schema_name = File.basename(full_schema_path, '.avsc')
-        namespace_dir = File.dirname(full_schema_path).
-          delete_prefix("#{_schema_path}/").
-          gsub('/', '.')
-
-        "#{namespace_dir}.#{schema_name}"
       end
 
       # Defines the initialization method for Schema Records. Handles wrapping when the list of
@@ -165,7 +136,7 @@ module Deimos
       end
 
       # Overrides default attr accessor methods
-      # TODO: Handle default values here too!
+      # TODO: Handle default values here too
       # @return [Array<String>]
       def _field_assignments
         result = []
