@@ -18,21 +18,38 @@ module Deimos
       def sent_messages
         Deimos::Backends::Test.sent_messages
       end
+
+      # Set the config to the right settings for a unit test
+      def unit_test!
+        Deimos.configure do |deimos_config|
+          deimos_config.logger = Logger.new(STDOUT)
+          deimos_config.consumers.reraise_errors = true
+          deimos_config.kafka.seed_brokers ||= ['test_broker']
+          deimos_config.schema.backend = Deimos.schema_backend_class.mock_backend
+          deimos_config.producers.backend = :test
+        end
+      end
+
+      # Kafka test config with avro schema registry
+      def full_integration_test!
+        Deimos.configure do |deimos_config|
+          deimos_config.producers.backend = :kafka
+          deimos_config.schema.backend = :avro_schema_registry
+        end
+      end
+
+      # Set the config to the right settings for a kafka test
+      def kafka_test!
+        Deimos.configure do |deimos_config|
+          deimos_config.producers.backend = :kafka
+          deimos_config.schema.backend = :avro_validation
+        end
+      end
     end
 
     included do
 
       RSpec.configure do |config|
-
-        config.before(:suite) do
-          Deimos.configure do |d_config|
-            d_config.logger = Logger.new(STDOUT)
-            d_config.consumers.reraise_errors = true
-            d_config.kafka.seed_brokers ||= ['test_broker']
-            d_config.schema.backend = Deimos.schema_backend_class.mock_backend
-            d_config.producers.backend = :test
-          end
-        end
 
         config.prepend_before(:each) do
           client = double('client').as_null_object

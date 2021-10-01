@@ -60,7 +60,7 @@ module Deimos
       end
 
       # @param topic [String]
-      # @return [String] the topic that was locked, or nil if none were.
+      # @return [String, nil] the topic that was locked, or nil if none were.
       def process_topic(topic)
         # If the topic is already locked, another producer is currently
         # working on it. Move on to the next one.
@@ -76,6 +76,7 @@ module Deimos
       rescue StandardError => e
         @logger.error("Error processing messages for topic #{@current_topic}: #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
         KafkaTopicInfo.register_error(@current_topic, @id)
+        shutdown_producer
       end
 
       # Process a single batch in a topic.

@@ -10,7 +10,7 @@ module Deimos
     class AvroSchemaRegistry < AvroBase
       # @override
       def decode_payload(payload, schema:)
-        avro_turf_messaging.decode(payload, schema_name: schema)
+        avro_turf_messaging.decode(payload.to_s, schema_name: schema)
       end
 
       # @override
