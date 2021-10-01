@@ -295,7 +295,48 @@ each_db_config(Deimos::Utils::DbPoller) do
                  column_name: :updated_at,
                  min_id: last_widget.id)
         end
+
+        it 'should recover correctly with errors and save the right ID' do
+          widgets.each do |w|
+            w.update_attribute(:updated_at, time_value(mins: -61, secs: 30))
+          end
+          allow(MyProducer).to receive(:poll_query).and_call_original
+          expect(poller).to receive(:process_batch).ordered.
+            with([widgets[0], widgets[1], widgets[2]]).and_call_original
+          expect(poller).to receive(:process_batch).ordered.
+            with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
+
+          expect { poller.process_updates }.to raise_exception('OH NOES')
+
+          expect(MyProducer).to have_received(:poll_query).
+            with(time_from: time_value(mins: -61),
+                 time_to: time_value(secs: -2),
+                 column_name: :updated_at,
+                 min_id: 0)
+
+          info = Deimos::PollInfo.last
+          expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
+          expect(info.last_sent_id).to eq(widgets[2].id)
+
+          travel 61.seconds
+          # process the last widget which came in during the delay
+          expect(poller).to receive(:process_batch).ordered.
+            with([widgets[3], widgets[4], widgets[5]]).and_call_original
+          expect(poller).to receive(:process_batch).with([widgets[6], last_widget]).
+            and_call_original
+          poller.process_updates
+          expect(MyProducer).to have_received(:poll_query).
+            with(time_from: time_value(mins: -61, secs: 30),
+                 time_to: time_value(secs: 59),
+                 column_name: :updated_at,
+                 min_id: widgets[2].id)
+
+          expect(info.reload.last_sent.in_time_zone).to eq(time_value(secs: -1))
+          expect(info.last_sent_id).to eq(last_widget.id)
+        end
+
       end
+
       describe 'join tables' do
         before(:each) do
           config.producer_class = 'MyProducerWithJoins'
@@ -327,26 +368,25 @@ each_db_config(Deimos::Utils::DbPoller) do
 
           poller.process_updates
 
-
           expect(poller).to have_received(:process_batch) do |batch|
-            expect(batch.to_json).to eq(
+            expect(batch.to_json).to match(
                                        [
                                          {
-                                           "id":4,
+                                           "id":widgets[1].id,
                                           "some_int":2,
                                            "test_id":"some_id",
                                            "some_other_int":1,
                                            "updated_at":"2015-05-05T03:59:32.000Z"
                                          },
                                          {
-                                           "id":5,
+                                           "id":widgets[2].id,
                                            "some_int":3,
                                            "test_id":"some_id",
                                            "some_other_int":2,
                                            "updated_at":"2015-05-05T03:59:33.000Z"
                                          },
                                          {
-                                           "id":6,
+                                           "id":widgets[3].id,
                                            "some_int":4,
                                            "test_id":"some_id",
                                            "some_other_int":3,
@@ -360,54 +400,8 @@ each_db_config(Deimos::Utils::DbPoller) do
 
           info = Deimos::PollInfo.last
           expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 34))
-          expect(info.last_sent_id).to eq(6)
+          expect(info.last_sent_id).to eq(widgets[3].id)
         end
-      end
-
-      it 'should recover correctly with errors and save the right ID' do
-        widgets.each do |w|
-          w.update_attribute(:updated_at, time_value(mins: -61, secs: 30))
-        end
-        allow(MyProducer).to receive(:poll_query).and_call_original
-        allow(poller).to receive(:process_batch).ordered.
-          with([widgets[0], widgets[1], widgets[2]]).and_call_original
-        allow(poller).to receive(:process_batch).ordered.
-          with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
-
-        poller.retrieve_poll_info
-
-        poller.process_updates
-
-        expect(poller).to have_received(:process_batch).ordered.
-          with([widgets[0], widgets[1], widgets[2]]).and_call_original
-        allow(poller).to have_received(:process_batch).ordered.
-          with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
-
-        expect(MyProducer).to have_received(:poll_query).
-          with(time_from: time_value(mins: -61),
-               time_to: time_value(secs: -2),
-               column_name: :updated_at,
-               min_id: 0)
-
-        info = Deimos::PollInfo.last
-        expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
-        expect(info.last_sent_id).to eq(widgets[2].id)
-
-        travel 61.seconds
-        # process the last widget which came in during the delay
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[3], widgets[4], widgets[5]]).and_call_original
-        expect(poller).to receive(:process_batch).with([widgets[6], last_widget]).
-          and_call_original
-        poller.process_updates
-        expect(MyProducer).to have_received(:poll_query).
-          with(time_from: time_value(mins: -61, secs: 30),
-               time_to: time_value(secs: 59),
-               column_name: :updated_at,
-               min_id: widgets[2].id)
-
-        expect(info.reload.last_sent.in_time_zone).to eq(time_value(secs: -1))
-        expect(info.last_sent_id).to eq(last_widget.id)
       end
 
     end
