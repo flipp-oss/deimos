@@ -6,7 +6,6 @@ module Deimos
   module SchemaClass
     # Base Class for Schema Classes generated from Avro.
     class Base
-
       # Converts the object to a string that represents a JSON object
       # @return [String] a JSON string
       def to_json(*_args)
@@ -41,6 +40,12 @@ module Deimos
         "#{klass}(#{self.as_json.symbolize_keys.to_s[1..-2]})"
       end
 
+      # Initializes this class from a given value
+      # @param value [Object]
+      def self.initialize_from_value(value)
+        raise NotImplementedError
+      end
+
     protected
 
       # :nodoc:
@@ -52,13 +57,6 @@ module Deimos
       def hash
         state.hash
       end
-
-      # Initializes this class from a given value
-      # @param value [Object]
-      def self.initialize_from_value(value)
-        raise NotImplementedError
-      end
-
     end
   end
 end

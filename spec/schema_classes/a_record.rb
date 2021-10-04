@@ -4,7 +4,7 @@
 module Deimos
   # :nodoc:
   class ARecord < SchemaClass::Record
-
+    # Attribute Accessors
     # @param value [String]
     attr_accessor :a_record_field
     # @return [Object] An optional payload key

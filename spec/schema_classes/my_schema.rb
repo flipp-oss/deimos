@@ -4,7 +4,7 @@
 module Deimos
   # :nodoc:
   class MySchema < SchemaClass::Record
-
+    # Attribute Accessors
     # @param value [String]
     attr_accessor :test_id
     # @param value [Integer]

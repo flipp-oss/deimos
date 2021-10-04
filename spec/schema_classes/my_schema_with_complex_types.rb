@@ -4,6 +4,7 @@
 module Deimos
   # :nodoc:
   class MySchemaWithComplexTypes < SchemaClass::Record
+    # Attribute Readers
     # @return [Deimos::ARecord]
     attr_reader :some_record
     # @return [nil, Deimos::ARecord]
@@ -14,7 +15,7 @@ module Deimos
     attr_reader :some_record_map
     # @return [Array<Deimos::AnEnum>]
     attr_reader :some_enum_array
-
+    # Attribute Accessors
     # @param value [String]
     attr_accessor :test_id
     # @param value [Float]
@@ -29,7 +30,7 @@ module Deimos
     attr_accessor :some_integer_map
     # @return [Object] An optional payload key
     attr_accessor :payload_key
-
+    # Attribute Writers
     # @param value [Deimos::ARecord]
     def some_record=(value)
       @some_record = Deimos::ARecord.initialize_from_value(value)
@@ -60,6 +61,7 @@ module Deimos
         Deimos::AnEnum.initialize_from_value(value)
       end
     end
+
 
     # @override
     def initialize(test_id: nil,

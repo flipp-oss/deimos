@@ -13,14 +13,12 @@ module Deimos
         raise NotImplementedError
       end
 
-    protected
-
       # :nodoc:
       def self.initialize_from_value(value)
         return nil if value.nil?
+
         value.is_a?(self) ? value : self.new(value)
       end
-
     end
   end
 end

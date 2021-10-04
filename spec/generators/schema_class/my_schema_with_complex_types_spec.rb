@@ -7,8 +7,8 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       test_id: 'test id',
       test_float: 1.2,
       test_string_array: %w(abc def),
-      test_int_array: [123,456],
-      some_integer_map: { "int_1" => 1, "int_2" => 2 },
+      test_int_array: [123, 456],
+      some_integer_map: { 'int_1' => 1, 'int_2' => 2 },
       some_record: Deimos::ARecord.new(a_record_field: 'field 1'),
       some_optional_record: Deimos::ARecord.new(a_record_field: 'field 2'),
       some_record_array: [Deimos::ARecord.new(a_record_field: 'field 3'),
@@ -49,7 +49,6 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       expect(klass).to be_instance_of(described_class)
     end
 
-
   end
 
   describe 'base class methods' do
@@ -58,7 +57,7 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
     end
 
     let(:schema_fields) do
-      %w(test_id test_float test_int_array test_optional_int test_string_array some_integer_map some_record some_optional_record some_record_array some_record_map some_enum_array )
+      %w(test_id test_float test_int_array test_optional_int test_string_array some_integer_map some_record some_optional_record some_record_array some_record_map some_enum_array)
     end
 
     it 'should return the name of the schema and namespace' do
@@ -77,9 +76,9 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
         'test_id' => 'test id',
         'test_float' => 1.2,
         'test_string_array' => %w(abc def),
-        "test_int_array"=>[123, 456],
-        "test_optional_int"=>123,
-        "some_integer_map"=>{ "int_1" => 1, "int_2" => 2 },
+        'test_int_array' => [123, 456],
+        'test_optional_int' => 123,
+        'some_integer_map' => { 'int_1' => 1, 'int_2' => 2 },
         'some_record' => { 'a_record_field' => 'field 1' },
         'some_optional_record' => { 'a_record_field' => 'field 2' },
         'some_record_array' => [
@@ -112,7 +111,7 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
     it 'should set some_record if it is not provided' do
       payload_hash.delete(:some_record)
       klass = described_class.new(**payload_hash)
-      expect(klass.some_record).to eq(Deimos::ARecord.new(:a_record_field=>"Test String"))
+      expect(klass.some_record).to eq(Deimos::ARecord.new(a_record_field: 'Test String'))
     end
 
     it 'should set some_record to nil' do

@@ -11,9 +11,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
   before(:each) do
     Deimos.config.reset!
     Deimos.configure do
-      schema.path 'spec/schemas/'
+      schema.path('spec/schemas/')
       schema.generated_class_path('app/lib/schema_classes')
-      schema.backend :avro
+      schema.backend(:avro)
     end
   end
 
@@ -21,7 +21,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     FileUtils.rm_rf(schema_class_path) if File.exist?(schema_class_path)
   end
 
-  context 'A Consumers Schema' do
+  context 'with a Consumers Schema' do
     before(:each) do
       Deimos.configure do
         consumer do
@@ -49,7 +49,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
-  context 'A Consumers Schema with Complex types' do
+  context 'with a Consumers Schema with Complex types' do
     before(:each) do
       Deimos.configure do
         consumer do
@@ -77,7 +77,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
-  context 'A Producers Schema with a Key' do
+  context 'with a Producers Schema with a Key' do
     before(:each) do
       Deimos.configure do
         producer do
@@ -105,7 +105,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
-  context 'A Consumers Nested Schema' do
+  context 'with a Consumers Nested Schema' do
     before(:each) do
       Deimos.configure do
         consumer do
@@ -133,7 +133,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
-  context 'A mix of Consumer and Producer Schemas' do
+  context 'with a mix of Consumer and Producer Schemas' do
     before(:each) do
       Deimos.configure do
         producer do

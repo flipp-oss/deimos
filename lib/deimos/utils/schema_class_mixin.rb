@@ -4,7 +4,6 @@ module Deimos
   module Utils
     # Module with Quality of Life methods used in SchemaClassGenerator and Consumer/Producer interfaces
     module SchemaClassMixin
-
       # @param schema [String] the current schema name as a string
       # @return [Class] the Class of the current schema.
       def classified_schema(schema)

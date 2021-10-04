@@ -7,7 +7,6 @@ module Deimos
   module SchemaClass
     # Base Class of Record Classes generated from Avro.
     class Record < Base
-
       # Element access method as if this Object were a hash
       # @param key[String||Symbol]
       # @return [Object] The value of the attribute if exists, nil otherwise
@@ -49,14 +48,12 @@ module Deimos
         validator.schema_fields.map(&:name)
       end
 
-    protected
-
       # :nodoc:
       def self.initialize_from_value(value)
         return nil if value.nil?
+
         value.is_a?(self) ? value : self.new(**value.symbolize_keys)
       end
-
     end
   end
 end

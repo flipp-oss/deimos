@@ -84,8 +84,8 @@ module Deimos
       end
 
       # @return [Boolean] If the schema is being used as a key schema
-      def is_key_schema?
-        is_consumer_key_schema? || is_producer_key_schema?
+      def key_schema?
+        consumer_key_schema? || producer_key_schema?
       end
 
       # @override
@@ -137,17 +137,17 @@ module Deimos
       # Returns the base type of this schema. Decodes Arrays, Maps and Unions
       # @param schema [Avro::Schema::NamedSchema]
       # @return [Avro::Schema::NamedSchema]
-      def self.schema_base_class(schema)
-        case schema.type_sym
+      def self.schema_base_class(avro_schema)
+        case avro_schema.type_sym
         when :array
-          schema_base_class(schema.items)
+          schema_base_class(avro_schema.items)
         when :map
-          schema_base_class(schema.values)
+          schema_base_class(avro_schema.values)
         when :union
-          schema.schemas.map(&method(:schema_base_class)).
+          avro_schema.schemas.map(&method(:schema_base_class)).
             reject { |schema| schema.type_sym == :null }.first
         else
-          schema
+          avro_schema
         end
       end
 
@@ -201,19 +201,18 @@ module Deimos
       end
 
       # @return [Boolean] If the schema is being used in a Consumer
-      def is_consumer_key_schema?
+      def consumer_key_schema?
         @consumer_key_schemas ||= Deimos.config.consumer_objects.map { |c| c.try(:key_schema) }.
           uniq.compact
-        @consumer_key_schemas.include? avro_schema.name
+        @consumer_key_schemas.include?(avro_schema.name)
       end
 
       # @return [Boolean] If the schema is being used in a Producer
-      def is_producer_key_schema?
+      def producer_key_schema?
         @producer_key_schemas ||= Deimos.config.producer_objects.map { |c| c.try(:key_schema) }.
           uniq.compact
-        @producer_key_schemas.include? avro_schema.name
+        @producer_key_schemas.include?(avro_schema.name)
       end
-
     end
   end
 end

@@ -4,11 +4,12 @@
 module Deimos
   # :nodoc:
   class MyNestedSchema < SchemaClass::Record
+    # Attribute Readers
     # @return [Deimos::MyNestedRecord]
     attr_reader :some_nested_record
     # @return [nil, Deimos::MyNestedRecord]
     attr_reader :some_optional_record
-
+    # Attribute Accessors
     # @param value [String]
     attr_accessor :test_id
     # @param value [Float]
@@ -17,7 +18,7 @@ module Deimos
     attr_accessor :test_array
     # @return [Object] An optional payload key
     attr_accessor :payload_key
-
+    # Attribute Writers
     # @param value [Deimos::MyNestedRecord]
     def some_nested_record=(value)
       @some_nested_record = Deimos::MyNestedRecord.initialize_from_value(value)
@@ -27,6 +28,7 @@ module Deimos
     def some_optional_record=(value)
       @some_optional_record = Deimos::MyNestedRecord.initialize_from_value(value)
     end
+
 
     # @override
     def initialize(test_id: nil,

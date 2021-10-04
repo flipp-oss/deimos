@@ -4,11 +4,12 @@
 module Deimos
   # :nodoc:
   class Generated < SchemaClass::Record
+    # Attribute Readers
     # @return [Deimos::AnEnum]
     attr_reader :an_enum
     # @return [Deimos::ARecord]
     attr_reader :a_record
-
+    # Attribute Accessors
     # @param value [String]
     attr_accessor :a_string
     # @param value [Integer]
@@ -31,7 +32,7 @@ module Deimos
     attr_accessor :message_id
     # @return [Object] An optional payload key
     attr_accessor :payload_key
-
+    # Attribute Writers
     # @param value [Deimos::AnEnum]
     def an_enum=(value)
       @an_enum = Deimos::AnEnum.initialize_from_value(value)
@@ -41,6 +42,7 @@ module Deimos
     def a_record=(value)
       @a_record = Deimos::ARecord.initialize_from_value(value)
     end
+
 
     # @override
     def initialize(a_string: nil,

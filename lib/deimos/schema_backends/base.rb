@@ -163,7 +163,7 @@ module Deimos
       end
 
       # @return [Boolean] If the schema is being used as a key schema
-      def is_key_schema?
+      def key_schema?
         raise NotImplementedError
       end
     end

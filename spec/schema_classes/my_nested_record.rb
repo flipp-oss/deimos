@@ -4,7 +4,7 @@
 module Deimos
   # :nodoc:
   class MyNestedRecord < SchemaClass::Record
-
+    # Attribute Accessors
     # @param value [Integer]
     attr_accessor :some_int
     # @param value [Float]

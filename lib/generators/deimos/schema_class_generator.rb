@@ -14,8 +14,8 @@ module Deimos
       include Deimos::Utils::SchemaClassMixin
 
       SPECIAL_TYPES = %i(record enum).freeze
-      INITIALIZE_WHITESPACE = "\n#{' ' * 19}".freeze
-      IGNORE_DEFAULTS = %w(message_id timestamp)
+      INITIALIZE_WHITESPACE = "\n#{' ' * 19}"
+      IGNORE_DEFAULTS = %w(message_id timestamp).freeze
 
       source_root File.expand_path('schema_class/templates', __dir__)
 
@@ -44,10 +44,10 @@ module Deimos
           schema_base = Deimos::SchemaBackends::AvroBase.new(schema: schema_name, namespace: namespace)
           generate_classes_from_schema_base(schema_base)
 
-          if key_schema_name.present?
-            key_schema_base = Deimos::SchemaBackends::AvroBase.new(schema: key_schema_name, namespace: namespace)
-            generate_classes_from_schema_base(key_schema_base, is_key_schema: true)
-          end
+          return if key_schema_name.present?
+
+          key_schema_base = Deimos::SchemaBackends::AvroBase.new(schema: key_schema_name, namespace: namespace)
+          generate_classes_from_schema_base(key_schema_base, is_key_schema: true)
         end
 
         # @param schema_base [Deimos::SchemaBackends::AvroBase]
@@ -71,7 +71,7 @@ module Deimos
         # @return [String]
         def field_to_h(field)
           res = "'#{field.name}' => @#{field.name}"
-          field_base_type = _schema_base_type(field.type).type_sym
+          field_base_type = _schema_base_class(field.type).type_sym
 
           if %i(record enum).include?(field_base_type)
             res += case field.type.type_sym
@@ -97,14 +97,14 @@ module Deimos
         Deimos.config.producer_objects.each do |config|
           schema_name = config.schema
           namespace = config.namespace || Deimos.config.producers.schema_namespace
-          key_schema_name = config.key_config.dig(:schema)
+          key_schema_name = config.key_config[:schema]
           generate_classes(schema_name, namespace, key_schema_name)
         end
 
         Deimos.config.consumer_objects.each do |config|
           schema_name = config.schema
           namespace = config.namespace
-          key_schema_name = config.key_config.dig(:schema)
+          key_schema_name = config.key_config[:schema]
           generate_classes(schema_name, namespace, key_schema_name)
         end
       end
@@ -129,10 +129,10 @@ module Deimos
         arguments += ['payload_key: nil'] unless @schema_is_key
 
         result = "def initialize(#{arguments.first}"
-        arguments[1..-1].each_with_index do |arg, i|
+        arguments[1..-1].each_with_index do |arg, _i|
           result += ",#{INITIALIZE_WHITESPACE}#{arg}"
         end
-        result + ')'
+        "#{result})"
       end
 
       # @param [SchemaField]
@@ -140,6 +140,7 @@ module Deimos
       def _field_default(field)
         default = field.default
         return ' nil' if default == :no_default || default.nil? || IGNORE_DEFAULTS.include?(field.name)
+
         case field.type.type_sym
         when :string
           " '#{default}'"
@@ -158,10 +159,10 @@ module Deimos
         result = []
         fields.each do |field|
           field_type = field.type.type_sym # Record, Union, Enum, Array or Map
-          schema_base_type = _schema_base_type(field.type)
+          schema_base_type = _schema_base_class(field.type)
           field_base_type = _field_type(schema_base_type)
           method_argument = %i(array map).include?(field_type) ? 'values' : 'value'
-          is_schema_class = %i(record enum).include? schema_base_type.type_sym
+          is_schema_class = %i(record enum).include?(schema_base_type.type_sym)
 
           field_initialization = method_argument
 
@@ -196,7 +197,6 @@ module Deimos
       def _schema_base_class(avro_schema)
         Deimos::SchemaBackends::AvroBase.schema_base_class(avro_schema)
       end
-
     end
   end
 end
