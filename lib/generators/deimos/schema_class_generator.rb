@@ -14,6 +14,8 @@ module Deimos
       include Deimos::Utils::SchemaClassMixin
 
       SPECIAL_TYPES = %i(record enum).freeze
+      INITIALIZE_WHITESPACE = "\n#{' ' * 19}".freeze
+      IGNORE_DEFAULTS = %w(message_id timestamp)
 
       source_root File.expand_path('schema_class/templates', __dir__)
 
@@ -116,8 +118,7 @@ module Deimos
         raise 'Schema Class Generation requires an Avro-based Schema Backend' if backend !~ /^avro/
       end
 
-      # Defines the initialization method for Schema Records. Handles wrapping when the list of
-      # arguments is too long.
+      # Defines the initialization method for Schema Records with one keyword argument per line
       # @return [String] A string which defines the method signature for the initialize method
       def _initialization_definition
         arguments = fields.map do |schema_field|
@@ -126,36 +127,26 @@ module Deimos
           arg.strip
         end
         arguments += ['payload_key: nil'] unless @schema_is_key
-        remaining_arguments = arguments.join(', ')
 
-        wrapped_arguments = []
-        char_limit = 80
-        until remaining_arguments.length < char_limit
-          index_of_last_comma = remaining_arguments.first(char_limit).rindex(/,/)
-          wrapped_arguments << remaining_arguments[0..index_of_last_comma] + "\n"
-          remaining_arguments = remaining_arguments[(index_of_last_comma+2)..-1]
+        result = "def initialize(#{arguments.first}"
+        arguments[1..-1].each_with_index do |arg, i|
+          result += ",#{INITIALIZE_WHITESPACE}#{arg}"
         end
-        wrapped_arguments << remaining_arguments + ')'
-
-        result = "def initialize(#{wrapped_arguments.first}"
-        wrapped_arguments[1..-1].each do |args|
-          result += "                   #{args}"
-        end
-        result
+        result + ')'
       end
 
       # @param [SchemaField]
       # @return [String]
       def _field_default(field)
         default = field.default
-        return '' if default == :no_default
+        return ' nil' if default == :no_default || default.nil? || IGNORE_DEFAULTS.include?(field.name)
         case field.type.type_sym
         when :string
           " '#{default}'"
-        when :record, :enum
+        when :record
           schema_name = Deimos::SchemaBackends::AvroBase.schema_classname(field.type)
           class_instance = schema_class_instance(field.default, schema_name)
-          " #{class_instance.as_new_string}"
+          " #{class_instance.to_h}"
         else
           " #{default}"
         end
@@ -175,8 +166,7 @@ module Deimos
           field_initialization = method_argument
 
           if is_schema_class
-            value_prefix = schema_base_type.type_sym == :record ? '**' : ''
-            field_initialization = "(value.present? && !value.is_a?(#{field_base_type})) ? #{field_base_type}.new(#{value_prefix}value) : value"
+            field_initialization = "#{field_base_type}.initialize_from_value(value)"
           end
 
           result << {

@@ -43,6 +43,13 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       expect(klass).to be_instance_of(described_class)
     end
 
+    it 'should initialize the class when missing attributes' do
+      payload_hash.delete(:test_id)
+      klass = described_class.new(**payload_hash)
+      expect(klass).to be_instance_of(described_class)
+    end
+
+
   end
 
   describe 'base class methods' do

@@ -48,6 +48,15 @@ module Deimos
       def schema_fields
         validator.schema_fields.map(&:name)
       end
+
+    protected
+
+      # :nodoc:
+      def self.initialize_from_value(value)
+        return nil if value.nil?
+        value.is_a?(self) ? value : self.new(**value.symbolize_keys)
+      end
+
     end
   end
 end

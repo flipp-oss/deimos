@@ -22,7 +22,7 @@ module Deimos
         klass.new(**payload.symbolize_keys)
       end
 
-      # @param config [FigTree::ConfigStruct] Producer or Consumer config
+      # @param config [Hash] Producer or Consumer config
       # @return [Boolean]
       def use_schema_classes?(config)
         use_schema_classes = config[:use_schema_classes]

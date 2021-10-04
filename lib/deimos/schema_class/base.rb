@@ -41,12 +41,6 @@ module Deimos
         "#{klass}(#{self.as_json.symbolize_keys.to_s[1..-2]})"
       end
 
-      # Returns the string form of the object as if it were to be initialized
-      # @return [String]
-      def as_new_string
-        klass = self.class
-        "#{klass}.new(#{self.as_json.symbolize_keys.to_s[1..-2]})"
-      end
     protected
 
       # :nodoc:
@@ -57,6 +51,12 @@ module Deimos
       # :nodoc:
       def hash
         state.hash
+      end
+
+      # Initializes this class from a given value
+      # @param value [Object]
+      def self.initialize_from_value(value)
+        raise NotImplementedError
       end
 
     end
