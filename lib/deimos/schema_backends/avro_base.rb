@@ -137,14 +137,14 @@ module Deimos
       # Returns the base type of this schema. Decodes Arrays, Maps and Unions
       # @param schema [Avro::Schema::NamedSchema]
       # @return [Avro::Schema::NamedSchema]
-      def self.schema_base_type(schema)
+      def self.schema_base_class(schema)
         case schema.type_sym
         when :array
-          schema_base_type(schema.items)
+          schema_base_class(schema.items)
         when :map
-          schema_base_type(schema.values)
+          schema_base_class(schema.values)
         when :union
-          schema.schemas.map(&method(:schema_base_type)).
+          schema.schemas.map(&method(:schema_base_class)).
             reject { |schema| schema.type_sym == :null }.first
         else
           schema

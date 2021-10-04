@@ -190,11 +190,11 @@ module Deimos
         Deimos::SchemaBackends::AvroBase.field_type(avro_schema)
       end
 
-      # Returns the base type of this schema. Decodes Arrays, Maps and Unions
+      # Returns the base class for this schema. Decodes Arrays, Maps and Unions
       # @param avro_schema [Avro::Schema::NamedSchema]
       # @return [Avro::Schema::NamedSchema]
-      def _schema_base_type(avro_schema)
-        Deimos::SchemaBackends::AvroBase.schema_base_type(avro_schema)
+      def _schema_base_class(avro_schema)
+        Deimos::SchemaBackends::AvroBase.schema_base_class(avro_schema)
       end
 
     end
