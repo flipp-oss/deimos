@@ -49,6 +49,34 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
+  context 'A Consumers Schema with Complex types' do
+    before(:each) do
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'MySchemaWithComplexTypes'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
+      end
+      described_class.start
+    end
+
+    it 'should generate the correct number of classes' do
+      expect(files.length).to eq(3)
+    end
+
+    %w(my_schema_with_complex_types a_record an_enum).each do |klass|
+      it "should generate a schema class for #{klass}" do
+        generated_path = files.select { |f| f =~ /#{klass}/ }.first
+        expected_path = expected_files.select { |f| f =~ /#{klass}/ }.first
+
+        expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
+      end
+    end
+  end
+
   context 'A Producers Schema with a Key' do
     before(:each) do
       Deimos.configure do

@@ -9,7 +9,7 @@ module Deimos
       # Default is to use the primary key column and the value of the first
       # field in the key.
       # @param klass [Class < ActiveRecord::Base]
-      # @param _payload [Hash|Deimos::SchemaRecord]
+      # @param _payload [Hash|Deimos::SchemaClass::Record]
       # @param key [Object]
       # @return [ActiveRecord::Base]
       def fetch_record(klass, _payload, key)
@@ -18,13 +18,13 @@ module Deimos
 
       # Assign a key to a new record.
       # @param record [ActiveRecord::Base]
-      # @param _payload [Hash|Deimos::SchemaRecord]
+      # @param _payload [Hash|Deimos::SchemaClass::Record]
       # @param key [Object]
       def assign_key(record, _payload, key)
         record[record.class.primary_key] = key
       end
 
-      # @param payload [Hash|Deimos::SchemaRecord] Decoded payloads
+      # @param payload [Hash|Deimos::SchemaClass::Record] Decoded payloads
       # @param metadata [Hash] Information about batch, including keys.
       def consume(payload, metadata)
         unless self.process_message?(payload)

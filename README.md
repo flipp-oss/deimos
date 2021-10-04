@@ -827,7 +827,7 @@ Examples of consumers would look like this:
 ```ruby
 class MyConsumer < Deimos::Consumer
   def consume(payload, metadata)
-    # Same method as Phobos consumers but payload is now an instance of Deimos::SchemaRecord
+    # Same method as Phobos consumers but payload is now an instance of Deimos::SchemaClass::Record
     # rather than a hash. metadata is still a hash that contains information like :key and :topic.
     # You can interact with the schema class instance in the following way: 
     do_something(payload.test_id, payload.some_int)
@@ -841,7 +841,7 @@ end
 class MyActiveRecordConsumer < Deimos::ActiveRecordConsumer
   record_class Widget
   # Any method that expects a message payload as a hash will instead
-  # receive an instance of Deimos::SchemaRecord.
+  # receive an instance of Deimos::SchemaClass::Record.
   def record_attributes(payload, key)
     # You can interact with the schema class instance in the following way:
     super.merge(:some_field => "some_value-#{payload.test_id}")
@@ -879,10 +879,10 @@ end
 ```ruby
 class MyActiveRecordProducer < Deimos::ActiveRecordProducer
   record_class Widget
-  # @param payload [Deimos::SchemaRecord]
+  # @param payload [Deimos::SchemaClass::Record]
   # @param _record [Widget]
   def self.generate_payload(attributes, _record)
-    # This method converts your ActiveRecord into a SchemaRecord. You will be able to use super
+    # This method converts your ActiveRecord into a SchemaClass::Record. You will be able to use super
     # as an instance of Deimos::MySchema and set values that are not on your ActiveRecord schema.
     res = super
     res.some_value = "some_value-#{res.test_id}"

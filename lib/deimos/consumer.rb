@@ -60,7 +60,7 @@ module Deimos
       decoded_payload = payload.nil? ? nil : self.class.decoder.decode(payload)
       return decoded_payload if not use_schema_classes?(self.class.config)
 
-      schema_class_record(decoded_payload, self.class.config[:schema])
+      schema_class_instance(decoded_payload, self.class.config[:schema])
     end
 
   private

@@ -15,11 +15,34 @@
       "doc": "test float"
     },
     {
-      "name": "test_array",
+      "name": "test_string_array",
       "type": {
         "type": "array",
         "items": "string"
-      }
+      },
+      "default": ["test"]
+    },
+    {
+      "name": "test_int_array",
+      "type": {
+        "type": "array",
+        "items": "int"
+      },
+      "default": [123]
+    },
+    {
+      "name": "test_optional_int",
+      "type": [ "int", "null" ],
+      "default": 123
+    },
+    {
+      "name": "some_integer_map",
+      "doc": "some record map",
+      "type": {
+        "type": "map",
+        "values": "int"
+      },
+      "default": {"abc": 123}
     },
     {
       "name": "some_record",
@@ -32,7 +55,8 @@
             "type": "string"
           }
         ]
-      }
+      },
+      "default": {"a_record_field": "Test String"}
     },
     {
       "name": "some_optional_record",

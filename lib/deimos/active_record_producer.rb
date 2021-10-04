@@ -58,9 +58,9 @@ module Deimos
         payload.delete_if do |k, _|
           k.to_sym != :payload_key && !fields.map(&:name).include?(k)
         end
-        return payload if not use_schema_classes?(config)
+        return payload if !use_schema_classes?(config)
 
-        schema_class_record(payload, config[:schema])
+        schema_class_instance(payload, config[:schema])
       end
 
       # Query to use when polling the database with the DbPoller. Add

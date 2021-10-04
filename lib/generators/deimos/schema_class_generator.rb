@@ -35,11 +35,10 @@ module Deimos
 
         # Generate a Schema Model Class and all of its Nested Records from a
         # Deimos Consumer or Producer Configuration object
-        # @param config [FigTree::ConfigStruct]
-        def generate_classes_from_config_object(config)
-          schema_name = config.schema
-          namespace = config.namespace
-          key_schema_name = config.key_config.dig(:schema)
+        # @param schema_name [String]
+        # @param namespace [String]
+        # @param key_schema_name [String]
+        def generate_classes(schema_name, namespace, key_schema_name)
           schema_base = Deimos::SchemaBackends::AvroBase.new(schema: schema_name, namespace: namespace)
           generate_classes_from_schema_base(schema_base)
 
@@ -94,11 +93,17 @@ module Deimos
         _validate
         Rails.logger.info("Generating schemas from Deimos.config to #{Deimos.config.schema.generated_class_path}")
         Deimos.config.producer_objects.each do |config|
-          generate_classes_from_config_object(config)
+          schema_name = config.schema
+          namespace = config.namespace || Deimos.config.producers.schema_namespace
+          key_schema_name = config.key_config.dig(:schema)
+          generate_classes(schema_name, namespace, key_schema_name)
         end
 
         Deimos.config.consumer_objects.each do |config|
-          generate_classes_from_config_object(config)
+          schema_name = config.schema
+          namespace = config.namespace
+          key_schema_name = config.key_config.dig(:schema)
+          generate_classes(schema_name, namespace, key_schema_name)
         end
       end
 
@@ -115,7 +120,11 @@ module Deimos
       # arguments is too long.
       # @return [String] A string which defines the method signature for the initialize method
       def _initialization_definition
-        arguments = fields.map { |v| "#{v.name}:"}
+        arguments = fields.map do |schema_field|
+          arg = "#{schema_field.name}:"
+          arg += _field_default(schema_field)
+          arg.strip
+        end
         arguments += ['payload_key: nil'] unless @schema_is_key
         remaining_arguments = arguments.join(', ')
 
@@ -135,8 +144,24 @@ module Deimos
         result
       end
 
+      # @param [SchemaField]
+      # @return [String]
+      def _field_default(field)
+        default = field.default
+        return '' if default == :no_default
+        case field.type.type_sym
+        when :string
+          " '#{default}'"
+        when :record, :enum
+          schema_name = Deimos::SchemaBackends::AvroBase.schema_classname(field.type)
+          class_instance = schema_class_instance(field.default, schema_name)
+          " #{class_instance.as_new_string}"
+        else
+          " #{default}"
+        end
+      end
+
       # Overrides default attr accessor methods
-      # TODO: Handle default values here too
       # @return [Array<String>]
       def _field_assignments
         result = []
@@ -151,7 +176,7 @@ module Deimos
 
           if is_schema_class
             value_prefix = schema_base_type.type_sym == :record ? '**' : ''
-            field_initialization = "value.present? && !value.is_a?(#{field_base_type}) ? #{field_base_type}.new(#{value_prefix}value) : value"
+            field_initialization = "(value.present? && !value.is_a?(#{field_base_type})) ? #{field_base_type}.new(#{value_prefix}value) : value"
           end
 
           result << {
@@ -175,6 +200,7 @@ module Deimos
         Deimos::SchemaBackends::AvroBase.field_type(avro_schema)
       end
 
+      # TODO: Move this over to Avro Base
       # Returns the base type of this schema. Decodes Arrays, Maps and Unions
       # @param avro_schema [Avro::Schema::NamedSchema]
       # @return [Symbol]

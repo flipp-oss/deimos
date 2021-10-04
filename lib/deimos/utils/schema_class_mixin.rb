@@ -14,8 +14,8 @@ module Deimos
       # Converts a raw payload into an instance of the Schema Class
       # @param payload [Hash]
       # @param schema [String]
-      # @return [Deimos::SchemaRecord]
-      def schema_class_record(payload, schema)
+      # @return [Deimos::SchemaClass::Record]
+      def schema_class_instance(payload, schema)
         klass = classified_schema(schema)
         return payload if klass.nil? || payload.nil?
 

@@ -50,14 +50,14 @@ module Deimos
 
     # Override this method (with `super`) if you want to add/change the default
     # attributes set to the new/existing record.
-    # @param payload [Hash|Deimos::SchemaRecord]
+    # @param payload [Hash|Deimos::SchemaClass::Record]
     # @param _key [String]
     def record_attributes(payload, _key=nil)
       @converter.convert(payload)
     end
 
     # Override this message to conditionally save records
-    # @param _payload [Hash|Deimos::SchemaRecord] The kafka message
+    # @param _payload [Hash|Deimos::SchemaClass::Record] The kafka message
     # @return [Boolean] if true, record is created/update.
     #   If false, record processing is skipped but message offset is still committed.
     def process_message?(_payload)

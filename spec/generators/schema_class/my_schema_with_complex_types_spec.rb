@@ -6,7 +6,9 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
     {
       test_id: 'test id',
       test_float: 1.2,
-      test_array: %w(abc def),
+      test_string_array: %w(abc def),
+      test_int_array: [123,456],
+      some_integer_map: { "int_1" => 1, "int_2" => 2 },
       some_record: Deimos::ARecord.new(a_record_field: 'field 1'),
       some_optional_record: Deimos::ARecord.new(a_record_field: 'field 2'),
       some_record_array: [Deimos::ARecord.new(a_record_field: 'field 3'),
@@ -26,7 +28,7 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       klass = described_class.new(
         test_id: payload_hash[:test_id],
         test_float: payload_hash[:test_float],
-        test_array: payload_hash[:test_array],
+        test_string_array: payload_hash[:test_string_array],
         some_record: payload_hash[:some_record],
         some_optional_record: payload_hash[:some_optional_record],
         some_record_array: payload_hash[:some_record_array],
@@ -41,13 +43,6 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       expect(klass).to be_instance_of(described_class)
     end
 
-    # Do not support i guess /shrug
-    # it 'should initialize the class from a hash with strings as keys' do
-    #   string_payload = described_class.new(**payload_hash).as_json.with_indifferent_access
-    #   klass = described_class.new(**string_payload)
-    #   expect(klass).to be_instance_of(described_class)
-    # end
-
   end
 
   describe 'base class methods' do
@@ -56,7 +51,7 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
     end
 
     let(:schema_fields) do
-      %w(test_id test_float test_array some_record some_optional_record some_record_array some_record_map some_enum_array)
+      %w(test_id test_float test_int_array test_optional_int test_string_array some_integer_map some_record some_optional_record some_record_array some_record_map some_enum_array )
     end
 
     it 'should return the name of the schema and namespace' do
@@ -74,7 +69,10 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       payload_h = {
         'test_id' => 'test id',
         'test_float' => 1.2,
-        'test_array' => %w(abc def),
+        'test_string_array' => %w(abc def),
+        "test_int_array"=>[123, 456],
+        "test_optional_int"=>123,
+        "some_integer_map"=>{ "int_1" => 1, "int_2" => 2 },
         'some_record' => { 'a_record_field' => 'field 1' },
         'some_optional_record' => { 'a_record_field' => 'field 2' },
         'some_record_array' => [
@@ -92,21 +90,40 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
     end
 
     it 'should return a JSON string of the payload' do
-      s = '{"test_id":"test id","test_float":1.2,"test_array":["abc","def"],"some_record":{"a_record_field":"field 1"},"some_optional_record":{"a_record_field":"field 2"},"some_record_array":[{"a_record_field":"field 3"},{"a_record_field":"field 4"}],"some_record_map":{"record_1":{"a_record_field":"field 5"},"record_2":{"a_record_field":"field 6"}},"some_enum_array":["sym1","sym2"]}'
+      s = '{"test_id":"test id","test_float":1.2,"test_string_array":["abc","def"],"test_int_array":[123,456],"test_optional_int":123,"some_integer_map":{"int_1":1,"int_2":2},"some_record":{"a_record_field":"field 1"},"some_optional_record":{"a_record_field":"field 2"},"some_record_array":[{"a_record_field":"field 3"},{"a_record_field":"field 4"}],"some_record_map":{"record_1":{"a_record_field":"field 5"},"record_2":{"a_record_field":"field 6"}},"some_enum_array":["sym1","sym2"]}'
       expect(klass.to_json).to eq(s)
+    end
+  end
+
+  describe 'defaults' do
+    it 'should set an_optional_int if it is not provided' do
+      payload_hash.delete(:an_optional_int)
+      klass = described_class.new(**payload_hash)
+      expect(klass.test_optional_int).to eq(123)
+    end
+
+    it 'should set some_record if it is not provided' do
+      payload_hash.delete(:some_record)
+      klass = described_class.new(**payload_hash)
+      expect(klass.some_record).to eq(Deimos::ARecord.new(:a_record_field=>"Test String"))
+    end
+
+    it 'should set some_record to nil' do
+      klass = described_class.new(**payload_hash.merge(some_record: nil))
+      expect(klass.some_record).to be_nil
     end
   end
 
   describe 'getters and setters' do
     let(:klass) do
-      described_class.new(payload_hash)
+      described_class.new(**payload_hash)
     end
 
     context 'when getting attributes' do
       it 'should get of values of primitive types' do
         expect(klass.test_id).to eq('test id')
         expect(klass.test_float).to eq(1.2)
-        expect(klass.test_array).to eq(%w(abc def))
+        expect(klass.test_string_array).to eq(%w(abc def))
       end
 
       it 'should get the value of some_record_array' do
@@ -137,7 +154,7 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       it 'should support Hash-style element access of values' do
         expect(klass['test_id']).to eq('test id')
         expect(klass['test_float']).to eq(1.2)
-        expect(klass['test_array']).to eq(%w(abc def))
+        expect(klass['test_string_array']).to eq(%w(abc def))
       end
     end
 
