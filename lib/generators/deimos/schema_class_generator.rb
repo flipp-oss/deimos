@@ -44,7 +44,7 @@ module Deimos
           schema_base = Deimos::SchemaBackends::AvroBase.new(schema: schema_name, namespace: namespace)
           generate_classes_from_schema_base(schema_base)
 
-          return if key_schema_name.present?
+          return if key_schema_name.nil?
 
           key_schema_base = Deimos::SchemaBackends::AvroBase.new(schema: key_schema_name, namespace: namespace)
           generate_classes_from_schema_base(key_schema_base, is_key_schema: true)
