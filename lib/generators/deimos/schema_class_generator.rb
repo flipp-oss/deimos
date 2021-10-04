@@ -190,22 +190,11 @@ module Deimos
         Deimos::SchemaBackends::AvroBase.field_type(avro_schema)
       end
 
-      # TODO: Move this over to Avro Base
       # Returns the base type of this schema. Decodes Arrays, Maps and Unions
       # @param avro_schema [Avro::Schema::NamedSchema]
-      # @return [Symbol]
+      # @return [Avro::Schema::NamedSchema]
       def _schema_base_type(avro_schema)
-        case avro_schema.type_sym
-        when :array
-          _schema_base_type(avro_schema.items)
-        when :map
-          _schema_base_type(avro_schema.values)
-        when :union
-          avro_schema.schemas.map(&method(:_schema_base_type)).
-            reject { |schema| schema.type_sym == :null }.first
-        else
-          avro_schema
-        end
+        Deimos::SchemaBackends::AvroBase.schema_base_type(avro_schema)
       end
 
     end
