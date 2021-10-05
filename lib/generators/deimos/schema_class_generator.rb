@@ -21,9 +21,10 @@ module Deimos
 
       no_commands do
         # Retrieve the fields from this Avro Schema
+        # @param schema [Avro::Schema::NamedSchema]
         # @return [Array<SchemaField>]
-        def fields
-          @current_schema.fields.map do |field|
+        def fields(schema)
+          schema.fields.map do |field|
             Deimos::SchemaField.new(field.name, field.type, [], field.default)
           end
         end
@@ -42,28 +43,35 @@ module Deimos
         # @param key_schema_name [String]
         def generate_classes(schema_name, namespace, key_schema_name)
           schema_base = Deimos::SchemaBackends::AvroBase.new(schema: schema_name, namespace: namespace)
-          generate_classes_from_schema_base(schema_base)
+          schema_base.load_schema
+          if key_schema_name.present?
+            key_schema_base = Deimos::SchemaBackends::AvroBase.new(schema: key_schema_name, namespace: namespace)
+            key_schema_base.load_schema
+          end
+          generate_class_from_schema_base(schema_base, key_schema_base: key_schema_base)
 
-          return if key_schema_name.nil?
+          return if key_schema_base.nil?
 
-          key_schema_base = Deimos::SchemaBackends::AvroBase.new(schema: key_schema_name, namespace: namespace)
-          generate_classes_from_schema_base(key_schema_base, is_key_schema: true)
+          generate_class_from_schema_base(key_schema_base)
         end
 
         # @param schema_base [Deimos::SchemaBackends::AvroBase]
-        def generate_classes_from_schema_base(schema_base, is_key_schema: false)
-          schema_base.load_schema
-          schema_base.schema_store.schemas.each_value do |schema|
-            @current_schema = schema
-            @schema_is_key = is_key_schema
-            @initialization_definition = _initialization_definition if schema.type_sym == :record
-            @field_assignments = schema.type_sym == :record ? _field_assignments : {}
-            file_prefix = schema.name.underscore
-            namespace_path = schema.namespace.tr('.', '/')
-            schema_template = "schema_#{schema.type}.rb"
-            filename = "#{Deimos.config.schema.generated_class_path}/#{namespace_path}/#{file_prefix}.rb"
-            template(schema_template, filename, force: true)
+        def generate_class_from_schema_base(schema_base, key_schema_base: nil)
+          schemas = schema_base.schema_store.schemas.values
+          sub_schemas = schemas.reject { |s| s.name == schema_base.schema }
+          @sub_schema_templates = sub_schemas.map do |schema|
+            _generate_class_template_from_schema(schema)
           end
+
+          main_schema = schemas.find { |s| s.name == schema_base.schema }
+          class_template = _generate_class_template_from_schema(main_schema, key_schema_base)
+          @main_class_definition = class_template
+
+          file_prefix = main_schema.name.underscore
+          namespace_path = main_schema.namespace.tr('.', '/')
+          filename = "#{Deimos.config.schema.generated_class_path}/#{namespace_path}/#{file_prefix}.rb"
+
+          template('schema_class.rb', filename, force: true)
         end
 
         # Format a given field into its appropriate to_h representation.
@@ -84,7 +92,7 @@ module Deimos
                    end
           end
 
-          res + (field.name == fields.last.name ? '' : ',')
+          res + (field.name == @fields.last.name ? '' : ',')
         end
 
       end
@@ -118,15 +126,40 @@ module Deimos
         raise 'Schema Class Generation requires an Avro-based Schema Backend' if backend !~ /^avro/
       end
 
+      # @param schema[Avro::Schema::NamedSchema]
+      # @param key_schema_base[Avro::Schema::NamedSchema]
+      # @return [String]
+      def _generate_class_template_from_schema(schema, key_schema_base=nil)
+        _set_instance_variables(schema, key_schema_base)
+
+        temp = schema.type_sym == :record ? _record_class_template : _enum_class_template
+        res = ERB.new(temp, nil, '-')
+        res.result(binding)
+      end
+
+      # @param schema[Avro::Schema::NamedSchema]
+      # @param key_schema_base[Avro::Schema::NamedSchema]
+      def _set_instance_variables(schema, key_schema_base=nil)
+        @current_schema = schema
+        @schema_has_key = key_schema_base.present?
+        @fields = fields(schema) if schema.type_sym == :record
+        if @schema_has_key
+          key_schema_base.load_schema
+          key_schema = key_schema_base.schema_store.schemas.values.first
+          @fields << Deimos::SchemaField.new('payload_key', key_schema, [], nil)
+        end
+        @initialization_definition = _initialization_definition if schema.type_sym == :record
+        @field_assignments = schema.type_sym == :record ? _field_assignments : {}
+      end
+
       # Defines the initialization method for Schema Records with one keyword argument per line
       # @return [String] A string which defines the method signature for the initialize method
       def _initialization_definition
-        arguments = fields.map do |schema_field|
+        arguments = @fields.map do |schema_field|
           arg = "#{schema_field.name}:"
           arg += _field_default(schema_field)
           arg.strip
         end
-        arguments += ['payload_key: nil'] unless @schema_is_key
 
         result = "def initialize(#{arguments.first}"
         arguments[1..-1].each_with_index do |arg, _i|
@@ -157,7 +190,7 @@ module Deimos
       # @return [Array<String>]
       def _field_assignments
         result = []
-        fields.each do |field|
+        @fields.each do |field|
           field_type = field.type.type_sym # Record, Union, Enum, Array or Map
           schema_base_type = _schema_base_class(field.type)
           field_base_type = _field_type(schema_base_type)
@@ -196,6 +229,106 @@ module Deimos
       # @return [Avro::Schema::NamedSchema]
       def _schema_base_class(avro_schema)
         Deimos::SchemaBackends::AvroBase.schema_base_class(avro_schema)
+      end
+
+      # An ERB template for schema record classes
+      # @return [String]
+      def _record_class_template
+        %{
+  # Autogenerated Schema for Record at <%= @current_schema.namespace %>.<%= @current_schema.name %>
+  class <%= Deimos::SchemaBackends::AvroBase.schema_classname(@current_schema) %> < Deimos::SchemaClass::Record
+<%- if @field_assignments.select{ |h| h[:is_schema_class] }.any? -%>
+    ### Attribute Readers ###
+  <%- @field_assignments.select{ |h| h[:is_schema_class] }.each do |method_definition| -%>
+    # @return [<%= method_definition[:deimos_type] %>]
+    attr_reader :<%= method_definition[:field].name %>
+  <%- end -%>
+
+<% end -%>
+<%- if @field_assignments.select{ |h| !h[:is_schema_class] }.any? -%>
+    ### Attribute Accessors ###
+  <%- @field_assignments.select{ |h| !h[:is_schema_class] }.each do |method_definition| -%>
+    # @param <%= method_definition[:method_argument] %> [<%= method_definition[:deimos_type] %>]
+    attr_accessor :<%= method_definition[:field].name %>
+  <%- end -%>
+
+<% end -%>
+<%- if @field_assignments.select{ |h| h[:is_schema_class] }.any? -%>
+    ### Attribute Writers ###
+  <%- @field_assignments.select{ |h| h[:is_schema_class] }.each do |method_definition| -%>
+    # @param <%= method_definition[:method_argument] %> [<%= method_definition[:deimos_type] %>]
+    def <%= method_definition[:field].name %>=(<%= method_definition[:method_argument] %>)
+    <%- if method_definition[:field_type] == :array -%>
+      @<%= method_definition[:field].name %> = values.map do |value|
+        <%= method_definition[:field_initialization] %>
+      end
+    <%- elsif method_definition[:field_type] == :map -%>
+      @<%= method_definition[:field].name %> = values.transform_values do |value|
+        <%= method_definition[:field_initialization] %>
+      end
+    <%- else -%>
+      @<%= method_definition[:field].name %> = <%= method_definition[:field_initialization] %>
+    <%- end -%>
+    end
+
+  <%- end -%>
+<% end -%>
+    # @override
+    <%= @initialization_definition %>
+      super()
+<%- @fields.each do |field| -%>
+      self.<%= field.name %> = <%= field.name %>
+<% end -%>
+    end
+
+    # @override
+    def schema
+      '<%= @current_schema.name %>'
+    end
+
+    # @override
+    def namespace
+      '<%= @current_schema.namespace %>'
+    end
+
+    # @override
+    def to_h
+      \{
+<%- @fields.each do |field| -%>
+        <%= field_to_h(field) %>
+<% end -%>
+      \}
+    end
+  end
+        }.strip
+      end
+
+      # An ERB template for schema enum classes
+      # @return [String]
+      def _enum_class_template
+        %{
+  # Autogenerated Schema for Enum at <%= @current_schema.namespace %>.<%= @current_schema.name %>
+  class <%= Deimos::SchemaBackends::AvroBase.schema_classname(@current_schema) %> < Deimos::SchemaClass::Enum
+    # @return ['<%= @current_schema.symbols.join("', '") %>']
+    attr_accessor :<%= @current_schema.name.underscore %>
+
+    # :nodoc:
+    def initialize(<%= @current_schema.name.underscore %>)
+      super()
+      self.<%= @current_schema.name.underscore %> = <%= @current_schema.name.underscore %>
+    end
+
+    # @override
+    def symbols
+      %w(<%= @current_schema.symbols.join(' ') %>)
+    end
+
+    # @override
+    def to_h
+      @<%= @current_schema.name.underscore %>
+    end
+  end
+        }.strip
       end
     end
   end

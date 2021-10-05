@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # For testing the generated class.
-RSpec.describe Deimos::MySchemaWithComplexTypes do
+RSpec.describe Schemas::MySchemaWithComplexTypes do
   let(:payload_hash) do
     {
       test_id: 'test id',
@@ -9,16 +9,16 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
       test_string_array: %w(abc def),
       test_int_array: [123, 456],
       some_integer_map: { 'int_1' => 1, 'int_2' => 2 },
-      some_record: Deimos::ARecord.new(a_record_field: 'field 1'),
-      some_optional_record: Deimos::ARecord.new(a_record_field: 'field 2'),
-      some_record_array: [Deimos::ARecord.new(a_record_field: 'field 3'),
-                          Deimos::ARecord.new(a_record_field: 'field 4')],
+      some_record: Schemas::ARecord.new(a_record_field: 'field 1'),
+      some_optional_record: Schemas::ARecord.new(a_record_field: 'field 2'),
+      some_record_array: [Schemas::ARecord.new(a_record_field: 'field 3'),
+                          Schemas::ARecord.new(a_record_field: 'field 4')],
       some_record_map: {
-        'record_1' => Deimos::ARecord.new(a_record_field: 'field 5'),
-        'record_2' => Deimos::ARecord.new(a_record_field: 'field 6')
+        'record_1' => Schemas::ARecord.new(a_record_field: 'field 5'),
+        'record_2' => Schemas::ARecord.new(a_record_field: 'field 6')
       },
-      some_enum_array: [Deimos::AnEnum.new('sym1'),
-                        Deimos::AnEnum.new('sym2')]
+      some_enum_array: [Schemas::AnEnum.new('sym1'),
+                        Schemas::AnEnum.new('sym2')]
     }
   end
 
@@ -111,7 +111,7 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
     it 'should set some_record if it is not provided' do
       payload_hash.delete(:some_record)
       klass = described_class.new(**payload_hash)
-      expect(klass.some_record).to eq(Deimos::ARecord.new(a_record_field: 'Test String'))
+      expect(klass.some_record).to eq(Schemas::ARecord.new(a_record_field: 'Test String'))
     end
 
     it 'should set some_record to nil' do
@@ -134,25 +134,25 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
 
       it 'should get the value of some_record_array' do
         some_record_array = klass.some_record_array
-        expect(some_record_array.first).to be_instance_of(Deimos::ARecord)
+        expect(some_record_array.first).to be_instance_of(Schemas::ARecord)
         expect(some_record_array.first.a_record_field).to eq('field 3')
       end
 
       it 'should get the value of some_record_map' do
         some_record_map = klass.some_record_map
-        expect(some_record_map['record_1']).to be_instance_of(Deimos::ARecord)
+        expect(some_record_map['record_1']).to be_instance_of(Schemas::ARecord)
         expect(some_record_map['record_1'].a_record_field).to eq('field 5')
       end
 
       it 'should get the value of some_enum_array' do
         some_enum_array = klass.some_enum_array
-        expect(some_enum_array.first).to be_instance_of(Deimos::AnEnum)
+        expect(some_enum_array.first).to be_instance_of(Schemas::AnEnum)
         expect(some_enum_array.first.an_enum).to eq('sym1')
       end
 
       it 'should get the value of some_record' do
         record = klass.some_record
-        expect(record).to be_instance_of(Deimos::ARecord)
+        expect(record).to be_instance_of(Schemas::ARecord)
         expect(record.a_record_field).to eq('field 1')
         expect(record.to_h).to eq({ 'a_record_field' => 'field 1' })
       end
@@ -167,29 +167,39 @@ RSpec.describe Deimos::MySchemaWithComplexTypes do
     context 'when setting attributes' do
       it 'should modify the value of test_id' do
         expect(klass.test_id).to eq('test id')
+
         klass.test_id = 'something different'
         expect(klass.test_id).to eq('something different')
       end
 
       it 'should modify the value of some_optional_record' do
-        expect(klass.some_optional_record).to eq(Deimos::ARecord.new(a_record_field: 'field 2'))
-        klass.some_optional_record = Deimos::ARecord.new(a_record_field: 'new field')
-        expect(klass.some_optional_record).to eq(Deimos::ARecord.new(a_record_field: 'new field'))
+        expect(klass.some_optional_record).to eq(Schemas::ARecord.new(a_record_field: 'field 2'))
+        klass.some_optional_record = Schemas::ARecord.new(a_record_field: 'new field')
+
+        expect(klass.some_optional_record).to eq(Schemas::ARecord.new(a_record_field: 'new field'))
+        expect(klass.some_optional_record.as_json).to eq({ 'a_record_field' => 'new field' })
+      end
+
+      it 'should accept a hash object inner records' do
+        klass.some_optional_record = { a_record_field: 'new field' }
+        expect(klass.some_optional_record).to eq(Schemas::ARecord.new(a_record_field: 'new field'))
         expect(klass.some_optional_record.as_json).to eq({ 'a_record_field' => 'new field' })
       end
 
       it 'should modify the value of some_enum_array' do
         klass.some_enum_array.first.an_enum = 'new_sym'
-        expect(klass.some_enum_array.first).to eq(Deimos::AnEnum.new('new_sym'))
-        klass.some_enum_array.second.an_enum = Deimos::AnEnum.new('other_sym')
+        expect(klass.some_enum_array.first).to eq(Schemas::AnEnum.new('new_sym'))
+
+        klass.some_enum_array.second.an_enum = Schemas::AnEnum.new('other_sym')
         expect(klass.some_enum_array.second.an_enum).to eq('other_sym')
       end
 
       it 'should modify the value of some_record_map' do
         klass.some_record_map['record_1'].a_record_field = 'new field'
-        expect(klass.some_record_map['record_1']).to eq(Deimos::ARecord.new(a_record_field: 'new field'))
-        klass.some_record_map['record_2'] = Deimos::ARecord.new(a_record_field: 'other field')
-        expect(klass.some_record_map['record_2']).to eq(Deimos::ARecord.new(a_record_field: 'other field'))
+        expect(klass.some_record_map['record_1']).to eq(Schemas::ARecord.new(a_record_field: 'new field'))
+
+        klass.some_record_map['record_2'] = Schemas::ARecord.new(a_record_field: 'other field')
+        expect(klass.some_record_map['record_2']).to eq(Schemas::ARecord.new(a_record_field: 'other field'))
       end
     end
   end

@@ -865,7 +865,7 @@ class MyProducer < Deimos::Producer
     def self.send_a_message(test_id, some_int)
       # Instead of sending in a Hash object to the publish or publish_list method,      
       # you can initialize an instance of your schema class and send that in.
-      message = Deimos::MySchema.new(
+      message = Schemas::MySchema.new(
         test_id: test_id,
         some_int: some_int
       )
@@ -882,8 +882,8 @@ class MyActiveRecordProducer < Deimos::ActiveRecordProducer
   # @param payload [Deimos::SchemaClass::Record]
   # @param _record [Widget]
   def self.generate_payload(attributes, _record)
-    # This method converts your ActiveRecord into a SchemaClass::Record. You will be able to use super
-    # as an instance of Deimos::MySchema and set values that are not on your ActiveRecord schema.
+    # This method converts your ActiveRecord into a Deimos::SchemaClass::Record. You will be able to use super
+    # as an instance of Schemas::MySchema and set values that are not on your ActiveRecord schema.
     res = super
     res.some_value = "some_value-#{res.test_id}"
     res

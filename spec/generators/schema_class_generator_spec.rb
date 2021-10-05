@@ -36,16 +36,14 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
 
     it 'should generate the correct number of classes' do
-      expect(files.length).to eq(3)
+      expect(files.length).to eq(1)
     end
 
-    %w(generated a_record an_enum).each do |klass|
-      it "should generate a schema class for #{klass}" do
-        generated_path = files.select { |f| f =~ /#{klass}/ }.first
-        expected_path = expected_files.select { |f| f =~ /#{klass}/ }.first
+    it 'should generate a schema class for generated' do
+      generated_path = files.select { |f| f =~ /generated/ }.first
+      expected_path = expected_files.select { |f| f =~ /generated/ }.first
 
-        expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
-      end
+      expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
     end
   end
 
@@ -64,16 +62,14 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
 
     it 'should generate the correct number of classes' do
-      expect(files.length).to eq(3)
+      expect(files.length).to eq(1)
     end
 
-    %w(my_schema_with_complex_types a_record an_enum).each do |klass|
-      it "should generate a schema class for #{klass}" do
-        generated_path = files.select { |f| f =~ /#{klass}/ }.first
-        expected_path = expected_files.select { |f| f =~ /#{klass}/ }.first
+    it 'should generate a schema class for my_schema_with_complex_types' do
+      generated_path = files.select { |f| f =~ /my_schema_with_complex_types/ }.first
+      expected_path = expected_files.select { |f| f =~ /my_schema_with_complex_types/ }.first
 
-        expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
-      end
+      expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
     end
   end
 
@@ -120,16 +116,14 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
 
     it 'should generate the correct number of classes' do
-      expect(files.length).to eq(2)
+      expect(files.length).to eq(1)
     end
 
-    %w(my_nested_schema my_nested_record).each do |klass|
-      it "should generate a schema class for #{klass}" do
-        generated_path = files.select { |f| f =~ /#{klass}/ }.first
-        expected_path = expected_files.select { |f| f =~ /#{klass}/ }.first
+    it 'should generate a schema class for my_nested_schema' do
+      generated_path = files.select { |f| f =~ /my_nested_schema/ }.first
+      expected_path = expected_files.select { |f| f =~ /my_nested_schema/ }.first
 
-        expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
-      end
+      expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
     end
   end
 
@@ -149,7 +143,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           topic 'MyTopic'
           schema 'MySchema'
           namespace 'com.my-namespace'
-          key_config field: :test_id
+          key_config schema: 'MySchema-key'
         end
 
         producer do
@@ -164,10 +158,10 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
 
     it 'should generate the correct number of classes' do
-      expect(files.length).to eq(6)
+      expect(files.length).to eq(4)
     end
 
-    %w(generated a_record an_enum my_schema my_nested_schema my_nested_record).each do |klass|
+    %w(generated my_schema my_schema_key my_nested_schema).each do |klass|
       it "should generate a schema class for #{klass}" do
         generated_path = files.select { |f| f =~ /#{klass}\.rb/ }.first
         expected_path = expected_files.select { |f| f =~ /#{klass}\.rb/ }.first

@@ -161,11 +161,6 @@ module Deimos
       def load_schema
         raise NotImplementedError
       end
-
-      # @return [Boolean] If the schema is being used as a key schema
-      def key_schema?
-        raise NotImplementedError
-      end
     end
   end
 end

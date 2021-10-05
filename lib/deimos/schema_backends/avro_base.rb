@@ -83,11 +83,6 @@ module Deimos
         avro_schema
       end
 
-      # @return [Boolean] If the schema is being used as a key schema
-      def key_schema?
-        consumer_key_schema? || producer_key_schema?
-      end
-
       # @override
       def self.mock_backend
         :avro_validation
@@ -117,7 +112,7 @@ module Deimos
         when :float, :double
           'Float'
         when :record, :enum
-          "Deimos::#{schema_classname(avro_schema)}"
+          schema_classname(avro_schema)
         when :array
           arr_t = field_type(Deimos::SchemaField.new('n/a', avro_schema.items).type)
           "Array<#{arr_t}>"
@@ -200,18 +195,8 @@ module Deimos
         "#{schema}_key"
       end
 
-      # @return [Boolean] If the schema is being used in a Consumer
-      def consumer_key_schema?
-        @consumer_key_schemas ||= Deimos.config.consumer_objects.map { |c| c.try(:key_schema) }.
-          uniq.compact
-        @consumer_key_schemas.include?(avro_schema.name)
-      end
-
-      # @return [Boolean] If the schema is being used in a Producer
-      def producer_key_schema?
-        @producer_key_schemas ||= Deimos.config.producer_objects.map { |c| c.try(:key_schema) }.
-          uniq.compact
-        @producer_key_schemas.include?(avro_schema.name)
+      def _schema_name
+        avro_schema.name
       end
     end
   end
