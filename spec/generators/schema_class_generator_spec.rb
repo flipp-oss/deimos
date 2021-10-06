@@ -11,9 +11,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
   before(:each) do
     Deimos.config.reset!
     Deimos.configure do
-      schema.path('spec/schemas/')
-      schema.generated_class_path('app/lib/schema_classes')
-      schema.backend(:avro)
+      schema.path 'spec/schemas/'
+      schema.generated_class_path 'app/lib/schema_classes'
+      schema.backend :avro_local
     end
   end
 
@@ -168,6 +168,18 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
 
         expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
       end
+    end
+  end
+
+  context 'with non-avro schema backends' do
+    before(:each) do
+      Deimos.config.schema.backend :mock
+    end
+
+    it 'should fail to start schema class generation' do
+      expect {
+        described_class.start
+      }.to raise_error(message='Schema Class Generation requires an Avro-based Schema Backend')
     end
   end
 
