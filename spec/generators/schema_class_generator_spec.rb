@@ -130,7 +130,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
   context 'with a mix of Consumer and Producer Schemas' do
     before(:each) do
       Deimos.configure do
-        producer do
+        consumer do
           class_name 'ConsumerTest::MyConsumer'
           topic 'MyTopic'
           schema 'Generated'
@@ -138,7 +138,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           key_config field: :a_string
         end
 
-        consumer do
+        producer do
           class_name 'ConsumerTest::MyConsumer'
           topic 'MyTopic'
           schema 'MySchema'
