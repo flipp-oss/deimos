@@ -43,7 +43,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       generated_path = files.select { |f| f =~ /generated/ }.first
       expected_path = expected_files.select { |f| f =~ /generated/ }.first
 
-      expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
+      expect(File.read(generated_path)).to eq(File.read(expected_path))
     end
   end
 
@@ -69,11 +69,11 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       generated_path = files.select { |f| f =~ /my_schema_with_complex_types/ }.first
       expected_path = expected_files.select { |f| f =~ /my_schema_with_complex_types/ }.first
 
-      expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
+      expect(File.read(generated_path)).to eq(File.read(expected_path))
     end
   end
 
-  context 'with a Producers Schema with a Key' do
+  context 'with a Producers Schema and a Key' do
     before(:each) do
       Deimos.configure do
         producer do
@@ -93,10 +93,10 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
 
     %w(my_schema my_schema_key).each do |klass|
       it "should generate a schema class for #{klass}" do
-        generated_path = files.select { |f| f =~ /#{klass}/ }.first
-        expected_path = expected_files.select { |f| f =~ /#{klass}/ }.first
+        generated_path = files.select { |f| f =~ /#{klass}\.rb/ }.first
+        expected_path = expected_files.select { |f| f =~ /#{klass}\.rb/ }.first
 
-        expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
+        expect(File.read(generated_path)).to eq(File.read(expected_path))
       end
     end
   end
@@ -123,7 +123,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       generated_path = files.select { |f| f =~ /my_nested_schema/ }.first
       expected_path = expected_files.select { |f| f =~ /my_nested_schema/ }.first
 
-      expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
+      expect(File.read(generated_path)).to eq(File.read(expected_path))
     end
   end
 
@@ -166,7 +166,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
         generated_path = files.select { |f| f =~ /#{klass}\.rb/ }.first
         expected_path = expected_files.select { |f| f =~ /#{klass}\.rb/ }.first
 
-        expect(FileUtils.compare_file(generated_path, expected_path)).to be_truthy
+        expect(File.read(generated_path)).to eq(File.read(expected_path))
       end
     end
   end
