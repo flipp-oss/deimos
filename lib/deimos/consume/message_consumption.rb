@@ -15,9 +15,9 @@ module Deimos
         benchmark = Benchmark.measure do
           _with_span do
             new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
-            decoded_payload = payload ? self.class.decoder.decode(payload) : nil
+            decoded_payload = decode_message(payload)
             _received_message(decoded_payload, new_metadata)
-            yield decoded_payload, new_metadata
+            yield(decoded_payload, new_metadata)
           end
         end
         _handle_success(benchmark.real, decoded_payload, new_metadata)

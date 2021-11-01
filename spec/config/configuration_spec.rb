@@ -21,6 +21,7 @@ describe Deimos, 'configuration' do
       kafka_logger logger
       reraise_consumer_errors true
       schema_registry_url 'http://schema.registry'
+      schema.use_schema_classes false
       seed_broker 'whatever'
       schema_path 'some_path'
       producer_schema_namespace 'namespace'
@@ -37,6 +38,7 @@ describe Deimos, 'configuration' do
     expect(described_class.config.kafka.logger).to eq(logger)
     expect(described_class.config.consumers.reraise_errors).to eq(true)
     expect(described_class.config.schema.registry_url).to eq('http://schema.registry')
+    expect(described_class.config.schema.use_schema_classes).to eq(false)
     expect(described_class.config.kafka.seed_brokers).to eq('whatever')
     expect(described_class.config.producers.schema_namespace).to eq('namespace')
     expect(described_class.config.producers.topic_prefix).to eq('prefix')
@@ -86,7 +88,8 @@ describe Deimos, 'configuration' do
           offset_commit_threshold: 0,
           offset_retention_time: nil,
           heartbeat_interval: 10,
-          handler: 'ConsumerTest::MyConsumer'
+          handler: 'ConsumerTest::MyConsumer',
+          use_schema_classes: nil
         }, {
           topic: 'my_batch_consume_topic',
           group_id: 'my_batch_group_id',
@@ -102,7 +105,8 @@ describe Deimos, 'configuration' do
           offset_commit_threshold: 0,
           offset_retention_time: nil,
           heartbeat_interval: 10,
-          handler: 'ConsumerTest::MyBatchConsumer'
+          handler: 'ConsumerTest::MyBatchConsumer',
+          use_schema_classes: nil
         }
       ],
       producer: {
@@ -178,6 +182,7 @@ describe Deimos, 'configuration' do
         offset_commit_threshold 13
         offset_retention_time 13
         heartbeat_interval 13
+        use_schema_classes false
       end
       consumer do
         disabled true
@@ -185,6 +190,7 @@ describe Deimos, 'configuration' do
         schema 'blah2'
         topic 'blah2'
         group_id 'myconsumerid2'
+        use_schema_classes false
       end
     end
 
@@ -227,7 +233,8 @@ describe Deimos, 'configuration' do
             offset_commit_threshold: 13,
             offset_retention_time: 13,
             heartbeat_interval: 13,
-            handler: 'MyConfigConsumer'
+            handler: 'MyConfigConsumer',
+            use_schema_classes: false
           }
         ],
         producer: {

@@ -15,7 +15,7 @@ module Deimos
       # If two messages in a batch have the same key, we cannot process them
       # in the same operation as they would interfere with each other. Thus
       # they are split
-      # @param payloads [Array<Hash>] Decoded payloads.
+      # @param payloads [Array<Hash|Deimos::SchemaClass::Record>] Decoded payloads
       # @param metadata [Hash] Information about batch, including keys.
       def consume_batch(payloads, metadata)
         messages = payloads.

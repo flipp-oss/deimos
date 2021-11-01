@@ -51,6 +51,16 @@ module Deimos
       end
     end
 
+    # Helper method to decode an encoded message.
+    # @param payload [Object]
+    # @return [Object] the decoded message.
+    def decode_message(payload)
+      decoded_payload = payload.nil? ? nil : self.class.decoder.decode(payload)
+      return decoded_payload unless Utils::SchemaClass.use?(self.class.config.to_h)
+
+      Utils::SchemaClass.instance(decoded_payload, self.class.config[:schema])
+    end
+
   private
 
     def _with_span

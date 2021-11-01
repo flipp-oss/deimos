@@ -25,6 +25,12 @@
       "type": "double"
     },
     {
+      "name": "an_optional_int",
+      "type": [ "null", "int" ],
+      "doc": "an optional int",
+      "default": null
+    },
+    {
       "name": "an_enum",
       "type": {
         "type": "enum",

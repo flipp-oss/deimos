@@ -27,6 +27,7 @@ Built on Phobos and hence Ruby-Kafka.
    * [Database Backend](#database-backend)
    * [Database Poller](#database-poller)
    * [Running Consumers](#running-consumers)
+   * [Generated Schema Classes](#generated-schema-classes)
    * [Metrics](#metrics)
    * [Testing](#testing)
         * [Test Helpers](#test-helpers)
@@ -794,6 +795,101 @@ This will automatically set an environment variable called `DEIMOS_RAKE_TASK`,
 which can be useful if you want to figure out if you're inside the task
 as opposed to running your Rails server or console. E.g. you could start your 
 DB backend only when your rake task is running.
+
+## Generated Schema Classes
+
+Deimos offers a way to generate classes from Avro schemas. These classes are documented
+with YARD to aid in IDE auto-complete, and will help to move errors closer to the code.
+
+Add the following configurations for schema class generation: 
+
+```ruby
+config.schema.generated_class_path 'path/to/generated/classes' # Defaults to 'app/lib/schema_classes'
+```
+
+Run the following command to generate schema classes in your application. It will generate classes for every configured consumer or producer by `Deimos.configure`:
+
+    bundle exec rake deimos:generate_schema_classes
+
+Add the following configurations to start using generated schema classes in your application's Consumers and Producers:
+
+    config.schema.use_schema_classes true
+
+Additionally, you can enable or disable the usage of schema classes for a particular consumer or producer with the
+`use_schema_classes` config. See [Configuration](./docs/CONFIGURATION.md#defining-producers).
+
+### Consumer
+
+The consumer interface uses the `decode_message` method to turn JSON hash into the Schemas
+generated Class and provides it to the `consume`/`consume_batch` methods for their use.
+
+Examples of consumers would look like this:
+```ruby
+class MyConsumer < Deimos::Consumer
+  def consume(payload, metadata)
+    # Same method as Phobos consumers but payload is now an instance of Deimos::SchemaClass::Record
+    # rather than a hash. metadata is still a hash that contains information like :key and :topic.
+    # You can interact with the schema class instance in the following way: 
+    do_something(payload.test_id, payload.some_int)
+    # The original behaviour was as follows:
+    do_something(payload[:test_id], payload[:some_int])
+  end
+end
+```
+
+```ruby
+class MyActiveRecordConsumer < Deimos::ActiveRecordConsumer
+  record_class Widget
+  # Any method that expects a message payload as a hash will instead
+  # receive an instance of Deimos::SchemaClass::Record.
+  def record_attributes(payload, key)
+    # You can interact with the schema class instance in the following way:
+    super.merge(:some_field => "some_value-#{payload.test_id}")
+    # The original behaviour was as follows:
+    super.merge(:some_field => "some_value-#{payload[:test_id]}")
+  end
+end
+```
+
+### Producer
+Similarly to the consumer interface, the producer interface for using Schema Classes in your app
+relies on the `publish`/`publish_list` methods to convert a _provided_ instance of a Schema Class
+into a hash that can be used freely by the Kafka client.
+
+Examples of producers would look like this:
+```ruby
+class MyProducer < Deimos::Producer
+  class << self 
+    # @param test_id [String]
+    # @param some_int [Integer]
+    def self.send_a_message(test_id, some_int)
+      # Instead of sending in a Hash object to the publish or publish_list method,      
+      # you can initialize an instance of your schema class and send that in.
+      message = Schemas::MySchema.new(
+        test_id: test_id,
+        some_int: some_int
+      )
+      self.publish(message)
+      self.publish_list([message])
+    end
+  end
+end
+```
+
+```ruby
+class MyActiveRecordProducer < Deimos::ActiveRecordProducer
+  record_class Widget
+  # @param payload [Deimos::SchemaClass::Record]
+  # @param _record [Widget]
+  def self.generate_payload(attributes, _record)
+    # This method converts your ActiveRecord into a Deimos::SchemaClass::Record. You will be able to use super
+    # as an instance of Schemas::MySchema and set values that are not on your ActiveRecord schema.
+    res = super
+    res.some_value = "some_value-#{res.test_id}"
+    res
+  end
+end
+```
 
 # Metrics
 

@@ -28,6 +28,7 @@ RSpec.describe Deimos::Generators::ActiveRecordGenerator do
             t.bigint :a_long
             t.float :a_float
             t.float :a_double
+            t.string :an_optional_int
             t.string :an_enum
             t.json :an_array
             t.json :a_map

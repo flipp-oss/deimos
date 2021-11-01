@@ -1,0 +1,95 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "MySchemaWithComplexTypes",
+  "type": "record",
+  "doc": "Test schema",
+  "fields": [
+    {
+      "name": "test_id",
+      "type": "string",
+      "doc": "test string"
+    },
+    {
+      "name": "test_float",
+      "type": "float",
+      "doc": "test float"
+    },
+    {
+      "name": "test_string_array",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": ["test"]
+    },
+    {
+      "name": "test_int_array",
+      "type": {
+        "type": "array",
+        "items": "int"
+      },
+      "default": [123]
+    },
+    {
+      "name": "test_optional_int",
+      "type": [ "int", "null" ],
+      "default": 123
+    },
+    {
+      "name": "some_integer_map",
+      "doc": "some record map",
+      "type": {
+        "type": "map",
+        "values": "int"
+      },
+      "default": {"abc": 123}
+    },
+    {
+      "name": "some_record",
+      "type": {
+        "type": "record",
+        "name": "ARecord",
+        "fields": [
+          {
+            "name": "a_record_field",
+            "type": "string"
+          }
+        ]
+      },
+      "default": {"a_record_field": "Test String"}
+    },
+    {
+      "name": "some_optional_record",
+      "doc": "some optional record",
+      "type": [ "null", "ARecord" ],
+      "default": null
+    },
+    {
+      "name": "some_record_array",
+      "doc": "some record array",
+      "type": {
+        "type": "array",
+        "items": "ARecord"
+      }
+    },
+    {
+      "name": "some_record_map",
+      "doc": "some record map",
+      "type": {
+        "type": "map",
+        "values": "ARecord"
+      }
+    },
+    {
+      "name": "some_enum_array",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "enum",
+          "name": "AnEnum",
+          "symbols": ["sym1", "sym2"]
+        }
+      }
+    }
+  ]
+}

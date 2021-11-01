@@ -13,6 +13,10 @@ require 'activerecord-import'
 require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
+Dir['./spec/schema_classes/**/*.rb'].sort.each { |f| require f }
+
+# Constants used for consumer specs
+SCHEMA_CLASS_SETTINGS = { off: false, on: true }.freeze
 
 class DeimosApp < Rails::Application
 end
@@ -100,7 +104,7 @@ module DbConfigs
     DB_OPTIONS.each do |options|
       describe subject, :integration, db_config: options do
 
-        include_context 'with DB'
+        include_context('with DB')
         describe options[:adapter] do # rubocop:disable RSpec/EmptyExampleGroup
           self.instance_eval(&block)
         end
@@ -192,6 +196,7 @@ RSpec.configure do |config|
       deimos_config.logger = Logger.new('/dev/null')
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
+      deimos_config.schema.generated_class_path = 'spec/schema_classes'
     end
   end
 

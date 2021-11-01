@@ -18,6 +18,9 @@ module Deimos
   # :nodoc:
   after_configure do
     Phobos.configure(self.config.phobos_config)
+    if self.config.schema.use_schema_classes
+      load_generated_schema_classes
+    end
     self.config.producer_objects.each do |producer|
       configure_producer_or_consumer(producer)
     end
@@ -26,6 +29,17 @@ module Deimos
     end
     validate_consumers
     validate_db_backend if self.config.producers.backend == :db
+  end
+
+  # Loads generated classes
+  def self.load_generated_schema_classes
+    if Deimos.config.schema.generated_class_path.nil?
+      raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
+    end
+
+    Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.each { |f| require f }
+  rescue LoadError
+    raise 'Cannot load schema classes. Please regenerate classes with rake deimos:generate_schema_models.'
   end
 
   # Ensure everything is set up correctly for the DB backend.
@@ -68,6 +82,7 @@ module Deimos
       schema(kafka_config.schema) if kafka_config.schema.present?
       namespace(kafka_config.namespace) if kafka_config.namespace.present?
       key_config(**kafka_config.key_config) if kafka_config.key_config.present?
+      schema_class_config(kafka_config.use_schema_classes) if kafka_config.use_schema_classes.present?
     end
   end
 
@@ -260,6 +275,14 @@ module Deimos
       # Local path to look for schemas in.
       # @return [String]
       setting :path
+
+      # Local path for schema classes to be generated in.
+      # @return [String]
+      setting :generated_class_path, 'app/lib/schema_classes'
+
+      # Set to true to use the generated schema classes in your application
+      # @return [Boolean]
+      setting :use_schema_classes, false
     end
 
     # The configured metrics provider.
@@ -301,6 +324,9 @@ module Deimos
       # Key configuration (see docs).
       # @return [Hash]
       setting :key_config
+      # Configure the usage of generated schema classes for this producer
+      # @return [Boolean]
+      setting :use_schema_classes
     end
 
     setting_object :consumer do
@@ -323,6 +349,9 @@ module Deimos
       # listener.
       # @return [Boolean]
       setting :disabled, false
+      # Configure the usage of generated schema classes for this consumer
+      # @return [Boolean]
+      setting :use_schema_classes
 
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.

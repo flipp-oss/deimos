@@ -3,15 +3,16 @@
 module Deimos
   # Represents a field in the schema.
   class SchemaField
-    attr_accessor :name, :type, :enum_values
+    attr_accessor :name, :type, :enum_values, :default
 
     # @param name [String]
     # @param type [Object]
     # @param enum_values [Array<String>]
-    def initialize(name, type, enum_values=[])
+    def initialize(name, type, enum_values=[], default=:no_default)
       @name = name
       @type = type
       @enum_values = enum_values
+      @default = default
     end
   end
 
@@ -43,6 +44,7 @@ module Deimos
       # @return [Hash,nil]
       def decode(payload, schema: nil)
         return nil if payload.nil?
+
         decode_payload(payload, schema: schema || @schema)
       end
 
@@ -75,6 +77,14 @@ module Deimos
       # The content type to use when encoding / decoding requests over HTTP via ActionController.
       # @return [String]
       def self.content_type
+        raise NotImplementedError
+      end
+
+      # Converts your schema to String form for generated YARD docs.
+      # To be defined by subclass.
+      # @param schema [Object]
+      # @return [String] A string representation of the Type
+      def self.field_type(schema)
         raise NotImplementedError
       end
 
@@ -143,6 +153,12 @@ module Deimos
       # @param key_id [Symbol|String] the field in the message to decode.
       # @return [String]
       def decode_key(_payload, _key_id)
+        raise NotImplementedError
+      end
+
+      # Forcefully loads the schema into memory.
+      # @return [Object] The schema that is of use.
+      def load_schema
         raise NotImplementedError
       end
     end

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Features :star:
+
+- Generate Schema classes from Avro Schemas
+- Use Schema Classes in your consumer and producer 
+
 ## 1.11.0 - 2021-08-27
 
 - ### Fixes :wrench:

@@ -47,35 +47,46 @@ describe Deimos::ActiveRecordProducer do
     stub_const('MyProducerWithUniqueID', producer_class)
   end
 
-  it 'should send events correctly' do
-    MyProducer.send_event(Widget.new(test_id: 'abc', some_int: 3))
-    expect('my-topic').to have_sent(test_id: 'abc', some_int: 3)
-  end
+  describe 'produce' do
+    SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
+      context "with Schema Class consumption #{setting}" do
+        before(:each) do
+          Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
+        end
 
-  it 'should coerce values' do
-    MyProducer.send_event(Widget.new(test_id: 'abc', some_int: '3'))
-    MyProducer.send_event(Widget.new(test_id: 'abc', some_int: 4.5))
-    expect('my-topic').to have_sent(test_id: 'abc', some_int: 3)
-    expect('my-topic').to have_sent(test_id: 'abc', some_int: 4)
-    expect {
-      MyProducer.send_event(Widget.new(test_id: 'abc', some_int: nil))
-    }.to raise_error(Avro::SchemaValidator::ValidationError)
+        it 'should send events correctly' do
+          MyProducer.send_event(Widget.new(test_id: 'abc', some_int: 3))
+          expect('my-topic').to have_sent(test_id: 'abc', some_int: 3)
+        end
 
-    MyBooleanProducer.send_event(Widget.new(test_id: 'abc', some_bool: nil))
-    MyBooleanProducer.send_event(Widget.new(test_id: 'abc', some_bool: true))
-    expect('my-topic-with-boolean').to have_sent(test_id: 'abc', some_bool: false)
-    expect('my-topic-with-boolean').to have_sent(test_id: 'abc', some_bool: true)
-  end
+        it 'should coerce values' do
+          MyProducer.send_event(Widget.new(test_id: 'abc', some_int: '3'))
+          MyProducer.send_event(Widget.new(test_id: 'abc', some_int: 4.5))
+          expect('my-topic').to have_sent(test_id: 'abc', some_int: 3)
+          expect('my-topic').to have_sent(test_id: 'abc', some_int: 4)
+          expect {
+            MyProducer.send_event(Widget.new(test_id: 'abc', some_int: nil))
+          }.to raise_error(Avro::SchemaValidator::ValidationError)
 
-  it 'should be able to call the record' do
-    widget = Widget.create!(test_id: 'abc2', some_int: 3)
-    MyProducerWithID.send_event(id: widget.id, test_id: 'abc2', some_int: 3)
-    expect('my-topic-with-id').to have_sent(
-      test_id: 'abc2',
-      some_int: 3,
-      message_id: 'generated_id',
-      timestamp: anything
-    )
+          MyBooleanProducer.send_event(Widget.new(test_id: 'abc', some_bool: nil))
+          MyBooleanProducer.send_event(Widget.new(test_id: 'abc', some_bool: true))
+          expect('my-topic-with-boolean').to have_sent(test_id: 'abc', some_bool: false)
+          expect('my-topic-with-boolean').to have_sent(test_id: 'abc', some_bool: true)
+        end
+
+        it 'should be able to call the record' do
+          widget = Widget.create!(test_id: 'abc2', some_int: 3)
+          MyProducerWithID.send_event(id: widget.id, test_id: 'abc2', some_int: 3)
+          expect('my-topic-with-id').to have_sent(
+            test_id: 'abc2',
+            some_int: 3,
+            message_id: 'generated_id',
+            timestamp: anything
+          )
+        end
+
+      end
+    end
   end
 
   specify '#watched_attributes' do
