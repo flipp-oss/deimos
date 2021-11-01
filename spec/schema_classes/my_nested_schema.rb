@@ -20,7 +20,7 @@ module Schemas
                    some_float: nil,
                    some_string: nil,
                    some_optional_int: nil)
-      super()
+      super
       self.some_int = some_int
       self.some_float = some_float
       self.some_string = some_string
@@ -82,7 +82,7 @@ module Schemas
                    test_array: nil,
                    some_nested_record: nil,
                    some_optional_record: nil)
-      super()
+      super
       self.test_id = test_id
       self.test_float = test_float
       self.test_array = test_array

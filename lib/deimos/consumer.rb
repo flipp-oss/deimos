@@ -2,7 +2,6 @@
 
 require 'deimos/consume/batch_consumption'
 require 'deimos/consume/message_consumption'
-require 'deimos/utils/schema_class_mixin'
 
 # Class to consume messages coming from a Kafka topic
 # Note: According to the docs, instances of your handler will be created
@@ -16,7 +15,6 @@ module Deimos
     include Consume::MessageConsumption
     include Consume::BatchConsumption
     include SharedConfig
-    include Utils::SchemaClassMixin
 
     class << self
       # @return [Deimos::SchemaBackends::Base]
@@ -58,9 +56,9 @@ module Deimos
     # @return [Object] the decoded message.
     def decode_message(payload)
       decoded_payload = payload.nil? ? nil : self.class.decoder.decode(payload)
-      return decoded_payload unless use_schema_classes?(self.class.config.to_h)
+      return decoded_payload unless Utils::SchemaClass.use_schema_classes?(self.class.config.to_h)
 
-      schema_class_instance(decoded_payload, self.class.config[:schema])
+      Utils::SchemaClass.schema_class_instance(decoded_payload, self.class.config[:schema])
     end
 
   private

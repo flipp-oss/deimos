@@ -5,7 +5,7 @@
 
     # :nodoc:
     def initialize(<%= @current_schema.name.underscore %>)
-      super()
+      super
       self.<%= @current_schema.name.underscore %> = <%= @current_schema.name.underscore %>
     end
 

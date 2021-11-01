@@ -11,7 +11,7 @@ module Schemas
 
     # @override
     def initialize(a_record_field: nil)
-      super()
+      super
       self.a_record_field = a_record_field
     end
 
@@ -40,7 +40,7 @@ module Schemas
 
     # :nodoc:
     def initialize(an_enum)
-      super()
+      super
       self.an_enum = an_enum
     end
 
@@ -128,7 +128,7 @@ module Schemas
                    some_record_array: nil,
                    some_record_map: nil,
                    some_enum_array: nil)
-      super()
+      super
       self.test_id = test_id
       self.test_float = test_float
       self.test_string_array = test_string_array

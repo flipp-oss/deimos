@@ -25,7 +25,7 @@ module Schemas
     def initialize(test_id: nil,
                    some_int: nil,
                    payload_key: nil)
-      super()
+      super
       self.test_id = test_id
       self.some_int = some_int
       self.payload_key = payload_key

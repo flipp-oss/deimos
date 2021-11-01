@@ -38,7 +38,7 @@
 <% end -%>
     # @override
     <%= @initialization_definition %>
-      super()
+      super
 <%- @fields.each do |field| -%>
       self.<%= field.name %> = <%= field.name %>
 <% end -%>

@@ -10,7 +10,7 @@ module Schemas
 
     # :nodoc:
     def initialize(an_enum)
-      super()
+      super
       self.an_enum = an_enum
     end
 
@@ -33,7 +33,7 @@ module Schemas
 
     # @override
     def initialize(a_record_field: nil)
-      super()
+      super
       self.a_record_field = a_record_field
     end
 
@@ -110,7 +110,7 @@ module Schemas
                    timestamp: nil,
                    message_id: nil,
                    a_record: nil)
-      super()
+      super
       self.a_string = a_string
       self.a_int = a_int
       self.a_long = a_long

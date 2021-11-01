@@ -2,7 +2,6 @@
 
 require 'rails/generators'
 require 'deimos'
-require 'deimos/utils/schema_class_mixin'
 require 'deimos/schema_backends/avro_base'
 require 'deimos/config/configuration'
 
@@ -11,7 +10,6 @@ module Deimos
   module Generators
     # Generator for Schema Classes used for the IDE and consumer/producer interfaces
     class SchemaClassGenerator < Rails::Generators::Base
-      include Deimos::Utils::SchemaClassMixin
 
       SPECIAL_TYPES = %i(record enum).freeze
       INITIALIZE_WHITESPACE = "\n#{' ' * 19}"
@@ -181,7 +179,7 @@ module Deimos
           " '#{default}'"
         when :record
           schema_name = Deimos::SchemaBackends::AvroBase.schema_classname(field.type)
-          class_instance = schema_class_instance(field.default, schema_name)
+          class_instance = Utils::SchemaClass.schema_class_instance(field.default, schema_name)
           " #{class_instance.to_h}"
         else
           " #{default}"

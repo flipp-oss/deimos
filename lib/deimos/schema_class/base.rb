@@ -6,6 +6,11 @@ module Deimos
   module SchemaClass
     # Base Class for Schema Classes generated from Avro.
     class Base
+
+      # :nodoc:
+      def initialize(_)
+      end
+
       # Converts the object to a string that represents a JSON object
       # @return [String] a JSON string
       def to_json(*_args)

@@ -11,7 +11,7 @@ module Schemas
 
     # @override
     def initialize(test_id: nil)
-      super()
+      super
       self.test_id = test_id
     end
 

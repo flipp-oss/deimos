@@ -19,6 +19,7 @@ require 'deimos/backends/kafka_async'
 require 'deimos/backends/test'
 
 require 'deimos/schema_backends/base'
+require 'deimos/utils/schema_class'
 require 'deimos/schema_class/enum'
 require 'deimos/schema_class/record'
 
