@@ -7,6 +7,16 @@ module Deimos
   module SchemaClass
     # Base Class of Record Classes generated from Avro.
     class Record < Base
+      # :nodoc:
+      def ==(other)
+        comparison = other
+        if other.class == self.class
+          comparison = other.state
+        end
+
+        comparison.stringify_keys.except('payload_key') == self.state.except('payload_key')
+      end
+
       # Element access method as if this Object were a hash
       # @param key[String||Symbol]
       # @return [Object] The value of the attribute if exists, nil otherwise
