@@ -8,7 +8,7 @@ module Deimos
     class Base
 
       # :nodoc:
-      def initialize(_)
+      def initialize(*_args)
       end
 
       # Converts the object to a string that represents a JSON object

@@ -382,10 +382,10 @@ module Deimos
       if use_schema_classes && schema_class.present?
         expected = if input.is_a?(Array)
                      input.map do |payload|
-                       Utils::SchemaClass.schema_class_instance(payload, schema_class)
+                       Utils::SchemaClass.instance(payload, schema_class)
                      end
                    else
-                     Utils::SchemaClass.schema_class_instance(input, schema_class)
+                     Utils::SchemaClass.instance(input, schema_class)
                    end
       end
 

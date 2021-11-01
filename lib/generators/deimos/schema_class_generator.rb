@@ -179,7 +179,7 @@ module Deimos
           " '#{default}'"
         when :record
           schema_name = Deimos::SchemaBackends::AvroBase.schema_classname(field.type)
-          class_instance = Utils::SchemaClass.schema_class_instance(field.default, schema_name)
+          class_instance = Utils::SchemaClass.instance(field.default, schema_name)
           " #{class_instance.to_h}"
         else
           " #{default}"
