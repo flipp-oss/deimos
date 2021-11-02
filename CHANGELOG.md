@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.12.1 - 2021-11-02
+
 - ### Fixes :wrench:
 - Fixed issue where Schema Class Consumer/Producer are using `Deimos::` instead of `Schema::` for instances of classes.
 
