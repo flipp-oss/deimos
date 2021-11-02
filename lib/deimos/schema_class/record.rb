@@ -7,14 +7,11 @@ module Deimos
   module SchemaClass
     # Base Class of Record Classes generated from Avro.
     class Record < Base
-      # :nodoc:
-      def ==(other)
-        comparison = other
-        if other.class == self.class
-          comparison = other.state
-        end
 
-        comparison.stringify_keys.except('payload_key') == self.state.except('payload_key')
+      # Converts the object to a hash which can be used for debugging or comparing objects.
+      # @return [Hash] a hash representation of the payload
+      def as_json(_opts={})
+        super.except('payload_key')
       end
 
       # Element access method as if this Object were a hash
