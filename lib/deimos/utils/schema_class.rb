@@ -10,7 +10,7 @@ module Deimos
         # @param schema [String]
         # @return [Deimos::SchemaClass::Record]
         def instance(payload, schema)
-          klass = "Deimos::#{schema.underscore.camelize}".safe_constantize
+          klass = "Schemas::#{schema.underscore.camelize}".safe_constantize
           return payload if klass.nil? || payload.nil?
 
           klass.new(**payload.symbolize_keys)

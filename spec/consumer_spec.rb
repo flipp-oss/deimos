@@ -12,7 +12,7 @@ module ConsumerTest
 
         # :nodoc:
         def fatal_error?(_exception, payload, _metadata)
-          payload == 'fatal'
+          payload.to_s == 'fatal'
         end
 
         # :nodoc:

@@ -17,7 +17,7 @@ module Deimos
         to_h.to_json
       end
 
-      # Converts the object to a hash which can be used for debugging.
+      # Converts the object to a hash which can be used for debugging or comparing objects.
       # @return [Hash] a hash representation of the payload
       def as_json(_opts={})
         JSON.parse(to_json)
@@ -33,10 +33,10 @@ module Deimos
       def ==(other)
         comparison = other
         if other.class == self.class
-          comparison = other.state
+          comparison = other.as_json
         end
 
-        comparison == self.state
+        comparison == self.as_json
       end
 
       # :nodoc:
@@ -54,13 +54,8 @@ module Deimos
     protected
 
       # :nodoc:
-      def state
-        as_json
-      end
-
-      # :nodoc:
       def hash
-        state.hash
+        as_json.hash
       end
     end
   end
