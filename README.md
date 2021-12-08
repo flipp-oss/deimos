@@ -1164,6 +1164,13 @@ backend.validate(my_payload) # throws an error if not valid
 fields = backend.schema_fields # list of fields defined in the schema
 ```
 
+You can also do an even faster encode/decode:
+
+```ruby
+encoded = Deimos.encode(schema: 'MySchema', namespace: 'com.my-namespace', payload: my_payload)
+decoded = Deimos.decode(schema: 'MySchema', namespace: 'com.my-namespace', payload: my_encoded_payload)
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/flipp-oss/deimos .

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Added `Deimos.encode` and `Deimos.decode` for non-topic-related encoding and decoding.
+
 # 1.12.1 - 2021-11-02
 
 - ### Fixes :wrench:

@@ -62,6 +62,26 @@ module Deimos
       schema_backend_class.new(schema: schema, namespace: namespace)
     end
 
+    # @param schema [String]
+    # @param namespace [String]
+    # @param payload [Hash]
+    # @param subject [String]
+    # @return [String]
+    def encode(schema:, namespace:, payload:, subject: nil)
+      self.schema_backend(schema: schema, namespace: namespace).
+        encode(payload, topic: subject || "#{namespace}.#{schema}" )
+    end
+
+    # @param schema [String]
+    # @param namespace [String]
+    # @param payload [String]
+    # @param subject [String]
+    # @return [Hash,nil]
+    def decode(schema:, namespace:, payload:, subject: nil)
+      self.schema_backend(schema: schema, namespace: namespace).
+        decode(payload, topic: subject || "#{namespace}.#{schema}" )
+    end
+
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     def start_db_backend!(thread_count: 1)
