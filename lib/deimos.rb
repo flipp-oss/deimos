@@ -75,11 +75,9 @@ module Deimos
     # @param schema [String]
     # @param namespace [String]
     # @param payload [String]
-    # @param subject [String]
     # @return [Hash,nil]
-    def decode(schema:, namespace:, payload:, subject: nil)
-      self.schema_backend(schema: schema, namespace: namespace).
-        decode(payload, topic: subject || "#{namespace}.#{schema}" )
+    def decode(schema:, namespace:, payload:)
+      self.schema_backend(schema: schema, namespace: namespace).decode(payload)
     end
 
     # Start the DB producers to send Kafka messages.
