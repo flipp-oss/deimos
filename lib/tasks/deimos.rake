@@ -39,4 +39,18 @@ namespace :deimos do
     Deimos::Generators::SchemaClassGenerator.start
   end
 
+  desc 'Releases and pushes a new gem version'
+  task :release do
+    system("echo 'git tagging #{Deimos::VERSION}'")
+    system("git tag #{Deimos::VERSION}")
+
+    system("echo 'Pushing tag: #{Deimos::VERSION} to github'")
+    system("git push origin #{Deimos::VERSION}")
+
+    system("echo 'Building the gem'")
+    system("gem build deimos-ruby.gemspec")
+
+    system("echo 'Publishing the gem'")
+    system("gem push deimos-ruby-#{Deimos::VERSION}.gem")
+  end
 end
