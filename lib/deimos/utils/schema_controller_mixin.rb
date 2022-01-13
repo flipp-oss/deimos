@@ -106,7 +106,7 @@ module Deimos
       def render_schema(payload, schema: nil, namespace: nil)
         namespace, schema = parse_namespace(:response) if !schema && !namespace
         encoder = Deimos.schema_backend(schema: schema, namespace: namespace)
-        encoded = encoder.encode(payload)
+        encoded = encoder.encode(payload, topic: "#{namespace}.#{schema}")
         response.headers['Content-Type'] = encoder.class.content_type
         send_data(encoded)
       end

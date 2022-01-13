@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.12.4 - 2022-01-13
+
+- Fix bug where schema controller mixin was using the schema name to register and not the namespaced schema name
+
 # 1.12.3 - 2021-12-13
 
 - Fix bug with previous release
