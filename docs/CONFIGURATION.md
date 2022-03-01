@@ -179,7 +179,7 @@ schema.backend|`:mock`|Backend representing the schema encoder/decoder. You can 
 schema.registry_url|`http://localhost:8081`|URL of the Confluent schema registry.
 schema.path|nil|Local path to find your schemas.
 schema.use_schema_classes|false|Set this to true to use generated schema classes in your application.
-schema.generated_schema_path|`app/lib/schema_classes`|Local path to generated schema classes.
+schema.generated_class_path|`app/lib/schema_classes`|Local path to generated schema classes.
 
 ## Database Producer Configuration
 
