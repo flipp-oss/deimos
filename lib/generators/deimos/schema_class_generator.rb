@@ -53,10 +53,34 @@ module Deimos
           generate_class_from_schema_base(schema_base, key_schema_base: key_schema_base)
         end
 
+        # @param schema [Avro::Schema::NamedSchema]
+        # @return [Array<Avro::Schema::NamedSchema]
+        def child_schemas(schema)
+          if schema.respond_to?(:fields)
+            schema.fields.map(&:type)
+          elsif schema.respond_to?(:values)
+            [schema.values]
+          elsif schema.respond_to?(:items)
+            [schema.items]
+          else
+            []
+          end
+        end
+
+        # @param schemas [Array<Avro::Schema::NamedSchema>]
+        # @return [Array<Avro::Schema::NamedSchema>]
+        def collect_all_schemas(schemas)
+          schemas.dup.each do |schema|
+            schemas.concat(collect_all_schemas(child_schemas(schema)))
+          end
+          schemas.select { |s| s.respond_to?(:name) }.uniq
+        end
+
         # @param schema_base [Deimos::SchemaBackends::Base]
         # @param key_schema_base[Avro::Schema::NamedSchema]
         def generate_class_from_schema_base(schema_base, key_schema_base: nil)
-          schemas = schema_base.schema_store.schemas.values
+          schemas = collect_all_schemas(schema_base.schema_store.schemas.values)
+
           sub_schemas = schemas.reject { |s| s.name == schema_base.schema }
           @sub_schema_templates = sub_schemas.map do |schema|
             _generate_class_template_from_schema(schema)

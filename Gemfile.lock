@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    deimos-ruby (1.12.3)
-      avro_turf (~> 0.11)
+    deimos-ruby (1.12.4)
+      avro_turf (>= 0.11, < 2)
       fig_tree (~> 0.0.2)
       phobos (>= 1.9, < 3.0)
       ruby-kafka (< 2)
@@ -75,9 +75,9 @@ GEM
     ast (2.4.2)
     avro (1.9.2)
       multi_json
-    avro_turf (0.11.0)
-      avro (>= 1.7.7, < 1.10)
-      excon (~> 0.45)
+    avro_turf (1.5.0)
+      avro (>= 1.7.7, < 1.12)
+      excon (~> 0.71)
     builder (3.2.4)
     coderay (1.1.3)
     concurrent-ruby (1.1.8)
@@ -92,7 +92,7 @@ GEM
       rake (>= 12.0.0, < 14.0.0)
     dogstatsd-ruby (4.8.3)
     erubi (1.10.0)
-    excon (0.89.0)
+    excon (0.91.0)
     exponential-backoff (0.0.4)
     ffi (1.15.0)
     fig_tree (0.0.2)
@@ -156,7 +156,7 @@ GEM
     parser (3.0.1.1)
       ast (~> 2.4.1)
     pg (1.2.3)
-    phobos (2.1.0)
+    phobos (2.1.2)
       activesupport (>= 3.0.0)
       concurrent-ruby (>= 1.0.2)
       concurrent-ruby-ext (>= 1.0.2)
