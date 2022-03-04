@@ -38,6 +38,7 @@ module Deimos
           connect_timeout: self.kafka.connect_timeout,
           socket_timeout: self.kafka.socket_timeout,
           ssl_verify_hostname: self.kafka.ssl.verify_hostname,
+          ssl_ca_certs_from_system: self.kafka.ssl.ca_certs_from_system,
           seed_brokers: Array.wrap(self.kafka.seed_brokers)
         },
         producer: {
@@ -84,6 +85,26 @@ module Deimos
           p_config[:kafka]["ssl_#{key}".to_sym] = ssl_var_contents(self.kafka.ssl.send(key))
         end
       end
+
+      if self.kafka.sasl.enabled
+        p_config[:kafka][:sasl_over_ssl] = self.kafka.sasl.enforce_ssl
+        %w(
+          gssapi_principal
+          gssapi_keytab
+          plain_authzid
+          plain_username
+          plain_password
+          scram_username
+          scram_password
+          scram_mechanism
+          oauth_token_provider
+        ).each do |key|
+          value = self.kafka.sasl.send(key)
+          next if value.blank?
+
+          p_config[:kafka]["sasl_#{key}".to_sym] = value
+        end
+      end
       p_config
     end
 
@@ -102,6 +123,9 @@ module Deimos
         if k.starts_with?('ssl')
           k = k.sub('ssl_', '')
           self.kafka.ssl.send("#{k}=", v)
+        elsif k.starts_with?('sasl')
+          k = (k == 'sasl_over_ssl') ? 'enforce_ssl' : k.sub('sasl_', '')
+          self.kafka.sasl.send("#{k}=", v)
         else
           self.kafka.send("#{k}=", v)
         end

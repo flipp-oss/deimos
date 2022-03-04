@@ -136,6 +136,58 @@ module Deimos
 
         # Verify certificate hostname if supported (ruby >= 2.4.0)
         setting :verify_hostname, true
+
+        # Use CA certs from system. This is useful to have enabled for Confluent Cloud
+        # @return [Boolean]
+        setting :ca_certs_from_system, false
+      end
+
+      setting :sasl do
+        # Whether SASL is enabled on the brokers.
+        # @return [Boolean]
+        setting :enabled
+
+        # A KRB5 principal.
+        # @return [String]
+        setting :gssapi_principal
+
+        # A KRB5 keytab filepath.
+        # @return [String]
+        setting :gssapi_keytab
+
+        # Plain authorization ID. It needs to default to '' in order for it to work.
+        # This is because Phobos expects it to be truthy for using plain SASL.
+        # @return [String]
+        setting :plain_authzid, ''
+
+        # Plain username.
+        # @return [String]
+        setting :plain_username
+
+        # Plain password.
+        # @return [String]
+        setting :plain_password
+
+        # SCRAM username.
+        # @return [String]
+        setting :scram_username
+
+        # SCRAM password.
+        # @return [String]
+        setting :scram_password
+
+        # Scram mechanism, either "sha256" or "sha512".
+        # @return [String]
+        setting :scram_mechanism
+
+        # Whether to enforce SSL with SASL.
+        # @return [Boolean]
+        setting :enforce_ssl
+
+        # OAuthBearer Token Provider instance that implements
+        # method token. See {Sasl::OAuth#initialize}.
+        # @return [Object]
+        setting :oauth_token_provider
       end
     end
 
