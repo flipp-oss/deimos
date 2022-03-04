@@ -324,6 +324,10 @@ module Deimos
       # @return [String]
       setting :registry_url, 'http://localhost:8081'
 
+      setting :user
+
+      setting :password
+
       # Local path to look for schemas in.
       # @return [String]
       setting :path
