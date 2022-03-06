@@ -1,0 +1,3 @@
+eval_gemfile '../Gemfile'
+
+gem 'avro_turf', '~> 0.11'
