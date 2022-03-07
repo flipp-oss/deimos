@@ -13,7 +13,7 @@ module Deimos
       MAX_DELETE_ATTEMPTS = 3
 
       # @param logger [Logger]
-      def initialize(logger=Logger.new(STDOUT))
+      def initialize(logger=Logger.new($stdout))
         @id = SecureRandom.uuid
         @logger = logger
         @logger.push_tags("DbProducer #{@id}") if @logger.respond_to?(:push_tags)
@@ -88,14 +88,14 @@ module Deimos
         compacted_messages = compact_messages(messages)
         log_messages(compacted_messages)
         Deimos.instrument('db_producer.produce', topic: @current_topic, messages: compacted_messages) do
-          begin
-            produce_messages(compacted_messages.map(&:phobos_message))
-          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
-            delete_messages(messages)
-            @logger.error('Message batch too large, deleting...')
-            @logger.error(Deimos::KafkaMessage.decoded(messages))
-            raise
-          end
+
+          produce_messages(compacted_messages.map(&:phobos_message))
+        rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
+          delete_messages(messages)
+          @logger.error('Message batch too large, deleting...')
+          @logger.error(Deimos::KafkaMessage.decoded(messages))
+          raise
+
         end
         delete_messages(messages)
         Deimos.config.metrics&.increment(
@@ -198,7 +198,7 @@ module Deimos
         batch_size = batch.size
         current_index = 0
         begin
-          batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
+          batch[current_index..].in_groups_of(batch_size, false).each do |group|
             @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
             producer.publish_list(group)
             Deimos.config.metrics&.increment(

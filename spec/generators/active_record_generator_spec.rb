@@ -34,15 +34,15 @@ RSpec.describe Deimos::Generators::ActiveRecordGenerator do
             t.json :a_map
             t.json :a_record
           end
-      
+
           # TODO add indexes as necessary
         end
-      
+
         def down
           return unless table_exists?(:generated_table)
           drop_table :generated_table
         end
-      
+
       end
     MIGRATION
     expect(File.read(files[0])).to eq(results)

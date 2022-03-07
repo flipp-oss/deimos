@@ -62,7 +62,7 @@ module Deimos
             break
           end
           process_updates
-          sleep 0.1
+          sleep(0.1)
         end
       end
 

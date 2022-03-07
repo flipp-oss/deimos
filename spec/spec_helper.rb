@@ -105,7 +105,7 @@ module DbConfigs
       describe subject, :integration, db_config: options do
 
         include_context('with DB')
-        describe options[:adapter] do # rubocop:disable RSpec/EmptyExampleGroup
+        describe options[:adapter] do
           self.instance_eval(&block)
         end
       end

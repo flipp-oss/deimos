@@ -63,7 +63,7 @@ RSpec.shared_examples_for('an Avro backend') do
 
   specify('#encode_key') do
     expect(backend).to receive(:encode).
-      with({ 'test_id' => 1 }, { schema: 'MySchema_key', topic: 'topic' }).and_return('itsme')
+      with({ 'test_id' => 1 }, schema: 'MySchema_key', topic: 'topic').and_return('itsme')
     expect(backend.encode_key('test_id', 1, topic: 'topic')).to eq('itsme')
     expect(backend.schema_store.find('MySchema_key', 'com.my-namespace').to_avro).
       to eq(
@@ -87,13 +87,13 @@ RSpec.shared_examples_for('an Avro backend') do
   describe('#validate') do
     it 'should pass valid schemas' do
       expect {
-        backend.validate({ 'test_id' => 'hi', 'some_int' => 4 }, { schema: 'MySchema' })
+        backend.validate({ 'test_id' => 'hi', 'some_int' => 4 }, schema: 'MySchema')
       }.not_to raise_error
     end
 
     it 'should fail invalid schemas' do
       expect {
-        backend.validate({ 'test_id2' => 'hi', 'some_int' => 4 }, { schema: 'MySchema' })
+        backend.validate({ 'test_id2' => 'hi', 'some_int' => 4 }, schema: 'MySchema')
       }.to raise_error(Avro::SchemaValidator::ValidationError)
     end
 
@@ -126,8 +126,8 @@ RSpec.shared_examples_for('an Avro backend') do
       expect(result['long-field']).to eq(11_111_111_111_111_111_111)
       expect(result['float-field']).to eq(1.0)
       expect(result['double-field']).to eq(2.0)
-      expect(result['boolean-field']).to eq(true)
-      expect(result['union-field']).to eq(nil)
+      expect(result['boolean-field']).to be(true)
+      expect(result['union-field']).to be_nil
     end
 
     it 'should coerce strings to numbers' do
@@ -177,7 +177,7 @@ RSpec.shared_examples_for('an Avro backend') do
 
     it 'should convert null to false' do
       result = backend.coerce(payload.merge('boolean-field' => nil))
-      expect(result['boolean-field']).to eq(false)
+      expect(result['boolean-field']).to be(false)
     end
 
     it 'should convert unions' do

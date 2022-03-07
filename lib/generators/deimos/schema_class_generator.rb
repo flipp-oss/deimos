@@ -10,7 +10,6 @@ module Deimos
   module Generators
     # Generator for Schema Classes used for the IDE and consumer/producer interfaces
     class SchemaClassGenerator < Rails::Generators::Base
-
       SPECIAL_TYPES = %i(record enum).freeze
       INITIALIZE_WHITESPACE = "\n#{' ' * 19}"
       IGNORE_DEFAULTS = %w(message_id timestamp).freeze
@@ -131,7 +130,7 @@ module Deimos
         _set_instance_variables(schema, key_schema_base)
 
         temp = schema.is_a?(Avro::Schema::RecordSchema) ? _record_class_template : _enum_class_template
-        res = ERB.new(temp, nil, '-')
+        res = ERB.new(temp, trim_mode: '-')
         res.result(binding)
       end
 
@@ -162,7 +161,7 @@ module Deimos
         end
 
         result = "def initialize(#{arguments.first}"
-        arguments[1..-1].each_with_index do |arg, _i|
+        arguments[1..].each_with_index do |arg, _i|
           result += ",#{INITIALIZE_WHITESPACE}#{arg}"
         end
         "#{result})"

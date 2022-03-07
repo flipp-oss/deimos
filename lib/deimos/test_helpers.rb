@@ -22,7 +22,7 @@ module Deimos
       # Set the config to the right settings for a unit test
       def unit_test!
         Deimos.configure do |deimos_config|
-          deimos_config.logger = Logger.new(STDOUT)
+          deimos_config.logger = Logger.new($stdout)
           deimos_config.consumers.reraise_errors = true
           deimos_config.kafka.seed_brokers ||= ['test_broker']
           deimos_config.schema.backend = Deimos.schema_backend_class.mock_backend
@@ -340,7 +340,7 @@ module Deimos
         backend = consumer.decoder
         old_schema = backend.schema
         backend.schema = consumer.config[:key_schema]
-        key = backend.schema_fields.map { |field| [field.name, 1] }.to_h
+        key = backend.schema_fields.to_h { |field| [field.name, 1] }
         backend.schema = old_schema
         key
       elsif consumer.config[:no_keys]

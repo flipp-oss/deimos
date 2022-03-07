@@ -37,10 +37,8 @@ module Deimos
       end
 
       # :nodoc:
-      def time(metric_name, options={})
-        @client.time(metric_name, options) do
-          yield
-        end
+      def time(metric_name, options={}, &block)
+        @client.time(metric_name, options, &block)
       end
     end
   end

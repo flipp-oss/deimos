@@ -21,7 +21,7 @@ describe Deimos, 'configuration' do
       kafka_logger logger
       reraise_consumer_errors true
       schema_registry_url 'http://schema.registry'
-      schema.use_schema_classes false
+      schema.use_schema_classes(false)
       seed_broker 'whatever'
       schema_path 'some_path'
       producer_schema_namespace 'namespace'
@@ -36,19 +36,19 @@ describe Deimos, 'configuration' do
     end
 
     expect(described_class.config.kafka.logger).to eq(logger)
-    expect(described_class.config.consumers.reraise_errors).to eq(true)
+    expect(described_class.config.consumers.reraise_errors).to be(true)
     expect(described_class.config.schema.registry_url).to eq('http://schema.registry')
-    expect(described_class.config.schema.use_schema_classes).to eq(false)
+    expect(described_class.config.schema.use_schema_classes).to be(false)
     expect(described_class.config.kafka.seed_brokers).to eq('whatever')
     expect(described_class.config.producers.schema_namespace).to eq('namespace')
     expect(described_class.config.producers.topic_prefix).to eq('prefix')
-    expect(described_class.config.producers.disabled).to eq(true)
-    expect(described_class.config.kafka.ssl.enabled).to eq(true)
+    expect(described_class.config.producers.disabled).to be(true)
+    expect(described_class.config.kafka.ssl.enabled).to be(true)
     expect(described_class.config.kafka.ssl.ca_cert).to eq('cert')
     expect(described_class.config.kafka.ssl.client_cert).to eq('cert')
     expect(described_class.config.kafka.ssl.client_cert_key).to eq('key')
     expect(described_class.config.producers.backend).to eq('db')
-    expect(described_class.config.consumers.report_lag).to eq(true)
+    expect(described_class.config.consumers.report_lag).to be(true)
   end
 
   it 'reads existing Phobos config YML files' do

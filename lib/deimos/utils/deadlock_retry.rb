@@ -28,13 +28,11 @@ module Deimos
         # from retrying at the same time.
         # @param tags [Array] Tags to attach when logging and reporting metrics.
         # @yield Yields to the block that may deadlock.
-        def wrap(tags=[])
+        def wrap(tags=[], &block)
           count = RETRY_COUNT
 
           begin
-            ActiveRecord::Base.transaction do
-              yield
-            end
+            ActiveRecord::Base.transaction(&block)
           rescue ActiveRecord::StatementInvalid => e
             # Reraise if not a known deadlock
             raise if DEADLOCK_MESSAGES.none? { |m| e.message.include?(m) }
@@ -44,7 +42,7 @@ module Deimos
 
             Deimos.config.logger.warn(
               message: 'Deadlock encountered when trying to execute query. '\
-                "Retrying. #{count} attempt(s) remaining",
+                       "Retrying. #{count} attempt(s) remaining",
               tags: tags
             )
 

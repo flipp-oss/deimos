@@ -104,12 +104,12 @@ each_db_config(Deimos::Utils::DbProducer) do
         raise Kafka::BufferOverflow if group.any?('BIG') && group.size >= 10
       end
       allow(Deimos.config.metrics).to receive(:increment)
-      batch = ['A'] * 450 + ['BIG'] * 550
+      batch = (['A'] * 450) + (['BIG'] * 550)
       producer.produce_messages(batch)
 
       expect(phobos_producer).to have_received(:publish_list).with(batch)
       expect(phobos_producer).to have_received(:publish_list).with(['A'] * 100).exactly(4).times
-      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 50 + ['BIG'] * 50)
+      expect(phobos_producer).to have_received(:publish_list).with((['A'] * 50) + (['BIG'] * 50))
       expect(phobos_producer).to have_received(:publish_list).with(['A'] * 10).exactly(5).times
       expect(phobos_producer).to have_received(:publish_list).with(['BIG'] * 1).exactly(550).times
 

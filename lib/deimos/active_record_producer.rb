@@ -71,7 +71,7 @@ module Deimos
       # @param min_id [Numeric] the minimum ID (i.e. all IDs must be greater
       # than this value).
       # @return [ActiveRecord::Relation]
-      def poll_query(time_from:, time_to:, column_name: :updated_at, min_id:)
+      def poll_query(time_from:, time_to:, min_id:, column_name: :updated_at)
         klass = config[:record_class]
         table = ActiveRecord::Base.connection.quote_table_name(klass.table_name)
         column = ActiveRecord::Base.connection.quote_column_name(column_name)

@@ -11,9 +11,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
   before(:each) do
     Deimos.config.reset!
     Deimos.configure do
-      schema.path 'spec/schemas/'
-      schema.generated_class_path 'app/lib/schema_classes'
-      schema.backend :avro_local
+      schema.path('spec/schemas/')
+      schema.generated_class_path('app/lib/schema_classes')
+      schema.backend(:avro_local)
     end
   end
 
@@ -40,8 +40,8 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
 
     it 'should generate a schema class for generated' do
-      generated_path = files.select { |f| f =~ /generated/ }.first
-      expected_path = expected_files.select { |f| f =~ /generated/ }.first
+      generated_path = files.grep(/generated/).first
+      expected_path = expected_files.grep(/generated/).first
 
       expect(File.read(generated_path)).to eq(File.read(expected_path))
     end
@@ -66,8 +66,8 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
 
     it 'should generate a schema class for my_schema_with_complex_types' do
-      generated_path = files.select { |f| f =~ /my_schema_with_complex_types/ }.first
-      expected_path = expected_files.select { |f| f =~ /my_schema_with_complex_types/ }.first
+      generated_path = files.grep(/my_schema_with_complex_types/).first
+      expected_path = expected_files.grep(/my_schema_with_complex_types/).first
 
       expect(File.read(generated_path)).to eq(File.read(expected_path))
     end
@@ -93,8 +93,8 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
 
     %w(my_schema my_schema_key).each do |klass|
       it "should generate a schema class for #{klass}" do
-        generated_path = files.select { |f| f =~ /#{klass}\.rb/ }.first
-        expected_path = expected_files.select { |f| f =~ /#{klass}\.rb/ }.first
+        generated_path = files.grep(/#{klass}\.rb/).first
+        expected_path = expected_files.grep(/#{klass}\.rb/).first
 
         expect(File.read(generated_path)).to eq(File.read(expected_path))
       end
@@ -120,8 +120,8 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
 
     it 'should generate a schema class for my_nested_schema' do
-      generated_path = files.select { |f| f =~ /my_nested_schema/ }.first
-      expected_path = expected_files.select { |f| f =~ /my_nested_schema/ }.first
+      generated_path = files.grep(/my_nested_schema/).first
+      expected_path = expected_files.grep(/my_nested_schema/).first
 
       expect(File.read(generated_path)).to eq(File.read(expected_path))
     end
@@ -163,8 +163,8 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
 
     %w(generated my_schema my_schema_key my_nested_schema).each do |klass|
       it "should generate a schema class for #{klass}" do
-        generated_path = files.select { |f| f =~ /#{klass}\.rb/ }.first
-        expected_path = expected_files.select { |f| f =~ /#{klass}\.rb/ }.first
+        generated_path = files.grep(/#{klass}\.rb/).first
+        expected_path = expected_files.grep(/#{klass}\.rb/).first
 
         expect(File.read(generated_path)).to eq(File.read(expected_path))
       end
@@ -173,13 +173,13 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
 
   context 'with non-avro schema backends' do
     before(:each) do
-      Deimos.config.schema.backend :mock
+      Deimos.config.schema.backend(:mock)
     end
 
     it 'should fail to start schema class generation' do
       expect {
         described_class.start
-      }.to raise_error(message='Schema Class Generation requires an Avro-based Schema Backend')
+      }.to raise_error(message = 'Schema Class Generation requires an Avro-based Schema Backend')
     end
   end
 

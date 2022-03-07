@@ -33,7 +33,7 @@ each_db_config(Deimos::Backends::Db) do
     described_class.publish(producer_class: MyProducer,
                             messages: [build_message(nil, 'my-topic', 'foo1')])
     expect(Deimos::KafkaMessage.count).to eq(1)
-    expect(Deimos::KafkaMessage.last.message).to eq(nil)
+    expect(Deimos::KafkaMessage.last.message).to be_nil
   end
 
   it 'should add to non-keyed messages' do

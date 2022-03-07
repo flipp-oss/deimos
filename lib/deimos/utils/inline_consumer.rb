@@ -87,9 +87,9 @@ module Deimos
           raise 'You must specify either a config_class or a schema, namespace and key_config!'
         else
           MessageBankHandler.class_eval do
-            schema schema
-            namespace namespace
-            key_config key_config
+            schema(schema)
+            namespace(namespace)
+            key_config(key_config)
             @decoder = nil
             @key_decoder = nil
           end
@@ -98,7 +98,7 @@ module Deimos
                      frk_consumer: MessageBankHandler,
                      num_messages: num_messages)
         messages = MessageBankHandler.total_messages
-        messages.size <= num_messages ? messages : messages[-num_messages..-1]
+        messages.size <= num_messages ? messages : messages[-num_messages..]
       end
 
       # Consume the last X messages from a topic.

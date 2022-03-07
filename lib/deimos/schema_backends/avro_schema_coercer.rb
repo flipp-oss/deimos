@@ -68,11 +68,7 @@ module Deimos
           val # this will fail
         end
       when :boolean
-        if val.nil? || val == false
-          false
-        else
-          true
-        end
+        !(val.nil? || val == false)
       when :union
         coerce_union(type, val)
       when :record

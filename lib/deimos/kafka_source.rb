@@ -7,7 +7,7 @@ module Deimos
     extend ActiveSupport::Concern
 
     DEPRECATION_WARNING = 'The kafka_producer interface will be deprecated ' \
-        'in future releases. Please use kafka_producers instead.'
+                          'in future releases. Please use kafka_producers instead.'
 
     included do
       after_create(:send_kafka_event_on_create)
@@ -104,7 +104,7 @@ module Deimos
             unique_columns = column_names.map(&:to_s) -
                              options[:on_duplicate_key_update].map(&:to_s) - %w(id created_at)
             records = hashes_without_id.map do |hash|
-              self.where(unique_columns.map { |c| [c, hash[c]] }.to_h).first
+              self.where(unique_columns.to_h { |c| [c, hash[c]] }).first
             end
             self.kafka_producers.each { |p| p.send_events(records) }
           else

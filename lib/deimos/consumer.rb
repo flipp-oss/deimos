@@ -39,7 +39,7 @@ module Deimos
       config = self.class.config
       unless config[:key_configured]
         raise 'No key config given - if you are not decoding keys, please use '\
-          '`key_config plain: true`'
+              '`key_config plain: true`'
       end
 
       if config[:key_field]

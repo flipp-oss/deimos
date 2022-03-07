@@ -1,8 +1,11 @@
+inherit_from: .rubocop_todo.yml
+
 require: rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: 2.6
   Exclude:
+    - spec/schema_classes/*.rb # Exclude auto-generated schema classes
     - lib/deimos/monkey_patches/*.rb
     - vendor/**/*
     - Guardfile

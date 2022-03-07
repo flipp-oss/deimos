@@ -6,7 +6,6 @@ module Deimos
   module SchemaClass
     # Base Class for Schema Classes generated from Avro.
     class Base
-
       # :nodoc:
       def initialize(*_args)
       end

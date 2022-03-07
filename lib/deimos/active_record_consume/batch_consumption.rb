@@ -133,7 +133,7 @@ module Deimos
       def deleted_query(records)
         keys = records.
           map { |m| record_key(m.key)[@klass.primary_key] }.
-          reject(&:nil?)
+          compact
 
         @klass.unscoped.where(@klass.primary_key => keys)
       end

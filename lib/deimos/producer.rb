@@ -57,7 +57,6 @@ module Deimos
     MAX_BATCH_SIZE = 500
 
     class << self
-
       # @return [Hash]
       def config
         @config ||= {
@@ -204,7 +203,8 @@ module Deimos
         end
 
         if config[:key_field]
-          encoder.encode_key(config[:key_field], key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
+          encoder.encode_key(config[:key_field], key,
+                             topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
         elsif config[:key_schema]
           key_encoder.encode(key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
         else

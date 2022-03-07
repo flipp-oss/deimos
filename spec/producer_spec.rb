@@ -28,7 +28,7 @@ module ProducerTest
         key_config plain: true
         # :nodoc:
         def self.partition_key(payload)
-          payload[:payload_key] ? payload[:payload_key] + '1' : nil
+          payload[:payload_key] ? "#{payload[:payload_key]}1" : nil
         end
       end
       stub_const('MyNonEncodedProducer', producer_class)
@@ -79,7 +79,7 @@ module ProducerTest
         expect(event.payload[:payloads]).to eq([{ 'invalid' => 'key' }])
       end
       expect(MyProducer.encoder).to receive(:validate).and_raise('OH NOES')
-      expect { MyProducer.publish('invalid' => 'key', :payload_key => 'key') }.
+      expect { MyProducer.publish({ 'invalid' => 'key', :payload_key => 'key' }) }.
         to raise_error('OH NOES')
       Deimos.unsubscribe(subscriber)
     end
@@ -295,16 +295,18 @@ module ProducerTest
     it 'should properly encode and coerce values with a nested record' do
       expect(MyNestedSchemaProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
       MyNestedSchemaProducer.publish(
-        'test_id' => 'foo',
-        'test_float' => BigDecimal('123.456'),
-        'test_array' => ['1'],
-        'some_nested_record' => {
-          'some_int' => 123,
-          'some_float' => BigDecimal('456.789'),
-          'some_string' => '123',
-          'some_optional_int' => nil
-        },
-        'some_optional_record' => nil
+        {
+          'test_id' => 'foo',
+          'test_float' => BigDecimal('123.456'),
+          'test_array' => ['1'],
+          'some_nested_record' => {
+            'some_int' => 123,
+            'some_float' => BigDecimal('456.789'),
+            'some_string' => '123',
+            'some_optional_int' => nil
+          },
+          'some_optional_record' => nil
+        }
       )
       expect(MyNestedSchemaProducer.topic).to have_sent(
         'test_id' => 'foo',
@@ -505,13 +507,13 @@ module ProducerTest
         Deimos.disable_producers do
           Deimos.disable_producers do # test nested
             MyProducer.publish(
-              'test_id' => 'foo',
-              'some_int' => 123,
-              :payload_key => '123'
+              {
+                'test_id' => 'foo',
+                'some_int' => 123,
+                :payload_key => '123'
+              }
             )
-            MyProducerWithID.publish(
-              'test_id' => 'foo', 'some_int' => 123
-            )
+            MyProducerWithID.publish({ 'test_id' => 'foo', 'some_int' => 123 })
             expect('my-topic').not_to have_sent(anything)
             expect(Deimos).to be_producers_disabled
             expect(Deimos).to be_producers_disabled([MyProducer])
@@ -519,7 +521,11 @@ module ProducerTest
         end
 
         MyProducerWithID.publish(
-          'test_id' => 'foo', 'some_int' => 123, :payload_key => 123
+          {
+            'test_id' => 'foo',
+            'some_int' => 123,
+            :payload_key => 123
+          }
         )
         expect('my-topic').
           to have_sent('test_id' => 'foo', 'some_int' => 123,
@@ -532,13 +538,18 @@ module ProducerTest
         Deimos.disable_producers(MyProducer) do # test nested
           Deimos.disable_producers(MyProducer) do
             MySchemaProducer.publish(
-              'test_id' => 'foo', 'some_int' => 123,
-              :payload_key => { 'test_id' => 'foo_key' }
+              {
+                'test_id' => 'foo',
+                'some_int' => 123,
+                :payload_key => { 'test_id' => 'foo_key' }
+              }
             )
             MyProducer.publish(
-              'test_id' => 'foo',
-              'some_int' => 123,
-              :payload_key => '123'
+              {
+                'test_id' => 'foo',
+                'some_int' => 123,
+                :payload_key => '123'
+              }
             )
             expect('my-topic').not_to have_sent(anything)
             expect('my-topic2').to have_sent('test_id' => 'foo', 'some_int' => 123)
@@ -551,9 +562,11 @@ module ProducerTest
         expect(Deimos).not_to be_producers_disabled(MyProducer)
         expect(Deimos).not_to be_producers_disabled(MySchemaProducer)
         MyProducer.publish(
-          'test_id' => 'foo',
-          'some_int' => 123,
-          :payload_key => '123'
+          {
+            'test_id' => 'foo',
+            'some_int' => 123,
+            :payload_key => '123'
+          }
         )
         expect('my-topic').
           to have_sent('test_id' => 'foo', 'some_int' => 123)

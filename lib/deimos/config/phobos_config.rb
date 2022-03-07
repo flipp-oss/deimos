@@ -10,14 +10,14 @@ module Deimos
 
     # @return [Hash]
     def to_h
-      (FIELDS + [:handler]).map { |f|
+      (FIELDS + [:handler]).to_h do |f|
         val = self.send(f)
         if f == :backoff && val
           [:backoff, _backoff(val)]
         elsif val.present?
           [f, val]
         end
-      }.to_h
+      end
     end
 
     # :nodoc:
@@ -30,7 +30,7 @@ module Deimos
     # @return [Hash]
     def phobos_config
       p_config = {
-        logger: Logger.new(STDOUT),
+        logger: Logger.new($stdout),
         custom_logger: self.phobos_logger,
         custom_kafka_logger: self.kafka.logger,
         kafka: {
@@ -68,7 +68,7 @@ module Deimos
         hash = consumer.to_h.reject do |k, _|
           %i(class_name schema namespace key_config backoff disabled).include?(k)
         end
-        hash = hash.map { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v] }.to_h
+        hash = hash.to_h { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v] }
         hash[:handler] = consumer.class_name
         if consumer.backoff
           hash[:backoff] = _backoff(consumer.backoff.to_a)
