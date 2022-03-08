@@ -1,6 +1,6 @@
 {
   "namespace": "com.my-namespace",
-  "name": "MySchema-key",
+  "name": "MySchema_key",
   "type": "record",
   "doc": "Test schema",
   "fields": [

@@ -259,7 +259,7 @@ like this:
 ```javascript
 {
   "namespace": "com.my-namespace",
-  "name": "MySchema-key",
+  "name": "MySchema_key",
   "type": "record",
   "doc": "Key for com.my-namespace.MySchema",
   "fields": [

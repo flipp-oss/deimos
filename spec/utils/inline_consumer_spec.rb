@@ -17,14 +17,14 @@ describe Deimos::Utils::SeekListener do
     it 'should seek offset' do
       allow(consumer).to receive(:seek)
       expect(consumer).to receive(:seek).once
-      seek_listener = described_class.new({ handler: handler, group_id: 999, topic: 'test_topic' })
+      seek_listener = described_class.new(handler: handler, group_id: 999, topic: 'test_topic')
       seek_listener.start_listener
     end
 
     it 'should retry on errors when seeking offset' do
       allow(consumer).to receive(:seek).and_raise(StandardError)
       expect(consumer).to receive(:seek).twice
-      seek_listener = described_class.new({ handler: handler, group_id: 999, topic: 'test_topic' })
+      seek_listener = described_class.new(handler: handler, group_id: 999, topic: 'test_topic')
       seek_listener.start_listener
     end
   end

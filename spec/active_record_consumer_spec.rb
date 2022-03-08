@@ -76,7 +76,7 @@ module ActiveRecordConsumerTest
                                      updated_at: 1.day.ago.to_i,
                                      some_datetime_int: Time.zone.now.to_i,
                                      timestamp: 2.minutes.ago.to_s
-                                   }, { call_original: true, key: 5 })
+                                   }, call_original: true, key: 5)
 
               expect(Widget.count).to eq(1)
               widget = Widget.last
@@ -96,7 +96,7 @@ module ActiveRecordConsumerTest
                                      some_int: 3,
                                      some_datetime_int: Time.zone.now.to_i,
                                      timestamp: 2.minutes.ago.to_s
-                                   }, { call_original: true, key: 5 })
+                                   }, call_original: true, key: 5)
               expect(Widget.unscoped.count).to eq(1)
               widget = Widget.unscoped.last
               expect(widget.id).to eq(5)
@@ -120,7 +120,7 @@ module ActiveRecordConsumerTest
             test_consume_message(MyCustomFetchConsumer, {
                                    test_id: 'id1',
                                    some_int: 3
-                                 }, { call_original: true })
+                                 }, call_original: true)
             expect(widget1.reload.updated_at.in_time_zone).
               to eq(Time.local(2020, 5, 6, 5, 5, 5))
             travel_back
@@ -132,13 +132,13 @@ module ActiveRecordConsumerTest
             test_consume_message(MyCustomFetchConsumer, {
                                    test_id: 'id1',
                                    some_int: 3
-                                 }, { call_original: true })
+                                 }, call_original: true)
             expect(widget1.reload.some_int).to eq(3)
             expect(Widget.count).to eq(1)
             test_consume_message(MyCustomFetchConsumer, {
                                    test_id: 'id2',
                                    some_int: 4
-                                 }, { call_original: true })
+                                 }, call_original: true)
             expect(Widget.count).to eq(2)
             expect(Widget.find_by_test_id('id1').some_int).to eq(3)
             expect(Widget.find_by_test_id('id2').some_int).to eq(4)
@@ -153,7 +153,7 @@ module ActiveRecordConsumerTest
                                    updated_at: 1.day.ago.to_i,
                                    some_datetime_int: Time.zone.now.to_i,
                                    timestamp: 2.minutes.ago.to_s
-                                 }, { call_original: true, key: 5 })
+                                 }, call_original: true, key: 5)
             expect(Widget.count).to eq(0)
           end
         end
