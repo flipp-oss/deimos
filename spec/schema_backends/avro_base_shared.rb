@@ -87,13 +87,13 @@ RSpec.shared_examples_for('an Avro backend') do
   describe('#validate') do
     it 'should pass valid schemas' do
       expect {
-        backend.validate({ 'test_id' => 'hi', 'some_int' => 4 }, { schema: 'MySchema' })
+        backend.validate({ 'test_id' => 'hi', 'some_int' => 4 }, schema: 'MySchema')
       }.not_to raise_error
     end
 
     it 'should fail invalid schemas' do
       expect {
-        backend.validate({ 'test_id2' => 'hi', 'some_int' => 4 }, { schema: 'MySchema' })
+        backend.validate({ 'test_id2' => 'hi', 'some_int' => 4 }, schema: 'MySchema')
       }.to raise_error(Avro::SchemaValidator::ValidationError)
     end
 

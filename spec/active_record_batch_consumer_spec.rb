@@ -315,7 +315,7 @@ module ActiveRecordBatchConsumerTest
         Class.new(described_class) do
           schema 'MySchema'
           namespace 'com.my-namespace'
-          key_config schema: 'MySchemaCompound-key'
+          key_config schema: 'MySchemaCompound_key'
           record_class Widget
           compacted false
 

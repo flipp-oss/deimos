@@ -81,7 +81,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           topic 'MyTopic'
           schema 'MySchema'
           namespace 'com.my-namespace'
-          key_config schema: 'MySchema-key'
+          key_config schema: 'MySchema_key'
         end
       end
       described_class.start
@@ -143,7 +143,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           topic 'MyTopic'
           schema 'MySchema'
           namespace 'com.my-namespace'
-          key_config schema: 'MySchema-key'
+          key_config schema: 'MySchema_key'
         end
 
         producer do

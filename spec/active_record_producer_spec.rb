@@ -76,7 +76,7 @@ describe Deimos::ActiveRecordProducer do
 
         it 'should be able to call the record' do
           widget = Widget.create!(test_id: 'abc2', some_int: 3)
-          MyProducerWithID.send_event(id: widget.id, test_id: 'abc2', some_int: 3)
+          MyProducerWithID.send_event({id: widget.id, test_id: 'abc2', some_int: 3})
           expect('my-topic-with-id').to have_sent(
             test_id: 'abc2',
             some_int: 3,
