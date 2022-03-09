@@ -130,9 +130,21 @@ kafka.client_id|`phobos`|Identifier for this application.
 kafka.connect_timeout|15|The socket timeout for connecting to the broker, in seconds.
 kafka.socket_timeout|15|The socket timeout for reading and writing to the broker, in seconds.
 kafka.ssl.enabled|false|Whether SSL is enabled on the brokers.
+kafka.ssl.ca_certs_from_system|false|Use CA certs from system.
 kafka.ssl.ca_cert|nil| A PEM encoded CA cert, a file path to the cert, or an Array of certs to use with an SSL connection.
 kafka.ssl.client_cert|nil|A PEM encoded client cert to use with an SSL connection, or a file path to the cert.
 kafka.ssl.client_cert_key|nil|A PEM encoded client cert key to use with an SSL connection.
+kafka.sasl.enabled|false|Whether SASL is enabled on the brokers.
+kafka.sasl.gssapi_principal|nil|A KRB5 principal.
+kafka.sasl.gssapi_keytab|nil|A KRB5 keytab filepath.
+kafka.sasl.plain_authzid|nil|Plain authorization ID.
+kafka.sasl.plain_username|nil|Plain username.
+kafka.sasl.plain_password|nil|Plain password.
+kafka.sasl.scram_username|nil|SCRAM username.
+kafka.sasl.scram_password|nil|SCRAM password.
+kafka.sasl.scram_mechanism|nil|Scram mechanism, either "sha256" or "sha512".
+kafka.sasl.enforce_ssl|nil|Whether to enforce SSL with SASL.
+kafka.sasl.oauth_token_provider|nil|OAuthBearer Token Provider instance that implements method token. See {Sasl::OAuth#initialize}.
 
 ## Consumer Configuration
 
@@ -177,6 +189,8 @@ Config name|Default|Description
 -----------|-------|-----------
 schema.backend|`:mock`|Backend representing the schema encoder/decoder. You can see a full list [here](../lib/deimos/schema_backends).
 schema.registry_url|`http://localhost:8081`|URL of the Confluent schema registry.
+schema.user|nil|Basic auth user.
+schema.password|nil|Basic auth password.
 schema.path|nil|Local path to find your schemas.
 schema.use_schema_classes|false|Set this to true to use generated schema classes in your application.
 schema.generated_class_path|`app/lib/schema_classes`|Local path to generated schema classes.
