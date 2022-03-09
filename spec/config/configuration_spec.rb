@@ -70,6 +70,7 @@ describe Deimos, 'configuration' do
         connect_timeout: 15,
         socket_timeout: 15,
         ssl_verify_hostname: true,
+        ssl_ca_certs_from_system: false,
         seed_brokers: ['localhost:9092']
       },
       listeners: [
@@ -138,10 +139,22 @@ describe Deimos, 'configuration' do
         connect_timeout 30
         socket_timeout 30
         ssl.enabled(true)
+        ssl.ca_certs_from_system(true)
         ssl.ca_cert('cert')
         ssl.client_cert('cert')
         ssl.client_cert_key('key')
         ssl.verify_hostname(false)
+        sasl.enabled true
+        sasl.gssapi_principal 'gssapi_principal'
+        sasl.gssapi_keytab 'gssapi_keytab'
+        sasl.plain_authzid 'plain_authzid'
+        sasl.plain_username 'plain_username'
+        sasl.plain_password 'plain_password'
+        sasl.scram_username 'scram_username'
+        sasl.scram_password 'scram_password'
+        sasl.scram_mechanism 'scram_mechanism'
+        sasl.enforce_ssl true
+        sasl.oauth_token_provider 'oauth_token_provider'
       end
       consumers do
         session_timeout 30
@@ -210,11 +223,22 @@ describe Deimos, 'configuration' do
           client_id: 'phobos2',
           connect_timeout: 30,
           socket_timeout: 30,
+          ssl_ca_certs_from_system: true,
           ssl_ca_cert: 'cert',
           ssl_client_cert: 'cert',
           ssl_client_cert_key: 'key',
           ssl_verify_hostname: false,
-          seed_brokers: ['my-seed-brokers']
+          seed_brokers: ['my-seed-brokers'],
+          sasl_gssapi_principal: 'gssapi_principal',
+          sasl_gssapi_keytab: 'gssapi_keytab',
+          sasl_plain_authzid: 'plain_authzid',
+          sasl_plain_username: 'plain_username',
+          sasl_plain_password: 'plain_password',
+          sasl_scram_username: 'scram_username',
+          sasl_scram_password: 'scram_password',
+          sasl_scram_mechanism: 'scram_mechanism',
+          sasl_over_ssl: true,
+          sasl_oauth_token_provider: 'oauth_token_provider',
         },
         listeners: [
           {
