@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix NameError when using Datadog Metrics
+
 # 1.12.5 - 2022-03-09
 
 - Allow use of new avro_turf versions where child schemas are not listed with the top level schemas
