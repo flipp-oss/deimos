@@ -934,8 +934,8 @@ The following metrics are reported:
 
 ### Configuring Metrics Providers
 
-See the `metrics` field under [Configuration](CONFIGURATION.md).
-View all available Metrics Providers [here](lib/deimos/metrics/metrics_providers)
+See the `metrics` field under [Configuration](#configuration).
+View all available Metrics Providers [here](lib/deimos/metrics)
 
 ### Custom Metrics Providers
 
