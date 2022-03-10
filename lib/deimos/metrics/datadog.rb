@@ -13,7 +13,7 @@ module Deimos
         raise 'Metrics config must specify namespace' if config[:namespace].nil?
 
         logger.info("DatadogMetricsProvider configured with: #{config}")
-        @client = Datadog::Statsd.new(
+        @client = ::Datadog::Statsd.new(
           config[:host_ip],
           config[:host_port]
         )
