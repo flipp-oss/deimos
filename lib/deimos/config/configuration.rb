@@ -347,11 +347,11 @@ module Deimos
 
     # The configured metrics provider.
     # @return [Metrics::Provider]
-    setting :metrics, Metrics::Mock.new
+    setting :metrics, default_proc: proc { Metrics::Mock.new }
 
     # The configured tracing / APM provider.
     # @return [Tracing::Provider]
-    setting :tracer, Tracing::Mock.new
+    setting :tracer, default_proc: proc { Tracing::Mock.new }
 
     setting :db_producer do
 
