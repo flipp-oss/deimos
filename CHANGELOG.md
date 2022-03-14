@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 - Fix NameError when using Datadog Metrics
+- Fix unwanted STDOUT output when loading the main `Deimos` module
 
 # 1.12.5 - 2022-03-09
 
