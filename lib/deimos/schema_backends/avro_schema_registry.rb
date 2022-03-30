@@ -28,7 +28,8 @@ module Deimos
           schemas_path: Deimos.config.schema.path,
           user: Deimos.config.schema.user,
           password: Deimos.config.schema.password,
-          namespace: @namespace
+          namespace: @namespace,
+          logger: Deimos.config.logger
         )
       end
     end
