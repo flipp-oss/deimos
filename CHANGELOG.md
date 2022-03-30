@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.13.0 - 2022-03-30
+
 - Pass the Deimos logger to `AvroTurf::Messaging` for consistent logging
 - Fix an issue with nullable enums not being included in the auto-generated schema class
 
