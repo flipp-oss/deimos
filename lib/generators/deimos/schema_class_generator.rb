@@ -62,6 +62,8 @@ module Deimos
             [schema.values]
           elsif schema.respond_to?(:items)
             [schema.items]
+          elsif schema.respond_to?(:schemas)
+            schema.schemas
           else
             []
           end
