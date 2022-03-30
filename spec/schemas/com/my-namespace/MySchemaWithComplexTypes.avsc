@@ -90,6 +90,17 @@
           "symbols": ["sym1", "sym2"]
         }
       }
+    },
+    {
+      "name": "some_optional_enum",
+      "type": [
+        "null",
+        {
+          "type": "enum",
+          "name": "AnotherEnum",
+          "symbols": ["sym3", "sym4"]
+        }
+      ]
     }
   ]
 }
