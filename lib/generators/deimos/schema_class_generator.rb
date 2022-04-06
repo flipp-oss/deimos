@@ -73,14 +73,19 @@ module Deimos
         # @return [Array<Avro::Schema::NamedSchema>]
         def collect_all_schemas(schemas)
           schemas.dup.each do |schema|
+            next if @discovered_schemas.include?(schema)
+
+            @discovered_schemas << schema
             schemas.concat(collect_all_schemas(child_schemas(schema)))
           end
+
           schemas.select { |s| s.respond_to?(:name) }.uniq
         end
 
         # @param schema_base [Deimos::SchemaBackends::Base]
         # @param key_schema_base[Avro::Schema::NamedSchema]
         def generate_class_from_schema_base(schema_base, key_schema_base: nil)
+          @discovered_schemas = Set.new
           schemas = collect_all_schemas(schema_base.schema_store.schemas.values)
 
           sub_schemas = schemas.reject { |s| s.name == schema_base.schema }
