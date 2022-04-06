@@ -1,0 +1,39 @@
+{
+  "namespace": "com.my-namespace",
+  "name": "MySchemaWithCircularReference",
+  "type": "record",
+  "fields": [
+    {
+      "default": {},
+      "name": "properties",
+      "type": {
+        "type": "map",
+        "values": {
+          "fields": [
+            {
+              "name": "property",
+              "type": [
+                "boolean",
+                "int",
+                "long",
+                "float",
+                "double",
+                "string",
+                {
+                  "items": "Property",
+                  "type": "array"
+                },
+                {
+                  "type": "map",
+                  "values": "Property"
+                }
+              ]
+            }
+          ],
+          "name": "Property",
+          "type": "record"
+        }
+      }
+    }
+  ]
+}

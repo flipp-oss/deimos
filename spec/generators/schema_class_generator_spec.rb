@@ -73,6 +73,32 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
+  context 'with a Consumers Schema with a circular reference' do
+    before(:each) do
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'MySchemaWithCircularReference'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
+      end
+      described_class.start
+    end
+
+    it 'should generate the correct number of classes' do
+      expect(files.length).to eq(1)
+    end
+
+    it 'should generate a schema class for my_schema_with_circular_reference' do
+      generated_path = files.select { |f| f =~ /my_schema_with_circular_reference/ }.first
+      expected_path = expected_files.select { |f| f =~ /my_schema_with_circular_reference/ }.first
+
+      expect(File.read(generated_path)).to eq(File.read(expected_path))
+    end
+  end
+
   context 'with a Producers Schema and a Key' do
     before(:each) do
       Deimos.configure do
