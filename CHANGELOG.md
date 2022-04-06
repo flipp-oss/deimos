@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.13.1 - 2022-04-06
+
 - Fix circular reference schema generation
 
 # 1.13.0 - 2022-03-30
