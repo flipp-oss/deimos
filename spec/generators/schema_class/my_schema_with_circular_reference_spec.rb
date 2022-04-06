@@ -31,7 +31,7 @@ RSpec.describe Schemas::MySchemaWithCircularReference do
 
   describe 'class initialization' do
     it 'should initialize the class from keyword arguments' do
-      klass = described_class.new(payload_hash)
+      klass = described_class.new(properties: payload_hash[:properties])
       expect(klass).to be_instance_of(described_class)
     end
 
@@ -41,7 +41,7 @@ RSpec.describe Schemas::MySchemaWithCircularReference do
     end
 
     it 'should initialize the class when missing attributes' do
-      payload_hash.delete(:test_id)
+      payload_hash.delete(:properties)
       klass = described_class.new(**payload_hash)
       expect(klass).to be_instance_of(described_class)
     end
