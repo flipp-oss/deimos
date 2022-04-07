@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.13.2 - 2022-04-07
+
 - Fix an issue with generating schema classes for schemas containing an enum with default value 
 
 # 1.13.1 - 2022-04-06
