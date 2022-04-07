@@ -206,8 +206,8 @@ module Deimos
         return ' nil' if default == :no_default || default.nil? || IGNORE_DEFAULTS.include?(field.name)
 
         case field.type.type_sym
-        when :string
-          " '#{default}'"
+        when :string, :enum
+          " \"#{default}\""
         when :record
           schema_name = Deimos::SchemaBackends::AvroBase.schema_classname(field.type)
           class_instance = Utils::SchemaClass.instance(field.default, schema_name)
