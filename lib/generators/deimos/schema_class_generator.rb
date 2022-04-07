@@ -88,7 +88,7 @@ module Deimos
           @discovered_schemas = Set.new
           schemas = collect_all_schemas(schema_base.schema_store.schemas.values)
 
-          sub_schemas = schemas.reject { |s| s.name == schema_base.schema }
+          sub_schemas = schemas.reject { |s| s.name == schema_base.schema }.sort_by(&:name)
           @sub_schema_templates = sub_schemas.map do |schema|
             _generate_class_template_from_schema(schema)
           end
