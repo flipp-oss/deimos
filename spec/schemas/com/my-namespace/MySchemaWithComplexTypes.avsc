@@ -101,6 +101,15 @@
           "symbols": ["sym3", "sym4"]
         }
       ]
+    },
+    {
+      "name": "some_enum_with_default",
+      "default": "sym6",
+      "type": {
+        "type": "enum",
+        "name": "YetAnotherEnum",
+        "symbols": ["sym5", "sym6"]
+      }
     }
   ]
 }

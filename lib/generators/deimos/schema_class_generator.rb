@@ -88,7 +88,7 @@ module Deimos
           @discovered_schemas = Set.new
           schemas = collect_all_schemas(schema_base.schema_store.schemas.values)
 
-          sub_schemas = schemas.reject { |s| s.name == schema_base.schema }
+          sub_schemas = schemas.reject { |s| s.name == schema_base.schema }.sort_by(&:name)
           @sub_schema_templates = sub_schemas.map do |schema|
             _generate_class_template_from_schema(schema)
           end
@@ -206,8 +206,8 @@ module Deimos
         return ' nil' if default == :no_default || default.nil? || IGNORE_DEFAULTS.include?(field.name)
 
         case field.type.type_sym
-        when :string
-          " '#{default}'"
+        when :string, :enum
+          " \"#{default}\""
         when :record
           schema_name = Deimos::SchemaBackends::AvroBase.schema_classname(field.type)
           class_instance = Utils::SchemaClass.instance(field.default, schema_name)

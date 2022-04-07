@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix an issue with generating schema classes for schemas containing an enum with default value 
+
 # 1.13.1 - 2022-04-06
 
 - Fix circular reference schema generation

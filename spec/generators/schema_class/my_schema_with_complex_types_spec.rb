@@ -57,7 +57,7 @@ RSpec.describe Schemas::MySchemaWithComplexTypes do
     end
 
     let(:schema_fields) do
-      %w(test_id test_float test_int_array test_optional_int test_string_array some_integer_map some_record some_optional_record some_record_array some_record_map some_enum_array some_optional_enum)
+      %w(test_id test_float test_int_array test_optional_int test_string_array some_integer_map some_record some_optional_record some_record_array some_record_map some_enum_array some_optional_enum some_enum_with_default)
     end
 
     it 'should return the name of the schema and namespace' do
@@ -90,14 +90,15 @@ RSpec.describe Schemas::MySchemaWithComplexTypes do
           'record_1' => { 'a_record_field' => 'field 5' },
           'record_2' => { 'a_record_field' => 'field 6' }
         },
-        'some_enum_array' => %w(sym1 sym2)
+        'some_enum_array' => %w(sym1 sym2),
+        'some_enum_with_default' => 'sym6'
       }
 
       expect(klass.as_json).to eq(payload_h)
     end
 
     it 'should return a JSON string of the payload' do
-      s = '{"test_id":"test id","test_float":1.2,"test_string_array":["abc","def"],"test_int_array":[123,456],"test_optional_int":123,"some_integer_map":{"int_1":1,"int_2":2},"some_record":{"a_record_field":"field 1"},"some_optional_record":{"a_record_field":"field 2"},"some_record_array":[{"a_record_field":"field 3"},{"a_record_field":"field 4"}],"some_record_map":{"record_1":{"a_record_field":"field 5"},"record_2":{"a_record_field":"field 6"}},"some_enum_array":["sym1","sym2"],"some_optional_enum":null}'
+      s = '{"test_id":"test id","test_float":1.2,"test_string_array":["abc","def"],"test_int_array":[123,456],"test_optional_int":123,"some_integer_map":{"int_1":1,"int_2":2},"some_record":{"a_record_field":"field 1"},"some_optional_record":{"a_record_field":"field 2"},"some_record_array":[{"a_record_field":"field 3"},{"a_record_field":"field 4"}],"some_record_map":{"record_1":{"a_record_field":"field 5"},"record_2":{"a_record_field":"field 6"}},"some_enum_array":["sym1","sym2"],"some_optional_enum":null,"some_enum_with_default":"sym6"}'
       expect(klass.to_json).to eq(s)
     end
   end
