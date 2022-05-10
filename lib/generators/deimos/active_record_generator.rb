@@ -72,7 +72,7 @@ module Deimos
       # :nodoc:
       def generate
         migration_template('migration.rb', "db/migrate/create_#{table_name.underscore}.rb")
-        template('model.rb', "app/models/#{table_name.underscore}.rb")
+        template('model.rb', "app/models/#{table_name.underscore.singularize}.rb")
       end
     end
   end
