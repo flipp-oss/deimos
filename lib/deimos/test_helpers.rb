@@ -188,7 +188,7 @@ module Deimos
                              &block)
       raise 'Cannot have both call_original and be given a block!' if call_original && block_given?
 
-      payload&.stringify_keys!
+      payload.stringify_keys! if payload.respond_to?(:stringify_keys!)
       handler_class = if handler_class_or_topic.is_a?(String)
                         _get_handler_class_from_topic(handler_class_or_topic)
                       else

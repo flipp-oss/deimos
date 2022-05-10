@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 - Some cleanup on the active_record generator
+- Fix crash with `test_consume_message` when using schema classes
+- Add `[]=` and `merge` methods on the base schema class
 
 # 1.13.2 - 2022-04-07
 

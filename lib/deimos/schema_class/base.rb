@@ -29,6 +29,23 @@ module Deimos
         raise NotImplementedError
       end
 
+      # @param key [String|Symbol]
+      # @param val [Object]
+      def []=(key, val)
+        self.send("#{key}=", val)
+      end
+
+      # Merge a hash or an identical schema object with this one and return a new object.
+      # @param other_hash [Hash|SchemaClasses::Base]
+      # @return [SchemaClasses::Base]
+      def merge(other_hash)
+        obj = self.class.new(**self.to_h.symbolize_keys)
+        other_hash.to_h.each do |k, v|
+          obj.send("#{k}=", v)
+        end
+        obj
+      end
+
       # :nodoc:
       def ==(other)
         comparison = other
