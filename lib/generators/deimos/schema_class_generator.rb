@@ -110,7 +110,7 @@ module Deimos
           class_template = _generate_class_template_from_schema(schema, key_schema_base)
           @main_class_definition = class_template
 
-          file_prefix = schema.name.underscore
+          file_prefix = schema.name.underscore.singularize
           filename = "#{Deimos.config.schema.generated_class_path}/#{file_prefix}.rb"
           template(SCHEMA_CLASS_FILE, filename, force: true)
         end
