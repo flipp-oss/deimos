@@ -820,6 +820,10 @@ Additionally, you can enable or disable the usage of schema classes for a partic
 
 Note that if you have a schema in your repo but have not configured a producer or consumer, the generator will **not** generate a schema class for it. This is because you need to supply the `key_config` for the generator to know how to handle the schema key. 
 
+One additional configuration option indicates whether nested records should be generated as top-level classes or would remain nested inside the generated class for its parent schema. The default is to nest them, as a flattened structure can have one sub-schema clobber another sub-schema defined in a different top-level schema.
+
+    config.schema.nest_child_schemas = false # Flatten all classes into one directory
+
 ### Consumer
 
 The consumer interface uses the `decode_message` method to turn JSON hash into the Schemas
