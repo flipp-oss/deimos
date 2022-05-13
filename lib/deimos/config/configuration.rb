@@ -343,6 +343,10 @@ module Deimos
       # Set to true to use the generated schema classes in your application
       # @return [Boolean]
       setting :use_schema_classes, false
+
+      # Set to false to generate child schemas as their own files.
+      # @return [Boolean]
+      setting :nest_child_schemas, true
     end
 
     # The configured metrics provider.

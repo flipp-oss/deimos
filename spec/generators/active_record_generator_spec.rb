@@ -33,9 +33,11 @@ RSpec.describe Deimos::Generators::ActiveRecordGenerator do
             t.json :an_array
             t.json :a_map
             t.json :a_record
+
+            t.timestamps
+
+            # TODO add indexes as necessary
           end
-      
-          # TODO add indexes as necessary
         end
       
         def down

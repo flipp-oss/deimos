@@ -86,20 +86,32 @@ module Deimos
         # @param key_schema_base[Avro::Schema::NamedSchema]
         def generate_class_from_schema_base(schema_base, key_schema_base: nil)
           @discovered_schemas = Set.new
+          @sub_schema_templates = []
           schemas = collect_all_schemas(schema_base.schema_store.schemas.values)
 
-          sub_schemas = schemas.reject { |s| s.name == schema_base.schema }.sort_by(&:name)
-          @sub_schema_templates = sub_schemas.map do |schema|
-            _generate_class_template_from_schema(schema)
-          end
-
           main_schema = schemas.find { |s| s.name == schema_base.schema }
-          class_template = _generate_class_template_from_schema(main_schema, key_schema_base)
+          sub_schemas = schemas.reject { |s| s.name == schema_base.schema }.sort_by(&:name)
+          if Deimos.config.schema.nest_child_schemas
+            @sub_schema_templates = sub_schemas.map do |schema|
+              _generate_class_template_from_schema(schema)
+            end
+            write_file(main_schema, key_schema_base)
+          else
+            write_file(main_schema, key_schema_base)
+            sub_schemas.each do |schema|
+              write_file(schema, nil)
+            end
+          end
+        end
+
+        # @param schema [Avro::Schema::NamedSchema]
+        # @param key_schema_base [Avro::Schema::NamedSchema, nil]
+        def write_file(schema, key_schema_base)
+          class_template = _generate_class_template_from_schema(schema, key_schema_base)
           @main_class_definition = class_template
 
-          file_prefix = main_schema.name.underscore
-          namespace_path = main_schema.namespace.tr('.', '/')
-          filename = "#{Deimos.config.schema.generated_class_path}/#{namespace_path}/#{file_prefix}.rb"
+          file_prefix = schema.name.underscore
+          filename = "#{Deimos.config.schema.generated_class_path}/#{file_prefix}.rb"
           template(SCHEMA_CLASS_FILE, filename, force: true)
         end
 
