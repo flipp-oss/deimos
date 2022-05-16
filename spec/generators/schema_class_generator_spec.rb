@@ -5,7 +5,7 @@ require 'fileutils'
 
 class MultiFileSerializer
   def dump(value)
-    value.map { |k, v| "#{k}:\n#{v}\n" }.join("\n")
+    value.keys.sort.map { |k| "#{k}:\n#{value[k]}\n" }.join("\n")
   end
 end
 
