@@ -14,7 +14,7 @@ require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
 require 'rspec/snapshot'
-Dir['./spec/schema_classes/**/*.rb'].sort.each { |f| require f }
+Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
 
 # Constants used for consumer specs
 SCHEMA_CLASS_SETTINGS = { off: false, on: true }.freeze

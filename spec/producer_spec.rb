@@ -476,7 +476,7 @@ module ProducerTest
             test_id: 'foo',
             test_float: BigDecimal('123.456'),
             test_array: ['1'],
-            some_nested_record: Schemas::MyNestedRecord.new(
+            some_nested_record: Schemas::MyNestedSchema::MyNestedRecord.new(
               some_int: 123,
               some_float: BigDecimal('456.789'),
               some_string: '123',
