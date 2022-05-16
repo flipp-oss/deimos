@@ -2,7 +2,7 @@
   class <%= Deimos::SchemaBackends::AvroBase.schema_classname(@current_schema) %> < Deimos::SchemaClass::Record
 <% if @sub_schema_templates.present? -%>
 
-  ### Secondary Schema Classes ###
+    ### Secondary Schema Classes ###
   <%- @sub_schema_templates.each do |schema_template| -%>
   <%=- schema_template.gsub(/^/, "  ") %>
 
