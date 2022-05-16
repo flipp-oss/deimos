@@ -13,7 +13,8 @@ require 'activerecord-import'
 require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
-Dir['./spec/schema_classes/**/*.rb'].sort.each { |f| require f }
+require 'rspec/snapshot'
+Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
 
 # Constants used for consumer specs
 SCHEMA_CLASS_SETTINGS = { off: false, on: true }.freeze
@@ -155,6 +156,8 @@ RSpec.configure do |config|
   include DbConfigs
   config.include TestRunners
   config.full_backtrace = true
+
+  config.snapshot_dir = "spec/snapshots"
 
   # true by default for RSpec 4.0
   config.shared_context_metadata_behavior = :apply_to_host_groups

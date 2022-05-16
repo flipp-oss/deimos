@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- **Breaking Change**: Nest sub-schemas by default into their parent schemas when generating classes.
+- Add the `nest_child_schemas` option to essentially bring back the previous behavior in terms of code use (the actual classes will be separated out into different files).
+
 # 1.13.3 - 2022-05-10
 
 - Some cleanup on the active_record generator

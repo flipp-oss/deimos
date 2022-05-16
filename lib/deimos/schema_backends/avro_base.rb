@@ -96,7 +96,7 @@ module Deimos
       # @param schema [Avro::Schema::NamedSchema] A named schema
       # @return [String]
       def self.schema_classname(schema)
-        schema.name.underscore.camelize
+        schema.name.underscore.camelize.singularize
       end
 
       # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.

@@ -3,22 +3,27 @@
 require 'generators/deimos/schema_class_generator'
 require 'fileutils'
 
+class MultiFileSerializer
+  def dump(value)
+    value.keys.sort.map { |k| "#{k}:\n#{value[k]}\n" }.join("\n")
+  end
+end
+
 RSpec.describe Deimos::Generators::SchemaClassGenerator do
-  let(:schema_class_path) { 'app/lib/schema_classes/com/my-namespace' }
-  let(:expected_files) { Dir['spec/schema_classes/*.rb'] }
-  let(:files) { Dir["#{schema_class_path}/*.rb"] }
+  let(:schema_class_path) { 'spec/app/lib/schema_classes' }
+  let(:files) { Dir["#{schema_class_path}/*.rb"].map { |f| [f, File.read(f)]}.to_h }
 
   before(:each) do
     Deimos.config.reset!
     Deimos.configure do
       schema.path 'spec/schemas/'
-      schema.generated_class_path 'app/lib/schema_classes'
+      schema.generated_class_path 'spec/app/lib/schema_classes'
       schema.backend :avro_local
     end
   end
 
   after(:each) do
-    FileUtils.rm_rf(schema_class_path) if File.exist?(schema_class_path)
+    FileUtils.rm_rf('spec/app') if File.exist?('spec/app')
   end
 
   context 'with a Consumers Schema' do
@@ -32,19 +37,26 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           key_config field: :a_string
         end
       end
-      described_class.start
     end
 
-    it 'should generate the correct number of classes' do
-      expect(files.length).to eq(1)
+    context 'nested true' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => true) do
+          described_class.start
+          expect(files).to match_snapshot('consumers', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
 
-    it 'should generate a schema class for generated' do
-      generated_path = files.select { |f| f =~ /generated/ }.first
-      expected_path = expected_files.select { |f| f =~ /generated/ }.first
-
-      expect(File.read(generated_path)).to eq(File.read(expected_path))
+    context 'nested false' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => false) do
+          described_class.start
+          expect(files).to match_snapshot('consumers-no-nest', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
+
   end
 
   context 'with a Consumers Schema with Complex types' do
@@ -58,18 +70,24 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           key_config field: :a_string
         end
       end
-      described_class.start
     end
 
-    it 'should generate the correct number of classes' do
-      expect(files.length).to eq(1)
+    context 'nested true' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => true) do
+          described_class.start
+          expect(files).to match_snapshot('consumers_complex_types', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
 
-    it 'should generate a schema class for my_schema_with_complex_types' do
-      generated_path = files.select { |f| f =~ /my_schema_with_complex_types/ }.first
-      expected_path = expected_files.select { |f| f =~ /my_schema_with_complex_types/ }.first
-
-      expect(File.read(generated_path)).to eq(File.read(expected_path))
+    context 'nested false' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => false) do
+          described_class.start
+          expect(files).to match_snapshot('consumers_complex_types-no-nest', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
   end
 
@@ -84,18 +102,24 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           key_config field: :a_string
         end
       end
-      described_class.start
     end
 
-    it 'should generate the correct number of classes' do
-      expect(files.length).to eq(1)
+    context 'nested true' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => true) do
+          described_class.start
+          expect(files).to match_snapshot('consumers_circular', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
 
-    it 'should generate a schema class for my_schema_with_circular_reference' do
-      generated_path = files.select { |f| f =~ /my_schema_with_circular_reference/ }.first
-      expected_path = expected_files.select { |f| f =~ /my_schema_with_circular_reference/ }.first
-
-      expect(File.read(generated_path)).to eq(File.read(expected_path))
+    context 'nested false' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => false) do
+          described_class.start
+          expect(files).to match_snapshot('consumers_circular-no-nest', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
   end
 
@@ -110,19 +134,23 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           key_config schema: 'MySchema_key'
         end
       end
-      described_class.start
     end
 
-    it 'should generate the correct number of classes' do
-      expect(files.length).to eq(2)
+    context 'nested true' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => true) do
+          described_class.start
+          expect(files).to match_snapshot('producers_with_key', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
 
-    %w(my_schema my_schema_key).each do |klass|
-      it "should generate a schema class for #{klass}" do
-        generated_path = files.select { |f| f =~ /#{klass}\.rb/ }.first
-        expected_path = expected_files.select { |f| f =~ /#{klass}\.rb/ }.first
-
-        expect(File.read(generated_path)).to eq(File.read(expected_path))
+    context 'nested false' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => false) do
+          described_class.start
+          expect(files).to match_snapshot('producers_with_key-no-nest', snapshot_serializer: MultiFileSerializer)
+        end
       end
     end
   end
@@ -138,18 +166,24 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           key_config field: :test_id
         end
       end
-      described_class.start
     end
 
-    it 'should generate the correct number of classes' do
-      expect(files.length).to eq(1)
+    context 'nested true' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => true) do
+          described_class.start
+          expect(files).to match_snapshot('consumers_nested', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
 
-    it 'should generate a schema class for my_nested_schema' do
-      generated_path = files.select { |f| f =~ /my_nested_schema/ }.first
-      expected_path = expected_files.select { |f| f =~ /my_nested_schema/ }.first
-
-      expect(File.read(generated_path)).to eq(File.read(expected_path))
+    context 'nested false' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => false) do
+          described_class.start
+          expect(files).to match_snapshot('consumers_nested-no-nest', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
   end
 
@@ -180,19 +214,23 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           key_config field: :test_id
         end
       end
-      described_class.start
     end
 
-    it 'should generate the correct number of classes' do
-      expect(files.length).to eq(4)
+    context 'nested true' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => true) do
+          described_class.start
+          expect(files).to match_snapshot('consumers_and_producers', snapshot_serializer: MultiFileSerializer)
+        end
+      end
     end
 
-    %w(generated my_schema my_schema_key my_nested_schema).each do |klass|
-      it "should generate a schema class for #{klass}" do
-        generated_path = files.select { |f| f =~ /#{klass}\.rb/ }.first
-        expected_path = expected_files.select { |f| f =~ /#{klass}\.rb/ }.first
-
-        expect(File.read(generated_path)).to eq(File.read(expected_path))
+    context 'nested false' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.nest_child_schemas' => false) do
+          described_class.start
+          expect(files).to match_snapshot('consumers_and_producers-no-nest', snapshot_serializer: MultiFileSerializer)
+        end
       end
     end
   end
