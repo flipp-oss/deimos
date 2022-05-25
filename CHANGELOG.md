@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.14.1 - 2022-05-25
+
 - Fix: When using key schemas, ActiveRecordConsumers were not finding the record by default.
 
 # 1.14.0 - 2022-05-16
