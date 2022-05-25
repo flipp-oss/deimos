@@ -40,6 +40,14 @@ module ActiveRecordConsumerTest
       stub_const('MyConsumer', consumer_class)
 
       consumer_class = Class.new(Deimos::ActiveRecordConsumer) do
+        schema 'MySchemaWithDateTimes'
+        namespace 'com.my-namespace'
+        key_config schema: 'MySchemaId_key'
+        record_class Widget
+      end
+      stub_const('MyConsumerWithKey', consumer_class)
+
+      consumer_class = Class.new(Deimos::ActiveRecordConsumer) do
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config none: true
@@ -124,6 +132,19 @@ module ActiveRecordConsumerTest
             expect(widget1.reload.updated_at.in_time_zone).
               to eq(Time.local(2020, 5, 6, 5, 5, 5))
             travel_back
+          end
+
+          it 'should find widgets with a schema key' do
+            widget1 = Widget.create!(test_id: 'id1')
+            expect(widget1.some_int).to be_nil
+            test_consume_message(MyConsumerWithKey, {
+                                   test_id: 'id1',
+                                   some_int: 3
+                                 },
+                                 key: { id: widget1.id },
+                                 call_original: true)
+            expect(widget1.reload.some_int).to eq(3)
+            expect(Widget.count).to eq(1)
           end
 
           it 'should find widgets by custom logic' do

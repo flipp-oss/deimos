@@ -13,7 +13,8 @@ module Deimos
       # @param key [Object]
       # @return [ActiveRecord::Base]
       def fetch_record(klass, _payload, key)
-        klass.unscoped.where(klass.primary_key => key).first
+        fetch_key = key.is_a?(Hash) && key.size == 1 ? key.values.first : key
+        klass.unscoped.where(klass.primary_key => fetch_key).first
       end
 
       # Assign a key to a new record.

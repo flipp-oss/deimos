@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix: When using key schemas, ActiveRecordConsumers were not finding the record by default.
+
 # 1.14.0 - 2022-05-16
 
 - **Breaking Change**: Nest sub-schemas by default into their parent schemas when generating classes.
