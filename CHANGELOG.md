@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.14.2 - 2022-05-26
+
+- Fix crash with `test_consume_message` when passing in an instance of a schema class instead of a hash.
+
 # 1.14.1 - 2022-05-25
 
 - Fix: When using key schemas, ActiveRecordConsumers were not finding the record by default.

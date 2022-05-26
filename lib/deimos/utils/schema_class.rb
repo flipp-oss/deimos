@@ -6,10 +6,12 @@ module Deimos
     module SchemaClass
       class << self
         # Converts a raw payload into an instance of the Schema Class
-        # @param payload [Hash]
+        # @param payload [Hash, Deimos::SchemaClass::Base]
         # @param schema [String]
         # @return [Deimos::SchemaClass::Record]
         def instance(payload, schema)
+          return payload if payload.is_a?(Deimos::SchemaClass::Base)
+
           klass = "Schemas::#{schema.underscore.camelize}".safe_constantize
           return payload if klass.nil? || payload.nil?
 
