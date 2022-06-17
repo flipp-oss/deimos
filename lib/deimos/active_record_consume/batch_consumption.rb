@@ -100,12 +100,13 @@ module Deimos
 
         options = if key_cols.empty?
                     {} # Can't upsert with no key, just do regular insert
+                  elsif ActiveRecord::Base.connection.adapter_name.downcase =~ /mysql/
+                    {
+                      on_duplicate_key_update: :all
+                    }
                   else
                     {
                       on_duplicate_key_update: {
-                        # conflict_target must explicitly list the columns for
-                        # Postgres and SQLite. Not required for MySQL, but this
-                        # ensures consistent behaviour.
                         conflict_target: key_cols,
                         columns: :all
                       }

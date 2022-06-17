@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.14.4 - 2022-06-18
+
+- Fix import in ActiveRecordConsumer on mysql
+
 # 1.14.3 - 2022-06-17
 
 - Fix issue with ActiveRecordConsumer double-decoding keys in batch mode.
