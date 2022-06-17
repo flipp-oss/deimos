@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix crash with the tracer when error happens in decoding a message during batch consuming
+
 # 1.14.4 - 2022-06-18
 
 - Fix import in ActiveRecordConsumer on mysql

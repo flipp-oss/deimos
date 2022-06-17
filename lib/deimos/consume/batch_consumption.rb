@@ -12,23 +12,23 @@ module Deimos
       # :nodoc:
       def around_consume_batch(batch, metadata)
         payloads = []
-        benchmark = Benchmark.measure do
-          if self.class.config[:key_configured]
-            metadata[:keys] = batch.map do |message|
-              decode_key(message.key)
+        _with_span do
+          benchmark = Benchmark.measure do
+            if self.class.config[:key_configured]
+              metadata[:keys] = batch.map do |message|
+                decode_key(message.key)
+              end
             end
-          end
-          metadata[:first_offset] = batch.first&.offset
+            metadata[:first_offset] = batch.first&.offset
 
-          payloads = batch.map do |message|
-            decode_message(message.payload)
-          end
-          _received_batch(payloads, metadata)
-          _with_span do
+            payloads = batch.map do |message|
+              decode_message(message.payload)
+            end
+            _received_batch(payloads, metadata)
             yield(payloads, metadata)
           end
+          _handle_batch_success(benchmark.real, payloads, metadata)
         end
-        _handle_batch_success(benchmark.real, payloads, metadata)
       rescue StandardError => e
         _handle_batch_error(e, payloads, metadata)
       end
