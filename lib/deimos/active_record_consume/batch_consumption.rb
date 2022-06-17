@@ -44,14 +44,12 @@ module Deimos
       # @param key [String] The encoded key.
       # @return [Hash] The key attributes.
       def record_key(key)
-        decoded_key = decode_key(key)
-
-        if decoded_key.nil?
+        if key.nil?
           {}
-        elsif decoded_key.is_a?(Hash)
-          @key_converter.convert(decoded_key)
+        elsif key.is_a?(Hash)
+          @key_converter.convert(key)
         else
-          { @klass.primary_key => decoded_key }
+          { @klass.primary_key => key }
         end
       end
 
