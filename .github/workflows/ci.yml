@@ -25,6 +25,9 @@ jobs:
           ruby-version: 2.7
           bundler-cache: true
 
+      - name: Bundle install
+        run: bundle install --with development
+
       - name: Rubocop
         run: bundle exec rubocop --format progress
 

@@ -40,7 +40,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rspec_junit_formatter', '~>0.3')
   spec.add_development_dependency('rspec-rails', '~> 4')
   spec.add_development_dependency('rspec-snapshot', '~> 2.0')
-  spec.add_development_dependency('rubocop', '0.89.0')
+  spec.add_development_dependency('rubocop', '1.25.0')
   spec.add_development_dependency('rubocop-rspec', '1.42.0')
   spec.add_development_dependency('sqlite3', '~> 1.3')
 end
