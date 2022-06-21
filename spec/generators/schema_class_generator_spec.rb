@@ -56,7 +56,6 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
         end
       end
     end
-
   end
 
   context 'with a Consumers Schema with Complex types' do

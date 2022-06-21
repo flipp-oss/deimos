@@ -41,7 +41,7 @@ module Deimos
         # Deimos Consumer or Producer Configuration object
         # @param schema_name [String]
         # @param namespace [String]
-        # @param key_schema_name [String]
+        # @param key_schema_name [String,nil]
         def generate_classes(schema_name, namespace, key_schema_name)
           schema_base = Deimos.schema_backend(schema: schema_name, namespace: namespace)
           schema_base.load_schema
@@ -143,10 +143,13 @@ module Deimos
       def generate
         _validate
         Rails.logger.info("Generating schemas from Deimos.config to #{Deimos.config.schema.generated_class_path}")
+        found_schemas = Set.new
         Deimos.config.producer_objects.each do |config|
           schema_name = config.schema
           namespace = config.namespace || Deimos.config.producers.schema_namespace
           key_schema_name = config.key_config[:schema]
+          found_schemas.add("#{namespace}.#{schema_name}")
+          found_schemas.add("#{namespace}.#{key_schema_name}") if key_schema_name
           generate_classes(schema_name, namespace, key_schema_name)
         end
 
@@ -154,11 +157,27 @@ module Deimos
           schema_name = config.schema
           namespace = config.namespace
           key_schema_name = config.key_config[:schema]
+          found_schemas.add("#{namespace}.#{schema_name}")
+          found_schemas.add("#{namespace}.#{key_schema_name}") if key_schema_name
           generate_classes(schema_name, namespace, key_schema_name)
         end
+
+        generate_from_schema_files(found_schemas)
+
       end
 
     private
+
+      def generate_from_schema_files(found_schemas)
+        schema_store = AvroTurf::MutableSchemaStore.new(path: Deimos.config.schema.path)
+        schema_store.load_schemas!
+        schema_store.schemas.values.each do |schema|
+          name = "#{schema.namespace}.#{schema.name}"
+          next if found_schemas.include?(name)
+
+          generate_classes(schema.name, schema.namespace, nil)
+        end
+      end
 
       # Determines if Schema Class Generation can be run.
       # @raise if Schema Backend is not of a Avro-based class
