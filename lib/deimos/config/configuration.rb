@@ -347,6 +347,10 @@ module Deimos
       # Set to false to generate child schemas as their own files.
       # @return [Boolean]
       setting :nest_child_schemas, true
+
+      # Set to true to generate folders matching the last part of the schema namespace.
+      # @return [Boolean]
+      setting :generate_namespace_folders, false
     end
 
     # The configured metrics provider.

@@ -11,7 +11,7 @@ end
 
 RSpec.describe Deimos::Generators::SchemaClassGenerator do
   let(:schema_class_path) { 'spec/app/lib/schema_classes' }
-  let(:files) { Dir["#{schema_class_path}/*.rb"].map { |f| [f, File.read(f)]}.to_h }
+  let(:files) { Dir["#{schema_class_path}/**/*.rb"].map { |f| [f, File.read(f)]}.to_h }
 
   before(:each) do
     Deimos.config.reset!
@@ -211,6 +211,15 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           schema 'MyNestedSchema'
           namespace 'com.my-namespace'
           key_config field: :test_id
+        end
+      end
+    end
+
+    context 'with namespace folders' do
+      it 'should generate the correct classes' do
+        Deimos.with_config('schema.generate_namespace_folders' => true) do
+          described_class.start
+          expect(files).to match_snapshot('namespace_folders', snapshot_serializer: MultiFileSerializer)
         end
       end
     end
