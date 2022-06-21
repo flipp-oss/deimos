@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.14.5 - 2022-06-21
+
 - Fix crash with the tracer when error happens in decoding a message during batch consuming
 - Generate schema classes for all schemas, even without a consumer/producer set
 
