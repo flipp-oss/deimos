@@ -7,10 +7,12 @@ module Deimos
     # Class that mocks out tracing functionality
     class Mock < Tracing::Provider
       # :nodoc:
+      # rubocop:disable Lint/MissingSuper
       def initialize(logger=nil)
-        @logger = logger || Logger.new(STDOUT)
+        @logger = logger || Logger.new($stdout)
         @logger.info('MockTracingProvider initialized')
       end
+      # rubocop:enable Lint/MissingSuper
 
       # :nodoc:
       def start(span_name, _options={})

@@ -10,6 +10,7 @@ module Deimos
       # @param topic [String]
       # @param lock_id [String]
       # @return [Boolean]
+      # rubocop:disable Metrics/AbcSize
       def lock(topic, lock_id)
         # Try to create it - it's fine if it already exists
         begin
@@ -44,6 +45,7 @@ module Deimos
         self.connection.update(sql)
         self.where(locked_by: lock_id, topic: topic).any?
       end
+      # rubocop:enable Metrics/AbcSize
 
       # This is called once a producer is finished working on a topic, i.e.
       # there are no more messages to fetch. It unlocks the topic and

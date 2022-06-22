@@ -75,6 +75,7 @@ module Deimos
       # Get the namespace from either an existing instance variable, or tease it out of the schema.
       # @param type [Symbol] :request or :response
       # @return [Array<String, String>] the namespace and schema.
+      # rubocop:disable Metrics/AbcSize
       def parse_namespace(type)
         namespace = self.class.namespaces[type]
         schema = self.class.schema_mapping[params['action']][type]
@@ -92,6 +93,7 @@ module Deimos
 
         [namespace, schema]
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Decode the payload with the parameters.
       def decode_schema

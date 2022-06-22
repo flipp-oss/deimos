@@ -126,6 +126,7 @@ module Deimos
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]
       # @return [Array<Array>] the identifiers.
+      # rubocop:disable Metrics/PerceivedComplexity
       def _payload_identifiers(payloads, metadata)
         message_ids = payloads&.map do |payload|
           if payload.is_a?(Hash) && payload.key?('message_id')
@@ -145,6 +146,7 @@ module Deimos
           ids
         end
       end
+      # rubocop:enable Metrics/PerceivedComplexity
     end
   end
 end

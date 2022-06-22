@@ -12,7 +12,7 @@ namespace :deimos do
       config.producers.backend = :kafka if config.producers.backend == :kafka_async
     end
     ENV['DEIMOS_RAKE_TASK'] = 'true'
-    STDOUT.sync = true
+    $stdout.sync = true
     Rails.logger.info('Running deimos:start rake task.')
     Phobos::CLI::Commands.start(%w(start --skip_config))
   end
@@ -20,7 +20,7 @@ namespace :deimos do
   desc 'Starts the Deimos database producer'
   task db_producer: :environment do
     ENV['DEIMOS_RAKE_TASK'] = 'true'
-    STDOUT.sync = true
+    $stdout.sync = true
     Rails.logger.info('Running deimos:db_producer rake task.')
     thread_count = ENV['THREAD_COUNT'].to_i.zero? ? 1 : ENV['THREAD_COUNT'].to_i
     Deimos.start_db_backend!(thread_count: thread_count)
@@ -28,14 +28,14 @@ namespace :deimos do
 
   task db_poller: :environment do
     ENV['DEIMOS_RAKE_TASK'] = 'true'
-    STDOUT.sync = true
+    $stdout.sync = true
     Rails.logger.info('Running deimos:db_poller rake task.')
     Deimos::Utils::DbPoller.start!
   end
 
   desc 'Run Schema Model Generator'
   task generate_schema_classes: :environment do
-    Rails.logger.info("Running deimos:generate_schema_classes")
+    Rails.logger.info('Running deimos:generate_schema_classes')
     Deimos::Generators::SchemaClassGenerator.start
   end
 

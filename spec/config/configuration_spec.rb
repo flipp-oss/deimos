@@ -15,13 +15,14 @@ class MyConfigConsumer2 < Deimos::Consumer
 end
 
 describe Deimos, 'configuration' do
+  # rubocop:disable RSpec/MultipleExpectations
   it 'should configure with deprecated fields' do
     logger = Logger.new(nil)
     described_class.configure do
       kafka_logger logger
       reraise_consumer_errors true
       schema_registry_url 'http://schema.registry'
-      schema.use_schema_classes false
+      schema.use_schema_classes(false)
       seed_broker 'whatever'
       schema_path 'some_path'
       producer_schema_namespace 'namespace'
@@ -50,7 +51,9 @@ describe Deimos, 'configuration' do
     expect(described_class.config.producers.backend).to eq('db')
     expect(described_class.config.consumers.report_lag).to eq(true)
   end
+  # rubocop:enable RSpec/MultipleExpectations
 
+  # rubocop:disable RSpec/ExampleLength
   it 'reads existing Phobos config YML files' do
     described_class.config.reset!
     described_class.configure { |c| c.phobos_config_file = File.join(File.dirname(__FILE__), '..', 'phobos.yml') }
@@ -144,17 +147,17 @@ describe Deimos, 'configuration' do
         ssl.client_cert('cert')
         ssl.client_cert_key('key')
         ssl.verify_hostname(false)
-        sasl.enabled true
-        sasl.gssapi_principal 'gssapi_principal'
-        sasl.gssapi_keytab 'gssapi_keytab'
-        sasl.plain_authzid 'plain_authzid'
-        sasl.plain_username 'plain_username'
-        sasl.plain_password 'plain_password'
-        sasl.scram_username 'scram_username'
-        sasl.scram_password 'scram_password'
-        sasl.scram_mechanism 'scram_mechanism'
-        sasl.enforce_ssl true
-        sasl.oauth_token_provider 'oauth_token_provider'
+        sasl.enabled(true)
+        sasl.gssapi_principal('gssapi_principal')
+        sasl.gssapi_keytab('gssapi_keytab')
+        sasl.plain_authzid('plain_authzid')
+        sasl.plain_username('plain_username')
+        sasl.plain_password('plain_password')
+        sasl.scram_username('scram_username')
+        sasl.scram_password('scram_password')
+        sasl.scram_mechanism('scram_mechanism')
+        sasl.enforce_ssl(true)
+        sasl.oauth_token_provider('oauth_token_provider')
       end
       consumers do
         session_timeout 30
@@ -238,7 +241,7 @@ describe Deimos, 'configuration' do
           sasl_scram_password: 'scram_password',
           sasl_scram_mechanism: 'scram_mechanism',
           sasl_over_ssl: true,
-          sasl_oauth_token_provider: 'oauth_token_provider',
+          sasl_oauth_token_provider: 'oauth_token_provider'
         },
         listeners: [
           {
@@ -276,4 +279,5 @@ describe Deimos, 'configuration' do
         }
       )
   end
+  # rubocop:enable RSpec/ExampleLength
 end

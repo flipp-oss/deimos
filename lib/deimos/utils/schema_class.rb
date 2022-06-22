@@ -38,7 +38,6 @@ module Deimos
           use_schema_classes = config[:use_schema_classes]
           use_schema_classes.present? ? use_schema_classes : Deimos.config.schema.use_schema_classes
         end
-
       end
     end
   end

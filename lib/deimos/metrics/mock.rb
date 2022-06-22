@@ -8,7 +8,7 @@ module Deimos
     class Mock
       # :nodoc:
       def initialize(logger=nil)
-        @logger = logger || Logger.new(STDOUT)
+        @logger = logger || Logger.new($stdout)
         @logger.info('MockMetricsProvider initialized')
       end
 

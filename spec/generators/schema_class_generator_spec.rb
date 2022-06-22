@@ -3,7 +3,9 @@
 require 'generators/deimos/schema_class_generator'
 require 'fileutils'
 
+# :nodoc:
 class MultiFileSerializer
+  # :nodoc:
   def dump(value)
     value.keys.sort.map { |k| "#{k}:\n#{value[k]}\n" }.join("\n")
   end
@@ -16,9 +18,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
   before(:each) do
     Deimos.config.reset!
     Deimos.configure do
-      schema.path 'spec/schemas/'
-      schema.generated_class_path 'spec/app/lib/schema_classes'
-      schema.backend :avro_local
+      schema.path('spec/schemas/')
+      schema.generated_class_path('spec/app/lib/schema_classes')
+      schema.backend(:avro_local)
     end
   end
 
@@ -39,7 +41,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested true' do
+    context 'with nested true' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => true) do
           described_class.start
@@ -48,7 +50,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested false' do
+    context 'with nested false' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => false) do
           described_class.start
@@ -71,7 +73,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested true' do
+    context 'with nested true' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => true) do
           described_class.start
@@ -80,7 +82,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested false' do
+    context 'with nested false' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => false) do
           described_class.start
@@ -103,7 +105,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested true' do
+    context 'with nested true' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => true) do
           described_class.start
@@ -112,7 +114,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested false' do
+    context 'with nested false' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => false) do
           described_class.start
@@ -135,7 +137,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested true' do
+    context 'with nested true' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => true) do
           described_class.start
@@ -144,7 +146,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested false' do
+    context 'with nested false' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => false) do
           described_class.start
@@ -167,7 +169,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested true' do
+    context 'with nested true' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => true) do
           described_class.start
@@ -176,7 +178,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested false' do
+    context 'with nested false' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => false) do
           described_class.start
@@ -215,6 +217,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
+<<<<<<< HEAD
     context 'with namespace folders' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.generate_namespace_folders' => true) do
@@ -225,6 +228,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
 
     context 'nested true' do
+=======
+    context 'with nested true' do
+>>>>>>> GUILD-618: Fix Rubocop lint
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => true) do
           described_class.start
@@ -233,7 +239,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested false' do
+    context 'with nested false' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => false) do
           described_class.start
@@ -245,13 +251,13 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
 
   context 'with non-avro schema backends' do
     before(:each) do
-      Deimos.config.schema.backend :mock
+      Deimos.config.schema.backend(:mock)
     end
 
     it 'should fail to start schema class generation' do
       expect {
         described_class.start
-      }.to raise_error(message='Schema Class Generation requires an Avro-based Schema Backend')
+      }.to raise_error('Schema Class Generation requires an Avro-based Schema Backend')
     end
   end
 

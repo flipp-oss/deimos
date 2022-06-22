@@ -9,6 +9,7 @@ module Deimos
   # Include this module in your RSpec spec_helper
   # to stub out external dependencies
   # and add methods to use to test encoding/decoding.
+  # rubocop:disable Metrics/ModuleLength
   module TestHelpers
     extend ActiveSupport::Concern
 
@@ -22,7 +23,7 @@ module Deimos
       # Set the config to the right settings for a unit test
       def unit_test!
         Deimos.configure do |deimos_config|
-          deimos_config.logger = Logger.new(STDOUT)
+          deimos_config.logger = Logger.new($stdout)
           deimos_config.consumers.reraise_errors = true
           deimos_config.kafka.seed_brokers ||= ['test_broker']
           deimos_config.schema.backend = Deimos.schema_backend_class.mock_backend
@@ -97,6 +98,7 @@ module Deimos
     end
 
     # :nodoc:
+    # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Style/OptionalBooleanParameter
     def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
       messages = Deimos::Backends::Test.sent_messages.
         select { |m| m[:topic] == topic }.
@@ -124,6 +126,7 @@ module Deimos
       str += "\nDiff: #{diff}" if diff
       str + "\nAll Messages received:\n#{message_string}"
     end
+    # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize, Style/OptionalBooleanParameter
 
     RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil|
       message = if msg.respond_to?(:with_indifferent_access)
@@ -239,6 +242,7 @@ module Deimos
     # @param handler_class_or_topic [Class|String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payloads [Array<Hash>] the payload to consume
+    # rubocop:disable Metrics/AbcSize
     def test_consume_batch(handler_class_or_topic,
                            payloads,
                            keys: [],
@@ -293,6 +297,7 @@ module Deimos
       allow(action).to receive(:handle_error) { |e| raise e }
       action.send(:execute)
     end
+    # rubocop:enable Metrics/AbcSize
 
     # Check to see that a given message will fail due to validation errors.
     # @param handler_class [Class]
@@ -394,4 +399,5 @@ module Deimos
       expectation.and_call_original if call_original
     end
   end
+  # rubocop:enable Metrics/ModuleLength
 end

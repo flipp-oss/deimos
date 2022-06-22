@@ -80,6 +80,7 @@ module Deimos
       # the inputs (arrays, hashes, records etc.)
       # Basically we want to first do the import, then reload the records
       # and send them to Kafka.
+      # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
       def import_without_validations_or_callbacks(column_names,
                                                   array_of_attributes,
                                                   options={})
@@ -123,6 +124,7 @@ module Deimos
         end
         results
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity
     end
   end
 end

@@ -36,6 +36,7 @@ each_db_config(Deimos::KafkaTopicInfo) do
     expect(described_class.first.locked_by).to eq(nil)
   end
 
+  # rubocop:disable RSpec/MultipleExpectations
   specify '#clear_lock' do
     freeze_time do
       Deimos::KafkaTopicInfo.create!(topic: 'my-topic', locked_by: 'abc',
@@ -60,6 +61,7 @@ each_db_config(Deimos::KafkaTopicInfo) do
       expect(record.last_processed_at.in_time_zone.to_s).to eq(20.seconds.ago.to_s)
     end
   end
+  # rubocop:enable RSpec/MultipleExpectations
 
   specify '#ping_empty_topics' do
     freeze_time do

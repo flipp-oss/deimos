@@ -27,6 +27,7 @@ module Deimos
 
       # @param payload [Hash|Deimos::SchemaClass::Record] Decoded payloads
       # @param metadata [Hash] Information about batch, including keys.
+      # rubocop:disable Metrics/AbcSize
       def consume(payload, metadata)
         unless self.process_message?(payload)
           Deimos.config.logger.debug(
@@ -62,6 +63,7 @@ module Deimos
         end
         save_record(record)
       end
+      # rubocop:enable Metrics/AbcSize
 
       # @param record [ActiveRecord::Base]
       def save_record(record)

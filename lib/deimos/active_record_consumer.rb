@@ -37,6 +37,7 @@ module Deimos
     end
 
     # Setup
+    # rubocop:disable Lint/MissingSuper
     def initialize
       @klass = self.class.config[:record_class]
       @converter = ActiveRecordConsume::SchemaModelConverter.new(self.class.decoder, @klass)
@@ -47,6 +48,7 @@ module Deimos
 
       @compacted = self.class.config[:compacted] != false
     end
+    # rubocop:enable Lint/MissingSuper
 
     # Override this method (with `super`) if you want to add/change the default
     # attributes set to the new/existing record.

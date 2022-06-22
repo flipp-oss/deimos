@@ -7,11 +7,13 @@ module Deimos
     # Tracing wrapper class for Datadog.
     class Datadog < Tracing::Provider
       # :nodoc:
+      # rubocop:disable Lint/MissingSuper
       def initialize(config)
         raise 'Tracing config must specify service_name' if config[:service_name].nil?
 
         @service = config[:service_name]
       end
+      # rubocop:enable Lint/MissingSuper
 
       # :nodoc:
       def start(span_name, options={})

@@ -1,3 +1,4 @@
+# rubocop:disable Gemspec/RequiredRubyVersion
 # frozen_string_literal: true
 
 lib = File.expand_path('lib', __dir__)
@@ -19,6 +20,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency('avro_turf', '>= 0.11', '< 2')
+  spec.add_runtime_dependency('fig_tree', '~> 0.0.2')
   spec.add_runtime_dependency('phobos', '>= 1.9', '< 3.0')
   spec.add_runtime_dependency('ruby-kafka', '< 2')
   spec.add_runtime_dependency('sigurd', '>= 0.1.0', '< 1.0')
@@ -44,3 +46,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rubocop-rspec', '1.42.0')
   spec.add_development_dependency('sqlite3', '~> 1.3')
 end
+# rubocop:enable Gemspec/RequiredRubyVersion

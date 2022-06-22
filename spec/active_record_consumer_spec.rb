@@ -75,6 +75,7 @@ module ActiveRecordConsumerTest
             Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
           end
 
+          # rubocop:disable RSpec/MultipleExpectations
           it 'should receive events correctly' do
             travel 1.day do
               expect(Widget.count).to eq(0)
@@ -118,6 +119,7 @@ module ActiveRecordConsumerTest
             end
 
           end
+          # rubocop:enable RSpec/MultipleExpectations
 
           it 'should update only updated_at' do
             travel_to Time.local(2020, 5, 5, 5, 5, 5)

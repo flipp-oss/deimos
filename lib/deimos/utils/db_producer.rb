@@ -13,7 +13,7 @@ module Deimos
       MAX_DELETE_ATTEMPTS = 3
 
       # @param logger [Logger]
-      def initialize(logger=Logger.new(STDOUT))
+      def initialize(logger=Logger.new($stdout))
         @id = SecureRandom.uuid
         @logger = logger
         @logger.push_tags("DbProducer #{@id}") if @logger.respond_to?(:push_tags)
@@ -74,7 +74,8 @@ module Deimos
 
         KafkaTopicInfo.clear_lock(@current_topic, @id)
       rescue StandardError => e
-        @logger.error("Error processing messages for topic #{@current_topic}: #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
+        @logger.error("Error processing messages for topic #{@current_topic}:"\
+                      " #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
         KafkaTopicInfo.register_error(@current_topic, @id)
         shutdown_producer
       end
@@ -88,14 +89,14 @@ module Deimos
         compacted_messages = compact_messages(messages)
         log_messages(compacted_messages)
         Deimos.instrument('db_producer.produce', topic: @current_topic, messages: compacted_messages) do
-          begin
-            produce_messages(compacted_messages.map(&:phobos_message))
-          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
-            delete_messages(messages)
-            @logger.error('Message batch too large, deleting...')
-            @logger.error(Deimos::KafkaMessage.decoded(messages))
-            raise
-          end
+
+          produce_messages(compacted_messages.map(&:phobos_message))
+        rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
+          delete_messages(messages)
+          @logger.error('Message batch too large, deleting...')
+          @logger.error(Deimos::KafkaMessage.decoded(messages))
+          raise
+
         end
         delete_messages(messages)
         Deimos.config.metrics&.increment(
@@ -147,6 +148,7 @@ module Deimos
       end
 
       # Send metrics to Datadog.
+      # rubocop:disable Metrics/AbcSize
       def send_pending_metrics
         metrics = Deimos.config.metrics
         return unless metrics
@@ -181,6 +183,7 @@ module Deimos
                         tags: ["topic:#{record.topic}"])
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Shut down the sync producer if we have to. Phobos will automatically
       # create a new one. We should call this if the producer can be in a bad
@@ -194,6 +197,7 @@ module Deimos
       # Produce messages in batches, reducing the size 1/10 if the batch is too
       # large. Does not retry batches of messages that have already been sent.
       # @param batch [Array<Hash>]
+      # rubocop:disable Metrics/AbcSize
       def produce_messages(batch)
         batch_size = batch.size
         current_index = 0
@@ -216,7 +220,8 @@ module Deimos
             raise
           end
 
-          @logger.error("Got error #{e.class.name} when publishing #{batch.size} in groups of #{batch_size}, retrying...")
+          @logger.error("Got error #{e.class.name} when publishing #{batch.size}"\
+                        " in groups of #{batch_size}, retrying...")
           batch_size = if batch_size < 10
                          1
                        else
@@ -226,6 +231,7 @@ module Deimos
           retry
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       # @param batch [Array<Deimos::KafkaMessage>]
       # @return [Array<Deimos::KafkaMessage>]

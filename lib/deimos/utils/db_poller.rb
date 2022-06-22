@@ -61,7 +61,7 @@ module Deimos
             break
           end
           process_updates
-          sleep 0.1
+          sleep(0.1)
         end
       end
 
@@ -95,6 +95,7 @@ module Deimos
       end
 
       # Send messages for updated data.
+      # rubocop:disable Metrics/AbcSize
       def process_updates
         return unless should_run?
 
@@ -116,8 +117,10 @@ module Deimos
           message_count += batch.size
           time_from = last_updated(batch.last)
         end
-        Deimos.config.logger.info("Poll #{@producer.topic} complete at #{time_to} (#{message_count} messages, #{batch_count} batches}")
+        Deimos.config.logger.info("Poll #{@producer.topic} complete at #{time_to} "\
+                                  "(#{message_count} messages, #{batch_count} batches}")
       end
+      # rubocop:enable Metrics/AbcSize
 
       # @param time_from [ActiveSupport::TimeWithZone]
       # @param time_to [ActiveSupport::TimeWithZone]

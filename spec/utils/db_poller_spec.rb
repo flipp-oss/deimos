@@ -197,6 +197,7 @@ each_db_config(Deimos::Utils::DbPoller) do
         end
       end
 
+      # rubocop:disable RSpec/MultipleExpectations
       it 'should update the full table' do
         info = Deimos::PollInfo.last
         config.full_table = true
@@ -232,6 +233,7 @@ each_db_config(Deimos::Utils::DbPoller) do
         expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
         expect(info.last_sent_id).to eq(widgets[6].id)
       end
+      # rubocop:enable RSpec/MultipleExpectations
 
       it 'should send events across multiple batches' do
         allow(MyProducer).to receive(:poll_query).and_call_original
@@ -275,6 +277,7 @@ each_db_config(Deimos::Utils::DbPoller) do
                min_id: last_widget.id)
       end
 
+      # rubocop:disable RSpec/MultipleExpectations
       it 'should recover correctly with errors and save the right ID' do
         widgets.each do |w|
           w.update_attribute(:updated_at, time_value(mins: -61, secs: 30))
@@ -313,6 +316,7 @@ each_db_config(Deimos::Utils::DbPoller) do
         expect(info.reload.last_sent.in_time_zone).to eq(time_value(secs: -1))
         expect(info.last_sent_id).to eq(last_widget.id)
       end
+      # rubocop:enable RSpec/MultipleExpectations
 
     end
 

@@ -157,7 +157,7 @@ RSpec.configure do |config|
   config.include TestRunners
   config.full_backtrace = true
 
-  config.snapshot_dir = "spec/snapshots"
+  config.snapshot_dir = 'spec/snapshots'
 
   # true by default for RSpec 4.0
   config.shared_context_metadata_behavior = :apply_to_host_groups

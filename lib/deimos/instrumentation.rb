@@ -40,6 +40,7 @@ module Deimos
     # Listens for any exceptions that happen during publishing and re-publishes
     # as a Deimos event.
     # @param event [ActiveSupport::Notification]
+    # rubocop:disable Metrics/AbcSize
     def self.send_produce_error(event)
       exception = event.payload[:exception_object]
       return if !exception || !exception.respond_to?(:failed_messages)
@@ -67,6 +68,7 @@ module Deimos
         )
       end
     end
+    # rubocop:enable Metrics/AbcSize
   end
 
   ActiveSupport::Notifications.subscribe('deliver_messages.producer.kafka') do |*args|
