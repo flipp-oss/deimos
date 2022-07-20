@@ -83,6 +83,7 @@ module Deimos
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     def start_db_backend!(thread_count: 1)
+      Sigurd.exit_on_signal = true
       if self.config.producers.backend != :db
         raise('Publish backend is not set to :db, exiting')
       end

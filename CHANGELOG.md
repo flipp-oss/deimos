@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.15.0 - 2022-07-20
+
+- Update to `sigurd` 0.1.0 - DB producer should now exit when receiving a `SIGTERM` instead of throwing a `SignalException`
+
 # 1.14.6 - 2022-06-21
 
 - Add `generate_namespace_folders` to configuration; this will automatically generate subfolders to the `schemas` folder so that you can have different schemas with the same name but different namespaces generate separate classes.
