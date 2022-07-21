@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 require 'deimos/poll_info'
-require 'sigurd/executor'
-require 'sigurd/signal_handler'
+require 'sigurd'
 
 module Deimos
   module Utils
