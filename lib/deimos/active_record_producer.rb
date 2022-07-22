@@ -60,7 +60,7 @@ module Deimos
         end
         return payload unless Utils::SchemaClass.use?(config.to_h)
 
-        Utils::SchemaClass.instance(payload, config[:schema])
+        Utils::SchemaClass.instance(payload, config[:schema], config[:namespace])
       end
 
       # Query to use when polling the database with the DbPoller. Add

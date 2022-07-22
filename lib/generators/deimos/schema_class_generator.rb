@@ -108,16 +108,12 @@ module Deimos
         # @param key_schema_base [Avro::Schema::NamedSchema, nil]
         def write_file(schema, key_schema_base)
           class_template = _generate_class_template_from_schema(schema, key_schema_base)
-          @modules = ['Schemas']
-          namespace_folder = schema.namespace.split('.').last
-          if Deimos.config.schema.generate_namespace_folders
-            @modules.push(namespace_folder.underscore.classify)
-          end
+          @modules = Utils::SchemaClass.modules_for(schema.namespace)
           @main_class_definition = class_template
 
           file_prefix = schema.name.underscore.singularize
           if Deimos.config.schema.generate_namespace_folders
-            file_prefix = "#{namespace_folder}/#{file_prefix}"
+            file_prefix = "#{@modules.last.underscore.singularize}/#{file_prefix}"
           end
           filename = "#{Deimos.config.schema.generated_class_path}/#{file_prefix}.rb"
           template(SCHEMA_CLASS_FILE, filename, force: true)

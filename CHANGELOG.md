@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fixed bug with previous release where the filename and constant names for `generate_namespace_folders` did not always match.
 # 1.14.6 - 2022-06-21
 
 - Add `generate_namespace_folders` to configuration; this will automatically generate subfolders to the `schemas` folder so that you can have different schemas with the same name but different namespaces generate separate classes.
