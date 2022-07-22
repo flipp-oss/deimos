@@ -30,6 +30,16 @@ module Deimos
       end
 
       # :nodoc:
+      def active_span
+        nil
+      end
+
+      # :nodoc:
+      def set_tag(name, value)
+        nil
+      end
+
+      # :nodoc:
       def set_error(span, exception)
         span[:exception] = exception
         name = span[:name]

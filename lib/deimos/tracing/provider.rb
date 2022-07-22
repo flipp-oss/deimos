@@ -24,6 +24,19 @@ module Deimos
       def set_error(span, exception)
         raise NotImplementedError
       end
+
+      # Get the currently activated span.
+      def active_span
+        raise NotImplementedError
+      end
+
+      # Set a tag to a span. Use the currently active span if not given.
+      # @param tag [String]
+      # @param value [String]
+      def set_tag(tag, value, span=nil)
+        raise NotImplementedError
+      end
+
     end
   end
 end

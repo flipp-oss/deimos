@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix issues with `enum` schema classes (e.g. equality not working, `to_s` not working)
 - Changed assumption in the base schema class that it was a record (e.g. defining `to_h` instead of `as_json`). Moved record functionality to the record base class.
+- Added the `active_span` and `set_tag` methods to the tracing classes.
+- Added span tags for fields in SchemaControllerMixin.
+- Updated SchemaControllerMixin so it works with generated schema classes.
 - Fixed bug with previous release where the filename and constant names for `generate_namespace_folders` did not always match.
+
 # 1.14.6 - 2022-06-21
 
 - Add `generate_namespace_folders` to configuration; this will automatically generate subfolders to the `schemas` folder so that you can have different schemas with the same name but different namespaces generate separate classes.

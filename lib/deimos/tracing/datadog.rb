@@ -27,9 +27,20 @@ module Deimos
       end
 
       # :nodoc:
+      def active_span
+        ::Datadog.tracer.active_span
+      end
+
+      # :nodoc:
       def set_error(span, exception)
         span.set_error(exception)
       end
+
+      # :nodoc:
+      def set_tag(tag, value, span=nil)
+        (span || active_span).set_tag(tag, value)
+      end
+
     end
   end
 end
