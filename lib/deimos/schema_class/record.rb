@@ -8,6 +8,23 @@ module Deimos
     # Base Class of Record Classes generated from Avro.
     class Record < Base
 
+      # Converts the object attributes to a hash which can be used for Kafka
+      # @return [Hash] the payload as a hash.
+      def to_h
+        self.as_json
+      end
+
+      # Merge a hash or an identical schema object with this one and return a new object.
+      # @param other_hash [Hash|SchemaClasses::Base]
+      # @return [SchemaClasses::Base]
+      def merge(other_hash)
+        obj = self.class.new(**self.to_h.symbolize_keys)
+        other_hash.to_h.each do |k, v|
+          obj.send("#{k}=", v)
+        end
+        obj
+      end
+
       # Converts the object to a hash which can be used for debugging or comparing objects.
       # @return [Hash] a hash representation of the payload
       def as_json(_opts={})

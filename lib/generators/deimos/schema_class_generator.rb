@@ -122,18 +122,18 @@ module Deimos
         # Format a given field into its appropriate to_h representation.
         # @param field[Deimos::SchemaField]
         # @return [String]
-        def field_to_h(field)
+        def field_as_json(field)
           res = "'#{field.name}' => @#{field.name}"
           field_base_type = _schema_base_class(field.type).type_sym
 
           if %i(record enum).include?(field_base_type)
             res += case field.type.type_sym
                    when :array
-                     '.map { |v| v&.to_h }'
+                     '.map { |v| v&.as_json }'
                    when :map
-                     '.transform_values { |v| v&.to_h }'
+                     '.transform_values { |v| v&.as_json }'
                    else
-                     '&.to_h'
+                     '&.as_json'
                    end
           end
 

@@ -31,7 +31,7 @@ module Schemas
       end
 
       # @override
-      def to_h
+      def as_json(_opts={})
         {
           'a_record_field' => @a_record_field
         }
@@ -55,7 +55,7 @@ module Schemas
       end
 
       # @override
-      def to_h
+      def as_json(_opts={})
         @an_enum
       end
     end
@@ -139,7 +139,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'a_string' => @a_string,
         'a_int' => @a_int,
@@ -147,12 +147,12 @@ module Schemas
         'a_float' => @a_float,
         'a_double' => @a_double,
         'an_optional_int' => @an_optional_int,
-        'an_enum' => @an_enum&.to_h,
+        'an_enum' => @an_enum&.as_json,
         'an_array' => @an_array,
         'a_map' => @a_map,
         'timestamp' => @timestamp,
         'message_id' => @message_id,
-        'a_record' => @a_record&.to_h
+        'a_record' => @a_record&.as_json
       }
     end
   end

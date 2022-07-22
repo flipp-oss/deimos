@@ -43,11 +43,11 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'some_int' => @some_int,
-        'payload_key' => @payload_key&.to_h
+        'payload_key' => @payload_key&.as_json
       }
     end
   end

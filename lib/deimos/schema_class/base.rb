@@ -11,21 +11,9 @@ module Deimos
       def initialize(*_args)
       end
 
-      # Converts the object to a string that represents a JSON object
-      # @return [String] a JSON string
-      def to_json(*_args)
-        to_h.to_json
-      end
-
       # Converts the object to a hash which can be used for debugging or comparing objects.
       # @return [Hash] a hash representation of the payload
       def as_json(_opts={})
-        JSON.parse(to_json)
-      end
-
-      # Converts the object attributes to a hash which can be used for Kafka
-      # @return [Hash] the payload as a hash.
-      def to_h
         raise NotImplementedError
       end
 
@@ -33,17 +21,6 @@ module Deimos
       # @param val [Object]
       def []=(key, val)
         self.send("#{key}=", val)
-      end
-
-      # Merge a hash or an identical schema object with this one and return a new object.
-      # @param other_hash [Hash|SchemaClasses::Base]
-      # @return [SchemaClasses::Base]
-      def merge(other_hash)
-        obj = self.class.new(**self.to_h.symbolize_keys)
-        other_hash.to_h.each do |k, v|
-          obj.send("#{k}=", v)
-        end
-        obj
       end
 
       # :nodoc:
@@ -59,7 +36,7 @@ module Deimos
       # :nodoc:
       def to_s
         klass = self.class
-        "#{klass}(#{self.as_json.symbolize_keys.to_s[1..-2]})"
+        "#{klass}(#{self.as_json})"
       end
 
       # Initializes this class from a given value

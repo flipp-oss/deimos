@@ -6,23 +6,23 @@ RSpec.describe Schemas::MySchemaWithCircularReference do
     {
       properties: {
         a_boolean: {
-          property: true
+          'property' => true
         },
         an_integer: {
-          property: 1
+          'property' => 1
         },
         a_float: {
-          property: 4.5
+          'property' => 4.5
         },
         a_string: {
-          property: 'string'
+          'property' => 'string'
         },
         an_array: {
-          property: [1, 2, 3]
+          'property' => [1, 2, 3]
         },
         an_hash: {
-          property: {
-            a_key: 'a_value'
+          'property' => {
+            'a_key' => 'a_value'
           }
         }
       }
@@ -63,23 +63,23 @@ RSpec.describe Schemas::MySchemaWithCircularReference do
       described_class.new(**payload_hash)
       payload_h = {
         'properties' => {
-          'a_boolean' => {
-            'property' => true
+          a_boolean: {
+            'property' =>true
           },
-          'an_integer' => {
-            'property' => 1
+          an_integer: {
+            'property' =>1
           },
-          'a_float' => {
-            'property' => 4.5
+          a_float: {
+            'property' =>4.5
           },
-          'a_string' => {
-            'property' => 'string'
+          a_string: {
+            'property' =>'string'
           },
-          'an_array' => {
-            'property' => [1, 2, 3]
+          an_array: {
+            'property' =>[1, 2, 3]
           },
-          'an_hash' => {
-            'property' => {
+          an_hash: {
+            'property' =>{
               'a_key' => 'a_value'
             }
           }

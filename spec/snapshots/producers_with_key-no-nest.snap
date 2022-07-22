@@ -28,7 +28,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'a_record_field' => @a_record_field
       }
@@ -48,20 +48,9 @@ module Schemas
     # @return ['sym1', 'sym2']
     attr_accessor :an_enum
 
-    # :nodoc:
-    def initialize(an_enum)
-      super
-      self.an_enum = an_enum
-    end
-
     # @override
     def symbols
       %w(sym1 sym2)
-    end
-
-    # @override
-    def to_h
-      @an_enum
     end
   end
 end
@@ -78,20 +67,9 @@ module Schemas
     # @return ['sym3', 'sym4']
     attr_accessor :another_enum
 
-    # :nodoc:
-    def initialize(another_enum)
-      super
-      self.another_enum = another_enum
-    end
-
     # @override
     def symbols
       %w(sym3 sym4)
-    end
-
-    # @override
-    def to_h
-      @another_enum
     end
   end
 end
@@ -127,7 +105,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'response_id' => @response_id
       }
@@ -223,7 +201,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'a_string' => @a_string,
         'a_int' => @a_int,
@@ -231,12 +209,12 @@ module Schemas
         'a_float' => @a_float,
         'a_double' => @a_double,
         'an_optional_int' => @an_optional_int,
-        'an_enum' => @an_enum&.to_h,
+        'an_enum' => @an_enum&.as_json,
         'an_array' => @an_array,
         'a_map' => @a_map,
         'timestamp' => @timestamp,
         'message_id' => @message_id,
-        'a_record' => @a_record&.to_h
+        'a_record' => @a_record&.as_json
       }
     end
   end
@@ -273,7 +251,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'response_id' => @response_id
       }
@@ -324,7 +302,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'some_int' => @some_int,
         'some_float' => @some_float,
@@ -395,13 +373,13 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'test_float' => @test_float,
         'test_array' => @test_array,
-        'some_nested_record' => @some_nested_record&.to_h,
-        'some_optional_record' => @some_optional_record&.to_h
+        'some_nested_record' => @some_nested_record&.as_json,
+        'some_optional_record' => @some_optional_record&.as_json
       }
     end
   end
@@ -454,11 +432,11 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'some_int' => @some_int,
-        'payload_key' => @payload_key&.to_h
+        'payload_key' => @payload_key&.as_json
       }
     end
   end
@@ -499,7 +477,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'part_one' => @part_one,
         'part_two' => @part_two
@@ -539,7 +517,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'id' => @id
       }
@@ -578,7 +556,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id
       }
@@ -621,7 +599,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'some_bool' => @some_bool
@@ -669,9 +647,9 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
-        'properties' => @properties.transform_values { |v| v&.to_h }
+        'properties' => @properties.transform_values { |v| v&.as_json }
       }
     end
   end
@@ -800,7 +778,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'test_float' => @test_float,
@@ -808,13 +786,13 @@ module Schemas
         'test_int_array' => @test_int_array,
         'test_optional_int' => @test_optional_int,
         'some_integer_map' => @some_integer_map,
-        'some_record' => @some_record&.to_h,
-        'some_optional_record' => @some_optional_record&.to_h,
-        'some_record_array' => @some_record_array.map { |v| v&.to_h },
-        'some_record_map' => @some_record_map.transform_values { |v| v&.to_h },
-        'some_enum_array' => @some_enum_array.map { |v| v&.to_h },
-        'some_optional_enum' => @some_optional_enum&.to_h,
-        'some_enum_with_default' => @some_enum_with_default&.to_h
+        'some_record' => @some_record&.as_json,
+        'some_optional_record' => @some_optional_record&.as_json,
+        'some_record_array' => @some_record_array.map { |v| v&.as_json },
+        'some_record_map' => @some_record_map.transform_values { |v| v&.as_json },
+        'some_enum_array' => @some_enum_array.map { |v| v&.as_json },
+        'some_optional_enum' => @some_optional_enum&.as_json,
+        'some_enum_with_default' => @some_enum_with_default&.as_json
       }
     end
   end
@@ -867,7 +845,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'updated_at' => @updated_at,
@@ -922,7 +900,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'some_int' => @some_int,
@@ -980,7 +958,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'id' => @id,
         'test_id' => @test_id,
@@ -1023,7 +1001,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'property' => @property
       }
@@ -1062,7 +1040,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'update_request_id' => @update_request_id
       }
@@ -1101,7 +1079,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'update_response_id' => @update_response_id
       }
@@ -1172,7 +1150,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'id' => @id,
         'wibble_id' => @wibble_id,
@@ -1235,7 +1213,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'id' => @id,
         'widget_id' => @widget_id,
@@ -1294,7 +1272,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'id' => @id,
         'widget_id' => @widget_id,
@@ -1318,20 +1296,9 @@ module Schemas
     # @return ['sym5', 'sym6']
     attr_accessor :yet_another_enum
 
-    # :nodoc:
-    def initialize(yet_another_enum)
-      super
-      self.yet_another_enum = yet_another_enum
-    end
-
     # @override
     def symbols
       %w(sym5 sym6)
-    end
-
-    # @override
-    def to_h
-      @yet_another_enum
     end
   end
 end

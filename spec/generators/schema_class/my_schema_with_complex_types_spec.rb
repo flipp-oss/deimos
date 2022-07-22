@@ -153,7 +153,7 @@ RSpec.describe Schemas::MySchemaWithComplexType do
       it 'should get the value of some_enum_array' do
         some_enum_array = klass.some_enum_array
         expect(some_enum_array.first).to be_instance_of(Schemas::MySchemaWithComplexType::AnEnum)
-        expect(some_enum_array.first.an_enum).to eq('sym1')
+        expect(some_enum_array.first.value).to eq('sym1')
       end
 
       it 'should get the value of some_record' do
@@ -197,7 +197,7 @@ RSpec.describe Schemas::MySchemaWithComplexType do
       end
 
       it 'should modify the value of some_enum_array' do
-        klass.some_enum_array.first.an_enum = 'new_sym'
+        klass.some_enum_array.first.value = 'new_sym'
         expect(klass.some_enum_array.first).
           to eq(Schemas::MySchemaWithComplexType::AnEnum.new('new_sym'))
 

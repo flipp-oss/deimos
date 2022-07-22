@@ -31,7 +31,7 @@ module Schemas
       end
 
       # @override
-      def to_h
+      def as_json(_opts={})
         {
           'property' => @property
         }
@@ -68,9 +68,9 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
-        'properties' => @properties.transform_values { |v| v&.to_h }
+        'properties' => @properties.transform_values { |v| v&.as_json }
       }
     end
   end

@@ -64,10 +64,10 @@
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
 <%- @fields.each do |field| -%>
-        <%= field_to_h(field) %>
+        <%= field_as_json(field) %>
 <% end -%>
       }
     end
