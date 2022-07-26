@@ -217,7 +217,6 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-<<<<<<< HEAD
     context 'with namespace folders' do
       it 'should generate the correct classes' do
         Deimos.with_config('schema.generate_namespace_folders' => true) do
@@ -227,10 +226,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       end
     end
 
-    context 'nested true' do
-=======
     context 'with nested true' do
->>>>>>> GUILD-618: Fix Rubocop lint
       it 'should generate the correct classes' do
         Deimos.with_config('schema.nest_child_schemas' => true) do
           described_class.start
