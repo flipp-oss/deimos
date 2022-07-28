@@ -167,6 +167,7 @@ module Deimos
         end
 
         generate_from_schema_files(found_schemas)
+
       end
     # rubocop:enable Metrics/AbcSize
 
@@ -175,7 +176,7 @@ module Deimos
       def generate_from_schema_files(found_schemas)
         schema_store = AvroTurf::MutableSchemaStore.new(path: Deimos.config.schema.path)
         schema_store.load_schemas!
-        schema_store.schemas.each_value do |schema|
+        schema_store.schemas.values.each do |schema|
           name = "#{schema.namespace}.#{schema.name}"
           next if found_schemas.include?(name)
 
