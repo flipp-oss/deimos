@@ -199,7 +199,6 @@ each_db_config(Deimos::Utils::DbProducer) do
       producer.process_topic('my-topic')
     end
 
-    # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
     it 'should complete successfully' do
       messages = (1..4).map do |i|
         Deimos::KafkaMessage.new(
@@ -261,7 +260,6 @@ each_db_config(Deimos::Utils::DbProducer) do
         with('my-topic', 'abc').once
       producer.process_topic('my-topic')
     end
-    # rubocop:enable RSpec/ExampleLength, RSpec/MultipleExpectations
 
     it 'should register an error if it gets an error' do
       allow(producer).to receive(:shutdown_producer)
@@ -436,7 +434,6 @@ each_db_config(Deimos::Utils::DbProducer) do
     end
   end
 
-  # rubocop:disable RSpec/ExampleLength
   example 'Full integration test' do
     (1..4).each do |i|
       (1..2).each do |j|
@@ -514,5 +511,4 @@ each_db_config(Deimos::Utils::DbProducer) do
                                                                 }
                                                               ])
   end
-  # rubocop:enable RSpec/ExampleLength
 end

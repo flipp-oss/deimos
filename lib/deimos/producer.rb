@@ -57,6 +57,7 @@ module Deimos
     MAX_BATCH_SIZE = 500
 
     class << self
+
       # @return [Hash]
       def config
         @config ||= {
@@ -168,7 +169,6 @@ module Deimos
 
       # @param message [Message]
       # @param topic [String]
-      # rubocop:disable Metrics/AbcSize
       def _process_message(message, topic)
         # this violates the Law of Demeter but it has to happen in a very
         # specific order and requires a bunch of methods on the producer
@@ -186,7 +186,7 @@ module Deimos
                                     nil
                                   else
                                     encoder.encode(message.payload,
-                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-value") # rubocop:disable Layout/LineLength
+                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-value")
                                   end
       end
 
@@ -204,14 +204,13 @@ module Deimos
         end
 
         if config[:key_field]
-          encoder.encode_key(config[:key_field], key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key") # rubocop:disable Layout/LineLength
+          encoder.encode_key(config[:key_field], key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
         elsif config[:key_schema]
           key_encoder.encode(key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
         else
           key
         end
       end
-      # rubocop:enable Metrics/AbcSize
 
       # @param payload [Hash]
       # @return [String]

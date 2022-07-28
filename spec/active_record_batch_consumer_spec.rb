@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 # Wrapped in a module to prevent class leakage
-# rubocop:disable Metrics/ModuleLength
 module ActiveRecordBatchConsumerTest
   describe Deimos::ActiveRecordConsumer, 'Batch Consumer' do
     # Create ActiveRecord table and model
@@ -490,4 +489,3 @@ module ActiveRecordBatchConsumerTest
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

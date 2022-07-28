@@ -7,7 +7,6 @@ module Deimos
     # A Metrics wrapper class for Datadog.
     class Datadog < Metrics::Provider
       # :nodoc:
-      # rubocop:disable Lint/MissingSuper
       def initialize(config, logger)
         raise 'Metrics config must specify host_ip' if config[:host_ip].nil?
         raise 'Metrics config must specify host_port' if config[:host_port].nil?
@@ -21,7 +20,6 @@ module Deimos
         @client.tags = config[:tags]
         @client.namespace = config[:namespace]
       end
-      # rubocop:enable Lint/MissingSuper
 
       # :nodoc:
       def increment(metric_name, options={})
@@ -39,8 +37,10 @@ module Deimos
       end
 
       # :nodoc:
-      def time(metric_name, options={}, &block)
-        @client.time(metric_name, options, &block)
+      def time(metric_name, options={})
+        @client.time(metric_name, options) do
+          yield
+        end
       end
     end
   end

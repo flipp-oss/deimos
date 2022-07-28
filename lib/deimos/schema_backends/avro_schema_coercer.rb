@@ -38,7 +38,6 @@ module Deimos
     # @param type [Avro::Schema]
     # @param val [Object]
     # @return [Object]
-    # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize
     def coerce_type(type, val)
       int_classes = [Time, ActiveSupport::TimeWithZone]
       field_type = type.type.to_sym
@@ -82,7 +81,6 @@ module Deimos
         val
       end
     end
-  # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize
 
   private
 

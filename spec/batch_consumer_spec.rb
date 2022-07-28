@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 # :nodoc:
-# rubocop:disable Metrics/ModuleLength
 module ConsumerTest
   describe Deimos::Consumer, 'Batch Consumer' do
     prepend_before(:each) do
@@ -267,4 +266,3 @@ module ConsumerTest
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

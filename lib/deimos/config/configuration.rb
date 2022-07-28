@@ -89,7 +89,7 @@ module Deimos
   define_settings do
 
     # @return [Logger]
-    setting :logger, Logger.new($stdout)
+    setting :logger, Logger.new(STDOUT)
 
     # @return [Logger]
     setting :phobos_logger, default_proc: proc { Deimos.config.logger.clone }

@@ -119,16 +119,16 @@ describe Deimos do
       expect {
         described_class.configure do
           consumer do
-            class_name('ConsumerTest::MyConsumer')
-            delivery(:message)
+            class_name 'ConsumerTest::MyConsumer'
+            delivery :message
           end
           consumer do
-            class_name('ConsumerTest::MyConsumer')
-            delivery(:batch)
+            class_name 'ConsumerTest::MyConsumer'
+            delivery :batch
           end
           consumer do
-            class_name('ConsumerTest::MyBatchConsumer')
-            delivery(:inline_batch)
+            class_name 'ConsumerTest::MyBatchConsumer'
+            delivery :inline_batch
           end
         end
       }.not_to raise_error
@@ -138,8 +138,8 @@ describe Deimos do
       expect {
         described_class.configure do
           consumer do
-            class_name('ConsumerTest::MyConsumer')
-            delivery(:inline_batch)
+            class_name 'ConsumerTest::MyConsumer'
+            delivery :inline_batch
           end
         end
       }.to raise_error('BatchConsumer ConsumerTest::MyConsumer does not implement `consume_batch`')
@@ -149,8 +149,8 @@ describe Deimos do
       expect {
         described_class.configure do
           consumer do
-            class_name('ConsumerTest::MyBatchConsumer')
-            delivery(:message)
+            class_name 'ConsumerTest::MyBatchConsumer'
+            delivery :message
           end
         end
       }.to raise_error('Non-batch Consumer ConsumerTest::MyBatchConsumer does not implement `consume`')
@@ -160,7 +160,7 @@ describe Deimos do
       expect {
         described_class.configure do
           consumer do
-            class_name('ConsumerTest::MyConsumer')
+            class_name 'ConsumerTest::MyConsumer'
           end
         end
       }.not_to raise_error

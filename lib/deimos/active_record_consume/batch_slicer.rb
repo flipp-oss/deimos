@@ -19,7 +19,7 @@ module Deimos
 
         # Generate slices for each depth
         depth.times.map do |i|
-          ops.values.map { |arr| arr[i] }.compact
+          ops.values.map { |arr| arr.dig(i) }.compact
         end
       end
     end

@@ -1,4 +1,3 @@
-# rubocop:disable Gemspec/RequiredRubyVersion
 # frozen_string_literal: true
 
 lib = File.expand_path('lib', __dir__)
@@ -45,4 +44,3 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rubocop-rspec', '1.42.0')
   spec.add_development_dependency('sqlite3', '~> 1.3')
 end
-# rubocop:enable Gemspec/RequiredRubyVersion

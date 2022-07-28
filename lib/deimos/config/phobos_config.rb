@@ -28,10 +28,9 @@ module Deimos
 
     # Create a hash representing the config that Phobos expects.
     # @return [Hash]
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
     def phobos_config
       p_config = {
-        logger: Logger.new($stdout),
+        logger: Logger.new(STDOUT),
         custom_logger: self.phobos_logger,
         custom_kafka_logger: self.kafka.logger,
         kafka: {
@@ -108,7 +107,6 @@ module Deimos
       end
       p_config
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
 
     # @param key [String]
     # @return [String]
@@ -117,7 +115,6 @@ module Deimos
     end
 
     # Legacy method to parse Phobos config file
-    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
     def phobos_config_file=(file)
       pconfig = YAML.load(ERB.new(File.read(File.expand_path(file))).result). # rubocop:disable Security/YAMLLoad
         with_indifferent_access
@@ -127,7 +124,7 @@ module Deimos
           k = k.sub('ssl_', '')
           self.kafka.ssl.send("#{k}=", v)
         elsif k.starts_with?('sasl')
-          k = k == 'sasl_over_ssl' ? 'enforce_ssl' : k.sub('sasl_', '')
+          k = (k == 'sasl_over_ssl') ? 'enforce_ssl' : k.sub('sasl_', '')
           self.kafka.sasl.send("#{k}=", v)
         else
           self.kafka.send("#{k}=", v)
@@ -149,7 +146,6 @@ module Deimos
         end
       end
     end
-  # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity
 
   private
 

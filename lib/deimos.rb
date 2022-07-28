@@ -68,7 +68,7 @@ module Deimos
     # @return [String]
     def encode(schema:, namespace:, payload:, subject: nil)
       self.schema_backend(schema: schema, namespace: namespace).
-        encode(payload, topic: subject || "#{namespace}.#{schema}")
+        encode(payload, topic: subject || "#{namespace}.#{schema}" )
     end
 
     # @param schema [String]
@@ -105,12 +105,12 @@ module Deimos
 end
 
 at_exit do
-
-  Deimos::Backends::KafkaAsync.shutdown_producer
-  Deimos::Backends::Kafka.shutdown_producer
-rescue StandardError => e
-  Deimos.config.logger.error(
-    "Error closing producer on shutdown: #{e.message} #{e.backtrace.join("\n")}"
-  )
-
+  begin
+    Deimos::Backends::KafkaAsync.shutdown_producer
+    Deimos::Backends::Kafka.shutdown_producer
+  rescue StandardError => e
+    Deimos.config.logger.error(
+      "Error closing producer on shutdown: #{e.message} #{e.backtrace.join("\n")}"
+    )
+  end
 end

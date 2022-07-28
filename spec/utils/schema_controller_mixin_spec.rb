@@ -22,22 +22,22 @@ RSpec.describe Deimos::Utils::SchemaControllerMixin, type: :controller do
 
     # :nodoc:
     def index
-      render_schema({ 'response_id' => "#{payload[:request_id]} mom" })
+      render_schema({ 'response_id' => payload[:request_id] + ' mom' })
     end
 
     # :nodoc:
     def show
-      render_schema({ 'response_id' => "#{payload[:request_id]} dad" })
+      render_schema({ 'response_id' => payload[:request_id] + ' dad' })
     end
 
     # :nodoc:
     def create
-      render_schema({ 'response_id' => "#{payload[:request_id]} bro" })
+      render_schema({ 'response_id' => payload[:request_id] + ' bro' })
     end
 
     # :nodoc:
     def update
-      render_schema({ 'update_response_id' => "#{payload[:update_request_id]} sis" })
+      render_schema({ 'update_response_id' => payload[:update_request_id] + ' sis' })
     end
   end
 

@@ -10,6 +10,7 @@ module Deimos
   module Generators
     # Generator for Schema Classes used for the IDE and consumer/producer interfaces
     class SchemaClassGenerator < Rails::Generators::Base
+
       SPECIAL_TYPES = %i(record enum).freeze
       INITIALIZE_WHITESPACE = "\n#{' ' * 19}"
       IGNORE_DEFAULTS = %w(message_id timestamp).freeze
@@ -143,7 +144,6 @@ module Deimos
 
       desc 'Generate a class based on configured consumer and producers.'
       # :nodoc:
-      # rubocop:disable Metrics/AbcSize
       def generate
         _validate
         Rails.logger.info("Generating schemas from Deimos.config to #{Deimos.config.schema.generated_class_path}")
@@ -169,7 +169,6 @@ module Deimos
         generate_from_schema_files(found_schemas)
 
       end
-    # rubocop:enable Metrics/AbcSize
 
     private
 

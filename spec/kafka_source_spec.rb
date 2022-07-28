@@ -3,7 +3,6 @@
 require 'activerecord-import'
 
 # Wrap in a module so our classes don't leak out afterwards
-# rubocop:disable Metrics/ModuleLength
 module KafkaSourceSpec
   RSpec.describe Deimos::KafkaSource do
     before(:all) do
@@ -380,4 +379,3 @@ module KafkaSourceSpec
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

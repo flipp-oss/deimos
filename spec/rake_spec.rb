@@ -2,7 +2,7 @@
 
 require 'rake'
 require 'rails'
-Rails.logger = Logger.new($stdout)
+Rails.logger = Logger.new(STDOUT)
 load("#{__dir__}/../lib/tasks/deimos.rake")
 
 if Rake.application.lookup(:environment).nil?

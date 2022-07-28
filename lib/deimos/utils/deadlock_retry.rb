@@ -28,11 +28,13 @@ module Deimos
         # from retrying at the same time.
         # @param tags [Array] Tags to attach when logging and reporting metrics.
         # @yield Yields to the block that may deadlock.
-        def wrap(tags=[], &block)
+        def wrap(tags=[])
           count = RETRY_COUNT
 
           begin
-            ActiveRecord::Base.transaction(&block)
+            ActiveRecord::Base.transaction do
+              yield
+            end
           rescue ActiveRecord::StatementInvalid => e
             # Reraise if not a known deadlock
             raise if DEADLOCK_MESSAGES.none? { |m| e.message.include?(m) }

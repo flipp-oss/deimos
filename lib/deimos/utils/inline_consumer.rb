@@ -10,7 +10,6 @@ module Deimos
       attr_accessor :num_messages
 
       # :nodoc:
-      # rubocop:disable Metrics/AbcSize
       def start_listener
         @num_messages ||= 10
         @consumer = create_kafka_consumer
@@ -38,7 +37,6 @@ module Deimos
         end
         log_info('Listener started', listener_metadata)
       end
-      # rubocop:enable Metrics/AbcSize
     end
 
     # Class to return the messages consumed.
@@ -89,9 +87,9 @@ module Deimos
           raise 'You must specify either a config_class or a schema, namespace and key_config!'
         else
           MessageBankHandler.class_eval do
-            schema(schema)
-            namespace(namespace)
-            key_config(key_config)
+            schema schema
+            namespace namespace
+            key_config key_config
             @decoder = nil
             @key_decoder = nil
           end
@@ -108,7 +106,6 @@ module Deimos
       # @param frk_consumer [Class]
       # @param num_messages [Integer] If this number is >= the number
       #   of messages in the topic, all messages will be consumed.
-      # rubocop:disable Metrics/AbcSize
       def self.consume(topic:, frk_consumer:, num_messages: 10)
         listener = SeekListener.new(
           handler: frk_consumer,
@@ -148,7 +145,6 @@ module Deimos
         listener.start
         subscribers.each { |s| ActiveSupport::Notifications.unsubscribe(s) }
       end
-      # rubocop:enable Metrics/AbcSize
     end
   end
 end
