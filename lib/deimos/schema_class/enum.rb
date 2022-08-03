@@ -15,6 +15,11 @@ module Deimos
         other.is_a?(self.class) ? other.value == @value : other == @value
       end
 
+      # @return [String]
+      def to_s
+        @value.to_s
+      end
+
       # @param value [String]
       def initialize(value)
         @value = value

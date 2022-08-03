@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-# 1.16.0 - 2022-08-03
+# 1.16.1 - 2022-08-03
 
 - Fix issues with `enum` schema classes (e.g. equality not working, `to_s` not working)
 - Changed assumption in the base schema class that it was a record (e.g. defining `to_h` instead of `as_json`). Moved record functionality to the record base class.

@@ -34,7 +34,7 @@ module Deimos
       end
 
       # :nodoc:
-      def to_s
+      def inspect
         klass = self.class
         "#{klass}(#{self.as_json})"
       end
