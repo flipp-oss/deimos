@@ -43,7 +43,7 @@ module Schemas
       end
 
       # @override
-      def to_h
+      def as_json(_opts={})
         {
           'some_int' => @some_int,
           'some_float' => @some_float,
@@ -104,13 +104,13 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'test_float' => @test_float,
         'test_array' => @test_array,
-        'some_nested_record' => @some_nested_record&.to_h,
-        'some_optional_record' => @some_optional_record&.to_h
+        'some_nested_record' => @some_nested_record&.as_json,
+        'some_optional_record' => @some_optional_record&.as_json
       }
     end
   end

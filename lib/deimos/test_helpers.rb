@@ -373,6 +373,7 @@ module Deimos
                              call_original,
                              &block)
       schema_class = handler.class.config[:schema]
+      namespace = handler.class.config[:namespace]
       expected = input.dup
 
       config = handler.class.config
@@ -382,10 +383,10 @@ module Deimos
       if use_schema_classes && schema_class.present?
         expected = if input.is_a?(Array)
                      input.map do |payload|
-                       Utils::SchemaClass.instance(payload, schema_class)
+                       Utils::SchemaClass.instance(payload, schema_class, namespace)
                      end
                    else
-                     Utils::SchemaClass.instance(input, schema_class)
+                     Utils::SchemaClass.instance(input, schema_class, namespace)
                    end
       end
 

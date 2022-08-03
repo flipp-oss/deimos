@@ -58,7 +58,9 @@ module Deimos
       decoded_payload = payload.nil? ? nil : self.class.decoder.decode(payload)
       return decoded_payload unless Utils::SchemaClass.use?(self.class.config.to_h)
 
-      Utils::SchemaClass.instance(decoded_payload, self.class.config[:schema])
+      Utils::SchemaClass.instance(decoded_payload,
+                                  self.class.config[:schema],
+                                  self.class.config[:namespace])
     end
 
   private

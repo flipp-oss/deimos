@@ -27,7 +27,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id
       }

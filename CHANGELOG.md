@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix issues with `enum` schema classes (e.g. equality not working, `to_s` not working)
+- Changed assumption in the base schema class that it was a record (e.g. defining `to_h` instead of `as_json`). Moved record functionality to the record base class.
+- Added the `active_span` and `set_tag` methods to the tracing classes.
+- Added span tags for fields in SchemaControllerMixin.
+- Updated SchemaControllerMixin so it works with generated schema classes.
+- Fixed bug with previous release where the filename and constant names for `generate_namespace_folders` did not always match.
+
 # 1.15.0 - 2022-07-20
 
 - Update to `sigurd` 0.1.0 - DB producer should now exit when receiving a `SIGTERM` instead of throwing a `SignalException`

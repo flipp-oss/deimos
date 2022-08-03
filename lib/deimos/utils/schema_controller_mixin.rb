@@ -98,6 +98,12 @@ module Deimos
         namespace, schema = parse_namespace(:request)
         decoder = Deimos.schema_backend(schema: schema, namespace: namespace)
         @payload = decoder.decode(request.body.read).with_indifferent_access
+        @payload.each do |key, value|
+          Deimos.config.tracer&.set_tag("body.#{key}", value)
+        end
+        if Deimos.config.schema.use_schema_classes
+          @payload = Utils::SchemaClass.instance(@payload, schema, namespace)
+        end
         request.body.rewind if request.body.respond_to?(:rewind)
       end
 
@@ -106,7 +112,7 @@ module Deimos
       def render_schema(payload, schema: nil, namespace: nil)
         namespace, schema = parse_namespace(:response) if !schema && !namespace
         encoder = Deimos.schema_backend(schema: schema, namespace: namespace)
-        encoded = encoder.encode(payload, topic: "#{namespace}.#{schema}")
+        encoded = encoder.encode(payload.to_h, topic: "#{namespace}.#{schema}")
         response.headers['Content-Type'] = encoder.class.content_type
         send_data(encoded)
       end

@@ -32,6 +32,13 @@ module ConsumerTest
     describe 'consume_batch' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
+
+          let(:schema_class_batch) do
+            batch.map do |p|
+              Deimos::Utils::SchemaClass.instance(p, 'MySchema', 'com.my-namespace')
+            end
+          end
+
           before(:each) do
             Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
           end
@@ -49,25 +56,21 @@ module ConsumerTest
             end
             stub_const('ConsumerTest::MyOldBatchConsumer', consumer_class)
 
-            test_consume_batch(MyOldBatchConsumer, batch) do |received, _metadata|
-              expect(received).to eq(batch)
+            test_consume_batch(MyOldBatchConsumer, schema_class_batch) do |received, _metadata|
+              expect(received).to eq(schema_class_batch)
             end
           end
 
           it 'should consume a batch of messages' do
-            test_consume_batch(MyBatchConsumer, batch) do |received, _metadata|
-              expect(received).to eq(batch)
+            test_consume_batch(MyBatchConsumer, schema_class_batch) do |received, _metadata|
+              expect(received).to eq(schema_class_batch)
             end
           end
 
           it 'should consume a message on a topic' do
-            test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
-              expect(received).to eq(batch)
+            test_consume_batch('my_batch_consume_topic', schema_class_batch) do |received, _metadata|
+              expect(received).to eq(schema_class_batch)
             end
-          end
-
-          it 'should fail on an invalid message in the batch' do
-            test_consume_batch_invalid_message(MyBatchConsumer, batch.concat(invalid_payloads))
           end
         end
       end

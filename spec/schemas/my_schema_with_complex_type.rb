@@ -31,7 +31,7 @@ module Schemas
       end
 
       # @override
-      def to_h
+      def as_json(_opts={})
         {
           'a_record_field' => @a_record_field
         }
@@ -43,20 +43,9 @@ module Schemas
       # @return ['sym1', 'sym2']
       attr_accessor :an_enum
 
-      # :nodoc:
-      def initialize(an_enum)
-        super
-        self.an_enum = an_enum
-      end
-
       # @override
       def symbols
         %w(sym1 sym2)
-      end
-
-      # @override
-      def to_h
-        @an_enum
       end
     end
 
@@ -77,7 +66,7 @@ module Schemas
       end
 
       # @override
-      def to_h
+      def as_json(_opts={})
         @another_enum
       end
     end
@@ -99,7 +88,7 @@ module Schemas
       end
 
       # @override
-      def to_h
+      def as_json(_opts={})
         @yet_another_enum
       end
     end
@@ -218,7 +207,7 @@ module Schemas
     end
 
     # @override
-    def to_h
+    def as_json(_opts={})
       {
         'test_id' => @test_id,
         'test_float' => @test_float,
@@ -226,13 +215,13 @@ module Schemas
         'test_int_array' => @test_int_array,
         'test_optional_int' => @test_optional_int,
         'some_integer_map' => @some_integer_map,
-        'some_record' => @some_record&.to_h,
-        'some_optional_record' => @some_optional_record&.to_h,
-        'some_record_array' => @some_record_array.map { |v| v&.to_h },
-        'some_record_map' => @some_record_map.transform_values { |v| v&.to_h },
-        'some_enum_array' => @some_enum_array.map { |v| v&.to_h },
-        'some_optional_enum' => @some_optional_enum&.to_h,
-        'some_enum_with_default' => @some_enum_with_default&.to_h
+        'some_record' => @some_record&.as_json,
+        'some_optional_record' => @some_optional_record&.as_json,
+        'some_record_array' => @some_record_array.map { |v| v&.as_json },
+        'some_record_map' => @some_record_map.transform_values { |v| v&.as_json },
+        'some_enum_array' => @some_enum_array.map { |v| v&.as_json },
+        'some_optional_enum' => @some_optional_enum&.as_json,
+        'some_enum_with_default' => @some_enum_with_default&.as_json
       }
     end
   end
