@@ -25,12 +25,6 @@ module Deimos
         obj
       end
 
-      # Converts the object to a hash which can be used for debugging or comparing objects.
-      # @return [Hash] a hash representation of the payload
-      def as_json(_opts={})
-        super.except('payload_key')
-      end
-
       # Element access method as if this Object were a hash
       # @param key[String||Symbol]
       # @return [Object] The value of the attribute if exists, nil otherwise
