@@ -785,6 +785,21 @@ have one process running at a time. If a particular poll takes longer than
 the poll interval (i.e. interval is set at 1 minute but it takes 75 seconds)
 the next poll will begin immediately following the first one completing.
 
+To post process batches sended to Kafka:
+
+You need to define one additional method in your producer class to post-process batch sent to Kafka.
+
+```ruby
+class MyProducer < Deimos::ActiveRecordProducer
+  ...
+  def post_process(batch)
+    # If you need to do some extra actions with
+    # the collection of elements you just sent to Kafka
+    # write some code here
+  end
+end
+```
+
 ## Running consumers
 
 Deimos includes a rake task. Once it's in your gemfile, just run

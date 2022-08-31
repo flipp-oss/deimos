@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Added support of `post_process` metod for batches in producer
+
 # 1.16.1 - 2022-08-03
 
 - Fix issues with `enum` schema classes (e.g. equality not working, `to_s` not working)
