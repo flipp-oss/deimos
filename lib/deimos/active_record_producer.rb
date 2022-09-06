@@ -44,6 +44,7 @@ module Deimos
           generate_payload(attrs, record).with_indifferent_access
         end
         self.publish_list(messages, force_send: force_send)
+        self.post_process(records) if self.respond_to?(:post_process)
       end
 
       # Generate the payload, given a list of attributes or a record..

@@ -143,7 +143,6 @@ module Deimos
         @producer.send_events(batch)
         @info.attributes = { last_sent: last_updated_at, last_sent_id: last_id }
         @info.save!
-        @producer.post_process(batch) if @producer.respond_to?(:post_process)
       end
     end
   end
