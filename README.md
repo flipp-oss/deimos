@@ -785,9 +785,9 @@ have one process running at a time. If a particular poll takes longer than
 the poll interval (i.e. interval is set at 1 minute but it takes 75 seconds)
 the next poll will begin immediately following the first one completing.
 
-To post-process batches sent to Kafka:
+To Post-Process records that are sent to Kafka:
 
-You need to define one additional method in your producer class to post-process the batch sent to Kafka.
+You need to define one additional method in your producer class to post-process the messages sent to Kafka.
 
 ```ruby
 class MyProducer < Deimos::ActiveRecordProducer
