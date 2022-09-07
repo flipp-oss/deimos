@@ -24,6 +24,7 @@ module Deimos
 
         # @param topic [String]
         # @param partition [Integer]
+        # @return [void]
         def report_lag(topic, partition)
           self.topics[topic.to_s] ||= Topic.new(topic, self)
           self.topics[topic.to_s].report_lag(partition)
@@ -32,6 +33,7 @@ module Deimos
         # @param topic [String]
         # @param partition [Integer]
         # @param offset [Integer]
+        # @return [void]
         def assign_current_offset(topic, partition, offset)
           self.topics[topic.to_s] ||= Topic.new(topic, self)
           self.topics[topic.to_s].assign_current_offset(partition, offset)
@@ -56,11 +58,15 @@ module Deimos
         end
 
         # @param partition [Integer]
+        # @param offset [Integer]
+        # @return [void]
         def assign_current_offset(partition, offset)
           self.partition_current_offsets[partition.to_i] = offset
         end
 
         # @param partition [Integer]
+        # @param offset [Integer]
+        # @return [Integer]
         def compute_lag(partition, offset)
           begin
             client = Phobos.create_kafka_client
@@ -74,6 +80,7 @@ module Deimos
         end
 
         # @param partition [Integer]
+        # @return [void]
         def report_lag(partition)
           current_offset = self.partition_current_offsets[partition.to_i]
           return unless current_offset
@@ -94,6 +101,7 @@ module Deimos
 
       class << self
         # Reset all group information.
+        # @return [void]
         def reset
           @groups = {}
         end
@@ -103,6 +111,7 @@ module Deimos
         # topic = event.payload.fetch(:topic)
         # partition = event.payload.fetch(:partition)
         # @param payload [Hash]
+        # @return [void]
         def message_processed(payload)
           offset = payload[:offset] || payload[:last_offset]
           topic = payload[:topic]
@@ -116,6 +125,7 @@ module Deimos
         end
 
         # @param payload [Hash]
+        # @return [void]
         def offset_seek(payload)
           offset = payload[:offset]
           topic = payload[:topic]
@@ -129,6 +139,7 @@ module Deimos
         end
 
         # @param payload [Hash]
+        # @return [void]
         def heartbeat(payload)
           group = payload[:group_id]
           synchronize do

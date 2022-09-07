@@ -3,11 +3,26 @@
 module Deimos
   # Basically a struct to hold the message as it's processed.
   class Message
-    attr_accessor :payload, :key, :partition_key, :encoded_key,
-                  :encoded_payload, :topic, :producer_name
+    # @return [Hash]
+    attr_accessor :payload
+    # @return [Hash, String, Integer]
+    attr_accessor :key
+    # @return [Integer]
+    attr_accessor :partition_key
+    # @return [String]
+    attr_accessor  :encoded_key
+    # @return [String]
+    attr_accessor  :encoded_payload
+    # @return [String]
+    attr_accessor  :topic
+    # @return [String]
+    attr_accessor  :producer_name
 
     # @param payload [Hash]
     # @param producer [Class]
+    # @param topic [String]
+    # @param key [String, Integer, Hash]
+    # @param partition_key [Integer]
     def initialize(payload, producer, topic: nil, key: nil, partition_key: nil)
       @payload = payload&.with_indifferent_access
       @producer_name = producer&.name
@@ -19,6 +34,7 @@ module Deimos
     # Add message_id and timestamp default values if they are in the
     # schema and don't already have values.
     # @param fields [Array<String>] existing name fields in the schema.
+    # @return [void]
     def add_fields(fields)
       return if @payload.except(:payload_key, :partition_key).blank?
 
@@ -31,6 +47,7 @@ module Deimos
     end
 
     # @param encoder [Deimos::SchemaBackends::Base]
+    # @return [void]
     def coerce_fields(encoder)
       return if payload.nil?
 

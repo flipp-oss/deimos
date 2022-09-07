@@ -5,8 +5,8 @@ require 'deimos/metrics/provider'
 module Deimos
   module Metrics
     # A mock Metrics wrapper which just logs the metrics
-    class Mock
-      # :nodoc:
+    class Mock < Provider
+      # @param logger [Logger,nil]
       def initialize(logger=nil)
         @logger = logger || Logger.new(STDOUT)
         @logger.info('MockMetricsProvider initialized')

@@ -7,9 +7,11 @@ module Deimos
     class DeadlockRetry
       class << self
         # Maximum number of times to retry the block after encountering a deadlock
+        # @return [Integer]
         RETRY_COUNT = 2
 
         # Need to match on error messages to support older Rails versions
+        # @return [Array<String>]
         DEADLOCK_MESSAGES = [
           # MySQL
           'Deadlock found when trying to get lock',
@@ -28,6 +30,7 @@ module Deimos
         # from retrying at the same time.
         # @param tags [Array] Tags to attach when logging and reporting metrics.
         # @yield Yields to the block that may deadlock.
+        # @return [void]
         def wrap(tags=[])
           count = RETRY_COUNT
 

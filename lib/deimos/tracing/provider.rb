@@ -14,6 +14,7 @@ module Deimos
 
       # Finishes the trace on the span object.
       # @param span [Object] The span to finish trace on
+      # @return [void]
       def finish(span)
         raise NotImplementedError
       end
@@ -21,11 +22,13 @@ module Deimos
       # Set an error on the span.
       # @param span [Object] The span to set error on
       # @param exception [Exception] The exception that occurred
+      # @return [void]
       def set_error(span, exception)
         raise NotImplementedError
       end
 
       # Get the currently activated span.
+      # @return [Object]
       def active_span
         raise NotImplementedError
       end
@@ -33,6 +36,8 @@ module Deimos
       # Set a tag to a span. Use the currently active span if not given.
       # @param tag [String]
       # @param value [String]
+      # @param span [Object]
+      # @return [void]
       def set_tag(tag, value, span=nil)
         raise NotImplementedError
       end

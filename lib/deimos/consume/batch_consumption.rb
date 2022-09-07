@@ -9,7 +9,9 @@ module Deimos
       extend ActiveSupport::Concern
       include Phobos::BatchHandler
 
-      # :nodoc:
+      # @param batch [Array<String>]
+      # @param metadata [Hash]
+      # @return [void]
       def around_consume_batch(batch, metadata)
         payloads = []
         _with_span do
@@ -36,12 +38,14 @@ module Deimos
       # Consume a batch of incoming messages.
       # @param _payloads [Array<Phobos::BatchMessage>]
       # @param _metadata [Hash]
+      # @return [void]
       def consume_batch(_payloads, _metadata)
         raise NotImplementedError
       end
 
     protected
 
+      # @!visibility private
       def _received_batch(payloads, metadata)
         Deimos.config.logger.info(
           message: 'Got Kafka batch event',
@@ -70,6 +74,7 @@ module Deimos
         end
       end
 
+      # @!visibility private
       # @param exception [Throwable]
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]
@@ -91,6 +96,7 @@ module Deimos
         _error(exception, payloads, metadata)
       end
 
+      # @!visibility private
       # @param time_taken [Float]
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]
@@ -122,6 +128,7 @@ module Deimos
         )
       end
 
+      # @!visibility private
       # Get payload identifiers (key and message_id if present) for logging.
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]

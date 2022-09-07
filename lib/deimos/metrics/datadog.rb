@@ -6,7 +6,8 @@ module Deimos
   module Metrics
     # A Metrics wrapper class for Datadog.
     class Datadog < Metrics::Provider
-      # :nodoc:
+      # @param config [Hash]
+      # @param logger [Logger]
       def initialize(config, logger)
         raise 'Metrics config must specify host_ip' if config[:host_ip].nil?
         raise 'Metrics config must specify host_port' if config[:host_port].nil?

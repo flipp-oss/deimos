@@ -6,6 +6,7 @@ module Deimos
   module KafkaSource
     extend ActiveSupport::Concern
 
+    # @return [String]
     DEPRECATION_WARNING = 'The kafka_producer interface will be deprecated ' \
         'in future releases. Please use kafka_producers instead.'
 
@@ -16,6 +17,7 @@ module Deimos
     end
 
     # Send the newly created model to Kafka.
+    # @return [void]
     def send_kafka_event_on_create
       return unless self.persisted?
       return unless self.class.kafka_config[:create]
@@ -24,6 +26,7 @@ module Deimos
     end
 
     # Send the newly updated model to Kafka.
+    # @return [void]
     def send_kafka_event_on_update
       return unless self.class.kafka_config[:update]
 
@@ -41,6 +44,7 @@ module Deimos
     end
 
     # Send a deletion (null payload) event to Kafka.
+    # @return [void]
     def send_kafka_event_on_destroy
       return unless self.class.kafka_config[:delete]
 
@@ -80,6 +84,7 @@ module Deimos
       # the inputs (arrays, hashes, records etc.)
       # Basically we want to first do the import, then reload the records
       # and send them to Kafka.
+      # @!visibility private
       def import_without_validations_or_callbacks(column_names,
                                                   array_of_attributes,
                                                   options={})

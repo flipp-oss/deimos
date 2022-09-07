@@ -3,11 +3,19 @@
 module Deimos
   # Represents a field in the schema.
   class SchemaField
-    attr_accessor :name, :type, :enum_values, :default
+    # @return [String]
+    attr_accessor :name
+    # @return [String]
+    attr_accessor :type
+    # @return [Array<String>]
+    attr_accessor :enum_values
+    # @return [Object]
+    attr_accessor :default
 
     # @param name [String]
     # @param type [Object]
     # @param enum_values [Array<String>]
+    # @param default [Object]
     def initialize(name, type, enum_values=[], default=:no_default)
       @name = name
       @type = type
@@ -19,9 +27,14 @@ module Deimos
   module SchemaBackends
     # Base class for encoding / decoding.
     class Base
-      attr_accessor :schema, :namespace, :key_schema
+      # @return [String]
+      attr_accessor :schema
+      # @return [String]
+      attr_accessor :namespace
+      # @return [String]
+      attr_accessor :key_schema
 
-      # @param schema [String|Symbol]
+      # @param schema [String,Symbol]
       # @param namespace [String]
       def initialize(schema:, namespace: nil)
         @schema = schema
@@ -30,7 +43,7 @@ module Deimos
 
       # Encode a payload with a schema. Public method.
       # @param payload [Hash]
-      # @param schema [Symbol|String]
+      # @param schema [String,Symbol]
       # @param topic [String]
       # @return [String]
       def encode(payload, schema: nil, topic: nil)
@@ -40,7 +53,7 @@ module Deimos
 
       # Decode a payload with a schema. Public method.
       # @param payload [String]
-      # @param schema [Symbol|String]
+      # @param schema [String,Symbol]
       # @return [Hash,nil]
       def decode(payload, schema: nil)
         return nil if payload.nil?
@@ -90,25 +103,26 @@ module Deimos
 
       # Encode a payload. To be defined by subclass.
       # @param payload [Hash]
-      # @param schema [Symbol|String]
+      # @param schema [String,Symbol]
       # @param topic [String]
       # @return [String]
-      def encode_payload(_payload, schema:, topic: nil)
+      def encode_payload(payload, schema:, topic: nil)
         raise NotImplementedError
       end
 
       # Decode a payload. To be defined by subclass.
       # @param payload [String]
-      # @param schema [String|Symbol]
+      # @param schema [String,Symbol]
       # @return [Hash]
-      def decode_payload(_payload, schema:)
+      def decode_payload(payload, schema:)
         raise NotImplementedError
       end
 
       # Validate that a payload matches the schema. To be defined by subclass.
       # @param payload [Hash]
-      # @param schema [String|Symbol]
-      def validate(_payload, schema:)
+      # @param schema [String,Symbol]
+      # @return [void]
+      def validate(payload, schema:)
         raise NotImplementedError
       end
 
@@ -124,7 +138,7 @@ module Deimos
       # @param field [SchemaField]
       # @param value [Object]
       # @return [Object]
-      def coerce_field(_field, _value)
+      def coerce_field(field, value)
         raise NotImplementedError
       end
 
@@ -140,19 +154,19 @@ module Deimos
       end
 
       # Encode a message key. To be defined by subclass.
-      # @param key [String|Hash] the value to use as the key.
-      # @param key_id [Symbol|String] the field name of the key.
+      # @param key [String,Hash] the value to use as the key.
+      # @param key_id [String,Symbol] the field name of the key.
       # @param topic [String]
       # @return [String]
-      def encode_key(_key, _key_id, topic: nil)
+      def encode_key(key, key_id, topic: nil)
         raise NotImplementedError
       end
 
       # Decode a message key. To be defined by subclass.
       # @param payload [Hash] the message itself.
-      # @param key_id [Symbol|String] the field in the message to decode.
+      # @param key_id [String,Symbol] the field in the message to decode.
       # @return [String]
-      def decode_key(_payload, _key_id)
+      def decode_key(payload, key_id)
         raise NotImplementedError
       end
 

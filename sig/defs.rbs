@@ -1,0 +1,912 @@
+# Generates a new consumer.
+module Deimos
+  include Deimos::Instrumentation
+  include FigTree
+  VERSION: String
+
+  def self.schema_backend_class: () -> singleton(Deimos::SchemaBackends::Base)
+
+  # _@param_ `schema`
+  # 
+  # _@param_ `namespace`
+  def self.schema_backend: (schema: (String | Symbol), namespace: String) -> Deimos::SchemaBackends::Base
+
+  # _@param_ `schema`
+  # 
+  # _@param_ `namespace`
+  # 
+  # _@param_ `payload`
+  # 
+  # _@param_ `subject`
+  def self.encode: (
+                     schema: String,
+                     namespace: String,
+                     payload: ::Hash[untyped, untyped],
+                     ?subject: String?
+                   ) -> String
+
+  # _@param_ `schema`
+  # 
+  # _@param_ `namespace`
+  # 
+  # _@param_ `payload`
+  def self.decode: (schema: String, namespace: String, payload: String) -> ::Hash[untyped, untyped]?
+
+  # Start the DB producers to send Kafka messages.
+  # 
+  # _@param_ `thread_count` — the number of threads to start.
+  def self.start_db_backend!: (?thread_count: Integer) -> void
+
+  # Run a block without allowing any messages to be produced to Kafka.
+  # Optionally add a list of producer classes to limit the disabling to those
+  # classes.
+  # 
+  # _@param_ `producer_classes`
+  def self.disable_producers: (*(::Array[Class] | Class) producer_classes) -> void
+
+  # Are producers disabled? If a class is passed in, check only that class.
+  # Otherwise check if the global disable flag is set.
+  # 
+  # _@param_ `producer_class`
+  def self.producers_disabled?: (?Class? producer_class) -> bool
+
+  # Loads generated classes
+  def self.load_generated_schema_classes: () -> void
+
+  # Basically a struct to hold the message as it's processed.
+  class Message
+    # _@param_ `payload`
+    # 
+    # _@param_ `producer`
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `key`
+    # 
+    # _@param_ `partition_key`
+    def initialize: (
+                      ::Hash[untyped, untyped] payload,
+                      Class producer,
+                      ?topic: String?,
+                      ?key: (String | Integer | ::Hash[untyped, untyped])?,
+                      ?partition_key: Integer?
+                    ) -> void
+
+    # Add message_id and timestamp default values if they are in the
+    # schema and don't already have values.
+    # 
+    # _@param_ `fields` — existing name fields in the schema.
+    def add_fields: (::Array[String] fields) -> void
+
+    # _@param_ `encoder`
+    def coerce_fields: (Deimos::SchemaBackends::Base encoder) -> void
+
+    def encoded_hash: () -> ::Hash[untyped, untyped]
+
+    def to_h: () -> ::Hash[untyped, untyped]
+
+    # _@param_ `other`
+    def ==: (Message other) -> bool
+
+    # _@return_ — True if this message is a tombstone
+    def tombstone?: () -> bool
+
+    attr_accessor payload: ::Hash[untyped, untyped]
+
+    attr_accessor key: (::Hash[untyped, untyped] | String | Integer)
+
+    attr_accessor partition_key: Integer
+
+    attr_accessor encoded_key: String
+
+    attr_accessor encoded_payload: String
+
+    attr_accessor topic: String
+
+    attr_accessor producer_name: String
+  end
+
+  # Add rake task to Rails.
+  class Railtie < Rails::Railtie
+  end
+
+  # Basic consumer class. Inherit from this class and override either consume
+  # or consume_batch, depending on the delivery mode of your listener.
+  # `consume` -> use `delivery :message` or `delivery :batch`
+  # `consume_batch` -> use `delivery :inline_batch`
+  class Consumer
+    include Deimos::Consume::MessageConsumption
+    include Deimos::Consume::BatchConsumption
+    include Deimos::SharedConfig
+
+    def self.decoder: () -> Deimos::SchemaBackends::Base
+
+    def self.key_decoder: () -> Deimos::SchemaBackends::Base
+
+    # Helper method to decode an encoded key.
+    # 
+    # _@param_ `key`
+    # 
+    # _@return_ — the decoded key.
+    def decode_key: (String key) -> Object
+
+    # Helper method to decode an encoded message.
+    # 
+    # _@param_ `payload`
+    # 
+    # _@return_ — the decoded message.
+    def decode_message: (Object payload) -> Object
+
+    # _@param_ `batch`
+    # 
+    # _@param_ `metadata`
+    def around_consume_batch: (::Array[String] batch, ::Hash[untyped, untyped] metadata) -> void
+
+    # Consume a batch of incoming messages.
+    # 
+    # _@param_ `_payloads`
+    # 
+    # _@param_ `_metadata`
+    def consume_batch: (::Array[Phobos::BatchMessage] _payloads, ::Hash[untyped, untyped] _metadata) -> void
+
+    # _@param_ `payload`
+    # 
+    # _@param_ `metadata`
+    def around_consume: (String payload, ::Hash[untyped, untyped] metadata) -> void
+
+    # Consume incoming messages.
+    # 
+    # _@param_ `_payload`
+    # 
+    # _@param_ `_metadata`
+    def consume: (String _payload, ::Hash[untyped, untyped] _metadata) -> void
+  end
+
+  # Producer to publish messages to a given kafka topic.
+  class Producer
+    include Deimos::SharedConfig
+    MAX_BATCH_SIZE: Integer
+
+    def self.config: () -> ::Hash[untyped, untyped]
+
+    # Set the topic.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@return_ — the current topic if no argument given.
+    def self.topic: (?String? topic) -> String
+
+    # Override the default partition key (which is the payload key).
+    # Will include `payload_key` if it is part of the original payload.
+    # 
+    # _@param_ `_payload` — the payload being passed into the produce method.
+    def self.partition_key: (::Hash[untyped, untyped] _payload) -> String
+
+    # Publish the payload to the topic.
+    # 
+    # _@param_ `payload` — with an optional payload_key hash key.
+    # 
+    # _@param_ `topic` — if specifying the topic
+    def self.publish: ((::Hash[untyped, untyped] | SchemaClass::Record) payload, ?topic: String) -> void
+
+    # Publish a list of messages.
+    # whether to publish synchronously.
+    # and send immediately to Kafka.
+    # 
+    # _@param_ `payloads` — with optional payload_key hash key.
+    # 
+    # _@param_ `sync` — if given, override the default setting of
+    # 
+    # _@param_ `force_send` — if true, ignore the configured backend
+    # 
+    # _@param_ `topic` — if specifying the topic
+    def self.publish_list: (
+                             ::Array[(::Hash[untyped, untyped] | SchemaClass::Record)] payloads,
+                             ?sync: bool?,
+                             ?force_send: bool,
+                             ?topic: String
+                           ) -> void
+
+    # _@param_ `sync`
+    # 
+    # _@param_ `force_send`
+    def self.determine_backend_class: (bool sync, bool force_send) -> singleton(Deimos::Backends::Base)
+
+    # Send a batch to the backend.
+    # 
+    # _@param_ `backend`
+    # 
+    # _@param_ `batch`
+    def self.produce_batch: (singleton(Deimos::Backends::Base) backend, ::Array[Deimos::Message] batch) -> void
+
+    def self.encoder: () -> Deimos::SchemaBackends::Base
+
+    def self.key_encoder: () -> Deimos::SchemaBackends::Base
+
+    # Override this in active record producers to add
+    # non-schema fields to check for updates
+    # 
+    # _@return_ — fields to check for updates
+    def self.watched_attributes: () -> ::Array[String]
+  end
+
+  # ActiveRecord class to record the last time we polled the database.
+  # For use with DbPoller.
+  class PollInfo < ActiveRecord::Base
+  end
+
+  module Backends
+    # Backend which saves messages to the database instead of immediately
+    # sending them.
+    class Db < Deimos::Backends::Base
+      # :nodoc:
+      def self.execute: (producer_class: singleton(Deimos::Producer), messages: ::Array[Deimos::Message]) -> void
+
+      # _@param_ `message`
+      # 
+      # _@return_ — the partition key to use for this message
+      def self.partition_key_for: (Deimos::Message message) -> String
+    end
+
+    # Abstract class for all publish backends.
+    class Base
+      # _@param_ `producer_class`
+      # 
+      # _@param_ `messages`
+      def self.publish: (producer_class: singleton(Deimos::Producer), messages: ::Array[Deimos::Message]) -> void
+
+      # _@param_ `producer_class`
+      # 
+      # _@param_ `messages`
+      def self.execute: (producer_class: singleton(Deimos::Producer), messages: ::Array[Deimos::Message]) -> void
+    end
+
+    # Backend which saves messages to an in-memory hash.
+    class Test < Deimos::Backends::Base
+      def self.sent_messages: () -> ::Array[::Hash[untyped, untyped]]
+
+      def self.execute: (producer_class: singleton(Deimos::Producer), messages: ::Array[Deimos::Message]) -> void
+    end
+
+    # Default backend to produce to Kafka.
+    class Kafka < Deimos::Backends::Base
+      include Phobos::Producer
+
+      # Shut down the producer if necessary.
+      def self.shutdown_producer: () -> void
+
+      # :nodoc:
+      def self.execute: (producer_class: singleton(Deimos::Producer), messages: ::Array[Deimos::Message]) -> void
+    end
+
+    # Backend which produces to Kafka via an async producer.
+    class KafkaAsync < Deimos::Backends::Base
+      include Phobos::Producer
+
+      # Shut down the producer cleanly.
+      def self.shutdown_producer: () -> void
+
+      # :nodoc:
+      def self.execute: (producer_class: singleton(Deimos::Producer), messages: ::Array[Deimos::Message]) -> void
+    end
+  end
+
+  # Represents an object which needs to inform Kafka when it is saved or
+  # bulk imported.
+  module KafkaSource
+    extend ActiveSupport::Concern
+    DEPRECATION_WARNING: String
+
+    # Send the newly created model to Kafka.
+    def send_kafka_event_on_create: () -> void
+
+    # Send the newly updated model to Kafka.
+    def send_kafka_event_on_update: () -> void
+
+    # Send a deletion (null payload) event to Kafka.
+    def send_kafka_event_on_destroy: () -> void
+
+    # Payload to send after we are destroyed.
+    def deletion_payload: () -> ::Hash[untyped, untyped]
+
+    # :nodoc:
+    module ClassMethods
+      def kafka_config: () -> ::Hash[untyped, untyped]
+
+      # _@return_ — the producers to run.
+      def kafka_producers: () -> ::Array[Deimos::ActiveRecordProducer]
+    end
+  end
+
+  module Metrics
+    # A mock Metrics wrapper which just logs the metrics
+    class Mock < Deimos::Metrics::Provider
+      # _@param_ `logger`
+      def initialize: (?Logger? logger) -> void
+
+      # :nodoc:
+      def increment: (String metric_name, ?::Hash[untyped, untyped] options) -> void
+
+      # :nodoc:
+      def gauge: (String metric_name, Integer count, ?::Hash[untyped, untyped] options) -> void
+
+      # :nodoc:
+      def histogram: (String metric_name, Integer count, ?::Hash[untyped, untyped] options) -> void
+
+      # :nodoc:
+      def time: (String metric_name, ?::Hash[untyped, untyped] options) -> void
+    end
+
+    # A Metrics wrapper class for Datadog.
+    class Datadog < Deimos::Metrics::Provider
+      # _@param_ `config`
+      # 
+      # _@param_ `logger`
+      def initialize: (::Hash[untyped, untyped] config, Logger logger) -> void
+
+      # :nodoc:
+      def increment: (String metric_name, ?::Hash[untyped, untyped] options) -> void
+
+      # :nodoc:
+      def gauge: (String metric_name, Integer count, ?::Hash[untyped, untyped] options) -> void
+
+      # :nodoc:
+      def histogram: (String metric_name, Integer count, ?::Hash[untyped, untyped] options) -> void
+
+      # :nodoc:
+      def time: (String metric_name, ?::Hash[untyped, untyped] options) -> void
+    end
+
+    # Base class for all metrics providers.
+    class Provider
+      # Send an counter increment metric
+      # 
+      # _@param_ `metric_name` — The name of the counter metric
+      # 
+      # _@param_ `options` — Any additional options, e.g. :tags
+      def increment: (String metric_name, ?::Hash[untyped, untyped] options) -> void
+
+      # Send an counter increment metric
+      # 
+      # _@param_ `metric_name` — The name of the counter metric
+      # 
+      # _@param_ `count`
+      # 
+      # _@param_ `options` — Any additional options, e.g. :tags
+      def gauge: (String metric_name, Integer count, ?::Hash[untyped, untyped] options) -> void
+
+      # Send an counter increment metric
+      # 
+      # _@param_ `metric_name` — The name of the counter metric
+      # 
+      # _@param_ `count`
+      # 
+      # _@param_ `options` — Any additional options, e.g. :tags
+      def histogram: (String metric_name, Integer count, ?::Hash[untyped, untyped] options) -> void
+
+      # Time a yielded block, and send a timer metric
+      # 
+      # _@param_ `metric_name` — The name of the metric
+      # 
+      # _@param_ `options` — Any additional options, e.g. :tags
+      def time: (String metric_name, ?::Hash[untyped, untyped] options) -> void
+    end
+  end
+
+  # Include this module in your RSpec spec_helper
+  # to stub out external dependencies
+  # and add methods to use to test encoding/decoding.
+  module TestHelpers
+    extend ActiveSupport::Concern
+
+    # for backwards compatibility
+    def self.sent_messages: () -> ::Array[::Hash[untyped, untyped]]
+
+    # Set the config to the right settings for a unit test
+    def self.unit_test!: () -> void
+
+    # Kafka test config with avro schema registry
+    def self.full_integration_test!: () -> void
+
+    # Set the config to the right settings for a kafka test
+    def self.kafka_test!: () -> void
+
+    # Clear all sent messages - e.g. if we want to check that
+    # particular messages were sent or not sent after a point in time.
+    def clear_kafka_messages!: () -> void
+
+    # Test that a given handler will consume a given payload correctly, i.e.
+    # that the schema is correct. If
+    # a block is given, that block will be executed when `consume` is called.
+    # Otherwise it will just confirm that `consume` is called at all.
+    # Deimos::Consumer or the topic as a string
+    # to continue as normal. Not compatible with a block.
+    # expectations on the consumer. Primarily used internally to Deimos.
+    # 
+    # _@param_ `handler_class_or_topic` — Class which inherits from
+    # 
+    # _@param_ `payload` — the payload to consume
+    # 
+    # _@param_ `call_original` — if true, allow the consume handler
+    # 
+    # _@param_ `skip_expectation` — Set to true to not place any
+    # 
+    # _@param_ `key` — the key to use.
+    # 
+    # _@param_ `partition_key` — the partition key to use.
+    def test_consume_message: (
+                                (Class | String) handler_class_or_topic,
+                                ::Hash[untyped, untyped] payload,
+                                ?call_original: bool,
+                                ?key: Object?,
+                                ?partition_key: Object?,
+                                ?skip_expectation: bool
+                              ) -> void
+
+    # Check to see that a given message will fail due to validation errors.
+    # 
+    # _@param_ `handler_class`
+    # 
+    # _@param_ `payload`
+    def test_consume_invalid_message: (Class handler_class, ::Hash[untyped, untyped] payload) -> void
+
+    # Test that a given handler will consume a given batch payload correctly,
+    # i.e. that the schema is correct. If
+    # a block is given, that block will be executed when `consume` is called.
+    # Otherwise it will just confirm that `consume` is called at all.
+    # Deimos::Consumer or the topic as a string
+    # 
+    # _@param_ `handler_class_or_topic` — Class which inherits from
+    # 
+    # _@param_ `payloads` — the payload to consume
+    # 
+    # _@param_ `keys`
+    # 
+    # _@param_ `partition_keys`
+    # 
+    # _@param_ `call_original`
+    # 
+    # _@param_ `skip_expectation`
+    def test_consume_batch: (
+                              (Class | String) handler_class_or_topic,
+                              ::Array[::Hash[untyped, untyped]] payloads,
+                              ?keys: ::Array[(::Hash[untyped, untyped] | String)],
+                              ?partition_keys: ::Array[Integer],
+                              ?call_original: bool,
+                              ?skip_expectation: bool
+                            ) -> void
+
+    # Check to see that a given message will fail due to validation errors.
+    # 
+    # _@param_ `handler_class`
+    # 
+    # _@param_ `payloads`
+    def test_consume_batch_invalid_message: (Class handler_class, ::Array[::Hash[untyped, untyped]] payloads) -> void
+  end
+
+  module Tracing
+    # Class that mocks out tracing functionality
+    class Mock < Deimos::Tracing::Provider
+      # _@param_ `logger`
+      def initialize: (?Logger? logger) -> void
+
+      # _@param_ `span_name`
+      # 
+      # _@param_ `_options`
+      def start: (String span_name, ?::Hash[untyped, untyped] _options) -> Object
+
+      # :nodoc:
+      def finish: (Object span) -> void
+
+      # :nodoc:
+      def active_span: () -> Object
+
+      # :nodoc:
+      def set_tag: (String tag, String value, ?Object? span) -> void
+
+      # :nodoc:
+      def set_error: (Object span, Exception exception) -> void
+    end
+
+    # Tracing wrapper class for Datadog.
+    class Datadog < Deimos::Tracing::Provider
+      # _@param_ `config`
+      def initialize: (::Hash[untyped, untyped] config) -> void
+
+      # :nodoc:
+      def start: (String span_name, ?::Hash[untyped, untyped] options) -> Object
+
+      # :nodoc:
+      def finish: (Object span) -> void
+
+      # :nodoc:
+      def active_span: () -> Object
+
+      # :nodoc:
+      def set_error: (Object span, Exception exception) -> void
+
+      # :nodoc:
+      def set_tag: (String tag, String value, ?Object? span) -> void
+    end
+
+    # Base class for all tracing providers.
+    class Provider
+      # Returns a span object and starts the trace.
+      # 
+      # _@param_ `span_name` — The name of the span/trace
+      # 
+      # _@param_ `options` — Options for the span
+      # 
+      # _@return_ — The span object
+      def start: (String span_name, ?::Hash[untyped, untyped] options) -> Object
+
+      # Finishes the trace on the span object.
+      # 
+      # _@param_ `span` — The span to finish trace on
+      def finish: (Object span) -> void
+
+      # Set an error on the span.
+      # 
+      # _@param_ `span` — The span to set error on
+      # 
+      # _@param_ `exception` — The exception that occurred
+      def set_error: (Object span, Exception exception) -> void
+
+      # Get the currently activated span.
+      def active_span: () -> Object
+
+      # Set a tag to a span. Use the currently active span if not given.
+      # 
+      # _@param_ `tag`
+      # 
+      # _@param_ `value`
+      # 
+      # _@param_ `span`
+      def set_tag: (String tag, String value, ?Object? span) -> void
+    end
+  end
+
+  # Store Kafka messages into the database.
+  class KafkaMessage < ActiveRecord::Base
+    # Ensure it gets turned into a string, e.g. for testing purposes. It
+    # should already be a string.
+    # 
+    # _@param_ `mess`
+    def message=: (Object mess) -> void
+
+    # Decoded payload for this message.
+    def decoded_message: () -> ::Hash[untyped, untyped]
+
+    # Get a decoder to decode a set of messages on the given topic.
+    # 
+    # _@param_ `topic`
+    def self.decoder: (String topic) -> Deimos::Consumer
+
+    # Decoded payloads for a list of messages.
+    # 
+    # _@param_ `messages`
+    def self.decoded: (?::Array[Deimos::KafkaMessage] messages) -> ::Array[::Hash[untyped, untyped]]
+
+    def phobos_message: () -> ::Hash[untyped, untyped]
+  end
+
+  # Module that producers and consumers can share which sets up configuration.
+  module SharedConfig
+    extend ActiveSupport::Concern
+
+    # need to use this instead of class_methods to be backwards-compatible
+    # with Rails 3
+    module ClassMethods
+      def config: () -> ::Hash[untyped, untyped]
+
+      # Set the schema.
+      # 
+      # _@param_ `schema`
+      def schema: (String schema) -> void
+
+      # Set the namespace.
+      # 
+      # _@param_ `namespace`
+      def namespace: (String namespace) -> void
+
+      # Set key configuration.
+      # 
+      # _@param_ `field` — the name of a field to use in the value schema as a generated key schema
+      # 
+      # _@param_ `schema` — the name of a schema to use for the key
+      # 
+      # _@param_ `plain` — if true, do not encode keys at all
+      # 
+      # _@param_ `none` — if true, do not use keys at all
+      def key_config: (
+                        ?plain: bool?,
+                        ?field: Symbol?,
+                        ?schema: (String | Symbol)?,
+                        ?none: bool?
+                      ) -> void
+
+      # _@param_ `use_schema_classes`
+      def schema_class_config: (bool use_schema_classes) -> void
+    end
+  end
+
+  # @deprecated Use Deimos::Consumer with `delivery: inline_batch` configured instead
+  class BatchConsumer < Deimos::Consumer
+  end
+
+  # Copied from Phobos instrumentation.
+  module Instrumentation
+    extend ActiveSupport::Concern
+    NAMESPACE: String
+
+    # :nodoc:
+    module ClassMethods
+      # _@param_ `event`
+      def subscribe: (String event) -> void
+
+      # _@param_ `subscriber`
+      def unsubscribe: (ActiveSupport::Subscriber subscriber) -> void
+
+      # _@param_ `event`
+      # 
+      # _@param_ `extra`
+      def instrument: (String event, ?::Hash[untyped, untyped] extra) -> void
+    end
+  end
+
+  # This module listens to events published by RubyKafka.
+  module KafkaListener
+    # Listens for any exceptions that happen during publishing and re-publishes
+    # as a Deimos event.
+    # 
+    # _@param_ `event`
+    def self.send_produce_error: (ActiveSupport::Notification event) -> void
+  end
+
+  module Utils
+    # Class which continually polls the database and sends Kafka messages.
+    class DbPoller
+      BATCH_SIZE: Integer
+
+      # Begin the DB Poller process.
+      def self.start!: () -> void
+
+      # _@param_ `config`
+      def initialize: (FigTree::ConfigStruct config) -> void
+
+      # Start the poll:
+      # 1) Grab the current PollInfo from the database indicating the last
+      # time we ran
+      # 2) On a loop, process all the recent updates between the last time
+      # we ran and now.
+      def start: () -> void
+
+      # Grab the PollInfo or create if it doesn't exist.
+      def retrieve_poll_info: () -> void
+
+      # Stop the poll.
+      def stop: () -> void
+
+      # Indicate whether this current loop should process updates. Most loops
+      # will busy-wait (sleeping 0.1 seconds) until it's ready.
+      def should_run?: () -> bool
+
+      # _@param_ `record`
+      def last_updated: (ActiveRecord::Base record) -> ActiveSupport::TimeWithZone
+
+      # Send messages for updated data.
+      def process_updates: () -> void
+
+      # _@param_ `time_from`
+      # 
+      # _@param_ `time_to`
+      def fetch_results: (ActiveSupport::TimeWithZone time_from, ActiveSupport::TimeWithZone time_to) -> ActiveRecord::Relation
+
+      # _@param_ `batch`
+      def process_batch: (::Array[ActiveRecord::Base] batch) -> void
+
+      # Needed for Executor so it can identify the worker
+      attr_reader id: Integer
+    end
+
+    # Class which continually polls the kafka_messages table
+    # in the database and sends Kafka messages.
+    class DbProducer
+      include Phobos::Producer
+      BATCH_SIZE: Integer
+      DELETE_BATCH_SIZE: Integer
+      MAX_DELETE_ATTEMPTS: Integer
+
+      # _@param_ `logger`
+      def initialize: (?Logger logger) -> void
+
+      def config: () -> FigTree
+
+      # Start the poll.
+      def start: () -> void
+
+      # Stop the poll.
+      def stop: () -> void
+
+      # Complete one loop of processing all messages in the DB.
+      def process_next_messages: () -> void
+
+      def retrieve_topics: () -> ::Array[String]
+
+      # _@param_ `topic`
+      # 
+      # _@return_ — the topic that was locked, or nil if none were.
+      def process_topic: (String topic) -> String?
+
+      # Process a single batch in a topic.
+      def process_topic_batch: () -> void
+
+      # _@param_ `messages`
+      def delete_messages: (::Array[Deimos::KafkaMessage] messages) -> void
+
+      def retrieve_messages: () -> ::Array[Deimos::KafkaMessage]
+
+      # _@param_ `messages`
+      def log_messages: (::Array[Deimos::KafkaMessage] messages) -> void
+
+      # Send metrics related to pending messages.
+      def send_pending_metrics: () -> void
+
+      # Shut down the sync producer if we have to. Phobos will automatically
+      # create a new one. We should call this if the producer can be in a bad
+      # state and e.g. we need to clear the buffer.
+      def shutdown_producer: () -> void
+
+      # Produce messages in batches, reducing the size 1/10 if the batch is too
+      # large. Does not retry batches of messages that have already been sent.
+      # 
+      # _@param_ `batch`
+      def produce_messages: (::Array[::Hash[untyped, untyped]] batch) -> void
+
+      # _@param_ `batch`
+      def compact_messages: (::Array[Deimos::KafkaMessage] batch) -> ::Array[Deimos::KafkaMessage]
+
+      # Returns the value of attribute id.
+      attr_accessor id: untyped
+
+      # Returns the value of attribute current_topic.
+      attr_accessor current_topic: untyped
+    end
+
+    # Class that manages reporting lag.
+    class LagReporter
+      extend Mutex_m
+
+      # Reset all group information.
+      def self.reset: () -> void
+
+      # offset_lag = event.payload.fetch(:offset_lag)
+      # group_id = event.payload.fetch(:group_id)
+      # topic = event.payload.fetch(:topic)
+      # partition = event.payload.fetch(:partition)
+      # 
+      # _@param_ `payload`
+      def self.message_processed: (::Hash[untyped, untyped] payload) -> void
+
+      # _@param_ `payload`
+      def self.offset_seek: (::Hash[untyped, untyped] payload) -> void
+
+      # _@param_ `payload`
+      def self.heartbeat: (::Hash[untyped, untyped] payload) -> void
+
+      # Class that has a list of topics
+      class ConsumerGroup
+        # _@param_ `id`
+        def initialize: (String id) -> void
+
+        # _@param_ `topic`
+        # 
+        # _@param_ `partition`
+        def report_lag: (String topic, Integer partition) -> void
+
+        # _@param_ `topic`
+        # 
+        # _@param_ `partition`
+        # 
+        # _@param_ `offset`
+        def assign_current_offset: (String topic, Integer partition, Integer offset) -> void
+
+        attr_accessor topics: ::Hash[String, Topic]
+
+        attr_accessor id: String
+      end
+
+      # Topic which has a hash of partition => last known current offsets
+      class Topic
+        # _@param_ `topic_name`
+        # 
+        # _@param_ `group`
+        def initialize: (String topic_name, ConsumerGroup group) -> void
+
+        # _@param_ `partition`
+        # 
+        # _@param_ `offset`
+        def assign_current_offset: (Integer partition, Integer offset) -> void
+
+        # _@param_ `partition`
+        # 
+        # _@param_ `offset`
+        def compute_lag: (Integer partition, Integer offset) -> Integer
+
+        # _@param_ `partition`
+        def report_lag: (Integer partition) -> void
+
+        attr_accessor topic_name: String
+
+        attr_accessor partition_current_offsets: ::Hash[Integer, Integer]
+
+        attr_accessor consumer_group: ConsumerGroup
+      end
+    end
+
+    # Class used by SchemaClassGenerator and Consumer/Producer interfaces
+    module SchemaClass
+      # _@param_ `namespace`
+      def self.modules_for: (String namespace) -> ::Array[String]
+
+      # Converts a raw payload into an instance of the Schema Class
+      # 
+      # _@param_ `payload`
+      # 
+      # _@param_ `schema`
+      # 
+      # _@param_ `namespace`
+      def self.instance: ((::Hash[untyped, untyped] | Deimos::SchemaClass::Base) payload, String schema, ?String namespace) -> Deimos::SchemaClass::Record
+
+      # _@param_ `config` — Producer or Consumer config
+      def self.use?: (::Hash[untyped, untyped] config) -> bool
+    end
+
+    # Utility class to retry a given block if a a deadlock is encountered.
+    # Supports Postgres and MySQL deadlocks and lock wait timeouts.
+    class DeadlockRetry
+      RETRY_COUNT: Integer
+      DEADLOCK_MESSAGES: ::Array[String]
+
+      # Retry the given block when encountering a deadlock. For any other
+      # exceptions, they are reraised. This is used to handle cases where
+      # the database may be busy but the transaction would succeed if
+      # retried later. Note that your block should be idempotent and it will
+      # be wrapped in a transaction.
+      # Sleeps for a random number of seconds to prevent multiple transactions
+      # from retrying at the same time.
+      # 
+      # _@param_ `tags` — Tags to attach when logging and reporting metrics.
+      def self.wrap: (?::Array[untyped] tags) -> void
+    end
+
+    # Listener that can seek to get the last X messages in a topic.
+    class SeekListener < Phobos::Listener
+      MAX_SEEK_RETRIES: Integer
+
+      def start_listener: () -> void
+
+      attr_accessor num_messages: Integer
+    end
+
+    # Class to return the messages consumed.
+    class MessageBankHandler < Deimos::Consumer
+      include Phobos::Handler
+
+      # _@param_ `klass`
+      def self.config_class=: (singleton(Deimos::Consumer) klass) -> void
+
+      # _@param_ `_kafka_client`
+      def self.start: (Kafka::Client _kafka_client) -> void
+
+      # _@param_ `payload`
+      # 
+      # _@param_ `metadata`
+      def consume: (::Hash[untyped, untyped] payload, ::Hash[untyped, untyped] metadata) -> void
+    end
+
+    # Class which can process/consume messages inline.
+    class InlineConsumer
+    end
+  end
+end

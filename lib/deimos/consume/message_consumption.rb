@@ -8,7 +8,9 @@ module Deimos
       extend ActiveSupport::Concern
       include Phobos::Handler
 
-      # :nodoc:
+      # @param payload [String]
+      # @param metadata [Hash]
+      # @return [void]
       def around_consume(payload, metadata)
         decoded_payload = payload.nil? ? nil : payload.dup
         new_metadata = metadata.dup
@@ -28,6 +30,7 @@ module Deimos
       # Consume incoming messages.
       # @param _payload [String]
       # @param _metadata [Hash]
+      # @return [void]
       def consume(_payload, _metadata)
         raise NotImplementedError
       end

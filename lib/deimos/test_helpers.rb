@@ -20,6 +20,7 @@ module Deimos
       end
 
       # Set the config to the right settings for a unit test
+      # @return [void]
       def unit_test!
         Deimos.configure do |deimos_config|
           deimos_config.logger = Logger.new(STDOUT)
@@ -31,6 +32,7 @@ module Deimos
       end
 
       # Kafka test config with avro schema registry
+      # @return [void]
       def full_integration_test!
         Deimos.configure do |deimos_config|
           deimos_config.producers.backend = :kafka
@@ -39,6 +41,7 @@ module Deimos
       end
 
       # Set the config to the right settings for a kafka test
+      # @return [void]
       def kafka_test!
         Deimos.configure do |deimos_config|
           deimos_config.producers.backend = :kafka
@@ -62,21 +65,25 @@ module Deimos
     end
 
     # @deprecated
+    # @!visibility private
     def stub_producers_and_consumers!
       warn('stub_producers_and_consumers! is no longer necessary and this method will be removed in 3.0')
     end
 
     # @deprecated
+    # @!visibility private
     def stub_producer(_klass)
       warn('Stubbing producers is no longer necessary and this method will be removed in 3.0')
     end
 
     # @deprecated
+    # @!visibility private
     def stub_consumer(_klass)
       warn('Stubbing consumers is no longer necessary and this method will be removed in 3.0')
     end
 
     # @deprecated
+    # @!visibility private
     def stub_batch_consumer(_klass)
       warn('Stubbing batch consumers is no longer necessary and this method will be removed in 3.0')
     end
@@ -84,6 +91,7 @@ module Deimos
     # get the difference of 2 hashes.
     # @param hash1 [Hash]
     # @param hash2 [Hash]
+    # @!visibility private
     def _hash_diff(hash1, hash2)
       if hash1.nil? || !hash1.is_a?(Hash)
         hash2
@@ -96,7 +104,7 @@ module Deimos
       end
     end
 
-    # :nodoc:
+    # @!visibility private
     def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
       messages = Deimos::Backends::Test.sent_messages.
         select { |m| m[:topic] == topic }.
@@ -162,6 +170,7 @@ module Deimos
 
     # Clear all sent messages - e.g. if we want to check that
     # particular messages were sent or not sent after a point in time.
+    # @return [void]
     def clear_kafka_messages!
       Deimos::Backends::Test.sent_messages.clear
     end
@@ -170,15 +179,16 @@ module Deimos
     # that the schema is correct. If
     # a block is given, that block will be executed when `consume` is called.
     # Otherwise it will just confirm that `consume` is called at all.
-    # @param handler_class_or_topic [Class|String] Class which inherits from
+    # @param handler_class_or_topic [Class, String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payload [Hash] the payload to consume
     # @param call_original [Boolean] if true, allow the consume handler
     # to continue as normal. Not compatible with a block.
-    # @param ignore_expectation [Boolean] Set to true to not place any
+    # @param skip_expectation [Boolean] Set to true to not place any
     # expectations on the consumer. Primarily used internally to Deimos.
     # @param key [Object] the key to use.
     # @param partition_key [Object] the partition key to use.
+    # @return [void]
     def test_consume_message(handler_class_or_topic,
                              payload,
                              call_original: false,
@@ -225,6 +235,7 @@ module Deimos
     # Check to see that a given message will fail due to validation errors.
     # @param handler_class [Class]
     # @param payload [Hash]
+    # @return [void]
     def test_consume_invalid_message(handler_class, payload)
       expect {
         handler_class.decoder.validate(payload,
@@ -236,9 +247,14 @@ module Deimos
     # i.e. that the schema is correct. If
     # a block is given, that block will be executed when `consume` is called.
     # Otherwise it will just confirm that `consume` is called at all.
-    # @param handler_class_or_topic [Class|String] Class which inherits from
+    # @param handler_class_or_topic [Class, String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payloads [Array<Hash>] the payload to consume
+    # @param keys [Array<Hash,String>]
+    # @param partition_keys [Array<Integer>]
+    # @param call_original [Boolean]
+    # @param skip_expectation [Boolean]
+    # @return [void]
     def test_consume_batch(handler_class_or_topic,
                            payloads,
                            keys: [],
@@ -297,6 +313,7 @@ module Deimos
     # Check to see that a given message will fail due to validation errors.
     # @param handler_class [Class]
     # @param payloads [Array<Hash>]
+    # @return [void]
     def test_consume_batch_invalid_message(handler_class, payloads)
       topic_name = 'my-topic'
       handler = handler_class.new

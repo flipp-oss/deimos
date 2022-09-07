@@ -234,7 +234,7 @@ module Deimos
         "#{result})"
       end
 
-      # @param [SchemaField]
+      # @param field [SchemaField]
       # @return [String]
       def _field_default(field)
         default = field.default
