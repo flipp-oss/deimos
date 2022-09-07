@@ -80,7 +80,7 @@ module Deimos
       # Deimos::Consumer or Deimos::Producer, or provide the
       # schema, namespace and key_config directly.
       # @param topic [String]
-      # @param config_class [Class<Deimos::Consumer,Deimos::Producer>]
+      # @param config_class [Class<Deimos::Consumer>,Class<Deimos::Producer>]
       # @param schema [String]
       # @param namespace [String]
       # @param key_config [Hash]

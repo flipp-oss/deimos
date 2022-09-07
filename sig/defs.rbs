@@ -907,6 +907,1006 @@ module Deimos
 
     # Class which can process/consume messages inline.
     class InlineConsumer
+      MAX_MESSAGE_WAIT_TIME: Integer
+      MAX_TOPIC_WAIT_TIME: Integer
+
+      # Get the last X messages from a topic. You can specify a subclass of
+      # Deimos::Consumer or Deimos::Producer, or provide the
+      # schema, namespace and key_config directly.
+      # 
+      # _@param_ `topic`
+      # 
+      # _@param_ `config_class`
+      # 
+      # _@param_ `schema`
+      # 
+      # _@param_ `namespace`
+      # 
+      # _@param_ `key_config`
+      # 
+      # _@param_ `num_messages`
+      def self.get_messages_for: (
+                                   topic: String,
+                                   ?schema: String?,
+                                   ?namespace: String?,
+                                   ?key_config: ::Hash[untyped, untyped]?,
+                                   ?config_class: (singleton(Deimos::Consumer) | singleton(Deimos::Producer))?,
+                                   ?num_messages: Integer
+                                 ) -> ::Array[::Hash[untyped, untyped]]
+
+      # Consume the last X messages from a topic.
+      # 
+      # _@param_ `topic`
+      # 
+      # _@param_ `frk_consumer`
+      # 
+      # _@param_ `num_messages` — If this number is >= the number of messages in the topic, all messages will be consumed.
+      def self.consume: (topic: String, frk_consumer: Class, ?num_messages: Integer) -> void
+    end
+
+    # Mixin to automatically decode schema-encoded payloads when given the correct content type,
+    # and provide the `render_schema` method to encode the payload for responses.
+    module SchemaControllerMixin
+      extend ActiveSupport::Concern
+
+      def schema_format?: () -> bool
+
+      # Get the namespace from either an existing instance variable, or tease it out of the schema.
+      # 
+      # _@param_ `type` — :request or :response
+      # 
+      # _@return_ — the namespace and schema.
+      def parse_namespace: (Symbol _type) -> ::Array[(String | String)]
+
+      # Decode the payload with the parameters.
+      def decode_schema: () -> void
+
+      # Render a hash into a payload as specified by the configured schema and namespace.
+      # 
+      # _@param_ `payload`
+      # 
+      # _@param_ `schema`
+      # 
+      # _@param_ `namespace`
+      def render_schema: (::Hash[untyped, untyped] payload, ?schema: String?, ?namespace: String?) -> void
+
+      # :nodoc:
+      module ClassMethods
+        def schema_mapping: () -> ::Hash[String, ::Hash[Symbol, String]]
+
+        # Indicate which schemas should be assigned to actions.
+        # 
+        # _@param_ `actions`
+        # 
+        # _@param_ `kwactions`
+        # 
+        # _@param_ `request`
+        # 
+        # _@param_ `response`
+        def schemas: (
+                       *Symbol actions,
+                       ?request: String?,
+                       ?response: String?,
+                       **String kwactions
+                     ) -> void
+
+        def namespaces: () -> ::Hash[Symbol, String]
+
+        # Set the namespace for both requests and responses.
+        # 
+        # _@param_ `name`
+        def namespace: (String name) -> void
+
+        # Set the namespace for requests.
+        # 
+        # _@param_ `name`
+        def request_namespace: (String name) -> void
+
+        # Set the namespace for repsonses.
+        # 
+        # _@param_ `name`
+        def response_namespace: (String name) -> void
+      end
+    end
+  end
+
+  # Record that keeps track of which topics are being worked on by DbProducers.
+  class KafkaTopicInfo < ActiveRecord::Base
+    # Lock a topic for the given ID. Returns whether the lock was successful.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `lock_id`
+    def self.lock: (String topic, String lock_id) -> bool
+
+    # This is called once a producer is finished working on a topic, i.e.
+    # there are no more messages to fetch. It unlocks the topic and
+    # moves on to the next one.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `lock_id`
+    def self.clear_lock: (String topic, String lock_id) -> void
+
+    # Update all topics that aren't currently locked and have no messages
+    # waiting. It's OK if some messages get inserted in the middle of this
+    # because the point is that at least within a few milliseconds of each
+    # other, it wasn't locked and had no messages, meaning the topic
+    # was in a good state.
+    # realized had messages in them, meaning all other topics were empty.
+    # 
+    # _@param_ `except_topics` — the list of topics we've just
+    def self.ping_empty_topics: (::Array[String] except_topics) -> void
+
+    # The producer calls this if it gets an error sending messages. This
+    # essentially locks down this topic for 1 minute (for all producers)
+    # and allows the caller to continue to the next topic.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `lock_id`
+    def self.register_error: (String topic, String lock_id) -> void
+
+    # Update the locked_at timestamp to indicate that the producer is still
+    # working on those messages and to continue.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `lock_id`
+    def self.heartbeat: (String topic, String lock_id) -> void
+  end
+
+  module SchemaClass
+    # Base Class for Schema Classes generated from Avro.
+    class Base
+      # _@param_ `_args`
+      def initialize: (*::Array[Object] _args) -> void
+
+      # Converts the object to a hash which can be used for debugging or comparing objects.
+      # 
+      # _@param_ `_opts`
+      # 
+      # _@return_ — a hash representation of the payload
+      def as_json: (?::Hash[untyped, untyped] _opts) -> ::Hash[untyped, untyped]
+
+      # _@param_ `key`
+      # 
+      # _@param_ `val`
+      def []=: ((String | Symbol) key, Object val) -> void
+
+      # _@param_ `other`
+      def ==: (SchemaClass::Base other) -> bool
+
+      def inspect: () -> String
+
+      # Initializes this class from a given value
+      # 
+      # _@param_ `value`
+      def self.initialize_from_value: (Object value) -> SchemaClass::Base
+
+      def hash: () -> Integer
+    end
+
+    # Base Class for Enum Classes generated from Avro.
+    class Enum < Deimos::SchemaClass::Base
+      # _@param_ `other`
+      def ==: (Deimos::SchemaClass::Enum other) -> bool
+
+      def to_s: () -> String
+
+      # _@param_ `value`
+      def initialize: (String value) -> void
+
+      # Returns all the valid symbols for this enum.
+      def symbols: () -> ::Array[String]
+
+      def as_json: (?::Hash[untyped, untyped] _opts) -> String
+
+      def self.initialize_from_value: (Object value) -> SchemaClass::Enum
+
+      attr_accessor value: String
+    end
+
+    # Base Class of Record Classes generated from Avro.
+    class Record < Deimos::SchemaClass::Base
+      # Converts the object attributes to a hash which can be used for Kafka
+      # 
+      # _@return_ — the payload as a hash.
+      def to_h: () -> ::Hash[untyped, untyped]
+
+      # Merge a hash or an identical schema object with this one and return a new object.
+      # 
+      # _@param_ `other_hash`
+      def merge: ((::Hash[untyped, untyped] | SchemaClasses::Base) other_hash) -> SchemaClass::Base
+
+      # Element access method as if this Object were a hash
+      # 
+      # _@param_ `key`
+      # 
+      # _@return_ — The value of the attribute if exists, nil otherwise
+      def []: ((String | Symbol) key) -> Object
+
+      def with_indifferent_access: () -> SchemaClass::Record
+
+      # Returns the schema name of the inheriting class.
+      def schema: () -> String
+
+      # Returns the namespace for the schema of the inheriting class.
+      def namespace: () -> String
+
+      # Returns the full schema name of the inheriting class.
+      def full_schema: () -> String
+
+      # Returns the schema validator from the schema backend
+      def validator: () -> Deimos::SchemaBackends::Base
+
+      # _@return_ — an array of fields names in the schema.
+      def schema_fields: () -> ::Array[String]
+
+      def self.initialize_from_value: (Object value) -> SchemaClass::Record
+    end
+  end
+
+  # Module to handle phobos.yml as well as outputting the configuration to save
+  # to Phobos itself.
+  module PhobosConfig
+    extend ActiveSupport::Concern
+
+    def to_h: () -> ::Hash[untyped, untyped]
+
+    def reset!: () -> void
+
+    # Create a hash representing the config that Phobos expects.
+    def phobos_config: () -> ::Hash[untyped, untyped]
+
+    # _@param_ `key`
+    def ssl_var_contents: (String key) -> String
+  end
+
+  # Represents a field in the schema.
+  class SchemaField
+    # _@param_ `name`
+    # 
+    # _@param_ `type`
+    # 
+    # _@param_ `enum_values`
+    # 
+    # _@param_ `default`
+    def initialize: (
+                      String name,
+                      Object _type,
+                      ?::Array[String] enum_values,
+                      ?Object default
+                    ) -> void
+
+    attr_accessor name: String
+
+    attr_accessor type: String
+
+    attr_accessor enum_values: ::Array[String]
+
+    attr_accessor default: Object
+  end
+
+  module SchemaBackends
+    # Base class for encoding / decoding.
+    class Base
+      # _@param_ `schema`
+      # 
+      # _@param_ `namespace`
+      def initialize: (schema: (String | Symbol), ?namespace: String?) -> void
+
+      # Encode a payload with a schema. Public method.
+      # 
+      # _@param_ `payload`
+      # 
+      # _@param_ `schema`
+      # 
+      # _@param_ `topic`
+      def encode: (::Hash[untyped, untyped] payload, ?schema: (String | Symbol)?, ?topic: String?) -> String
+
+      # Decode a payload with a schema. Public method.
+      # 
+      # _@param_ `payload`
+      # 
+      # _@param_ `schema`
+      def decode: (String payload, ?schema: (String | Symbol)?) -> ::Hash[untyped, untyped]?
+
+      # Given a hash, coerce its types to our schema. To be defined by subclass.
+      # 
+      # _@param_ `payload`
+      def coerce: (::Hash[untyped, untyped] payload) -> ::Hash[untyped, untyped]
+
+      # Indicate a class which should act as a mocked version of this backend.
+      # This class should perform all validations but not actually do any
+      # encoding.
+      # Note that the "mock" version (e.g. avro_validation) should return
+      # its own symbol when this is called, since it may be called multiple
+      # times depending on the order of RSpec helpers.
+      def self.mock_backend: () -> Symbol
+
+      # The content type to use when encoding / decoding requests over HTTP via ActionController.
+      def self.content_type: () -> String
+
+      # Converts your schema to String form for generated YARD docs.
+      # To be defined by subclass.
+      # 
+      # _@param_ `schema`
+      # 
+      # _@return_ — A string representation of the Type
+      def self.field_type: (Object schema) -> String
+
+      # Encode a payload. To be defined by subclass.
+      # 
+      # _@param_ `payload`
+      # 
+      # _@param_ `schema`
+      # 
+      # _@param_ `topic`
+      def encode_payload: (::Hash[untyped, untyped] payload, schema: (String | Symbol), ?topic: String?) -> String
+
+      # Decode a payload. To be defined by subclass.
+      # 
+      # _@param_ `payload`
+      # 
+      # _@param_ `schema`
+      def decode_payload: (String payload, schema: (String | Symbol)) -> ::Hash[untyped, untyped]
+
+      # Validate that a payload matches the schema. To be defined by subclass.
+      # 
+      # _@param_ `payload`
+      # 
+      # _@param_ `schema`
+      def validate: (::Hash[untyped, untyped] payload, schema: (String | Symbol)) -> void
+
+      # List of field names belonging to the schema. To be defined by subclass.
+      def schema_fields: () -> ::Array[SchemaField]
+
+      # Given a value and a field definition (as defined by whatever the
+      # underlying schema library is), coerce the given value to
+      # the given field type.
+      # 
+      # _@param_ `field`
+      # 
+      # _@param_ `value`
+      def coerce_field: (SchemaField field, Object value) -> Object
+
+      # Given a field definition, return the SQL type that might be used in
+      # ActiveRecord table creation - e.g. for Avro, a `long` type would
+      # return `:bigint`. There are also special values that need to be returned:
+      # `:array`, `:map` and `:record`, for types representing those structures.
+      # `:enum` is also recognized.
+      # 
+      # _@param_ `field`
+      def sql_type: (SchemaField field) -> Symbol
+
+      # Encode a message key. To be defined by subclass.
+      # 
+      # _@param_ `key` — the value to use as the key.
+      # 
+      # _@param_ `key_id` — the field name of the key.
+      # 
+      # _@param_ `topic`
+      def encode_key: ((String | ::Hash[untyped, untyped]) key, (String | Symbol) key_id, ?topic: String?) -> String
+
+      # Decode a message key. To be defined by subclass.
+      # 
+      # _@param_ `payload` — the message itself.
+      # 
+      # _@param_ `key_id` — the field in the message to decode.
+      def decode_key: (::Hash[untyped, untyped] payload, (String | Symbol) key_id) -> String
+
+      # Forcefully loads the schema into memory.
+      # 
+      # _@return_ — The schema that is of use.
+      def load_schema: () -> Object
+
+      attr_accessor schema: String
+
+      attr_accessor namespace: String
+
+      attr_accessor key_schema: String
+    end
+
+    # Mock implementation of a schema backend that does no encoding or validation.
+    class Mock < Deimos::SchemaBackends::Base
+      def decode_payload: (String payload, schema: (String | Symbol)) -> ::Hash[untyped, untyped]
+
+      def encode_payload: (::Hash[untyped, untyped] payload, schema: (String | Symbol), ?topic: String?) -> String
+
+      def validate: (untyped _payload, schema: (String | Symbol)) -> void
+
+      def schema_fields: () -> ::Array[SchemaField]
+
+      def coerce_field: (untyped _type, Object value) -> Object
+
+      def encode_key: ((String | Symbol) key_id, (String | ::Hash[untyped, untyped]) key) -> String
+
+      def decode_key: (::Hash[untyped, untyped] payload, (String | Symbol) key_id) -> String
+    end
+
+    # Encode / decode using Avro, either locally or via schema registry.
+    class AvroBase < Deimos::SchemaBackends::Base
+      def initialize: (schema: (String | Symbol), namespace: String) -> void
+
+      def encode_key: ((String | Symbol) key_id, (String | ::Hash[untyped, untyped]) key, ?topic: String?) -> String
+
+      def decode_key: (::Hash[untyped, untyped] payload, (String | Symbol) key_id) -> String
+
+      # :nodoc:
+      def sql_type: (SchemaField field) -> Symbol
+
+      def coerce_field: (SchemaField field, Object value) -> Object
+
+      def schema_fields: () -> ::Array[SchemaField]
+
+      def validate: (::Hash[untyped, untyped] payload, schema: (String | Symbol)) -> void
+
+      def load_schema: () -> Avro::Schema
+
+      def self.mock_backend: () -> Symbol
+
+      def self.content_type: () -> String
+
+      # _@param_ `schema` — A named schema
+      def self.schema_classname: (Avro::Schema::NamedSchema schema) -> String
+
+      # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.
+      # Recursively handles the typing for Arrays, Maps and Unions.
+      # 
+      # _@param_ `avro_schema`
+      # 
+      # _@return_ — A string representation of the Type of this SchemaField
+      def self.field_type: (Avro::Schema::NamedSchema avro_schema) -> String
+
+      # Returns the base type of this schema. Decodes Arrays, Maps and Unions
+      # 
+      # _@param_ `schema`
+      def self.schema_base_class: (Avro::Schema::NamedSchema schema) -> Avro::Schema::NamedSchema
+
+      # Returns the value of attribute schema_store.
+      attr_accessor schema_store: untyped
+    end
+
+    # Encode / decode using local Avro encoding.
+    class AvroLocal < Deimos::SchemaBackends::AvroBase
+      def decode_payload: (String payload, schema: (String | Symbol)) -> ::Hash[untyped, untyped]
+
+      def encode_payload: (::Hash[untyped, untyped] payload, ?schema: (String | Symbol)?, ?topic: String?) -> String
+    end
+
+    # Leave Ruby hashes as is but validate them against the schema.
+    # Useful for unit tests.
+    class AvroValidation < Deimos::SchemaBackends::AvroBase
+      def decode_payload: (String payload, ?schema: (String | Symbol)?) -> ::Hash[untyped, untyped]
+
+      def encode_payload: (::Hash[untyped, untyped] payload, ?schema: (String | Symbol)?, ?topic: String?) -> String
+    end
+
+    # Encode / decode using the Avro schema registry.
+    class AvroSchemaRegistry < Deimos::SchemaBackends::AvroBase
+      def decode_payload: (String payload, schema: (String | Symbol)) -> ::Hash[untyped, untyped]
+
+      def encode_payload: (::Hash[untyped, untyped] payload, ?schema: (String | Symbol)?, ?topic: String?) -> String
+    end
+  end
+
+  # To configure batch vs. message mode, change the delivery mode of your
+  # Phobos listener.
+  # Message-by-message -> use `delivery: message` or `delivery: batch`
+  # Batch -> use `delivery: inline_batch`
+  class ActiveRecordConsumer < Deimos::Consumer
+    include Deimos::ActiveRecordConsume::MessageConsumption
+    include Deimos::ActiveRecordConsume::BatchConsumption
+
+    # param klass [Class < ActiveRecord::Base] the class used to save to the
+    # database.
+    def self.record_class: (untyped klass) -> untyped
+
+    # param val [Boolean] Turn pre-compaction of the batch on or off. If true,
+    # only the last message for each unique key in a batch is processed.
+    def self.compacted: (untyped val) -> untyped
+
+    # Setup
+    def initialize: () -> void
+
+    # Override this method (with `super`) if you want to add/change the default
+    # attributes set to the new/existing record.
+    # 
+    # _@param_ `payload`
+    # 
+    # _@param_ `_key`
+    def record_attributes: (SORD_ERROR_HashDeimosSchemaClassRecord payload, ?String? _key) -> untyped
+
+    # Override this message to conditionally save records
+    # 
+    # _@param_ `_payload` — The kafka message
+    # 
+    # _@return_ — if true, record is created/update.
+    # If false, record processing is skipped but message offset is still committed.
+    def process_message?: (SORD_ERROR_HashDeimosSchemaClassRecord _payload) -> bool
+
+    # Handle a batch of Kafka messages. Batches are split into "slices",
+    # which are groups of independent messages that can be processed together
+    # in a single database operation.
+    # If two messages in a batch have the same key, we cannot process them
+    # in the same operation as they would interfere with each other. Thus
+    # they are split
+    # 
+    # _@param_ `payloads` — Decoded payloads
+    # 
+    # _@param_ `metadata` — Information about batch, including keys.
+    def consume_batch: (::Array[SORD_ERROR_HashDeimosSchemaClassRecord] payloads, ::Hash[untyped, untyped] metadata) -> untyped
+
+    # Get unique key for the ActiveRecord instance from the incoming key.
+    # Override this method (with super) to customize the set of attributes that
+    # uniquely identifies each record in the database.
+    # 
+    # _@param_ `key` — The encoded key.
+    # 
+    # _@return_ — The key attributes.
+    def record_key: (String key) -> ::Hash[untyped, untyped]
+
+    # Perform database operations for a batch of messages without compaction.
+    # All messages are split into slices containing only unique keys, and
+    # each slice is handles as its own batch.
+    # 
+    # _@param_ `messages` — List of messages.
+    def uncompacted_update: (::Array[Message] messages) -> untyped
+
+    # Perform database operations for a group of messages.
+    # All messages with payloads are passed to upsert_records.
+    # All tombstones messages are passed to remove_records.
+    # 
+    # _@param_ `messages` — List of messages.
+    def update_database: (::Array[Message] messages) -> untyped
+
+    # Upsert any non-deleted records
+    # records to either be updated or inserted.
+    # 
+    # _@param_ `messages` — List of messages for a group of
+    def upsert_records: (::Array[Message] messages) -> untyped
+
+    # Delete any records with a tombstone.
+    # deleted records.
+    # 
+    # _@param_ `messages` — List of messages for a group of
+    def remove_records: (::Array[Message] messages) -> untyped
+
+    # Create an ActiveRecord relation that matches all of the passed
+    # records. Used for bulk deletion.
+    # 
+    # _@param_ `records` — List of messages.
+    # 
+    # _@return_ — ActiveRecord::Relation Matching relation.
+    def deleted_query: (::Array[Message] records) -> untyped
+
+    # Get the set of attribute names that uniquely identify messages in the
+    # batch. Requires at least one record.
+    # 
+    # _@param_ `records` — Non-empty list of messages.
+    # 
+    # _@return_ — List of attribute names.
+    def key_columns: (::Array[Message] records) -> ::Array[String]
+
+    # Compact a batch of messages, taking only the last message for each
+    # unique key.
+    # 
+    # _@param_ `batch` — Batch of messages.
+    # 
+    # _@return_ — Compacted batch.
+    def compact_messages: (::Array[Message] batch) -> ::Array[Message]
+
+    # Find the record specified by the given payload and key.
+    # Default is to use the primary key column and the value of the first
+    # field in the key.
+    # 
+    # _@param_ `klass` — lass [Class < ActiveRecord::Base]
+    # 
+    # _@param_ `_payload`
+    # 
+    # _@param_ `key`
+    def fetch_record: (SORD_ERROR_ClassActiveRecordBase klass, SORD_ERROR_HashDeimosSchemaClassRecord _payload, Object key) -> ActiveRecord::Base
+
+    # Assign a key to a new record.
+    # 
+    # _@param_ `record`
+    # 
+    # _@param_ `_payload`
+    # 
+    # _@param_ `key`
+    def assign_key: (ActiveRecord::Base record, SORD_ERROR_HashDeimosSchemaClassRecord _payload, Object key) -> untyped
+
+    # _@param_ `payload` — Decoded payloads
+    # 
+    # _@param_ `metadata` — Information about batch, including keys.
+    def consume: (SORD_ERROR_HashDeimosSchemaClassRecord payload, ::Hash[untyped, untyped] metadata) -> untyped
+
+    # _@param_ `record`
+    def save_record: (ActiveRecord::Base record) -> untyped
+
+    # Destroy a record that received a null payload. Override if you need
+    # to do something other than a straight destroy (e.g. mark as archived).
+    # 
+    # _@param_ `record`
+    def destroy_record: (ActiveRecord::Base record) -> untyped
+  end
+
+  # Class which automatically produces a record when given an ActiveRecord
+  # instance or a list of them. Just call `send_events` on a list of records
+  # and they will be auto-published. You can override `generate_payload`
+  # to make changes to the payload before it's published.
+  # 
+  # You can also call this with a list of hashes representing attributes.
+  # This is common when using activerecord-import.
+  class ActiveRecordProducer < Deimos::Producer
+    MAX_BATCH_SIZE: Integer
+
+    # Indicate the class this producer is working on.
+    # a record object, refetch the record to pass into the `generate_payload`
+    # method.
+    # 
+    # _@param_ `klass`
+    # 
+    # _@param_ `refetch` — if true, and we are given a hash instead of
+    def self.record_class: (Class klass, ?refetch: bool) -> untyped
+
+    # _@param_ `record`
+    # 
+    # _@param_ `force_send`
+    def self.send_event: (ActiveRecord::Base record, ?force_send: bool) -> untyped
+
+    # _@param_ `records`
+    # 
+    # _@param_ `force_send`
+    def self.send_events: (::Array[ActiveRecord::Base] records, ?force_send: bool) -> untyped
+
+    # Generate the payload, given a list of attributes or a record..
+    # Can be overridden or added to by subclasses.
+    # is not set.
+    # 
+    # _@param_ `attributes`
+    # 
+    # _@param_ `_record` — May be nil if refetch_record
+    def self.generate_payload: (::Hash[untyped, untyped] attributes, ActiveRecord::Base _record) -> ::Hash[untyped, untyped]
+
+    # Query to use when polling the database with the DbPoller. Add
+    # includes, joins, or wheres as necessary, or replace entirely.
+    # than this value).
+    # 
+    # _@param_ `time_from` — the time to start the query from.
+    # 
+    # _@param_ `time_to` — the time to end the query.
+    # 
+    # _@param_ `column_name` — the column name to look for.
+    # 
+    # _@param_ `min_id` — the minimum ID (i.e. all IDs must be greater
+    def self.poll_query: (
+                           time_from: Time,
+                           time_to: Time,
+                           ?column_name: Symbol,
+                           min_id: Numeric
+                         ) -> ActiveRecord::Relation
+  end
+
+  module Consume
+    # Helper methods used by batch consumers, i.e. those with "inline_batch"
+    # delivery. Payloads are decoded then consumers are invoked with arrays
+    # of messages to be handled at once
+    module BatchConsumption
+      include Phobos::BatchHandler
+      extend ActiveSupport::Concern
+
+      # _@param_ `batch`
+      # 
+      # _@param_ `metadata`
+      def around_consume_batch: (::Array[String] batch, ::Hash[untyped, untyped] metadata) -> void
+
+      # Consume a batch of incoming messages.
+      # 
+      # _@param_ `_payloads`
+      # 
+      # _@param_ `_metadata`
+      def consume_batch: (::Array[Phobos::BatchMessage] _payloads, ::Hash[untyped, untyped] _metadata) -> void
+    end
+
+    # Methods used by message-by-message (non-batch) consumers. These consumers
+    # are invoked for every individual message.
+    module MessageConsumption
+      include Phobos::Handler
+      extend ActiveSupport::Concern
+
+      # _@param_ `payload`
+      # 
+      # _@param_ `metadata`
+      def around_consume: (String payload, ::Hash[untyped, untyped] metadata) -> void
+
+      # Consume incoming messages.
+      # 
+      # _@param_ `_payload`
+      # 
+      # _@param_ `_metadata`
+      def consume: (String _payload, ::Hash[untyped, untyped] _metadata) -> void
+    end
+  end
+
+  module Generators
+    # Generate the database backend migration.
+    class DbPollerGenerator < Rails::Generators::Base
+      include Rails::Generators::Migration
+      include ActiveRecord::Generators::Migration
+      extend ActiveRecord::Generators::Migration
+
+      def migration_version: () -> String
+
+      def db_migrate_path: () -> String
+
+      # Main method to create all the necessary files
+      def generate: () -> untyped
+    end
+
+    # Generate the database backend migration.
+    class DbBackendGenerator < Rails::Generators::Base
+      include Rails::Generators::Migration
+      include ActiveRecord::Generators::Migration
+      extend ActiveRecord::Generators::Migration
+
+      def migration_version: () -> String
+
+      def db_migrate_path: () -> String
+
+      # Main method to create all the necessary files
+      def generate: () -> untyped
+    end
+
+    # Generator for Schema Classes used for the IDE and consumer/producer interfaces
+    class SchemaClassGenerator < Rails::Generators::Base
+      SPECIAL_TYPES: untyped
+      INITIALIZE_WHITESPACE: untyped
+      IGNORE_DEFAULTS: untyped
+      SCHEMA_CLASS_FILE: untyped
+      SCHEMA_RECORD_PATH: untyped
+      SCHEMA_ENUM_PATH: untyped
+
+      # :nodoc:
+      def generate: () -> untyped
+    end
+
+    # Generator for ActiveRecord model and migration.
+    class ActiveRecordGenerator < Rails::Generators::Base
+      include Rails::Generators::Migration
+      include ActiveRecord::Generators::Migration
+      extend ActiveRecord::Generators::Migration
+
+      # :nodoc:
+      def generate: () -> untyped
+    end
+  end
+
+  module ActiveRecordConsume
+    # Helper class for breaking down batches into independent groups for
+    # processing
+    class BatchSlicer
+      # Split the batch into a series of independent slices. Each slice contains
+      # messages that can be processed in any order (i.e. they have distinct
+      # keys). Messages with the same key will be separated into different
+      # slices that maintain the correct order.
+      # E.g. Given messages A1, A2, B1, C1, C2, C3, they will be sliced as:
+      # [[A1, B1, C1], [A2, C2], [C3]]
+      def self.slice: (untyped messages) -> untyped
+    end
+
+    # Methods for consuming batches of messages and saving them to the database
+    # in bulk ActiveRecord operations.
+    module BatchConsumption
+      # Handle a batch of Kafka messages. Batches are split into "slices",
+      # which are groups of independent messages that can be processed together
+      # in a single database operation.
+      # If two messages in a batch have the same key, we cannot process them
+      # in the same operation as they would interfere with each other. Thus
+      # they are split
+      # 
+      # _@param_ `payloads` — Decoded payloads
+      # 
+      # _@param_ `metadata` — Information about batch, including keys.
+      def consume_batch: (::Array[SORD_ERROR_HashDeimosSchemaClassRecord] payloads, ::Hash[untyped, untyped] metadata) -> untyped
+
+      # Get unique key for the ActiveRecord instance from the incoming key.
+      # Override this method (with super) to customize the set of attributes that
+      # uniquely identifies each record in the database.
+      # 
+      # _@param_ `key` — The encoded key.
+      # 
+      # _@return_ — The key attributes.
+      def record_key: (String key) -> ::Hash[untyped, untyped]
+
+      # Perform database operations for a batch of messages without compaction.
+      # All messages are split into slices containing only unique keys, and
+      # each slice is handles as its own batch.
+      # 
+      # _@param_ `messages` — List of messages.
+      def uncompacted_update: (::Array[Message] messages) -> untyped
+
+      # Perform database operations for a group of messages.
+      # All messages with payloads are passed to upsert_records.
+      # All tombstones messages are passed to remove_records.
+      # 
+      # _@param_ `messages` — List of messages.
+      def update_database: (::Array[Message] messages) -> untyped
+
+      # Upsert any non-deleted records
+      # records to either be updated or inserted.
+      # 
+      # _@param_ `messages` — List of messages for a group of
+      def upsert_records: (::Array[Message] messages) -> untyped
+
+      # Delete any records with a tombstone.
+      # deleted records.
+      # 
+      # _@param_ `messages` — List of messages for a group of
+      def remove_records: (::Array[Message] messages) -> untyped
+
+      # Create an ActiveRecord relation that matches all of the passed
+      # records. Used for bulk deletion.
+      # 
+      # _@param_ `records` — List of messages.
+      # 
+      # _@return_ — ActiveRecord::Relation Matching relation.
+      def deleted_query: (::Array[Message] records) -> untyped
+
+      # Get the set of attribute names that uniquely identify messages in the
+      # batch. Requires at least one record.
+      # 
+      # _@param_ `records` — Non-empty list of messages.
+      # 
+      # _@return_ — List of attribute names.
+      def key_columns: (::Array[Message] records) -> ::Array[String]
+
+      # Compact a batch of messages, taking only the last message for each
+      # unique key.
+      # 
+      # _@param_ `batch` — Batch of messages.
+      # 
+      # _@return_ — Compacted batch.
+      def compact_messages: (::Array[Message] batch) -> ::Array[Message]
+    end
+
+    # Methods for consuming individual messages and saving them to the database
+    # as ActiveRecord instances.
+    module MessageConsumption
+      # Find the record specified by the given payload and key.
+      # Default is to use the primary key column and the value of the first
+      # field in the key.
+      # 
+      # _@param_ `klass` — lass [Class < ActiveRecord::Base]
+      # 
+      # _@param_ `_payload`
+      # 
+      # _@param_ `key`
+      def fetch_record: (SORD_ERROR_ClassActiveRecordBase klass, SORD_ERROR_HashDeimosSchemaClassRecord _payload, Object key) -> ActiveRecord::Base
+
+      # Assign a key to a new record.
+      # 
+      # _@param_ `record`
+      # 
+      # _@param_ `_payload`
+      # 
+      # _@param_ `key`
+      def assign_key: (ActiveRecord::Base record, SORD_ERROR_HashDeimosSchemaClassRecord _payload, Object key) -> untyped
+
+      # _@param_ `payload` — Decoded payloads
+      # 
+      # _@param_ `metadata` — Information about batch, including keys.
+      def consume: (SORD_ERROR_HashDeimosSchemaClassRecord payload, ::Hash[untyped, untyped] metadata) -> untyped
+
+      # _@param_ `record`
+      def save_record: (ActiveRecord::Base record) -> untyped
+
+      # Destroy a record that received a null payload. Override if you need
+      # to do something other than a straight destroy (e.g. mark as archived).
+      # 
+      # _@param_ `record`
+      def destroy_record: (ActiveRecord::Base record) -> untyped
+    end
+
+    # Convert a message with a schema to an ActiveRecord model
+    class SchemaModelConverter
+      # Create new converter
+      # 
+      # _@param_ `decoder` — Incoming message schema.
+      # 
+      # _@param_ `klass` — Model to map to.
+      def initialize: (SchemaBackends::Base decoder, ActiveRecord::Base klass) -> void
+
+      # Convert a message from a decoded hash to a set of ActiveRecord
+      # attributes. Attributes that don't exist in the model will be ignored.
+      # 
+      # _@param_ `payload` — Decoded message payload.
+      # 
+      # _@return_ — Model attributes.
+      def convert: (::Hash[untyped, untyped] payload) -> ::Hash[untyped, untyped]
+    end
+  end
+
+  # Class to coerce values in a payload to match a schema.
+  class AvroSchemaCoercer
+    # _@param_ `schema`
+    def initialize: (Avro::Schema schema) -> void
+
+    # Coerce sub-records in a payload to match the schema.
+    # 
+    # _@param_ `type`
+    # 
+    # _@param_ `val`
+    def coerce_union: (Avro::Schema::UnionSchema _type, Object val) -> Object
+
+    # Coerce sub-records in a payload to match the schema.
+    # 
+    # _@param_ `type`
+    # 
+    # _@param_ `val`
+    def coerce_record: (Avro::Schema::RecordSchema _type, Object val) -> Object
+
+    # Coerce values in a payload to match the schema.
+    # 
+    # _@param_ `type`
+    # 
+    # _@param_ `val`
+    def coerce_type: (Avro::Schema _type, Object val) -> Object
+  end
+end
+
+# :nodoc:
+module Phobos
+  # :nodoc:
+  module CLI
+    # :nodoc:
+    class Start
+      # :nodoc:
+      def validate_listeners!: () -> untyped
+    end
+  end
+
+  module Producer
+    # :nodoc:
+    class PublicAPI
+      # :nodoc:
+      def publish: (
+                     untyped topic,
+                     untyped payload,
+                     ?untyped key,
+                     ?untyped partition_key
+                   ) -> untyped
+
+      # :nodoc:
+      def async_publish: (
+                           untyped topic,
+                           untyped payload,
+                           ?untyped key,
+                           ?untyped partition_key
+                         ) -> untyped
+    end
+
+    # :nodoc:
+    module ClassMethods
+      # :nodoc:
+      class PublicAPI
+        # :nodoc:
+        def publish: (
+                       untyped topic,
+                       untyped payload,
+                       ?untyped key,
+                       ?untyped partition_key
+                     ) -> untyped
+
+        # :nodoc:
+        def async_publish: (
+                             untyped topic,
+                             untyped payload,
+                             ?untyped key,
+                             ?untyped partition_key
+                           ) -> untyped
+      end
     end
   end
 end
