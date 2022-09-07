@@ -45,6 +45,24 @@ describe Deimos::ActiveRecordProducer do
       record_class Widget
     end
     stub_const('MyProducerWithUniqueID', producer_class)
+
+    producer_class = Class.new(Deimos::ActiveRecordProducer) do
+      schema 'MySchemaWithUniqueId'
+      namespace 'com.my-namespace'
+      topic 'my-topic-with-unique-id'
+      key_config field: :id
+      record_class Widget
+
+      # :nodoc:
+      def self.post_process(batch)
+        batch.each do |message|
+          message.test_id = 'post_processed'
+          message.save!
+        end
+      end
+    end
+
+    stub_const('MyProducerWithPostProcess', producer_class)
   end
 
   describe 'produce' do
@@ -83,6 +101,12 @@ describe Deimos::ActiveRecordProducer do
             message_id: 'generated_id',
             timestamp: anything
           )
+        end
+
+        it 'should post process the batch of records in #send_events' do
+          widget = Widget.create!(test_id: 'abc3', some_int: 4)
+          MyProducerWithPostProcess.send_events([widget])
+          expect(widget.reload.test_id).to eq('post_processed')
         end
 
       end
