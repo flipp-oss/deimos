@@ -47,6 +47,7 @@ module Deimos
           generate_payload(attrs, record).with_indifferent_access
         end
         self.publish_list(messages, force_send: force_send)
+        self.post_process(records)
       end
 
       # Generate the payload, given a list of attributes or a record..
@@ -88,6 +89,12 @@ module Deimos
           time_to
         )
       end
+
+      # Post process records after publishing
+      # @param records [Array<ActiveRecord::Base>]
+      def post_process(_records)
+      end
+
     end
   end
 end
