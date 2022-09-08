@@ -1181,6 +1181,10 @@ decoded = Deimos.decode(schema: 'MySchema', namespace: 'com.my-namespace', paylo
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/flipp-oss/deimos .
 
+You can/should re-generate RBS types when methods or classes change by running the following:
+
+    bundle exec sord --hide-private --no-sord-comments sig/defs.rbs 
+
 ### Linting
 
 Deimos uses Rubocop to lint the code. Please run Rubocop on your code 
