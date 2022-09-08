@@ -15,8 +15,9 @@ module Deimos
       # If two messages in a batch have the same key, we cannot process them
       # in the same operation as they would interfere with each other. Thus
       # they are split
-      # @param payloads [Array<Hash|Deimos::SchemaClass::Record>] Decoded payloads
+      # @param payloads [Array<Hash,Deimos::SchemaClass::Record>] Decoded payloads
       # @param metadata [Hash] Information about batch, including keys.
+      # @return [void]
       def consume_batch(payloads, metadata)
         messages = payloads.
           zip(metadata[:keys]).
@@ -59,6 +60,7 @@ module Deimos
       # All messages are split into slices containing only unique keys, and
       # each slice is handles as its own batch.
       # @param messages [Array<Message>] List of messages.
+      # @return [void]
       def uncompacted_update(messages)
         BatchSlicer.
           slice(messages).
@@ -69,6 +71,7 @@ module Deimos
       # All messages with payloads are passed to upsert_records.
       # All tombstones messages are passed to remove_records.
       # @param messages [Array<Message>] List of messages.
+      # @return [void]
       def update_database(messages)
         # Find all upserted records (i.e. that have a payload) and all
         # deleted record (no payload)
@@ -81,6 +84,7 @@ module Deimos
       # Upsert any non-deleted records
       # @param messages [Array<Message>] List of messages for a group of
       # records to either be updated or inserted.
+      # @return [void]
       def upsert_records(messages)
         key_cols = key_columns(messages)
 
@@ -119,6 +123,7 @@ module Deimos
       # Delete any records with a tombstone.
       # @param messages [Array<Message>] List of messages for a group of
       # deleted records.
+      # @return [void]
       def remove_records(messages)
         clause = deleted_query(messages)
 
@@ -128,7 +133,7 @@ module Deimos
       # Create an ActiveRecord relation that matches all of the passed
       # records. Used for bulk deletion.
       # @param records [Array<Message>] List of messages.
-      # @return ActiveRecord::Relation Matching relation.
+      # @return [ActiveRecord::Relation] Matching relation.
       def deleted_query(records)
         keys = records.
           map { |m| record_key(m.key)[@klass.primary_key] }.

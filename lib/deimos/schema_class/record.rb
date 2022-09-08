@@ -15,7 +15,7 @@ module Deimos
       end
 
       # Merge a hash or an identical schema object with this one and return a new object.
-      # @param other_hash [Hash,SchemaClasses::Base]
+      # @param other_hash [Hash,SchemaClass::Base]
       # @return [SchemaClass::Base]
       def merge(other_hash)
         obj = self.class.new(**self.to_h.symbolize_keys)

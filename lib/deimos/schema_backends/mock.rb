@@ -15,7 +15,7 @@ module Deimos
       end
 
       # @override
-      def validate(_payload, schema:)
+      def validate(payload, schema:)
       end
 
       # @override
@@ -24,7 +24,7 @@ module Deimos
       end
 
       # @override
-      def coerce_field(_type, value)
+      def coerce_field(field, value)
         value
       end
 

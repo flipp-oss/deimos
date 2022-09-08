@@ -23,14 +23,16 @@ module Deimos
     include ActiveRecordConsume::BatchConsumption
 
     class << self
-      # param klass [Class < ActiveRecord::Base] the class used to save to the
+      # @param klass [Class<ActiveRecord::Base>] the class used to save to the
       # database.
+      # @return [void]
       def record_class(klass)
         config[:record_class] = klass
       end
 
-      # param val [Boolean] Turn pre-compaction of the batch on or off. If true,
+      # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
+      # @return [void]
       def compacted(val)
         config[:compacted] = val
       end
@@ -50,14 +52,15 @@ module Deimos
 
     # Override this method (with `super`) if you want to add/change the default
     # attributes set to the new/existing record.
-    # @param payload [Hash|Deimos::SchemaClass::Record]
+    # @param payload [Hash,Deimos::SchemaClass::Record]
     # @param _key [String]
+    # @return [Hash]
     def record_attributes(payload, _key=nil)
       @converter.convert(payload)
     end
 
     # Override this message to conditionally save records
-    # @param _payload [Hash|Deimos::SchemaClass::Record] The kafka message
+    # @param _payload [Hash,Deimos::SchemaClass::Record] The kafka message
     # @return [Boolean] if true, record is created/update.
     #   If false, record processing is skipped but message offset is still committed.
     def process_message?(_payload)

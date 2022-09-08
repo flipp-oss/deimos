@@ -1117,7 +1117,7 @@ module Deimos
       # Merge a hash or an identical schema object with this one and return a new object.
       # 
       # _@param_ `other_hash`
-      def merge: ((::Hash[untyped, untyped] | SchemaClasses::Base) other_hash) -> SchemaClass::Base
+      def merge: ((::Hash[untyped, untyped] | SchemaClass::Base) other_hash) -> SchemaClass::Base
 
       # Element access method as if this Object were a hash
       # 
@@ -1314,11 +1314,11 @@ module Deimos
 
       def encode_payload: (::Hash[untyped, untyped] payload, schema: (String | Symbol), ?topic: String?) -> String
 
-      def validate: (untyped _payload, schema: (String | Symbol)) -> void
+      def validate: (::Hash[untyped, untyped] payload, schema: (String | Symbol)) -> void
 
       def schema_fields: () -> ::Array[SchemaField]
 
-      def coerce_field: (untyped _type, Object value) -> Object
+      def coerce_field: (SchemaField field, Object value) -> Object
 
       def encode_key: ((String | Symbol) key_id, (String | ::Hash[untyped, untyped]) key) -> String
 
@@ -1399,13 +1399,15 @@ module Deimos
     include Deimos::ActiveRecordConsume::MessageConsumption
     include Deimos::ActiveRecordConsume::BatchConsumption
 
-    # param klass [Class < ActiveRecord::Base] the class used to save to the
     # database.
-    def self.record_class: (untyped klass) -> untyped
+    # 
+    # _@param_ `klass` — the class used to save to the
+    def self.record_class: (singleton(ActiveRecord::Base) klass) -> void
 
-    # param val [Boolean] Turn pre-compaction of the batch on or off. If true,
     # only the last message for each unique key in a batch is processed.
-    def self.compacted: (untyped val) -> untyped
+    # 
+    # _@param_ `val` — Turn pre-compaction of the batch on or off. If true,
+    def self.compacted: (bool val) -> void
 
     # Setup
     def initialize: () -> void
@@ -1416,7 +1418,7 @@ module Deimos
     # _@param_ `payload`
     # 
     # _@param_ `_key`
-    def record_attributes: (SORD_ERROR_HashDeimosSchemaClassRecord payload, ?String? _key) -> untyped
+    def record_attributes: ((::Hash[untyped, untyped] | Deimos::SchemaClass::Record) payload, ?String? _key) -> ::Hash[untyped, untyped]
 
     # Override this message to conditionally save records
     # 
@@ -1424,7 +1426,7 @@ module Deimos
     # 
     # _@return_ — if true, record is created/update.
     # If false, record processing is skipped but message offset is still committed.
-    def process_message?: (SORD_ERROR_HashDeimosSchemaClassRecord _payload) -> bool
+    def process_message?: ((::Hash[untyped, untyped] | Deimos::SchemaClass::Record) _payload) -> bool
 
     # Handle a batch of Kafka messages. Batches are split into "slices",
     # which are groups of independent messages that can be processed together
@@ -1436,7 +1438,7 @@ module Deimos
     # _@param_ `payloads` — Decoded payloads
     # 
     # _@param_ `metadata` — Information about batch, including keys.
-    def consume_batch: (::Array[SORD_ERROR_HashDeimosSchemaClassRecord] payloads, ::Hash[untyped, untyped] metadata) -> untyped
+    def consume_batch: (::Array[(::Hash[untyped, untyped] | Deimos::SchemaClass::Record)] payloads, ::Hash[untyped, untyped] metadata) -> void
 
     # Get unique key for the ActiveRecord instance from the incoming key.
     # Override this method (with super) to customize the set of attributes that
@@ -1452,34 +1454,34 @@ module Deimos
     # each slice is handles as its own batch.
     # 
     # _@param_ `messages` — List of messages.
-    def uncompacted_update: (::Array[Message] messages) -> untyped
+    def uncompacted_update: (::Array[Message] messages) -> void
 
     # Perform database operations for a group of messages.
     # All messages with payloads are passed to upsert_records.
     # All tombstones messages are passed to remove_records.
     # 
     # _@param_ `messages` — List of messages.
-    def update_database: (::Array[Message] messages) -> untyped
+    def update_database: (::Array[Message] messages) -> void
 
     # Upsert any non-deleted records
     # records to either be updated or inserted.
     # 
     # _@param_ `messages` — List of messages for a group of
-    def upsert_records: (::Array[Message] messages) -> untyped
+    def upsert_records: (::Array[Message] messages) -> void
 
     # Delete any records with a tombstone.
     # deleted records.
     # 
     # _@param_ `messages` — List of messages for a group of
-    def remove_records: (::Array[Message] messages) -> untyped
+    def remove_records: (::Array[Message] messages) -> void
 
     # Create an ActiveRecord relation that matches all of the passed
     # records. Used for bulk deletion.
     # 
     # _@param_ `records` — List of messages.
     # 
-    # _@return_ — ActiveRecord::Relation Matching relation.
-    def deleted_query: (::Array[Message] records) -> untyped
+    # _@return_ — Matching relation.
+    def deleted_query: (::Array[Message] records) -> ActiveRecord::Relation
 
     # Get the set of attribute names that uniquely identify messages in the
     # batch. Requires at least one record.
@@ -1501,12 +1503,12 @@ module Deimos
     # Default is to use the primary key column and the value of the first
     # field in the key.
     # 
-    # _@param_ `klass` — lass [Class < ActiveRecord::Base]
+    # _@param_ `klass`
     # 
     # _@param_ `_payload`
     # 
     # _@param_ `key`
-    def fetch_record: (SORD_ERROR_ClassActiveRecordBase klass, SORD_ERROR_HashDeimosSchemaClassRecord _payload, Object key) -> ActiveRecord::Base
+    def fetch_record: (singleton(ActiveRecord::Base) klass, (::Hash[untyped, untyped] | Deimos::SchemaClass::Record) _payload, Object key) -> ActiveRecord::Base
 
     # Assign a key to a new record.
     # 
@@ -1515,21 +1517,21 @@ module Deimos
     # _@param_ `_payload`
     # 
     # _@param_ `key`
-    def assign_key: (ActiveRecord::Base record, SORD_ERROR_HashDeimosSchemaClassRecord _payload, Object key) -> untyped
+    def assign_key: (ActiveRecord::Base record, (::Hash[untyped, untyped] | Deimos::SchemaClass::Record) _payload, Object key) -> void
 
     # _@param_ `payload` — Decoded payloads
     # 
     # _@param_ `metadata` — Information about batch, including keys.
-    def consume: (SORD_ERROR_HashDeimosSchemaClassRecord payload, ::Hash[untyped, untyped] metadata) -> untyped
+    def consume: ((::Hash[untyped, untyped] | Deimos::SchemaClass::Record) payload, ::Hash[untyped, untyped] metadata) -> void
 
     # _@param_ `record`
-    def save_record: (ActiveRecord::Base record) -> untyped
+    def save_record: (ActiveRecord::Base record) -> void
 
     # Destroy a record that received a null payload. Override if you need
     # to do something other than a straight destroy (e.g. mark as archived).
     # 
     # _@param_ `record`
-    def destroy_record: (ActiveRecord::Base record) -> untyped
+    def destroy_record: (ActiveRecord::Base record) -> void
   end
 
   # Class which automatically produces a record when given an ActiveRecord
@@ -1549,17 +1551,17 @@ module Deimos
     # _@param_ `klass`
     # 
     # _@param_ `refetch` — if true, and we are given a hash instead of
-    def self.record_class: (Class klass, ?refetch: bool) -> untyped
+    def self.record_class: (Class klass, ?refetch: bool) -> void
 
     # _@param_ `record`
     # 
     # _@param_ `force_send`
-    def self.send_event: (ActiveRecord::Base record, ?force_send: bool) -> untyped
+    def self.send_event: (ActiveRecord::Base record, ?force_send: bool) -> void
 
     # _@param_ `records`
     # 
     # _@param_ `force_send`
-    def self.send_events: (::Array[ActiveRecord::Base] records, ?force_send: bool) -> untyped
+    def self.send_events: (::Array[ActiveRecord::Base] records, ?force_send: bool) -> void
 
     # Generate the payload, given a list of attributes or a record..
     # Can be overridden or added to by subclasses.
@@ -1642,7 +1644,7 @@ module Deimos
       def db_migrate_path: () -> String
 
       # Main method to create all the necessary files
-      def generate: () -> untyped
+      def generate: () -> void
     end
 
     # Generate the database backend migration.
@@ -1656,20 +1658,19 @@ module Deimos
       def db_migrate_path: () -> String
 
       # Main method to create all the necessary files
-      def generate: () -> untyped
+      def generate: () -> void
     end
 
     # Generator for Schema Classes used for the IDE and consumer/producer interfaces
     class SchemaClassGenerator < Rails::Generators::Base
-      SPECIAL_TYPES: untyped
-      INITIALIZE_WHITESPACE: untyped
-      IGNORE_DEFAULTS: untyped
-      SCHEMA_CLASS_FILE: untyped
-      SCHEMA_RECORD_PATH: untyped
-      SCHEMA_ENUM_PATH: untyped
+      SPECIAL_TYPES: ::Array[Symbol]
+      INITIALIZE_WHITESPACE: String
+      IGNORE_DEFAULTS: ::Array[String]
+      SCHEMA_CLASS_FILE: String
+      SCHEMA_RECORD_PATH: String
+      SCHEMA_ENUM_PATH: String
 
-      # :nodoc:
-      def generate: () -> untyped
+      def generate: () -> void
     end
 
     # Generator for ActiveRecord model and migration.
@@ -1678,8 +1679,7 @@ module Deimos
       include ActiveRecord::Generators::Migration
       extend ActiveRecord::Generators::Migration
 
-      # :nodoc:
-      def generate: () -> untyped
+      def generate: () -> void
     end
   end
 
@@ -1693,7 +1693,9 @@ module Deimos
       # slices that maintain the correct order.
       # E.g. Given messages A1, A2, B1, C1, C2, C3, they will be sliced as:
       # [[A1, B1, C1], [A2, C2], [C3]]
-      def self.slice: (untyped messages) -> untyped
+      # 
+      # _@param_ `messages`
+      def self.slice: (::Array[Message] messages) -> ::Array[::Array[Message]]
     end
 
     # Methods for consuming batches of messages and saving them to the database
@@ -1709,7 +1711,7 @@ module Deimos
       # _@param_ `payloads` — Decoded payloads
       # 
       # _@param_ `metadata` — Information about batch, including keys.
-      def consume_batch: (::Array[SORD_ERROR_HashDeimosSchemaClassRecord] payloads, ::Hash[untyped, untyped] metadata) -> untyped
+      def consume_batch: (::Array[(::Hash[untyped, untyped] | Deimos::SchemaClass::Record)] payloads, ::Hash[untyped, untyped] metadata) -> void
 
       # Get unique key for the ActiveRecord instance from the incoming key.
       # Override this method (with super) to customize the set of attributes that
@@ -1725,34 +1727,34 @@ module Deimos
       # each slice is handles as its own batch.
       # 
       # _@param_ `messages` — List of messages.
-      def uncompacted_update: (::Array[Message] messages) -> untyped
+      def uncompacted_update: (::Array[Message] messages) -> void
 
       # Perform database operations for a group of messages.
       # All messages with payloads are passed to upsert_records.
       # All tombstones messages are passed to remove_records.
       # 
       # _@param_ `messages` — List of messages.
-      def update_database: (::Array[Message] messages) -> untyped
+      def update_database: (::Array[Message] messages) -> void
 
       # Upsert any non-deleted records
       # records to either be updated or inserted.
       # 
       # _@param_ `messages` — List of messages for a group of
-      def upsert_records: (::Array[Message] messages) -> untyped
+      def upsert_records: (::Array[Message] messages) -> void
 
       # Delete any records with a tombstone.
       # deleted records.
       # 
       # _@param_ `messages` — List of messages for a group of
-      def remove_records: (::Array[Message] messages) -> untyped
+      def remove_records: (::Array[Message] messages) -> void
 
       # Create an ActiveRecord relation that matches all of the passed
       # records. Used for bulk deletion.
       # 
       # _@param_ `records` — List of messages.
       # 
-      # _@return_ — ActiveRecord::Relation Matching relation.
-      def deleted_query: (::Array[Message] records) -> untyped
+      # _@return_ — Matching relation.
+      def deleted_query: (::Array[Message] records) -> ActiveRecord::Relation
 
       # Get the set of attribute names that uniquely identify messages in the
       # batch. Requires at least one record.
@@ -1778,12 +1780,12 @@ module Deimos
       # Default is to use the primary key column and the value of the first
       # field in the key.
       # 
-      # _@param_ `klass` — lass [Class < ActiveRecord::Base]
+      # _@param_ `klass`
       # 
       # _@param_ `_payload`
       # 
       # _@param_ `key`
-      def fetch_record: (SORD_ERROR_ClassActiveRecordBase klass, SORD_ERROR_HashDeimosSchemaClassRecord _payload, Object key) -> ActiveRecord::Base
+      def fetch_record: (singleton(ActiveRecord::Base) klass, (::Hash[untyped, untyped] | Deimos::SchemaClass::Record) _payload, Object key) -> ActiveRecord::Base
 
       # Assign a key to a new record.
       # 
@@ -1792,21 +1794,21 @@ module Deimos
       # _@param_ `_payload`
       # 
       # _@param_ `key`
-      def assign_key: (ActiveRecord::Base record, SORD_ERROR_HashDeimosSchemaClassRecord _payload, Object key) -> untyped
+      def assign_key: (ActiveRecord::Base record, (::Hash[untyped, untyped] | Deimos::SchemaClass::Record) _payload, Object key) -> void
 
       # _@param_ `payload` — Decoded payloads
       # 
       # _@param_ `metadata` — Information about batch, including keys.
-      def consume: (SORD_ERROR_HashDeimosSchemaClassRecord payload, ::Hash[untyped, untyped] metadata) -> untyped
+      def consume: ((::Hash[untyped, untyped] | Deimos::SchemaClass::Record) payload, ::Hash[untyped, untyped] metadata) -> void
 
       # _@param_ `record`
-      def save_record: (ActiveRecord::Base record) -> untyped
+      def save_record: (ActiveRecord::Base record) -> void
 
       # Destroy a record that received a null payload. Override if you need
       # to do something other than a straight destroy (e.g. mark as archived).
       # 
       # _@param_ `record`
-      def destroy_record: (ActiveRecord::Base record) -> untyped
+      def destroy_record: (ActiveRecord::Base record) -> void
     end
 
     # Convert a message with a schema to an ActiveRecord model
