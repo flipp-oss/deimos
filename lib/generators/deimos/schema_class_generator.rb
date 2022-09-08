@@ -214,7 +214,7 @@ module Deimos
           key_schema_base = Deimos.schema_backend(schema: key_config[:schema], namespace: schema.namespace)
           key_schema_base.load_schema
           key_schema = key_schema_base.schema_store.schemas.values.first
-          @fields << Deimos::SchemaField.new('payload_key', key_schema, [])
+          @fields << Deimos::SchemaField.new('payload_key', key_schema, [], nil)
         end
         @initialization_definition = _initialization_definition
         @field_assignments = _field_assignments
