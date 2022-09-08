@@ -45,7 +45,7 @@ module Deimos
   module KafkaListener
     # Listens for any exceptions that happen during publishing and re-publishes
     # as a Deimos event.
-    # @param event [ActiveSupport::Notification]
+    # @param event [ActiveSupport::Notifications::Event]
     # @return [void]
     def self.send_produce_error(event)
       exception = event.payload[:exception_object]

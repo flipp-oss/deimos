@@ -660,7 +660,7 @@ module Deimos
     # as a Deimos event.
     # 
     # _@param_ `event`
-    def self.send_produce_error: (ActiveSupport::Notification event) -> void
+    def self.send_produce_error: (ActiveSupport::Notifications::Event event) -> void
   end
 
   module Utils
@@ -1855,60 +1855,5 @@ module Deimos
     # 
     # _@param_ `val`
     def coerce_type: (Avro::Schema _type, Object val) -> Object
-  end
-end
-
-# :nodoc:
-module Phobos
-  # :nodoc:
-  module CLI
-    # :nodoc:
-    class Start
-      # :nodoc:
-      def validate_listeners!: () -> untyped
-    end
-  end
-
-  module Producer
-    # :nodoc:
-    class PublicAPI
-      # :nodoc:
-      def publish: (
-                     untyped topic,
-                     untyped payload,
-                     ?untyped key,
-                     ?untyped partition_key
-                   ) -> untyped
-
-      # :nodoc:
-      def async_publish: (
-                           untyped topic,
-                           untyped payload,
-                           ?untyped key,
-                           ?untyped partition_key
-                         ) -> untyped
-    end
-
-    # :nodoc:
-    module ClassMethods
-      # :nodoc:
-      class PublicAPI
-        # :nodoc:
-        def publish: (
-                       untyped topic,
-                       untyped payload,
-                       ?untyped key,
-                       ?untyped partition_key
-                     ) -> untyped
-
-        # :nodoc:
-        def async_publish: (
-                             untyped topic,
-                             untyped payload,
-                             ?untyped key,
-                             ?untyped partition_key
-                           ) -> untyped
-      end
-    end
   end
 end
