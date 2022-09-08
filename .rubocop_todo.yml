@@ -113,12 +113,6 @@ Layout/TrailingWhitespace:
     - 'spec/schemas/my_namespace/my_schema_with_circular_reference.rb'
     - 'spec/schemas/my_namespace/my_schema_with_complex_type.rb'
 
-# Offense count: 1
-# Configuration parameters: AllowComments.
-Lint/EmptyFile:
-  Exclude:
-    - 'spec/utils/platform_schema_validation_spec.rb'
-
 # Offense count: 5
 Lint/MissingSuper:
   Exclude:
@@ -146,13 +140,6 @@ Lint/UnusedMethodArgument:
 Lint/UselessAssignment:
   Exclude:
     - 'spec/generators/schema_class_generator_spec.rb'
-
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: AllowComments.
-Lint/UselessMethodDefinition:
-  Exclude:
-    - 'lib/deimos/schema_class/base.rb'
 
 # Offense count: 19
 # Configuration parameters: IgnoredMethods, Max.
@@ -222,19 +209,6 @@ RSpec/MultipleExpectations:
     - 'spec/utils/db_poller_spec.rb'
     - 'spec/utils/db_producer_spec.rb'
 
-# Offense count: 23
-RSpec/StubbedMock:
-  Exclude:
-    - 'spec/active_record_batch_consumer_spec.rb'
-    - 'spec/backends/kafka_async_spec.rb'
-    - 'spec/backends/kafka_spec.rb'
-    - 'spec/producer_spec.rb'
-    - 'spec/rake_spec.rb'
-    - 'spec/schema_backends/avro_base_shared.rb'
-    - 'spec/schema_backends/avro_local_spec.rb'
-    - 'spec/schema_backends/avro_schema_registry_spec.rb'
-    - 'spec/utils/db_producer_spec.rb'
-
 # Offense count: 1
 Style/Documentation:
   Exclude:
@@ -292,12 +266,6 @@ Style/GlobalStdStream:
 Style/HashEachMethods:
   Exclude:
     - 'lib/generators/deimos/schema_class_generator.rb'
-
-# Offense count: 1
-# Cop supports --auto-correct.
-Style/KeywordParametersOrder:
-  Exclude:
-    - 'lib/deimos/active_record_producer.rb'
 
 # Offense count: 31
 # Cop supports --auto-correct.
