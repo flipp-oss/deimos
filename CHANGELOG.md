@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.16.3 - 2022-09-08
+
 - Add the `tombstone` method to schema classes.
 
 # 1.16.2 - 2022-09-07
