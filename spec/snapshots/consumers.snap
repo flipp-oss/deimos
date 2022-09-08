@@ -8,7 +8,7 @@ module Schemas
   class CreateTopic < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :response_id
 
     # @override
@@ -51,7 +51,7 @@ module Schemas
     class ARecord < Deimos::SchemaClass::Record
   
       ### Attribute Accessors ###
-      # @param value [String]
+      # @return [String]
       attr_accessor :a_record_field
   
       # @override
@@ -97,34 +97,34 @@ module Schemas
     attr_reader :a_record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :a_string
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :a_int
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :a_long
-    # @param value [Float]
+    # @return [Float]
     attr_accessor :a_float
-    # @param value [Float]
+    # @return [Float]
     attr_accessor :a_double
-    # @param value [nil, Integer]
+    # @return [nil, Integer]
     attr_accessor :an_optional_int
-    # @param values [Array<Integer>]
+    # @return [Array<Integer>]
     attr_accessor :an_array
-    # @param values [Hash<String, String>]
+    # @return [Hash<String, String>]
     attr_accessor :a_map
-    # @param value [String]
+    # @return [String]
     attr_accessor :timestamp
-    # @param value [String]
+    # @return [String]
     attr_accessor :message_id
 
     ### Attribute Writers ###
-    # @param value [AnEnum]
+    # @return [AnEnum]
     def an_enum=(value)
       @an_enum = AnEnum.initialize_from_value(value)
     end
 
-    # @param value [ARecord]
+    # @return [ARecord]
     def a_record=(value)
       @a_record = ARecord.initialize_from_value(value)
     end
@@ -167,6 +167,13 @@ module Schemas
       'com.my-namespace'
     end
 
+    def self.tombstone(key)
+      record = self.new
+      record.tombstone_key = key
+      record.a_string = key
+      record
+    end
+
     # @override
     def as_json(_opts={})
       {
@@ -198,7 +205,7 @@ module Schemas
   class Index < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :response_id
 
     # @override
@@ -241,13 +248,13 @@ module Schemas
     class MyNestedRecord < Deimos::SchemaClass::Record
   
       ### Attribute Accessors ###
-      # @param value [Integer]
+      # @return [Integer]
       attr_accessor :some_int
-      # @param value [Float]
+      # @return [Float]
       attr_accessor :some_float
-      # @param value [String]
+      # @return [String]
       attr_accessor :some_string
-      # @param value [nil, Integer]
+      # @return [nil, Integer]
       attr_accessor :some_optional_int
   
       # @override
@@ -291,20 +298,20 @@ module Schemas
     attr_reader :some_optional_record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :test_id
-    # @param value [Float]
+    # @return [Float]
     attr_accessor :test_float
-    # @param values [Array<String>]
+    # @return [Array<String>]
     attr_accessor :test_array
 
     ### Attribute Writers ###
-    # @param value [MyNestedRecord]
+    # @return [MyNestedRecord]
     def some_nested_record=(value)
       @some_nested_record = MyNestedRecord.initialize_from_value(value)
     end
 
-    # @param value [nil, MyNestedRecord]
+    # @return [nil, MyNestedRecord]
     def some_optional_record=(value)
       @some_optional_record = MyNestedRecord.initialize_from_value(value)
     end
@@ -357,9 +364,9 @@ module Schemas
   class MySchema < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :test_id
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :some_int
 
     # @override
@@ -401,9 +408,9 @@ module Schemas
   class MySchemaCompoundKey < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :part_one
-    # @param value [String]
+    # @return [String]
     attr_accessor :part_two
 
     # @override
@@ -445,7 +452,7 @@ module Schemas
   class MySchemaIdKey < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :id
 
     # @override
@@ -484,7 +491,7 @@ module Schemas
   class MySchemaKey < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :test_id
 
     # @override
@@ -523,9 +530,9 @@ module Schemas
   class MySchemaWithBoolean < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :test_id
-    # @param value [Boolean]
+    # @return [Boolean]
     attr_accessor :some_bool
 
     # @override
@@ -571,7 +578,7 @@ module Schemas
     class Property < Deimos::SchemaClass::Record
   
       ### Attribute Accessors ###
-      # @param value [Boolean, Integer, Integer, Float, Float, String, Array<Property>, Hash<String, Property>]
+      # @return [Boolean, Integer, Integer, Float, Float, String, Array<Property>, Hash<String, Property>]
       attr_accessor :property
   
       # @override
@@ -604,9 +611,9 @@ module Schemas
     attr_reader :properties
 
     ### Attribute Writers ###
-    # @param values [Hash<String, Property>]
+    # @return [Hash<String, Property>]
     def properties=(values)
-      @properties = values.transform_values do |value|
+      @properties = values&.transform_values do |value|
         Property.initialize_from_value(value)
       end
     end
@@ -651,7 +658,7 @@ module Schemas
     class ARecord < Deimos::SchemaClass::Record
   
       ### Attribute Accessors ###
-      # @param value [String]
+      # @return [String]
       attr_accessor :a_record_field
   
       # @override
@@ -729,57 +736,57 @@ module Schemas
     attr_reader :some_enum_with_default
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :test_id
-    # @param value [Float]
+    # @return [Float]
     attr_accessor :test_float
-    # @param values [Array<String>]
+    # @return [Array<String>]
     attr_accessor :test_string_array
-    # @param values [Array<Integer>]
+    # @return [Array<Integer>]
     attr_accessor :test_int_array
-    # @param value [Integer, nil]
+    # @return [Integer, nil]
     attr_accessor :test_optional_int
-    # @param values [Hash<String, Integer>]
+    # @return [Hash<String, Integer>]
     attr_accessor :some_integer_map
 
     ### Attribute Writers ###
-    # @param value [ARecord]
+    # @return [ARecord]
     def some_record=(value)
       @some_record = ARecord.initialize_from_value(value)
     end
 
-    # @param value [nil, ARecord]
+    # @return [nil, ARecord]
     def some_optional_record=(value)
       @some_optional_record = ARecord.initialize_from_value(value)
     end
 
-    # @param values [Array<ARecord>]
+    # @return [Array<ARecord>]
     def some_record_array=(values)
-      @some_record_array = values.map do |value|
+      @some_record_array = values&.map do |value|
         ARecord.initialize_from_value(value)
       end
     end
 
-    # @param values [Hash<String, ARecord>]
+    # @return [Hash<String, ARecord>]
     def some_record_map=(values)
-      @some_record_map = values.transform_values do |value|
+      @some_record_map = values&.transform_values do |value|
         ARecord.initialize_from_value(value)
       end
     end
 
-    # @param values [Array<AnEnum>]
+    # @return [Array<AnEnum>]
     def some_enum_array=(values)
-      @some_enum_array = values.map do |value|
+      @some_enum_array = values&.map do |value|
         AnEnum.initialize_from_value(value)
       end
     end
 
-    # @param value [nil, AnotherEnum]
+    # @return [nil, AnotherEnum]
     def some_optional_enum=(value)
       @some_optional_enum = AnotherEnum.initialize_from_value(value)
     end
 
-    # @param value [YetAnotherEnum]
+    # @return [YetAnotherEnum]
     def some_enum_with_default=(value)
       @some_enum_with_default = YetAnotherEnum.initialize_from_value(value)
     end
@@ -856,15 +863,15 @@ module Schemas
   class MySchemaWithDateTime < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :test_id
-    # @param value [Integer, nil]
+    # @return [Integer, nil]
     attr_accessor :updated_at
-    # @param value [nil, Integer]
+    # @return [nil, Integer]
     attr_accessor :some_int
-    # @param value [nil, Integer]
+    # @return [nil, Integer]
     attr_accessor :some_datetime_int
-    # @param value [String]
+    # @return [String]
     attr_accessor :timestamp
 
     # @override
@@ -915,13 +922,13 @@ module Schemas
   class MySchemaWithId < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :test_id
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :some_int
-    # @param value [String]
+    # @return [String]
     attr_accessor :message_id
-    # @param value [String]
+    # @return [String]
     attr_accessor :timestamp
 
     # @override
@@ -969,15 +976,15 @@ module Schemas
   class MySchemaWithUniqueId < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :id
-    # @param value [String]
+    # @return [String]
     attr_accessor :test_id
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :some_int
-    # @param value [String]
+    # @return [String]
     attr_accessor :message_id
-    # @param value [String]
+    # @return [String]
     attr_accessor :timestamp
 
     # @override
@@ -1028,7 +1035,7 @@ module Schemas
   class UpdateRequest < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :update_request_id
 
     # @override
@@ -1067,7 +1074,7 @@ module Schemas
   class UpdateResponse < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [String]
+    # @return [String]
     attr_accessor :update_response_id
 
     # @override
@@ -1106,23 +1113,23 @@ module Schemas
   class Wibble < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :id
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :wibble_id
-    # @param value [String]
+    # @return [String]
     attr_accessor :name
-    # @param value [String]
+    # @return [String]
     attr_accessor :floop
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :birthday_int
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :birthday_long
-    # @param value [nil, Integer]
+    # @return [nil, Integer]
     attr_accessor :birthday_optional
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :updated_at
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :created_at
 
     # @override
@@ -1185,15 +1192,15 @@ module Schemas
   class Widget < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :id
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :widget_id
-    # @param value [String]
+    # @return [String]
     attr_accessor :name
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :updated_at
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :created_at
 
     # @override
@@ -1244,15 +1251,15 @@ module Schemas
   class WidgetTheSecond < Deimos::SchemaClass::Record
 
     ### Attribute Accessors ###
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :id
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :widget_id
-    # @param value [String]
+    # @return [String]
     attr_accessor :model_id
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :updated_at
-    # @param value [Integer]
+    # @return [Integer]
     attr_accessor :created_at
 
     # @override

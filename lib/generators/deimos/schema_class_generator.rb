@@ -41,16 +41,16 @@ module Deimos
         # Deimos Consumer or Producer Configuration object
         # @param schema_name [String]
         # @param namespace [String]
-        # @param key_schema_name [String,nil]
-        def generate_classes(schema_name, namespace, key_schema_name)
+        # @param key_config [Hash,nil]
+        def generate_classes(schema_name, namespace, key_config)
           schema_base = Deimos.schema_backend(schema: schema_name, namespace: namespace)
           schema_base.load_schema
-          if key_schema_name.present?
-            key_schema_base = Deimos.schema_backend(schema: key_schema_name, namespace: namespace)
+          if key_config&.dig(:schema)
+            key_schema_base = Deimos.schema_backend(schema: key_config[:schema], namespace: namespace)
             key_schema_base.load_schema
-            generate_class_from_schema_base(key_schema_base)
+            generate_class_from_schema_base(key_schema_base, key_config: nil)
           end
-          generate_class_from_schema_base(schema_base, key_schema_base: key_schema_base)
+          generate_class_from_schema_base(schema_base, key_config: key_config)
         end
 
         # @param schema [Avro::Schema::NamedSchema]
@@ -83,8 +83,8 @@ module Deimos
         end
 
         # @param schema_base [Deimos::SchemaBackends::Base]
-        # @param key_schema_base[Avro::Schema::NamedSchema]
-        def generate_class_from_schema_base(schema_base, key_schema_base: nil)
+        # @param key_config [Hash,nil]
+        def generate_class_from_schema_base(schema_base, key_config: nil)
           @discovered_schemas = Set.new
           @sub_schema_templates = []
           schemas = collect_all_schemas(schema_base.schema_store.schemas.values)
@@ -93,11 +93,11 @@ module Deimos
           sub_schemas = schemas.reject { |s| s.name == schema_base.schema }.sort_by(&:name)
           if Deimos.config.schema.nest_child_schemas
             @sub_schema_templates = sub_schemas.map do |schema|
-              _generate_class_template_from_schema(schema)
+              _generate_class_template_from_schema(schema, nil)
             end
-            write_file(main_schema, key_schema_base)
+            write_file(main_schema, key_config)
           else
-            write_file(main_schema, key_schema_base)
+            write_file(main_schema, key_config)
             sub_schemas.each do |schema|
               write_file(schema, nil)
             end
@@ -105,9 +105,9 @@ module Deimos
         end
 
         # @param schema [Avro::Schema::NamedSchema]
-        # @param key_schema_base [Avro::Schema::NamedSchema, nil]
-        def write_file(schema, key_schema_base)
-          class_template = _generate_class_template_from_schema(schema, key_schema_base)
+        # @param key_schema_base [Hash]
+        def write_file(schema, key_config)
+          class_template = _generate_class_template_from_schema(schema, key_config)
           @modules = Utils::SchemaClass.modules_for(schema.namespace)
           @main_class_definition = class_template
 
@@ -154,7 +154,7 @@ module Deimos
           key_schema_name = config.key_config[:schema]
           found_schemas.add("#{namespace}.#{schema_name}")
           found_schemas.add("#{namespace}.#{key_schema_name}") if key_schema_name
-          generate_classes(schema_name, namespace, key_schema_name)
+          generate_classes(schema_name, namespace, config.key_config)
         end
 
         Deimos.config.consumer_objects.each do |config|
@@ -163,7 +163,7 @@ module Deimos
           key_schema_name = config.key_config[:schema]
           found_schemas.add("#{namespace}.#{schema_name}")
           found_schemas.add("#{namespace}.#{key_schema_name}") if key_schema_name
-          generate_classes(schema_name, namespace, key_schema_name)
+          generate_classes(schema_name, namespace, config.key_config)
         end
 
         generate_from_schema_files(found_schemas)
@@ -191,10 +191,10 @@ module Deimos
       end
 
       # @param schema[Avro::Schema::NamedSchema]
-      # @param key_schema_base[Avro::Schema::NamedSchema]
+      # @param key_config[Hash,nil]
       # @return [String]
-      def _generate_class_template_from_schema(schema, key_schema_base=nil)
-        _set_instance_variables(schema, key_schema_base)
+      def _generate_class_template_from_schema(schema, key_config)
+        _set_instance_variables(schema, key_config)
 
         temp = schema.is_a?(Avro::Schema::RecordSchema) ? _record_class_template : _enum_class_template
         res = ERB.new(temp, nil, '-')
@@ -202,20 +202,38 @@ module Deimos
       end
 
       # @param schema[Avro::Schema::NamedSchema]
-      # @param key_schema_base[Avro::Schema::NamedSchema]
-      def _set_instance_variables(schema, key_schema_base=nil)
+      # @param key_config [Hash,nil]
+      def _set_instance_variables(schema, key_config)
         schema_is_record = schema.is_a?(Avro::Schema::RecordSchema)
         @current_schema = schema
         return unless schema_is_record
 
         @fields = fields(schema)
-        if key_schema_base.present?
+        key_schema = nil
+        if key_config&.dig(:schema)
+          key_schema_base = Deimos.schema_backend(schema: key_config[:schema], namespace: schema.namespace)
           key_schema_base.load_schema
           key_schema = key_schema_base.schema_store.schemas.values.first
-          @fields << Deimos::SchemaField.new('payload_key', key_schema, [], nil)
+          @fields << Deimos::SchemaField.new('payload_key', key_schema, [])
         end
         @initialization_definition = _initialization_definition
         @field_assignments = _field_assignments
+        @tombstone_assignment = _tombstone_assignment(key_config, key_schema)
+      end
+
+      def _tombstone_assignment(key_config, key_schema)
+        return nil unless key_config
+
+        if key_config[:plain]
+          "record.tombstone_key = key"
+        elsif key_config[:field]
+          "record.tombstone_key = key\n      record.#{key_config[:field]} = key"
+        elsif key_schema
+          field_base_type = _field_type(key_schema)
+          "record.tombstone_key = #{field_base_type}.initialize_from_value(key)\n      record.payload_key = key"
+        else
+          ''
+        end
       end
 
       # Defines the initialization method for Schema Records with one keyword argument per line

@@ -20,7 +20,7 @@
 <%- if @field_assignments.select{ |h| !h[:is_schema_class] }.any? -%>
     ### Attribute Accessors ###
   <%- @field_assignments.select{ |h| !h[:is_schema_class] }.each do |method_definition| -%>
-    # @param <%= method_definition[:method_argument] %> [<%= method_definition[:deimos_type] %>]
+    # @return [<%= method_definition[:deimos_type] %>]
     attr_accessor :<%= method_definition[:field].name %>
   <%- end -%>
 
@@ -28,14 +28,14 @@
 <%- if @field_assignments.select{ |h| h[:is_schema_class] }.any? -%>
     ### Attribute Writers ###
   <%- @field_assignments.select{ |h| h[:is_schema_class] }.each do |method_definition| -%>
-    # @param <%= method_definition[:method_argument] %> [<%= method_definition[:deimos_type] %>]
+    # @return [<%= method_definition[:deimos_type] %>]
     def <%= method_definition[:field].name %>=(<%= method_definition[:method_argument] %>)
     <%- if method_definition[:field_type] == :array -%>
-      @<%= method_definition[:field].name %> = values.map do |value|
+      @<%= method_definition[:field].name %> = values&.map do |value|
         <%= method_definition[:field_initialization] %>
       end
     <%- elsif method_definition[:field_type] == :map -%>
-      @<%= method_definition[:field].name %> = values.transform_values do |value|
+      @<%= method_definition[:field].name %> = values&.transform_values do |value|
         <%= method_definition[:field_initialization] %>
       end
     <%- else -%>
@@ -62,7 +62,15 @@
     def namespace
       '<%= @current_schema.namespace %>'
     end
-
+<%- if @tombstone_assignment %>
+    def self.tombstone(key)
+      record = self.new
+<%- if @tombstone_assignment.present? -%>
+      <%= @tombstone_assignment %>
+<%- end -%>
+      record
+    end
+<%- end %>
     # @override
     def as_json(_opts={})
       {

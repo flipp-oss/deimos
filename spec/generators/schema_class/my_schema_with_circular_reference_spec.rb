@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # For testing the generated class.
-RSpec.describe Schemas::MySchemaWithCircularReference do
+RSpec.describe Schemas::MyNamespace::MySchemaWithCircularReference do
   let(:payload_hash) do
     {
       properties: {
