@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Now generates RBS types.
+
 # 1.16.2 - 2022-09-07
 
 - Added support of post_process method in ActiveRecordProducer
