@@ -839,6 +839,8 @@ One additional configuration option indicates whether nested records should be g
 
     config.schema.nest_child_schemas = false # Flatten all classes into one directory
 
+You can generate a tombstone message (with only a key and no value) by calling the `YourSchemaClass.tombstone(key)` method. If you're using a `:field` key config, you can pass in just the key scalar value. If using a key schema, you can pass it in as a hash or as another schema class.
+
 ### Consumer
 
 The consumer interface uses the `decode_message` method to turn JSON hash into the Schemas

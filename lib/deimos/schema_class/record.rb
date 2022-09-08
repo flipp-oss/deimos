@@ -8,10 +8,16 @@ module Deimos
     # Base Class of Record Classes generated from Avro.
     class Record < Base
 
+      attr_accessor :tombstone_key
+
       # Converts the object attributes to a hash which can be used for Kafka
       # @return [Hash] the payload as a hash.
       def to_h
-        self.as_json
+        if self.tombstone_key
+          { payload_key: self.tombstone_key&.as_json }
+        else
+          self.as_json
+        end
       end
 
       # Merge a hash or an identical schema object with this one and return a new object.

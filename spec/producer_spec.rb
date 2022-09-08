@@ -397,7 +397,7 @@ module ProducerTest
         end
         expect(MyProducer.encoder).to receive(:validate).and_raise('OH NOES')
         expect {
-          MyProducer.publish(Schemas::MySchema.new(test_id: 'foo', some_int: 'invalid'))
+          MyProducer.publish(Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 'invalid'))
         }.to raise_error('OH NOES')
         Deimos.unsubscribe(subscriber)
       end
@@ -420,8 +420,8 @@ module ProducerTest
         ).and_call_original
 
         MyProducer.publish_list(
-          [Schemas::MySchema.new(test_id: 'foo', some_int: 123),
-           Schemas::MySchema.new(test_id: 'bar', some_int: 124)]
+          [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123),
+           Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124)]
         )
         expect('my-topic').to have_sent('test_id' => 'foo', 'some_int' => 123)
         expect('your-topic').not_to have_sent('test_id' => 'foo', 'some_int' => 123)
@@ -432,8 +432,8 @@ module ProducerTest
         expect(described_class).not_to receive(:produce_batch)
         Deimos.configure { |c| c.producers.disabled = true }
         MyProducer.publish_list(
-          [Schemas::MySchema.new(test_id: 'foo', some_int: 123),
-           Schemas::MySchema.new(test_id: 'bar', some_int: 124)]
+          [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123),
+           Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124)]
         )
         expect(MyProducer.topic).not_to have_sent(anything)
       end
@@ -452,8 +452,8 @@ module ProducerTest
                                                             }, { topic: 'my-topic-value' })
 
         MyProducer.publish_list(
-          [Schemas::MySchema.new(test_id: 'foo', some_int: 123),
-           Schemas::MySchema.new(test_id: 'bar', some_int: 124)]
+          [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123),
+           Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124)]
         )
       end
 
@@ -464,19 +464,19 @@ module ProducerTest
                                                                       { topic: 'my-topic2-key' })
 
         MySchemaProducer.publish_list(
-          [Schemas::MySchema.new(test_id: 'foo', some_int: 123, payload_key: { 'test_id' => 'foo_key' }),
-           Schemas::MySchema.new(test_id: 'bar', some_int: 124, payload_key: { 'test_id' => 'bar_key' })]
+          [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123, payload_key: { 'test_id' => 'foo_key' }),
+           Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124, payload_key: { 'test_id' => 'bar_key' })]
         )
       end
 
       it 'should properly encode and coerce values with a nested record' do
         expect(MyNestedSchemaProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
         MyNestedSchemaProducer.publish(
-          Schemas::MyNestedSchema.new(
+          Schemas::MyNamespace::MyNestedSchema.new(
             test_id: 'foo',
             test_float: BigDecimal('123.456'),
             test_array: ['1'],
-            some_nested_record: Schemas::MyNestedSchema::MyNestedRecord.new(
+            some_nested_record: Schemas::MyNamespace::MyNestedSchema::MyNestedRecord.new(
               some_int: 123,
               some_float: BigDecimal('456.789'),
               some_string: '123',
