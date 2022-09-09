@@ -8,23 +8,29 @@ module Deimos
   # Copied from Phobos instrumentation.
   module Instrumentation
     extend ActiveSupport::Concern
+
+    # @return [String]
     NAMESPACE = 'Deimos'
 
     # :nodoc:
     module ClassMethods
-      # :nodoc:
+      # @param event [String]
+      # @return [void]
       def subscribe(event)
         ActiveSupport::Notifications.subscribe("#{NAMESPACE}.#{event}") do |*args|
           yield(ActiveSupport::Notifications::Event.new(*args)) if block_given?
         end
       end
 
-      # :nodoc:
+      # @param subscriber [ActiveSupport::Subscriber]
+      # @return [void]
       def unsubscribe(subscriber)
         ActiveSupport::Notifications.unsubscribe(subscriber)
       end
 
-      # :nodoc:
+      # @param event [String]
+      # @param extra [Hash]
+      # @return [void]
       def instrument(event, extra={})
         ActiveSupport::Notifications.instrument("#{NAMESPACE}.#{event}", extra) do |extra2|
           yield(extra2) if block_given?
@@ -39,7 +45,8 @@ module Deimos
   module KafkaListener
     # Listens for any exceptions that happen during publishing and re-publishes
     # as a Deimos event.
-    # @param event [ActiveSupport::Notification]
+    # @param event [ActiveSupport::Notifications::Event]
+    # @return [void]
     def self.send_produce_error(event)
       exception = event.payload[:exception_object]
       return if !exception || !exception.respond_to?(:failed_messages)

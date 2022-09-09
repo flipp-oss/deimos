@@ -11,6 +11,8 @@ module Deimos
       # slices that maintain the correct order.
       # E.g. Given messages A1, A2, B1, C1, C2, C3, they will be sliced as:
       # [[A1, B1, C1], [A2, C2], [C3]]
+      # @param messages [Array<Message>]
+      # @return [Array<Array<Message>>]
       def self.slice(messages)
         ops = messages.group_by(&:key)
 

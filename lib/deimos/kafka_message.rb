@@ -10,6 +10,7 @@ module Deimos
     # Ensure it gets turned into a string, e.g. for testing purposes. It
     # should already be a string.
     # @param mess [Object]
+    # @return [void]
     def message=(mess)
       write_attribute(:message, mess ? mess.to_s : nil)
     end

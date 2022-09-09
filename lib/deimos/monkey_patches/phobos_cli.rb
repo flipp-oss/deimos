@@ -2,7 +2,7 @@
 
 require 'phobos/cli/start'
 
-# :nodoc:
+#@!visibility private
 module Phobos
   # :nodoc:
   module CLI

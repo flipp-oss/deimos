@@ -2,6 +2,7 @@
 
 require 'phobos/producer'
 
+#@!visibility private
 module Phobos
   module Producer
     # :nodoc:

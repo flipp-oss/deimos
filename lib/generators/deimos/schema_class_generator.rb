@@ -11,11 +11,17 @@ module Deimos
     # Generator for Schema Classes used for the IDE and consumer/producer interfaces
     class SchemaClassGenerator < Rails::Generators::Base
 
+      # @return [Array<Symbol>]
       SPECIAL_TYPES = %i(record enum).freeze
+      # @return [String]
       INITIALIZE_WHITESPACE = "\n#{' ' * 19}"
+      # @return [Array<String>]
       IGNORE_DEFAULTS = %w(message_id timestamp).freeze
+      # @return [String]
       SCHEMA_CLASS_FILE = 'schema_class.rb'
+      # @return [String]
       SCHEMA_RECORD_PATH = File.expand_path('schema_class/templates/schema_record.rb.tt', __dir__).freeze
+      # @return [String]
       SCHEMA_ENUM_PATH = File.expand_path('schema_class/templates/schema_enum.rb.tt', __dir__).freeze
 
       source_root File.expand_path('schema_class/templates', __dir__)
@@ -42,6 +48,7 @@ module Deimos
         # @param schema_name [String]
         # @param namespace [String]
         # @param key_config [Hash,nil]
+        # @return [void]
         def generate_classes(schema_name, namespace, key_config)
           schema_base = Deimos.schema_backend(schema: schema_name, namespace: namespace)
           schema_base.load_schema
@@ -84,6 +91,7 @@ module Deimos
 
         # @param schema_base [Deimos::SchemaBackends::Base]
         # @param key_config [Hash,nil]
+        # @return [void]
         def generate_class_from_schema_base(schema_base, key_config: nil)
           @discovered_schemas = Set.new
           @sub_schema_templates = []
@@ -105,7 +113,8 @@ module Deimos
         end
 
         # @param schema [Avro::Schema::NamedSchema]
-        # @param key_schema_base [Hash]
+        # @param key_config [Hash,nil]
+        # @return [void]
         def write_file(schema, key_config)
           class_template = _generate_class_template_from_schema(schema, key_config)
           @modules = Utils::SchemaClass.modules_for(schema.namespace)
@@ -143,7 +152,7 @@ module Deimos
       end
 
       desc 'Generate a class based on configured consumer and producers.'
-      # :nodoc:
+      # @return [void]
       def generate
         _validate
         Rails.logger.info("Generating schemas from Deimos.config to #{Deimos.config.schema.generated_class_path}")
@@ -252,7 +261,7 @@ module Deimos
         "#{result})"
       end
 
-      # @param [SchemaField]
+      # @param field [SchemaField]
       # @return [String]
       def _field_default(field)
         default = field.default

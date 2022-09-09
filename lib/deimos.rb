@@ -45,7 +45,7 @@ require 'erb'
 # Parent module.
 module Deimos
   class << self
-    # @return [Class < Deimos::SchemaBackends::Base]
+    # @return [Class<Deimos::SchemaBackends::Base>]
     def schema_backend_class
       backend = Deimos.config.schema.backend.to_s
 
@@ -54,7 +54,7 @@ module Deimos
       "Deimos::SchemaBackends::#{backend.classify}".constantize
     end
 
-    # @param schema [String|Symbol]
+    # @param schema [String, Symbol]
     # @param namespace [String]
     # @return [Deimos::SchemaBackends::Base]
     def schema_backend(schema:, namespace:)
@@ -81,6 +81,7 @@ module Deimos
 
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
+    # @return [void]
     def start_db_backend!(thread_count: 1)
       Sigurd.exit_on_signal = true
       if self.config.producers.backend != :db

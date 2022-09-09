@@ -8,8 +8,11 @@ module Deimos
       include Phobos::Producer
       attr_accessor :id, :current_topic
 
+      # @return [Integer]
       BATCH_SIZE = 1000
+      # @return [Integer]
       DELETE_BATCH_SIZE = 10
+      # @return [Integer]
       MAX_DELETE_ATTEMPTS = 3
 
       # @param logger [Logger]
@@ -19,12 +22,13 @@ module Deimos
         @logger.push_tags("DbProducer #{@id}") if @logger.respond_to?(:push_tags)
       end
 
-      # @return [Deimos::DbProducerConfig]
+      # @return [FigTree]
       def config
         Deimos.config.db_producer
       end
 
       # Start the poll.
+      # @return [void]
       def start
         @logger.info('Starting...')
         @signal_to_stop = false
@@ -40,12 +44,14 @@ module Deimos
       end
 
       # Stop the poll.
+      # @return [void]
       def stop
         @logger.info('Received signal to stop')
         @signal_to_stop = true
       end
 
       # Complete one loop of processing all messages in the DB.
+      # @return [void]
       def process_next_messages
         topics = retrieve_topics
         @logger.info("Found topics: #{topics}")
@@ -80,6 +86,7 @@ module Deimos
       end
 
       # Process a single batch in a topic.
+      # @return [void]
       def process_topic_batch
         messages = retrieve_messages
         return false if messages.empty?
@@ -111,6 +118,7 @@ module Deimos
       end
 
       # @param messages [Array<Deimos::KafkaMessage>]
+      # @return [void]
       def delete_messages(messages)
         attempts = 1
         begin
@@ -137,6 +145,7 @@ module Deimos
       end
 
       # @param messages [Array<Deimos::KafkaMessage>]
+      # @return [void]
       def log_messages(messages)
         return if config.log_topics != :all && !config.log_topics.include?(@current_topic)
 
@@ -146,7 +155,8 @@ module Deimos
         end
       end
 
-      # Send metrics to Datadog.
+      # Send metrics related to pending messages.
+      # @return [void]
       def send_pending_metrics
         metrics = Deimos.config.metrics
         return unless metrics
@@ -185,6 +195,7 @@ module Deimos
       # Shut down the sync producer if we have to. Phobos will automatically
       # create a new one. We should call this if the producer can be in a bad
       # state and e.g. we need to clear the buffer.
+      # @return [void]
       def shutdown_producer
         if self.class.producer.respond_to?(:sync_producer_shutdown) # Phobos 1.8.3
           self.class.producer.sync_producer_shutdown
@@ -194,6 +205,7 @@ module Deimos
       # Produce messages in batches, reducing the size 1/10 if the batch is too
       # large. Does not retry batches of messages that have already been sent.
       # @param batch [Array<Hash>]
+      # @return [void]
       def produce_messages(batch)
         batch_size = batch.size
         current_index = 0

@@ -393,7 +393,7 @@ module Schemas
     end
 
     def self.tombstone(key)
-      record = self.new
+      record = self.allocate
       record.tombstone_key = MySchemaKey.initialize_from_value(key)
       record.payload_key = key
       record

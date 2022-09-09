@@ -32,6 +32,7 @@ module Deimos
   end
 
   # Loads generated classes
+  # @return [void]
   def self.load_generated_schema_classes
     if Deimos.config.schema.generated_class_path.nil?
       raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
@@ -43,6 +44,7 @@ module Deimos
   end
 
   # Ensure everything is set up correctly for the DB backend.
+  # @!visibility private
   def self.validate_db_backend
     begin
       require 'activerecord-import'
@@ -56,6 +58,7 @@ module Deimos
 
   # Validate that consumers are configured correctly, including their
   # delivery mode.
+  # @!visibility private
   def self.validate_consumers
     Phobos.config.listeners.each do |listener|
       handler_class = listener.handler.constantize
@@ -74,6 +77,7 @@ module Deimos
     end
   end
 
+  # @!visibility private
   # @param kafka_config [FigTree::ConfigStruct]
   def self.configure_producer_or_consumer(kafka_config)
     klass = kafka_config.class_name.constantize

@@ -7,6 +7,7 @@ module Deimos
       include Phobos::Producer
 
       # Shut down the producer if necessary.
+      # @return [void]
       def self.shutdown_producer
         producer.sync_producer_shutdown if producer.respond_to?(:sync_producer_shutdown)
         producer.kafka_client&.close

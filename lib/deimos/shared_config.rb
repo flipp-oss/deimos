@@ -35,12 +35,14 @@ module Deimos
 
       # Set the schema.
       # @param schema [String]
+      # @return [void]
       def schema(schema)
         config[:schema] = schema
       end
 
       # Set the namespace.
       # @param namespace [String]
+      # @return [void]
       def namespace(namespace)
         config[:namespace] = namespace
       end
@@ -48,9 +50,10 @@ module Deimos
       # Set key configuration.
       # @param field [Symbol] the name of a field to use in the value schema as
       #   a generated key schema
-      # @param schema [String|Symbol] the name of a schema to use for the key
+      # @param schema [String, Symbol] the name of a schema to use for the key
       # @param plain [Boolean] if true, do not encode keys at all
       # @param none [Boolean] if true, do not use keys at all
+      # @return [void]
       def key_config(plain: nil, field: nil, schema: nil, none: nil)
         config[:key_configured] = true
         config[:no_keys] = none
@@ -59,7 +62,8 @@ module Deimos
         config[:key_schema] = schema
       end
 
-      # @param enabled [Boolean]
+      # @param use_schema_classes [Boolean]
+      # @return [void]
       def schema_class_config(use_schema_classes)
         config[:use_schema_classes] = use_schema_classes
       end

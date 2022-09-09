@@ -6,7 +6,7 @@ module Deimos
   module Tracing
     # Tracing wrapper class for Datadog.
     class Datadog < Tracing::Provider
-      # :nodoc:
+      # @param config [Hash]
       def initialize(config)
         raise 'Tracing config must specify service_name' if config[:service_name].nil?
 

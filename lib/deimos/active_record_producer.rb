@@ -17,6 +17,7 @@ module Deimos
       # @param refetch [Boolean] if true, and we are given a hash instead of
       # a record object, refetch the record to pass into the `generate_payload`
       # method.
+      # @return [void]
       def record_class(klass, refetch: true)
         config[:record_class] = klass
         config[:refetch_record] = refetch
@@ -24,12 +25,14 @@ module Deimos
 
       # @param record [ActiveRecord::Base]
       # @param force_send [Boolean]
+      # @return [void]
       def send_event(record, force_send: false)
         send_events([record], force_send: force_send)
       end
 
       # @param records [Array<ActiveRecord::Base>]
       # @param force_send [Boolean]
+      # @return [void]
       def send_events(records, force_send: false)
         primary_key = config[:record_class]&.primary_key
         messages = records.map do |record|

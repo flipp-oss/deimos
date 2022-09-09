@@ -8,8 +8,8 @@ module Deimos
       # Find the record specified by the given payload and key.
       # Default is to use the primary key column and the value of the first
       # field in the key.
-      # @param klass [Class < ActiveRecord::Base]
-      # @param _payload [Hash|Deimos::SchemaClass::Record]
+      # @param klass [Class<ActiveRecord::Base>]
+      # @param _payload [Hash,Deimos::SchemaClass::Record]
       # @param key [Object]
       # @return [ActiveRecord::Base]
       def fetch_record(klass, _payload, key)
@@ -19,14 +19,16 @@ module Deimos
 
       # Assign a key to a new record.
       # @param record [ActiveRecord::Base]
-      # @param _payload [Hash|Deimos::SchemaClass::Record]
+      # @param _payload [Hash,Deimos::SchemaClass::Record]
       # @param key [Object]
+      # @return [void]
       def assign_key(record, _payload, key)
         record[record.class.primary_key] = key
       end
 
-      # @param payload [Hash|Deimos::SchemaClass::Record] Decoded payloads
+      # @param payload [Hash,Deimos::SchemaClass::Record] Decoded payloads
       # @param metadata [Hash] Information about batch, including keys.
+      # @return [void]
       def consume(payload, metadata)
         unless self.process_message?(payload)
           Deimos.config.logger.debug(
@@ -64,6 +66,7 @@ module Deimos
       end
 
       # @param record [ActiveRecord::Base]
+      # @return [void]
       def save_record(record)
         record.created_at ||= Time.zone.now if record.respond_to?(:created_at)
         record.updated_at = Time.zone.now if record.respond_to?(:updated_at)
@@ -73,6 +76,7 @@ module Deimos
       # Destroy a record that received a null payload. Override if you need
       # to do something other than a straight destroy (e.g. mark as archived).
       # @param record [ActiveRecord::Base]
+      # @return [void]
       def destroy_record(record)
         record&.destroy
       end

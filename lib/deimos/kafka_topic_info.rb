@@ -50,6 +50,7 @@ module Deimos
       # moves on to the next one.
       # @param topic [String]
       # @param lock_id [String]
+      # @return [void]
       def clear_lock(topic, lock_id)
         self.where(topic: topic, locked_by: lock_id).
           update_all(locked_by: nil,
@@ -66,6 +67,7 @@ module Deimos
       # was in a good state.
       # @param except_topics [Array<String>] the list of topics we've just
       # realized had messages in them, meaning all other topics were empty.
+      # @return [void]
       def ping_empty_topics(except_topics)
         records = KafkaTopicInfo.where(locked_by: nil).
           where('topic not in(?)', except_topics)
@@ -79,6 +81,7 @@ module Deimos
       # and allows the caller to continue to the next topic.
       # @param topic [String]
       # @param lock_id [String]
+      # @return [void]
       def register_error(topic, lock_id)
         record = self.where(topic: topic, locked_by: lock_id).last
         attr_hash = { locked_by: nil,
@@ -93,6 +96,7 @@ module Deimos
       # working on those messages and to continue.
       # @param topic [String]
       # @param lock_id [String]
+      # @return [void]
       def heartbeat(topic, lock_id)
         self.where(topic: topic, locked_by: lock_id).
           update_all(locked_at: Time.zone.now)

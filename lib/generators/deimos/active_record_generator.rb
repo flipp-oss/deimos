@@ -69,7 +69,7 @@ module Deimos
       end
 
       desc 'Generate migration for a table based on an existing schema.'
-      # :nodoc:
+      # @return [void]
       def generate
         migration_template('migration.rb', "db/migrate/create_#{table_name.underscore}.rb")
         template('model.rb', "app/models/#{table_name.underscore.singularize}.rb")

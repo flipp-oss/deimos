@@ -6,13 +6,14 @@ module Deimos
   module Tracing
     # Class that mocks out tracing functionality
     class Mock < Tracing::Provider
-      # :nodoc:
+      # @param logger [Logger]
       def initialize(logger=nil)
         @logger = logger || Logger.new(STDOUT)
         @logger.info('MockTracingProvider initialized')
       end
 
-      # :nodoc:
+      # @param span_name [String]
+      # @param _options [Hash]
       def start(span_name, _options={})
         @logger.info("Mock span '#{span_name}' started")
         {
@@ -35,7 +36,7 @@ module Deimos
       end
 
       # :nodoc:
-      def set_tag(name, value)
+      def set_tag(tag, value, span=nil)
         nil
       end
 

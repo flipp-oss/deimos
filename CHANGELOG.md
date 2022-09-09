@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Now generates RBS types.
 - Use `allocate` instead of `new` in `tombstone` to avoid issues with required fields in `initialize`.
 
 # 1.16.3 - 2022-09-08

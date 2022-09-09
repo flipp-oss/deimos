@@ -7,12 +7,15 @@ module Deimos
   module Utils
     # Class which continually polls the database and sends Kafka messages.
     class DbPoller
+      # @return [Integer]
       BATCH_SIZE = 1000
 
       # Needed for Executor so it can identify the worker
+      # @return [Integer]
       attr_reader :id
 
       # Begin the DB Poller process.
+      # @return [void]
       def self.start!
         if Deimos.config.db_poller_objects.empty?
           raise('No pollers configured!')
@@ -28,7 +31,7 @@ module Deimos
         signal_handler.run!
       end
 
-      # @param config [Deimos::Configuration::ConfigStruct]
+      # @param config [FigTree::ConfigStruct]
       def initialize(config)
         @config = config
         @id = SecureRandom.hex
@@ -47,6 +50,7 @@ module Deimos
       # time we ran
       # 2) On a loop, process all the recent updates between the last time
       # we ran and now.
+      # @return [void]
       def start
         # Don't send asynchronously
         if Deimos.config.producers.backend == :kafka_async
@@ -66,6 +70,7 @@ module Deimos
       end
 
       # Grab the PollInfo or create if it doesn't exist.
+      # @return [void]
       def retrieve_poll_info
         ActiveRecord::Base.connection.reconnect! unless ActiveRecord::Base.connection.open_transactions.positive?
         new_time = @config.start_from_beginning ? Time.new(0) : Time.zone.now
@@ -76,6 +81,7 @@ module Deimos
       end
 
       # Stop the poll.
+      # @return [void]
       def stop
         Deimos.config.logger.info('Received signal to stop')
         @signal_to_stop = true
@@ -95,6 +101,7 @@ module Deimos
       end
 
       # Send messages for updated data.
+      # @return [void]
       def process_updates
         return unless should_run?
 
@@ -135,6 +142,7 @@ module Deimos
       end
 
       # @param batch [Array<ActiveRecord::Base>]
+      # @return [void]
       def process_batch(batch)
         record = batch.last
         id_method = record.class.primary_key

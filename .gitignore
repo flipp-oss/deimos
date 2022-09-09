@@ -40,3 +40,4 @@ Gemfile.lock
 test.sqlite3
 
 .idea
+/.gem_rbs_collection/

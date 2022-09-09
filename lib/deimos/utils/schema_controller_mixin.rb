@@ -31,6 +31,7 @@ module Deimos
         # @param kwactions [String]
         # @param request [String]
         # @param response [String]
+        # @return [void]
         def schemas(*actions, request: nil, response: nil, **kwactions)
           actions.each do |action|
             request ||= action.to_s.titleize
@@ -49,6 +50,7 @@ module Deimos
 
         # Set the namespace for both requests and responses.
         # @param name [String]
+        # @return [void]
         def namespace(name)
           request_namespace(name)
           response_namespace(name)
@@ -56,12 +58,14 @@ module Deimos
 
         # Set the namespace for requests.
         # @param name [String]
+        # @return [void]
         def request_namespace(name)
           namespaces[:request] = name
         end
 
         # Set the namespace for repsonses.
         # @param name [String]
+        # @return [void]
         def response_namespace(name)
           namespaces[:response] = name
         end
@@ -94,6 +98,7 @@ module Deimos
       end
 
       # Decode the payload with the parameters.
+      # @return [void]
       def decode_schema
         namespace, schema = parse_namespace(:request)
         decoder = Deimos.schema_backend(schema: schema, namespace: namespace)
@@ -109,6 +114,9 @@ module Deimos
 
       # Render a hash into a payload as specified by the configured schema and namespace.
       # @param payload [Hash]
+      # @param schema [String]
+      # @param namespace [String]
+      # @return [void]
       def render_schema(payload, schema: nil, namespace: nil)
         namespace, schema = parse_namespace(:response) if !schema && !namespace
         encoder = Deimos.schema_backend(schema: schema, namespace: namespace)

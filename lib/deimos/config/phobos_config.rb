@@ -20,7 +20,7 @@ module Deimos
       }.to_h
     end
 
-    # :nodoc:
+    # @return [void]
     def reset!
       super
       Phobos.configure(self.phobos_config)
@@ -115,6 +115,7 @@ module Deimos
     end
 
     # Legacy method to parse Phobos config file
+    # @!visibility private
     def phobos_config_file=(file)
       pconfig = YAML.load(ERB.new(File.read(File.expand_path(file))).result). # rubocop:disable Security/YAMLLoad
         with_indifferent_access

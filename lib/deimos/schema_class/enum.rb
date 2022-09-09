@@ -8,9 +8,11 @@ module Deimos
     # Base Class for Enum Classes generated from Avro.
     class Enum < Base
 
+      # @return [String]
       attr_accessor :value
 
       # @param other [Deimos::SchemaClass::Enum]
+      # @return [Boolean]
       def ==(other)
         other.is_a?(self.class) ? other.value == @value : other == @value
       end
@@ -31,12 +33,12 @@ module Deimos
         raise NotImplementedError
       end
 
-      # :nodoc:
+      # @return [String]
       def as_json(_opts={})
         @value
       end
 
-      # :nodoc:
+      # @return [SchemaClass::Enum]
       def self.initialize_from_value(value)
         return nil if value.nil?
 

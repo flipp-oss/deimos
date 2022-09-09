@@ -34,6 +34,7 @@ module Deimos
       end
 
       # Main method to create all the necessary files
+      # @return [void]
       def generate
         if Rails.version < '4'
           migration_template('rails3_migration',
