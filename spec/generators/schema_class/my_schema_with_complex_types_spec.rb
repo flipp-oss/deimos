@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # For testing the generated class.
-RSpec.describe Schemas::MySchemaWithComplexType do
+RSpec.describe Schemas::MyNamespace::MySchemaWithComplexType do
   let(:payload_hash) do
     {
       test_id: 'test id',
@@ -9,16 +9,16 @@ RSpec.describe Schemas::MySchemaWithComplexType do
       test_string_array: %w(abc def),
       test_int_array: [123, 456],
       some_integer_map: { 'int_1' => 1, 'int_2' => 2 },
-      some_record: Schemas::MySchemaWithComplexType::ARecord.new(a_record_field: 'field 1'),
-      some_optional_record: Schemas::MySchemaWithComplexType::ARecord.new(a_record_field: 'field 2'),
-      some_record_array: [Schemas::MySchemaWithComplexType::ARecord.new(a_record_field: 'field 3'),
-                          Schemas::MySchemaWithComplexType::ARecord.new(a_record_field: 'field 4')],
+      some_record: described_class::ARecord.new(a_record_field: 'field 1'),
+      some_optional_record: described_class::ARecord.new(a_record_field: 'field 2'),
+      some_record_array: [described_class::ARecord.new(a_record_field: 'field 3'),
+                          described_class::ARecord.new(a_record_field: 'field 4')],
       some_record_map: {
-        'record_1' => Schemas::MySchemaWithComplexType::ARecord.new(a_record_field: 'field 5'),
-        'record_2' => Schemas::MySchemaWithComplexType::ARecord.new(a_record_field: 'field 6')
+        'record_1' => described_class::ARecord.new(a_record_field: 'field 5'),
+        'record_2' => described_class::ARecord.new(a_record_field: 'field 6')
       },
-      some_enum_array: [Schemas::MySchemaWithComplexType::AnEnum.new('sym1'),
-                        Schemas::MySchemaWithComplexType::AnEnum.new('sym2')]
+      some_enum_array: [described_class::AnEnum.new('sym1'),
+                        described_class::AnEnum.new('sym2')]
     }
   end
 
@@ -49,6 +49,14 @@ RSpec.describe Schemas::MySchemaWithComplexType do
       expect(klass).to be_instance_of(described_class)
     end
 
+  end
+
+  describe '.tombstone' do
+    it 'should return a tombstone' do
+      record = described_class.tombstone('foo')
+      expect(record.tombstone_key).to eq('foo')
+      expect(record.to_h).to eq({payload_key: 'foo'})
+    end
   end
 
   describe 'base class methods' do
@@ -116,7 +124,7 @@ RSpec.describe Schemas::MySchemaWithComplexType do
       payload_hash.delete(:some_record)
       klass = described_class.new(**payload_hash)
       expect(klass.some_record).
-        to eq(Schemas::MySchemaWithComplexType::ARecord.new(a_record_field: 'Test String'))
+        to eq(described_class::ARecord.new(a_record_field: 'Test String'))
     end
 
     it 'should set some_record to nil' do
@@ -139,26 +147,26 @@ RSpec.describe Schemas::MySchemaWithComplexType do
 
       it 'should get the value of some_record_array' do
         some_record_array = klass.some_record_array
-        expect(some_record_array.first).to be_instance_of(Schemas::MySchemaWithComplexType::ARecord)
+        expect(some_record_array.first).to be_instance_of(described_class::ARecord)
         expect(some_record_array.first.a_record_field).to eq('field 3')
       end
 
       it 'should get the value of some_record_map' do
         some_record_map = klass.some_record_map
         expect(some_record_map['record_1']).
-          to be_instance_of(Schemas::MySchemaWithComplexType::ARecord)
+          to be_instance_of(described_class::ARecord)
         expect(some_record_map['record_1'].a_record_field).to eq('field 5')
       end
 
       it 'should get the value of some_enum_array' do
         some_enum_array = klass.some_enum_array
-        expect(some_enum_array.first).to be_instance_of(Schemas::MySchemaWithComplexType::AnEnum)
+        expect(some_enum_array.first).to be_instance_of(described_class::AnEnum)
         expect(some_enum_array.first.value).to eq('sym1')
       end
 
       it 'should get the value of some_record' do
         record = klass.some_record
-        expect(record).to be_instance_of(Schemas::MySchemaWithComplexType::ARecord)
+        expect(record).to be_instance_of(described_class::ARecord)
         expect(record.a_record_field).to eq('field 1')
         expect(record.to_h).to eq({ 'a_record_field' => 'field 1' })
       end
@@ -180,40 +188,40 @@ RSpec.describe Schemas::MySchemaWithComplexType do
 
       it 'should modify the value of some_optional_record' do
         expect(klass.some_optional_record).
-          to eq(Schemas::MySchemaWithComplexType::ARecord.new(a_record_field: 'field 2'))
-        klass.some_optional_record = Schemas::MySchemaWithComplexType::ARecord.
+          to eq(described_class::ARecord.new(a_record_field: 'field 2'))
+        klass.some_optional_record = described_class::ARecord.
           new(a_record_field: 'new field')
 
-        expect(klass.some_optional_record).to eq(Schemas::MySchemaWithComplexType::ARecord.
+        expect(klass.some_optional_record).to eq(described_class::ARecord.
           new(a_record_field: 'new field'))
         expect(klass.some_optional_record.as_json).to eq({ 'a_record_field' => 'new field' })
       end
 
       it 'should accept a hash object inner records' do
         klass.some_optional_record = { a_record_field: 'new field' }
-        expect(klass.some_optional_record).to eq(Schemas::MySchemaWithComplexType::ARecord.
-          new(a_record_field: 'new field'))
+        expect(klass.some_optional_record).
+          to eq(described_class::ARecord.new(a_record_field: 'new field'))
         expect(klass.some_optional_record.as_json).to eq({ 'a_record_field' => 'new field' })
       end
 
       it 'should modify the value of some_enum_array' do
         klass.some_enum_array.first.value = 'new_sym'
         expect(klass.some_enum_array.first).
-          to eq(Schemas::MySchemaWithComplexType::AnEnum.new('new_sym'))
+          to eq(described_class::AnEnum.new('new_sym'))
 
-        klass.some_enum_array.second.an_enum = Schemas::MySchemaWithComplexType::AnEnum.
+        klass.some_enum_array.second.an_enum = described_class::AnEnum.
           new('other_sym')
         expect(klass.some_enum_array.second.an_enum).to eq('other_sym')
       end
 
       it 'should modify the value of some_record_map' do
         klass.some_record_map['record_1'].a_record_field = 'new field'
-        expect(klass.some_record_map['record_1']).to eq(Schemas::MySchemaWithComplexType::ARecord.
+        expect(klass.some_record_map['record_1']).to eq(described_class::ARecord.
           new(a_record_field: 'new field'))
 
-        klass.some_record_map['record_2'] = Schemas::MySchemaWithComplexType::ARecord.
+        klass.some_record_map['record_2'] = described_class::ARecord.
           new(a_record_field: 'other field')
-        expect(klass.some_record_map['record_2']).to eq(Schemas::MySchemaWithComplexType::ARecord.
+        expect(klass.some_record_map['record_2']).to eq(described_class::ARecord.
           new(a_record_field: 'other field'))
       end
     end
