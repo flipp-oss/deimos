@@ -64,7 +64,7 @@
     end
 <%- if @tombstone_assignment %>
     def self.tombstone(key)
-      record = self.new
+      record = self.allocate
 <%- if @tombstone_assignment.present? -%>
       <%= @tombstone_assignment %>
 <%- end -%>
