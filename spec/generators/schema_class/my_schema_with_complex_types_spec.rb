@@ -55,7 +55,7 @@ RSpec.describe Schemas::MyNamespace::MySchemaWithComplexType do
     it 'should return a tombstone' do
       record = described_class.tombstone('foo')
       expect(record.tombstone_key).to eq('foo')
-      expect(record.to_h).to eq({payload_key: 'foo'})
+      expect(record.to_h).to eq({ payload_key: 'foo' })
     end
   end
 

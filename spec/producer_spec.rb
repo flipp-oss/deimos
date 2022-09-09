@@ -79,7 +79,7 @@ module ProducerTest
         expect(event.payload[:payloads]).to eq([{ 'invalid' => 'key' }])
       end
       expect(MyProducer.encoder).to receive(:validate).and_raise('OH NOES')
-      expect { MyProducer.publish({'invalid' => 'key', :payload_key => 'key'}) }.
+      expect { MyProducer.publish({ 'invalid' => 'key', :payload_key => 'key' }) }.
         to raise_error('OH NOES')
       Deimos.unsubscribe(subscriber)
     end

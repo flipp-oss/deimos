@@ -32,8 +32,8 @@ module ConsumerTest
 
           it 'should consume a message' do
             test_consume_message(MyConsumer,
-                                 {'test_id' => 'foo',
-                                 'some_int' => 123}) do |payload, _metadata|
+                                 { 'test_id' => 'foo',
+                                 'some_int' => 123 }) do |payload, _metadata|
                                    expect(payload['test_id']).to eq('foo')
                                    expect(payload['some_int']).to eq(123)
                                  end
@@ -64,15 +64,15 @@ module ConsumerTest
 
           it 'should consume a message on a topic' do
             test_consume_message('my_consume_topic',
-                                 {'test_id' => 'foo',
-                                 'some_int' => 123}) do |payload, _metadata|
+                                 { 'test_id' => 'foo',
+                                 'some_int' => 123 }) do |payload, _metadata|
                                    expect(payload['test_id']).to eq('foo')
                                    expect(payload['some_int']).to eq(123)
                                  end
           end
 
           it 'should fail on invalid message' do
-            test_consume_invalid_message(MyConsumer, {'invalid' => 'key'})
+            test_consume_invalid_message(MyConsumer, { 'invalid' => 'key' })
           end
 
           it 'should fail if reraise is false but fatal_error is true' do
@@ -85,14 +85,14 @@ module ConsumerTest
               config.consumers.fatal_error = proc { true }
               config.consumers.reraise_errors = false
             end
-            test_consume_invalid_message(MyConsumer, {'invalid' => 'key'})
+            test_consume_invalid_message(MyConsumer, { 'invalid' => 'key' })
           end
 
           it 'should fail on message with extra fields' do
             test_consume_invalid_message(MyConsumer,
-                                         {'test_id' => 'foo',
+                                         { 'test_id' => 'foo',
                                          'some_int' => 123,
-                                         'extra_field' => 'field name'})
+                                         'extra_field' => 'field name' })
           end
 
           it 'should not fail when before_consume fails without reraising errors' do
@@ -189,10 +189,10 @@ module ConsumerTest
       it 'should consume a message' do
         expect(Deimos.config.metrics).to receive(:histogram).twice
         test_consume_message('my_consume_topic',
-                             {'test_id' => 'foo',
+                             { 'test_id' => 'foo',
                              'some_int' => 123,
                              'updated_at' => Time.now.to_i,
-                             'timestamp' => 2.minutes.ago.to_s}) do |payload, _metadata|
+                             'timestamp' => 2.minutes.ago.to_s }) do |payload, _metadata|
                                expect(payload['test_id']).to eq('foo')
                              end
       end
@@ -200,17 +200,17 @@ module ConsumerTest
       it 'should fail nicely when timestamp wrong format' do
         expect(Deimos.config.metrics).to receive(:histogram).twice
         test_consume_message('my_consume_topic',
-                             {'test_id' => 'foo',
+                             { 'test_id' => 'foo',
                              'some_int' => 123,
                              'updated_at' => Time.now.to_i,
-                             'timestamp' => 'dffdf'}) do |payload, _metadata|
+                             'timestamp' => 'dffdf' }) do |payload, _metadata|
                                expect(payload['test_id']).to eq('foo')
                              end
         test_consume_message('my_consume_topic',
-                             {'test_id' => 'foo',
+                             { 'test_id' => 'foo',
                              'some_int' => 123,
                              'updated_at' => Time.now.to_i,
-                             'timestamp' => ''}) do |payload, _metadata|
+                             'timestamp' => '' }) do |payload, _metadata|
                                expect(payload['test_id']).to eq('foo')
                              end
       end

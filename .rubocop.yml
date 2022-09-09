@@ -1,7 +1,9 @@
+inherit_from: .rubocop_todo.yml
+
 require: rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: 2.5
   Exclude:
     - lib/deimos/monkey_patches/*.rb
     - vendor/**/*
@@ -39,8 +41,9 @@ Layout/EmptyLinesAroundBlockBody:
 Layout/LineLength:
   Max: 120
   Severity: refactor
-  Exclude:
-  - 'spec/**/*'
+#  TODO: uncomment the files below once rubocop is fixed
+#  Exclude:
+#  - 'spec/**/*'
 
 # foo = if expression
 #         'bar'
@@ -149,18 +152,20 @@ Style/CollectionMethods:
 Style/DateTime:
   AllowCoercion: true
 
-Style/Documentation:
-  Exclude:
-  - 'app/controllers/**/*'
-  - 'app/helpers/**/*'
-  - 'db/**/*'
+# TODO: uncomment the lines below once rubocop is fixed
+#Style/Documentation:
+#  Exclude:
+#  - 'app/controllers/**/*'
+#  - 'app/helpers/**/*'
+#  - 'db/**/*'
 
 # Force documentation for public methods and classes
 Style/DocumentationMethod:
   Enabled: true
-  Exclude:
-  - 'app/controllers/**/*'
-  - 'db/**/*'
+# TODO: uncomment the file below once rubocop is fixed
+#  Exclude:
+#  - 'app/controllers/**/*'
+#  - 'db/**/*'
 
 # Allow else with just nil in it
 Style/EmptyElse:
@@ -231,9 +236,10 @@ Style/MethodCallWithArgsParentheses:
     - before_destroy
     - after_destroy
     - queue_as
-  Exclude:
-    - 'bin/**/*'
-    - 'Gemfile'
+# TODO: uncomment the file below once rubocop is fixed
+#  Exclude:
+#    - 'bin/**/*'
+#    - 'Gemfile'
 
 # Do not allow "end.something"
 Style/MethodCalledOnDoEndBlock:
