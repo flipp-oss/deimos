@@ -800,6 +800,9 @@ class MyProducer < Deimos::ActiveRecordProducer
 end
 ```
 
+Note that the poller will retry infinitely if it encounters a Kafka-related error such
+as a communication failure. For all other errors, it will retry once by default.
+
 ## Running consumers
 
 Deimos includes a rake task. Once it's in your gemfile, just run

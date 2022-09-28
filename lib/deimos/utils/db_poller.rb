@@ -14,6 +14,9 @@ module Deimos
       # @return [Integer]
       attr_reader :id
 
+      # @return [Hash]
+      attr_reader :config
+
       # Begin the DB Poller process.
       # @return [void]
       def self.start!
@@ -110,6 +113,7 @@ module Deimos
         Deimos.config.logger.info("Polling #{@producer.topic} from #{time_from} to #{time_to}")
         message_count = 0
         batch_count = 0
+        error_count = 0
 
         # poll_query gets all the relevant data from the database, as defined
         # by the producer itself.
@@ -118,12 +122,15 @@ module Deimos
           batch = fetch_results(time_from, time_to).to_a
           break if batch.empty?
 
-          batch_count += 1
-          process_batch(batch)
+          if process_batch_with_span(batch)
+            batch_count += 1
+          else
+            error_count += 1
+          end
           message_count += batch.size
           time_from = last_updated(batch.last)
         end
-        Deimos.config.logger.info("Poll #{@producer.topic} complete at #{time_to} (#{message_count} messages, #{batch_count} batches}")
+        Deimos.config.logger.info("Poll #{@producer.topic} complete at #{time_to} (#{message_count} messages, #{batch_count} successful batches, #{error_count} batches errored}")
       end
 
       # @param time_from [ActiveSupport::TimeWithZone]
@@ -143,14 +150,49 @@ module Deimos
 
       # @param batch [Array<ActiveRecord::Base>]
       # @return [void]
-      def process_batch(batch)
+      def process_batch_with_span(batch)
+        retries = 0
+        begin
+          span = Deimos.config.tracer&.start(
+            'deimos-db-poller',
+            resource: @producer.class.name.gsub('::', '-')
+          )
+          process_batch(batch)
+          Deimos.config.tracer&.finish(span)
+        rescue Kafka::Error => e # keep trying till it fixes itself
+          Deimos.config.logger.error("Error publishing through DB Poller: #{e.message}")
+          sleep(0.5)
+          retry
+        rescue StandardError => e
+          if retries < @config.retries
+            retries += 1
+            sleep(0.5)
+            retry
+          else
+            Deimos.config.tracer&.set_error(span, e)
+            self.touch_info(batch)
+            return false
+          end
+        end
+        true
+      end
+
+      # @param batch [Array<ActiveRecord::Base>]
+      # @return [void]
+      def touch_info(batch)
         record = batch.last
         id_method = record.class.primary_key
         last_id = record.public_send(id_method)
         last_updated_at = last_updated(record)
-        @producer.send_events(batch)
         @info.attributes = { last_sent: last_updated_at, last_sent_id: last_id }
         @info.save!
+      end
+
+      # @param batch [Array<ActiveRecord::Base>]
+      # @return [void]
+      def process_batch(batch)
+        @producer.send_events(batch)
+        self.touch_info(batch)
       end
     end
   end

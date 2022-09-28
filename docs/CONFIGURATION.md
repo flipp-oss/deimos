@@ -119,6 +119,7 @@ timestamp_column|`:updated_at`|Name of the column to query. Remember to add an i
 delay_time|2|Amount of time in seconds to wait before picking up records, to allow for transactions to finish.
 full_table|false|If set to true, do a full table dump to Kafka each run. Good for very small tables.
 start_from_beginning|true|If false, start from the current time instead of the beginning of time if this is the first time running the poller.
+retries|1|The number of times to retry for a *non-Kafka* error.
 
 ## Kafka Configuration
 

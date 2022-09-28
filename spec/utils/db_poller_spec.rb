@@ -156,16 +156,55 @@ each_db_config(Deimos::Utils::DbPoller) do
       expect(poller.should_run?).to eq(false)
     end
 
-    specify '#process_batch' do
-      travel_to time_value
-      widgets = (1..3).map { Widget.create!(test_id: 'some_id', some_int: 4) }
-      widgets.last.update_attribute(:updated_at, time_value(mins: -30))
-      expect(MyProducer).to receive(:send_events).with(widgets)
-      poller.retrieve_poll_info
-      poller.process_batch(widgets)
-      info = Deimos::PollInfo.last
-      expect(info.last_sent.in_time_zone).to eq(time_value(mins: -30))
-      expect(info.last_sent_id).to eq(widgets.last.id)
+    describe '#process_batch' do
+      let(:widgets) { (1..3).map { Widget.create!(test_id: 'some_id', some_int: 4) } }
+      before(:each) do
+        allow(Deimos.config.tracer).to receive(:start).and_return("a span")
+        allow(Deimos.config.tracer).to receive(:set_error)
+        allow(Deimos.config.tracer).to receive(:finish)
+      end
+
+      it 'should process the batch' do
+        travel_to time_value
+        widgets.last.update_attribute(:updated_at, time_value(mins: -30))
+        expect(MyProducer).to receive(:send_events).with(widgets)
+        poller.retrieve_poll_info
+        poller.process_batch(widgets)
+        info = Deimos::PollInfo.last
+        expect(info.last_sent.in_time_zone).to eq(time_value(mins: -30))
+        expect(info.last_sent_id).to eq(widgets.last.id)
+      end
+
+      it 'should create a span' do
+        poller.retrieve_poll_info
+        poller.process_batch_with_span(widgets)
+        expect(Deimos.config.tracer).to have_received(:finish).with("a span")
+      end
+
+      it "should retry on Kafka error" do
+        called_once = false
+        allow(poller).to receive(:sleep)
+        allow(poller).to receive(:process_batch) do
+          unless called_once
+            called_once = true
+            raise Kafka::Error.new("OH NOES")
+          end
+        end
+        poller.retrieve_poll_info
+        poller.process_batch_with_span(widgets)
+        expect(poller).to have_received(:sleep).once.with(0.5)
+        expect(Deimos.config.tracer).to have_received(:finish).with("a span")
+      end
+
+      it 'should retry only once on other errors' do
+        error = RuntimeError.new("OH NOES")
+        allow(poller).to receive(:sleep)
+        allow(poller).to receive(:process_batch).and_raise(error)
+        poller.retrieve_poll_info
+        poller.process_batch_with_span(widgets)
+        expect(poller).to have_received(:sleep).once.with(0.5)
+        expect(Deimos.config.tracer).to have_received(:set_error).with("a span", error)
+      end
     end
 
     describe '#process_updates' do
@@ -234,6 +273,7 @@ each_db_config(Deimos::Utils::DbPoller) do
       end
 
       it 'should send events across multiple batches' do
+        allow(Deimos.config.logger).to receive(:info)
         allow(MyProducer).to receive(:poll_query).and_call_original
         expect(poller).to receive(:process_batch).ordered.
           with([widgets[0], widgets[1], widgets[2]]).and_call_original
@@ -273,48 +313,46 @@ each_db_config(Deimos::Utils::DbPoller) do
                time_to: time_value(secs: 120), # plus 122 seconds minus 2 seconds
                column_name: :updated_at,
                min_id: last_widget.id)
+        expect(Deimos.config.logger).to have_received(:info).
+          with("Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (7 messages, 3 successful batches, 0 batches errored}")
       end
 
-      it 'should recover correctly with errors and save the right ID' do
-        widgets.each do |w|
-          w.update_attribute(:updated_at, time_value(mins: -61, secs: 30))
+      describe 'errors' do
+        before(:each) do
+          poller.config.retries = 0
+          allow(Deimos.config.logger).to receive(:info)
         end
-        allow(MyProducer).to receive(:poll_query).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[0], widgets[1], widgets[2]]).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
+        after(:each) do
+          poller.config.retries = 1
+        end
 
-        expect { poller.process_updates }.to raise_exception('OH NOES')
+        it 'should recover correctly with errors and save the right ID' do
+          widgets.each do |w|
+            w.update_attribute(:updated_at, time_value(mins: -61, secs: 30))
+          end
+          allow(MyProducer).to receive(:poll_query).and_call_original
+          expect(poller).to receive(:process_batch).ordered.
+            with([widgets[0], widgets[1], widgets[2]]).and_call_original
+          expect(poller).to receive(:process_batch).ordered.
+            with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
+          expect(poller).to receive(:process_batch).ordered.
+            with([widgets[6]]).and_call_original
 
-        expect(MyProducer).to have_received(:poll_query).
-          with(time_from: time_value(mins: -61),
-               time_to: time_value(secs: -2),
-               column_name: :updated_at,
-               min_id: 0)
+          poller.process_updates
 
-        info = Deimos::PollInfo.last
-        expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
-        expect(info.last_sent_id).to eq(widgets[2].id)
+          expect(MyProducer).to have_received(:poll_query).
+            with(time_from: time_value(mins: -61),
+                 time_to: time_value(secs: -2),
+                 column_name: :updated_at,
+                 min_id: 0)
 
-        travel 61.seconds
-        # process the last widget which came in during the delay
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[3], widgets[4], widgets[5]]).and_call_original
-        expect(poller).to receive(:process_batch).with([widgets[6], last_widget]).
-          and_call_original
-        poller.process_updates
-        expect(MyProducer).to have_received(:poll_query).
-          with(time_from: time_value(mins: -61, secs: 30),
-               time_to: time_value(secs: 59),
-               column_name: :updated_at,
-               min_id: widgets[2].id)
-
-        expect(info.reload.last_sent.in_time_zone).to eq(time_value(secs: -1))
-        expect(info.last_sent_id).to eq(last_widget.id)
+          info = Deimos::PollInfo.last
+          expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
+          expect(info.last_sent_id).to eq(widgets[6].id)
+          expect(Deimos.config.logger).to have_received(:info).
+            with("Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (7 messages, 2 successful batches, 1 batches errored}")
+        end
       end
-
     end
-
   end
 end

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 - Fix the linting step in the CI
+- CHANGE: Add retries to DB poller and bypass "bad batches".
+- Add tracing spans to DB poller production.
 
 # 1.16.4 - 2022-09-09
 
