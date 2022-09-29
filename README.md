@@ -1200,7 +1200,8 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/flipp-
 
 You can/should re-generate RBS types when methods or classes change by running the following:
 
-    rbs collection install # if you haven't done it recently
+    rbs collection install # if you haven't done it 
+    rbs collection update
     bundle exec sord --hide-private --no-sord-comments sig/defs.rbs --tags 'override:Override'
 
 ### Linting
