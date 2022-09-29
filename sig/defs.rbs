@@ -2,7 +2,7 @@
 module Deimos
   include Deimos::Instrumentation
   include FigTree
-  VERSION: String
+  VERSION: untyped
 
   def self.schema_backend_class: () -> singleton(Deimos::SchemaBackends::Base)
 
@@ -1144,6 +1144,9 @@ module Deimos
       def schema_fields: () -> ::Array[String]
 
       def self.initialize_from_value: (Object value) -> SchemaClass::Record
+
+      # Returns the value of attribute tombstone_key.
+      attr_accessor tombstone_key: untyped
     end
   end
 
@@ -1589,6 +1592,11 @@ module Deimos
                            ?column_name: Symbol,
                            min_id: Numeric
                          ) -> ActiveRecord::Relation
+
+    # Post process records after publishing
+    # 
+    # _@param_ `records`
+    def self.post_process: (::Array[ActiveRecord::Base] _records) -> untyped
   end
 
   module Consume
