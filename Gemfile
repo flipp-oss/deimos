@@ -9,4 +9,3 @@ if !ENV['CI'] || ENV['CI'] == ''
   # TODO: once all PRs are merged, add this to gemspec as a development dependency
   gem 'sord', git: 'git@github.com:dorner/sord.git', ref: 'local-develop'
 end
-

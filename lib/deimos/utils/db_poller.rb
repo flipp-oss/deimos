@@ -164,11 +164,13 @@ module Deimos
           sleep(0.5)
           retry
         rescue StandardError => e
+          Deimos.config.logger.error("Error publishing through DB poller: #{e.message}}")
           if retries < @config.retries
             retries += 1
             sleep(0.5)
             retry
           else
+            Deimos.config.logger.error('Retries exceeded, moving on to next batch')
             Deimos.config.tracer&.set_error(span, e)
             self.touch_info(batch)
             return false

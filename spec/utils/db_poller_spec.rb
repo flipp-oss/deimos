@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Layout/LineLength
+
 # @param seconds [Integer]
 # @return [Time]
 def time_value(secs: 0, mins: 0)
@@ -158,8 +160,9 @@ each_db_config(Deimos::Utils::DbPoller) do
 
     describe '#process_batch' do
       let(:widgets) { (1..3).map { Widget.create!(test_id: 'some_id', some_int: 4) } }
+
       before(:each) do
-        allow(Deimos.config.tracer).to receive(:start).and_return("a span")
+        allow(Deimos.config.tracer).to receive(:start).and_return('a span')
         allow(Deimos.config.tracer).to receive(:set_error)
         allow(Deimos.config.tracer).to receive(:finish)
       end
@@ -178,32 +181,32 @@ each_db_config(Deimos::Utils::DbPoller) do
       it 'should create a span' do
         poller.retrieve_poll_info
         poller.process_batch_with_span(widgets)
-        expect(Deimos.config.tracer).to have_received(:finish).with("a span")
+        expect(Deimos.config.tracer).to have_received(:finish).with('a span')
       end
 
-      it "should retry on Kafka error" do
+      it 'should retry on Kafka error' do
         called_once = false
         allow(poller).to receive(:sleep)
         allow(poller).to receive(:process_batch) do
           unless called_once
             called_once = true
-            raise Kafka::Error.new("OH NOES")
+            raise Kafka::Error, 'OH NOES'
           end
         end
         poller.retrieve_poll_info
         poller.process_batch_with_span(widgets)
         expect(poller).to have_received(:sleep).once.with(0.5)
-        expect(Deimos.config.tracer).to have_received(:finish).with("a span")
+        expect(Deimos.config.tracer).to have_received(:finish).with('a span')
       end
 
       it 'should retry only once on other errors' do
-        error = RuntimeError.new("OH NOES")
+        error = RuntimeError.new('OH NOES')
         allow(poller).to receive(:sleep)
         allow(poller).to receive(:process_batch).and_raise(error)
         poller.retrieve_poll_info
         poller.process_batch_with_span(widgets)
         expect(poller).to have_received(:sleep).once.with(0.5)
-        expect(Deimos.config.tracer).to have_received(:set_error).with("a span", error)
+        expect(Deimos.config.tracer).to have_received(:set_error).with('a span', error)
       end
     end
 
@@ -314,7 +317,7 @@ each_db_config(Deimos::Utils::DbPoller) do
                column_name: :updated_at,
                min_id: last_widget.id)
         expect(Deimos.config.logger).to have_received(:info).
-          with("Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (7 messages, 3 successful batches, 0 batches errored}")
+          with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (7 messages, 3 successful batches, 0 batches errored}')
       end
 
       describe 'errors' do
@@ -322,6 +325,7 @@ each_db_config(Deimos::Utils::DbPoller) do
           poller.config.retries = 0
           allow(Deimos.config.logger).to receive(:info)
         end
+
         after(:each) do
           poller.config.retries = 1
         end
@@ -350,9 +354,10 @@ each_db_config(Deimos::Utils::DbPoller) do
           expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
           expect(info.last_sent_id).to eq(widgets[6].id)
           expect(Deimos.config.logger).to have_received(:info).
-            with("Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (7 messages, 2 successful batches, 1 batches errored}")
+            with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (7 messages, 2 successful batches, 1 batches errored}')
         end
       end
     end
   end
 end
+# rubocop:enable Layout/LineLength
