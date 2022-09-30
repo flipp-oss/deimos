@@ -43,4 +43,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rubocop', '0.89.0')
   spec.add_development_dependency('rubocop-rspec', '1.42.0')
   spec.add_development_dependency('sqlite3', '~> 1.3')
+  spec.add_development_dependency('steep', '~> 1.0')
 end
