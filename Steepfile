@@ -1,6 +1,8 @@
-target :app do
-  check "lib"
-  signature "sig"
+# frozen_string_literal: true
 
-  library "set", "pathname"
+target :app do
+  check 'lib'
+  signature 'sig'
+
+  library 'set', 'pathname'
 end

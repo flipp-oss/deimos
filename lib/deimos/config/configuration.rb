@@ -461,6 +461,8 @@ module Deimos
       # If false, start from the current time instead of the beginning of time
       # if this is the first time running the poller.
       setting :start_from_beginning, true
+      # The number of times to retry production when encountering a *non-Kafka* error.
+      setting :retries, 1
     end
 
     deprecate 'kafka_logger', 'kafka.logger'

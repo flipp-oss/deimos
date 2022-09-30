@@ -24,7 +24,7 @@ module Deimos
       end
 
       # @override
-      def coerce_field(field, value)
+      def coerce_field(_field, value)
         value
       end
 

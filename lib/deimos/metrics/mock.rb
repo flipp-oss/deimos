@@ -7,7 +7,7 @@ module Deimos
     # A mock Metrics wrapper which just logs the metrics
     class Mock < Provider
       # @param logger [Logger,nil]
-      def initialize(logger=nil)
+      def initialize(logger=nil) # rubocop:disable Lint/MissingSuper
         @logger = logger || Logger.new(STDOUT)
         @logger.info('MockMetricsProvider initialized')
       end

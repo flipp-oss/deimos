@@ -800,6 +800,9 @@ class MyProducer < Deimos::ActiveRecordProducer
 end
 ```
 
+Note that the poller will retry infinitely if it encounters a Kafka-related error such
+as a communication failure. For all other errors, it will retry once by default.
+
 ## Running consumers
 
 Deimos includes a rake task. Once it's in your gemfile, just run
@@ -1207,7 +1210,7 @@ You can/should re-generate RBS types when methods or classes change by running t
 ### Linting
 
 Deimos uses Rubocop to lint the code. Please run Rubocop on your code 
-before submitting a PR. The GitHub CI will also run rubocop on your pull request.
+before submitting a PR. The GitHub CI will also run rubocop on your pull request. 
 
 ---
 <p align="center">
