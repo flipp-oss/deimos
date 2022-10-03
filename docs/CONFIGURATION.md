@@ -15,7 +15,7 @@ Config name|Default|Description
 logger|`Logger.new(STDOUT)`|The logger that Deimos will use.
 phobos_logger|`Deimos.config.logger`|The logger passed to Phobos.
 metrics|`Deimos::Metrics::Mock.new`|The metrics backend use for reporting.
-tracer|`Deimos::Tracer::Mock.new`|The tracer backend used for debugging.
+tracer|`Deimos::Tracing::Mock.new`|The tracer backend used for debugging.
 
 ## Defining Producers
 
