@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.17.1 - 2022-10-20
+
 - Fix the log message for publishing messages so it uses the topic of the actual message instead of 
   the default for the producer.
 - Use public sord gem instead of private fork.
