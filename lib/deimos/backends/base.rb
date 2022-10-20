@@ -11,7 +11,7 @@ module Deimos
         def publish(producer_class:, messages:)
           Deimos.config.logger.info(
             message: 'Publishing messages',
-            topic: producer_class.topic,
+            topic: messages.first&.topic,
             payloads: messages.map do |message|
               {
                 payload: message.payload,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix the log message for publishing messages so it uses the topic of the actual message instead of 
+  the default for the producer.
+- Use public sord gem instead of private fork.
+
 # 1.17.0 - 2022-10-19
 - Fix the linting step in the CI
 - CHANGE: Add retries to DB poller and bypass "bad batches".
