@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Features :star:
+
+- Add the `state_based` mode for DB pollers.
+
 # 1.17.1 - 2022-10-20
 
 - Fix the log message for publishing messages so it uses the topic of the actual message instead of 

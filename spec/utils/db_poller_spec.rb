@@ -2,13 +2,14 @@
 
 # rubocop:disable Layout/LineLength
 
-# @param seconds [Integer]
+# @param secs [Integer]
+# @param mins [Integer]
 # @return [Time]
 def time_value(secs: 0, mins: 0)
   Time.local(2015, 5, 5, 1, 0, 0) + (secs + (mins * 60))
 end
 
-each_db_config(Deimos::Utils::DbPoller) do
+each_db_config(Deimos::Utils::DbPoller::Base) do
 
   before(:each) do
     Deimos::PollInfo.delete_all
@@ -49,14 +50,14 @@ each_db_config(Deimos::Utils::DbPoller) do
         end
       end
 
-      allow(Deimos::Utils::DbPoller).to receive(:new)
+      allow(Deimos::Utils::DbPoller::TimeBased).to receive(:new)
       signal_double = instance_double(Sigurd::SignalHandler, run!: nil)
       allow(Sigurd::SignalHandler).to receive(:new).and_return(signal_double)
       described_class.start!
-      expect(Deimos::Utils::DbPoller).to have_received(:new).twice
-      expect(Deimos::Utils::DbPoller).to have_received(:new).
+      expect(Deimos::Utils::DbPoller::TimeBased).to have_received(:new).twice
+      expect(Deimos::Utils::DbPoller::TimeBased).to have_received(:new).
         with(Deimos.config.db_poller_objects[0])
-      expect(Deimos::Utils::DbPoller).to have_received(:new).
+      expect(Deimos::Utils::DbPoller::TimeBased).to have_received(:new).
         with(Deimos.config.db_poller_objects[1])
     end
   end
@@ -65,7 +66,7 @@ each_db_config(Deimos::Utils::DbPoller) do
     include_context 'with widgets'
 
     let(:poller) do
-      poller = described_class.new(config)
+      poller = described_class.class_for_config(config.mode).new(config)
       allow(poller).to receive(:sleep)
       poller
     end
@@ -160,6 +161,7 @@ each_db_config(Deimos::Utils::DbPoller) do
 
     describe '#process_batch' do
       let(:widgets) { (1..3).map { Widget.create!(test_id: 'some_id', some_int: 4) } }
+      let(:status) { described_class::PollStatus.new(0, 0, 0) }
 
       before(:each) do
         allow(Deimos.config.tracer).to receive(:start).and_return('a span')
@@ -172,7 +174,7 @@ each_db_config(Deimos::Utils::DbPoller) do
         widgets.last.update_attribute(:updated_at, time_value(mins: -30))
         expect(MyProducer).to receive(:send_events).with(widgets)
         poller.retrieve_poll_info
-        poller.process_batch(widgets)
+        poller.process_and_touch_info(widgets, status)
         info = Deimos::PollInfo.last
         expect(info.last_sent.in_time_zone).to eq(time_value(mins: -30))
         expect(info.last_sent_id).to eq(widgets.last.id)
@@ -180,7 +182,10 @@ each_db_config(Deimos::Utils::DbPoller) do
 
       it 'should create a span' do
         poller.retrieve_poll_info
-        poller.process_batch_with_span(widgets)
+        poller.process_batch_with_span(widgets, status)
+        expect(status.batches_errored).to eq(0)
+        expect(status.batches_processed).to eq(1)
+        expect(status.messages_processed).to eq(3)
         expect(Deimos.config.tracer).to have_received(:finish).with('a span')
       end
 
@@ -194,9 +199,12 @@ each_db_config(Deimos::Utils::DbPoller) do
           end
         end
         poller.retrieve_poll_info
-        poller.process_batch_with_span(widgets)
+        poller.process_batch_with_span(widgets, status)
         expect(poller).to have_received(:sleep).once.with(0.5)
         expect(Deimos.config.tracer).to have_received(:finish).with('a span')
+        expect(status.batches_errored).to eq(0)
+        expect(status.batches_processed).to eq(1)
+        expect(status.messages_processed).to eq(3)
       end
 
       it 'should retry only once on other errors' do
@@ -204,9 +212,12 @@ each_db_config(Deimos::Utils::DbPoller) do
         allow(poller).to receive(:sleep)
         allow(poller).to receive(:process_batch).and_raise(error)
         poller.retrieve_poll_info
-        poller.process_batch_with_span(widgets)
+        poller.process_batch_with_span(widgets, status)
         expect(poller).to have_received(:sleep).once.with(0.5)
         expect(Deimos.config.tracer).to have_received(:set_error).with('a span', error)
+        expect(status.batches_errored).to eq(1)
+        expect(status.batches_processed).to eq(0)
+        expect(status.messages_processed).to eq(3)
       end
     end
 
@@ -243,16 +254,16 @@ each_db_config(Deimos::Utils::DbPoller) do
         info = Deimos::PollInfo.last
         config.full_table = true
         expect(MyProducer).to receive(:poll_query).at_least(:once).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([old_widget, widgets[0], widgets[1]]).and_wrap_original do |m, *args|
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([old_widget, widgets[0], widgets[1]], anything).and_wrap_original do |m, *args|
             m.call(*args)
             expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 32))
             expect(info.last_sent_id).to eq(widgets[1].id)
           end
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[2], widgets[3], widgets[4]]).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[5], widgets[6]]).and_call_original
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([widgets[2], widgets[3], widgets[4]], anything).and_call_original
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([widgets[5], widgets[6]], anything).and_call_original
         poller.process_updates
 
         # this is the updated_at of widgets[6]
@@ -263,12 +274,12 @@ each_db_config(Deimos::Utils::DbPoller) do
 
         travel 61.seconds
         # should reprocess the table
-        expect(poller).to receive(:process_batch).ordered.
-          with([last_widget, old_widget, widgets[0]]).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[1], widgets[2], widgets[3]]).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[4], widgets[5], widgets[6]]).and_call_original
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([last_widget, old_widget, widgets[0]], anything).and_call_original
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([widgets[1], widgets[2], widgets[3]], anything).and_call_original
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([widgets[4], widgets[5], widgets[6]], anything).and_call_original
         poller.process_updates
 
         expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 37))
@@ -278,12 +289,12 @@ each_db_config(Deimos::Utils::DbPoller) do
       it 'should send events across multiple batches' do
         allow(Deimos.config.logger).to receive(:info)
         allow(MyProducer).to receive(:poll_query).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[0], widgets[1], widgets[2]]).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[3], widgets[4], widgets[5]]).and_call_original
-        expect(poller).to receive(:process_batch).ordered.
-          with([widgets[6]]).and_call_original
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([widgets[0], widgets[1], widgets[2]], anything).and_call_original
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([widgets[3], widgets[4], widgets[5]], anything).and_call_original
+        expect(poller).to receive(:process_and_touch_info).ordered.
+          with([widgets[6]], anything).and_call_original
         poller.process_updates
 
         expect(MyProducer).to have_received(:poll_query).
@@ -294,7 +305,7 @@ each_db_config(Deimos::Utils::DbPoller) do
 
         travel 61.seconds
         # process the last widget which came in during the delay
-        expect(poller).to receive(:process_batch).with([last_widget]).
+        expect(poller).to receive(:process_and_touch_info).with([last_widget], anything).
           and_call_original
         poller.process_updates
 
@@ -307,7 +318,7 @@ each_db_config(Deimos::Utils::DbPoller) do
 
         travel 61.seconds
         # nothing else to process
-        expect(poller).not_to receive(:process_batch)
+        expect(poller).not_to receive(:process_and_touch_info)
         poller.process_updates
         poller.process_updates
 
@@ -317,7 +328,7 @@ each_db_config(Deimos::Utils::DbPoller) do
                column_name: :updated_at,
                min_id: last_widget.id)
         expect(Deimos.config.logger).to have_received(:info).
-          with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (7 messages, 3 successful batches, 0 batches errored}')
+          with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (3 batches, 0 errored batches, 7 processed messages)')
       end
 
       describe 'errors' do
@@ -354,7 +365,7 @@ each_db_config(Deimos::Utils::DbPoller) do
           expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
           expect(info.last_sent_id).to eq(widgets[6].id)
           expect(Deimos.config.logger).to have_received(:info).
-            with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (7 messages, 2 successful batches, 1 batches errored}')
+            with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (2 batches, 1 errored batches, 7 processed messages)')
         end
       end
     end

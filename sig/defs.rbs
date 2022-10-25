@@ -663,52 +663,147 @@ module Deimos
     def self.send_produce_error: (ActiveSupport::Notifications::Event event) -> void
   end
 
-  module Utils
-    # Class which continually polls the database and sends Kafka messages.
-    class DbPoller
-      BATCH_SIZE: Integer
+  # Record that keeps track of which topics are being worked on by DbProducers.
+  class KafkaTopicInfo < ActiveRecord::Base
+    # Lock a topic for the given ID. Returns whether the lock was successful.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `lock_id`
+    def self.lock: (String topic, String lock_id) -> bool
 
-      # Begin the DB Poller process.
-      def self.start!: () -> void
+    # This is called once a producer is finished working on a topic, i.e.
+    # there are no more messages to fetch. It unlocks the topic and
+    # moves on to the next one.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `lock_id`
+    def self.clear_lock: (String topic, String lock_id) -> void
 
-      # _@param_ `config`
-      def initialize: (FigTree::ConfigStruct config) -> void
+    # Update all topics that aren't currently locked and have no messages
+    # waiting. It's OK if some messages get inserted in the middle of this
+    # because the point is that at least within a few milliseconds of each
+    # other, it wasn't locked and had no messages, meaning the topic
+    # was in a good state.
+    # realized had messages in them, meaning all other topics were empty.
+    # 
+    # _@param_ `except_topics` — the list of topics we've just
+    def self.ping_empty_topics: (::Array[String] except_topics) -> void
 
-      # Start the poll:
-      # 1) Grab the current PollInfo from the database indicating the last
-      # time we ran
-      # 2) On a loop, process all the recent updates between the last time
-      # we ran and now.
-      def start: () -> void
+    # The producer calls this if it gets an error sending messages. This
+    # essentially locks down this topic for 1 minute (for all producers)
+    # and allows the caller to continue to the next topic.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `lock_id`
+    def self.register_error: (String topic, String lock_id) -> void
 
-      # Grab the PollInfo or create if it doesn't exist.
-      def retrieve_poll_info: () -> void
+    # Update the locked_at timestamp to indicate that the producer is still
+    # working on those messages and to continue.
+    # 
+    # _@param_ `topic`
+    # 
+    # _@param_ `lock_id`
+    def self.heartbeat: (String topic, String lock_id) -> void
+  end
 
-      # Stop the poll.
-      def stop: () -> void
+  module SchemaClass
+    # Base Class for Schema Classes generated from Avro.
+    class Base
+      # _@param_ `_args`
+      def initialize: (*::Array[Object] _args) -> void
 
-      # Indicate whether this current loop should process updates. Most loops
-      # will busy-wait (sleeping 0.1 seconds) until it's ready.
-      def should_run?: () -> bool
-
-      # _@param_ `record`
-      def last_updated: (ActiveRecord::Base record) -> ActiveSupport::TimeWithZone
-
-      # Send messages for updated data.
-      def process_updates: () -> void
-
-      # _@param_ `time_from`
+      # Converts the object to a hash which can be used for debugging or comparing objects.
       # 
-      # _@param_ `time_to`
-      def fetch_results: (ActiveSupport::TimeWithZone time_from, ActiveSupport::TimeWithZone time_to) -> ActiveRecord::Relation
+      # _@param_ `_opts`
+      # 
+      # _@return_ — a hash representation of the payload
+      def as_json: (?::Hash[untyped, untyped] _opts) -> ::Hash[untyped, untyped]
 
-      # _@param_ `batch`
-      def process_batch: (::Array[ActiveRecord::Base] batch) -> void
+      # _@param_ `key`
+      # 
+      # _@param_ `val`
+      def []=: ((String | Symbol) key, Object val) -> void
 
-      # Needed for Executor so it can identify the worker
-      attr_reader id: Integer
+      # _@param_ `other`
+      def ==: (SchemaClass::Base other) -> bool
+
+      def inspect: () -> String
+
+      # Initializes this class from a given value
+      # 
+      # _@param_ `value`
+      def self.initialize_from_value: (Object value) -> SchemaClass::Base
+
+      def hash: () -> Integer
     end
 
+    # Base Class for Enum Classes generated from Avro.
+    class Enum < Deimos::SchemaClass::Base
+      # _@param_ `other`
+      def ==: (Deimos::SchemaClass::Enum other) -> bool
+
+      def to_s: () -> String
+
+      # _@param_ `value`
+      def initialize: (String value) -> void
+
+      # Returns all the valid symbols for this enum.
+      def symbols: () -> ::Array[String]
+
+      def as_json: (?::Hash[untyped, untyped] _opts) -> String
+
+      def self.initialize_from_value: (Object value) -> SchemaClass::Enum
+
+      attr_accessor value: String
+    end
+
+    # Base Class of Record Classes generated from Avro.
+    class Record < Deimos::SchemaClass::Base
+      # Converts the object attributes to a hash which can be used for Kafka
+      # 
+      # _@return_ — the payload as a hash.
+      def to_h: () -> ::Hash[untyped, untyped]
+
+      # Merge a hash or an identical schema object with this one and return a new object.
+      # 
+      # _@param_ `other_hash`
+      def merge: ((::Hash[untyped, untyped] | SchemaClass::Base) other_hash) -> SchemaClass::Base
+
+      # Element access method as if this Object were a hash
+      # 
+      # _@param_ `key`
+      # 
+      # _@return_ — The value of the attribute if exists, nil otherwise
+      def []: ((String | Symbol) key) -> Object
+
+      def with_indifferent_access: () -> SchemaClass::Record
+
+      # Returns the schema name of the inheriting class.
+      def schema: () -> String
+
+      # Returns the namespace for the schema of the inheriting class.
+      def namespace: () -> String
+
+      # Returns the full schema name of the inheriting class.
+      def full_schema: () -> String
+
+      # Returns the schema validator from the schema backend
+      def validator: () -> Deimos::SchemaBackends::Base
+
+      # _@return_ — an array of fields names in the schema.
+      def schema_fields: () -> ::Array[String]
+
+      def self.initialize_from_value: (Object value) -> SchemaClass::Record
+
+      # Returns the value of attribute tombstone_key.
+      attr_accessor tombstone_key: untyped
+    end
+  end
+
+  module Utils
     # Class which continually polls the kafka_messages table
     # in the database and sends Kafka messages.
     class DbProducer
@@ -862,6 +957,112 @@ module Deimos
       def self.use?: (::Hash[untyped, untyped] config) -> bool
     end
 
+    # Class which continually polls the database and sends Kafka messages.
+    module DbPoller
+      class PollStatus < Struct
+        def current_batch: () -> Integer
+
+        def report: () -> String
+
+        # Returns the value of attribute batches_processed
+        attr_accessor batches_processed: Object
+
+        # Returns the value of attribute batches_errored
+        attr_accessor batches_errored: Object
+
+        # Returns the value of attribute messages_processed
+        attr_accessor messages_processed: Object
+      end
+
+      class Base
+        BATCH_SIZE: Integer
+
+        # _@param_ `config_name`
+        def self.class_for_config: (Symbol config_name) -> singleton(Deimos::Utils::DbPoller)
+
+        # Begin the DB Poller process.
+        def self.start!: () -> void
+
+        # _@param_ `config`
+        def initialize: (FigTree::ConfigStruct config) -> void
+
+        # Start the poll:
+        # 1) Grab the current PollInfo from the database indicating the last
+        # time we ran
+        # 2) On a loop, process all the recent updates between the last time
+        # we ran and now.
+        def start: () -> void
+
+        # Grab the PollInfo or create if it doesn't exist.
+        def retrieve_poll_info: () -> void
+
+        def create_poll_info: () -> Deimos::PollInfo
+
+        # Indicate whether this current loop should process updates. Most loops
+        # will busy-wait (sleeping 0.1 seconds) until it's ready.
+        def should_run?: () -> bool
+
+        # Stop the poll.
+        def stop: () -> void
+
+        # Send messages for updated data.
+        def process_updates: () -> void
+
+        # _@param_ `batch`
+        # 
+        # _@param_ `status`
+        def process_batch_with_span: (::Array[ActiveRecord::Base] batch, PollStatus status) -> bool
+
+        # _@param_ `batch`
+        def process_batch: (::Array[ActiveRecord::Base] batch) -> void
+
+        # Needed for Executor so it can identify the worker
+        attr_reader id: Integer
+
+        attr_reader config: ::Hash[untyped, untyped]
+      end
+
+      class TimeBased < Deimos::Utils::DbPoller::Base
+        BATCH_SIZE: Integer
+
+        # :nodoc:
+        def create_poll_info: () -> Deimos::PollInfo
+
+        # _@param_ `batch`
+        # 
+        # _@param_ `status`
+        def process_and_touch_info: (::Array[ActiveRecord::Base] batch, Deimos::Utils::DbPoller::PollStatus status) -> untyped
+
+        # Send messages for updated data.
+        def process_updates: () -> void
+
+        # _@param_ `time_from`
+        # 
+        # _@param_ `time_to`
+        def fetch_results: (ActiveSupport::TimeWithZone time_from, ActiveSupport::TimeWithZone time_to) -> ActiveRecord::Relation
+
+        # _@param_ `record`
+        def last_updated: (ActiveRecord::Base record) -> ActiveSupport::TimeWithZone
+
+        # _@param_ `batch`
+        def touch_info: (::Array[ActiveRecord::Base] batch) -> void
+      end
+
+      class StateBased < Deimos::Utils::DbPoller::Base
+        BATCH_SIZE: Integer
+
+        # Send messages for updated data.
+        def process_updates: () -> void
+
+        def fetch_results: () -> ActiveRecord::Relation
+
+        # _@param_ `batch`
+        # 
+        # _@param_ `success`
+        def finalize_batch: (::Array[ActiveRecord::Base] batch, bool success) -> void
+      end
+    end
+
     # Utility class to retry a given block if a a deadlock is encountered.
     # Supports Postgres and MySQL deadlocks and lock wait timeouts.
     class DeadlockRetry
@@ -1007,146 +1208,6 @@ module Deimos
         # _@param_ `name`
         def response_namespace: (String name) -> void
       end
-    end
-  end
-
-  # Record that keeps track of which topics are being worked on by DbProducers.
-  class KafkaTopicInfo < ActiveRecord::Base
-    # Lock a topic for the given ID. Returns whether the lock was successful.
-    # 
-    # _@param_ `topic`
-    # 
-    # _@param_ `lock_id`
-    def self.lock: (String topic, String lock_id) -> bool
-
-    # This is called once a producer is finished working on a topic, i.e.
-    # there are no more messages to fetch. It unlocks the topic and
-    # moves on to the next one.
-    # 
-    # _@param_ `topic`
-    # 
-    # _@param_ `lock_id`
-    def self.clear_lock: (String topic, String lock_id) -> void
-
-    # Update all topics that aren't currently locked and have no messages
-    # waiting. It's OK if some messages get inserted in the middle of this
-    # because the point is that at least within a few milliseconds of each
-    # other, it wasn't locked and had no messages, meaning the topic
-    # was in a good state.
-    # realized had messages in them, meaning all other topics were empty.
-    # 
-    # _@param_ `except_topics` — the list of topics we've just
-    def self.ping_empty_topics: (::Array[String] except_topics) -> void
-
-    # The producer calls this if it gets an error sending messages. This
-    # essentially locks down this topic for 1 minute (for all producers)
-    # and allows the caller to continue to the next topic.
-    # 
-    # _@param_ `topic`
-    # 
-    # _@param_ `lock_id`
-    def self.register_error: (String topic, String lock_id) -> void
-
-    # Update the locked_at timestamp to indicate that the producer is still
-    # working on those messages and to continue.
-    # 
-    # _@param_ `topic`
-    # 
-    # _@param_ `lock_id`
-    def self.heartbeat: (String topic, String lock_id) -> void
-  end
-
-  module SchemaClass
-    # Base Class for Schema Classes generated from Avro.
-    class Base
-      # _@param_ `_args`
-      def initialize: (*::Array[Object] _args) -> void
-
-      # Converts the object to a hash which can be used for debugging or comparing objects.
-      # 
-      # _@param_ `_opts`
-      # 
-      # _@return_ — a hash representation of the payload
-      def as_json: (?::Hash[untyped, untyped] _opts) -> ::Hash[untyped, untyped]
-
-      # _@param_ `key`
-      # 
-      # _@param_ `val`
-      def []=: ((String | Symbol) key, Object val) -> void
-
-      # _@param_ `other`
-      def ==: (SchemaClass::Base other) -> bool
-
-      def inspect: () -> String
-
-      # Initializes this class from a given value
-      # 
-      # _@param_ `value`
-      def self.initialize_from_value: (Object value) -> SchemaClass::Base
-
-      def hash: () -> Integer
-    end
-
-    # Base Class for Enum Classes generated from Avro.
-    class Enum < Deimos::SchemaClass::Base
-      # _@param_ `other`
-      def ==: (Deimos::SchemaClass::Enum other) -> bool
-
-      def to_s: () -> String
-
-      # _@param_ `value`
-      def initialize: (String value) -> void
-
-      # Returns all the valid symbols for this enum.
-      def symbols: () -> ::Array[String]
-
-      def as_json: (?::Hash[untyped, untyped] _opts) -> String
-
-      def self.initialize_from_value: (Object value) -> SchemaClass::Enum
-
-      attr_accessor value: String
-    end
-
-    # Base Class of Record Classes generated from Avro.
-    class Record < Deimos::SchemaClass::Base
-      # Converts the object attributes to a hash which can be used for Kafka
-      # 
-      # _@return_ — the payload as a hash.
-      def to_h: () -> ::Hash[untyped, untyped]
-
-      # Merge a hash or an identical schema object with this one and return a new object.
-      # 
-      # _@param_ `other_hash`
-      def merge: ((::Hash[untyped, untyped] | SchemaClass::Base) other_hash) -> SchemaClass::Base
-
-      # Element access method as if this Object were a hash
-      # 
-      # _@param_ `key`
-      # 
-      # _@return_ — The value of the attribute if exists, nil otherwise
-      def []: ((String | Symbol) key) -> Object
-
-      def with_indifferent_access: () -> SchemaClass::Record
-
-      # Returns the schema name of the inheriting class.
-      def schema: () -> String
-
-      # Returns the namespace for the schema of the inheriting class.
-      def namespace: () -> String
-
-      # Returns the full schema name of the inheriting class.
-      def full_schema: () -> String
-
-      # Returns the schema validator from the schema backend
-      def validator: () -> Deimos::SchemaBackends::Base
-
-      # _@return_ — an array of fields names in the schema.
-      def schema_fields: () -> ::Array[String]
-
-      def self.initialize_from_value: (Object value) -> SchemaClass::Record
-
-      # Returns the value of attribute tombstone_key.
-      attr_accessor tombstone_key: untyped
     end
   end
 
@@ -1321,7 +1382,7 @@ module Deimos
 
       def schema_fields: () -> ::Array[SchemaField]
 
-      def coerce_field: (SchemaField field, Object value) -> Object
+      def coerce_field: (untyped _field, Object value) -> Object
 
       def encode_key: ((String | Symbol) key_id, (String | ::Hash[untyped, untyped]) key) -> String
 
