@@ -7,7 +7,6 @@ module Deimos
   module Utils
     # Class which continually polls the database and sends Kafka messages.
     module DbPoller
-
       PollStatus = Struct.new(:batches_processed, :batches_errored, :messages_processed) do
 
         # @return [Integer]
@@ -21,6 +20,7 @@ module Deimos
         end
       end
 
+      # Base poller class for retrieving and publishing messages.
       class Base
 
         # @return [Integer]
@@ -97,7 +97,7 @@ module Deimos
               break
             end
             process_updates if should_run?
-            sleep 0.1
+            sleep(0.1)
           end
         end
 

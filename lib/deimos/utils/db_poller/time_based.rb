@@ -1,16 +1,19 @@
+# frozen_string_literal: true
+
 require 'deimos/utils/db_poller/base'
 
 module Deimos
   module Utils
     module DbPoller
+      # Poller that uses ID and updated_at to determine the records to publish.
       class TimeBased < Base
 
         # :nodoc:
         def create_poll_info
           new_time = @config.start_from_beginning ? Time.new(0) : Time.zone.now
           Deimos::PollInfo.create!(producer: @config.producer_class,
-                                           last_sent: new_time,
-                                           last_sent_id: 0)
+                                   last_sent: new_time,
+                                   last_sent_id: 0)
         end
 
         # @param batch [Array<ActiveRecord::Base>]

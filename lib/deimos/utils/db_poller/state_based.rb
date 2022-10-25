@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 require 'deimos/utils/db_poller/base'
 
 module Deimos
   module Utils
     module DbPoller
+      # Poller that uses state columns to determine the records to publish.
       class StateBased < Base
         # Send messages for updated data.
         # @return [void]
