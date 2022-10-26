@@ -29,7 +29,7 @@ module Deimos
       end
 
       # @override
-      def encode_key(key_id, key)
+      def encode_key(key_id, key, topic: nil)
         { key_id => key }
       end
 

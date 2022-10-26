@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Fixes :wrench:
+- Fix the mock schema backend's `encode_key` method so it doesn't crash when used in application code.
+
 # 1.17.1 - 2022-10-20
 
 - Fix the log message for publishing messages so it uses the topic of the actual message instead of 
