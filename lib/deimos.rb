@@ -35,7 +35,7 @@ if defined?(ActiveRecord)
   require 'deimos/backends/db'
   require 'sigurd'
   require 'deimos/utils/db_producer'
-  require 'deimos/utils/db_poller/base'
+  require 'deimos/utils/db_poller'
 end
 
 require 'deimos/utils/inline_consumer'

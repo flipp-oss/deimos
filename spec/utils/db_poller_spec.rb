@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'deimos/utils/db_poller'
+
 # rubocop:disable Layout/LineLength
 
 # @param secs [Integer]
@@ -37,7 +39,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
 
     it 'should raise an error if no pollers configured' do
       Deimos.configure {}
-      expect { described_class.start! }.to raise_error('No pollers configured!')
+      expect { Deimos::Utils::DbPoller.start! }.to raise_error('No pollers configured!')
     end
 
     it 'should start pollers as configured' do
@@ -53,7 +55,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
       allow(Deimos::Utils::DbPoller::TimeBased).to receive(:new)
       signal_double = instance_double(Sigurd::SignalHandler, run!: nil)
       allow(Sigurd::SignalHandler).to receive(:new).and_return(signal_double)
-      described_class.start!
+      Deimos::Utils::DbPoller.start!
       expect(Deimos::Utils::DbPoller::TimeBased).to have_received(:new).twice
       expect(Deimos::Utils::DbPoller::TimeBased).to have_received(:new).
         with(Deimos.config.db_poller_objects[0])
@@ -66,7 +68,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     include_context 'with widgets'
 
     let(:poller) do
-      poller = described_class.class_for_config(config.mode).new(config)
+      poller = Deimos::Utils::DbPoller.class_for_config(config.mode).new(config)
       allow(poller).to receive(:sleep)
       poller
     end
@@ -161,7 +163,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
 
     describe '#process_batch' do
       let(:widgets) { (1..3).map { Widget.create!(test_id: 'some_id', some_int: 4) } }
-      let(:status) { described_class::PollStatus.new(0, 0, 0) }
+      let(:status) { Deimos::Utils::DbPoller::PollStatus.new(0, 0, 0) }
 
       before(:each) do
         allow(Deimos.config.tracer).to receive(:start).and_return('a span')

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'deimos/utils/db_poller'
 require 'deimos/poll_info'
 require 'sigurd'
 
@@ -7,19 +8,6 @@ module Deimos
   module Utils
     # Class which continually polls the database and sends Kafka messages.
     module DbPoller
-      PollStatus = Struct.new(:batches_processed, :batches_errored, :messages_processed) do
-
-        # @return [Integer]
-        def current_batch
-          batches_processed + 1
-        end
-
-        # @return [String]
-        def report
-          "#{batches_processed} batches, #{batches_errored} errored batches, #{messages_processed} processed messages"
-        end
-      end
-
       # Base poller class for retrieving and publishing messages.
       class Base
 
@@ -32,34 +20,6 @@ module Deimos
 
         # @return [Hash]
         attr_reader :config
-
-        # @param config_name [Symbol]
-        # @return [Class<Deimos::Utils::DbPoller>]
-        def self.class_for_config(config_name)
-          case config_name
-          when :state_based
-            Deimos::Utils::DbPoller::StateBased
-          else
-            Deimos::Utils::DbPoller::TimeBased
-          end
-        end
-
-        # Begin the DB Poller process.
-        # @return [void]
-        def self.start!
-          if Deimos.config.db_poller_objects.empty?
-            raise('No pollers configured!')
-          end
-
-          pollers = Deimos.config.db_poller_objects.map do |poller_config|
-            self.class_for_config(poller_config.mode).new(poller_config)
-          end
-          executor = Sigurd::Executor.new(pollers,
-                                          sleep_seconds: 5,
-                                          logger: Deimos.config.logger)
-          signal_handler = Sigurd::SignalHandler.new(executor)
-          signal_handler.run!
-        end
 
         # @param config [FigTree::ConfigStruct]
         def initialize(config)
@@ -177,6 +137,3 @@ module Deimos
     end
   end
 end
-
-require 'deimos/utils/db_poller/time_based'
-require 'deimos/utils/db_poller/state_based'
