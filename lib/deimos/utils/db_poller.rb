@@ -2,6 +2,7 @@
 
 module Deimos
   module Utils
+    # Overall functionality related to DB poller.
     module DbPoller
       # Begin the DB Poller process.
       # @return [void]
