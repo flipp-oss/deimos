@@ -39,7 +39,7 @@ module Deimos
 
           state = success ? @config.published_state : @config.failed_state
           klass = batch.first.class
-          id_col = record.class.primary_key
+          id_col = klass.primary_key.to_sym
           timestamp_col = @config.timestamp_column
 
           attrs = { timestamp_col => Time.zone.now }

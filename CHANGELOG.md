@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix the primary_key detection way in `state_based` mode
+
 # 1.18.0 - 2022-11-01
 
 ### Features :star:
