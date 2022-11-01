@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.18.0 - 2022-11-01
+
 ### Features :star:
 
 - Add the `state_based` mode for DB pollers.
