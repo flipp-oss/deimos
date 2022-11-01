@@ -803,6 +803,25 @@ end
 Note that the poller will retry infinitely if it encounters a Kafka-related error such
 as a communication failure. For all other errors, it will retry once by default.
 
+### State-based pollers
+
+By default, pollers use timestamps and IDs to determine the records to publish. However, you can
+set a different mode whereby it will include all records that match your query, and when done,
+will update a state and/or timestamp column which should remove it from that query. With this
+algorithm, you can ignore the `updated_at` and `id` columns.
+
+To configure a state-based poller:
+
+```ruby
+db_poller do
+  mode :state_based
+  state_column :publish_state # the name of the column to update state to
+  publish_timestamp_column :published_at # the column to update when publishing succeeds
+  published_state 'published' # the value to put into the state_column when publishing succeeds
+  failed_state 'publish_failed' the value to put into the state_column when publishing fails
+end
+```
+
 ## Running consumers
 
 Deimos includes a rake task. Once it's in your gemfile, just run

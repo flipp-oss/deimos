@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+### Features :star:
+
+- Add the `state_based` mode for DB pollers.
+
 ### Fixes :wrench:
 - Fix the mock schema backend's `encode_key` method so it doesn't crash when used in application code.
 

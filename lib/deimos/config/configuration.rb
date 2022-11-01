@@ -444,25 +444,37 @@ module Deimos
     end
 
     setting_object :db_poller do
+      # Mode to use for querying - :time_based (via updated_at) or :state_based.
+      setting :mode, :time_based
       # Producer class to use for the poller.
       setting :producer_class
       # How often to run the poller, in seconds. If the poll takes longer than this
       # time, it will run again immediately and the timeout
       # will be pushed to the next e.g. 1 minute.
       setting :run_every, 60
-      # Column to use to find updates. Must have an index on it.
-      setting :timestamp_column, :updated_at
-      # Amount of time, in seconds, to wait before catching updates, to allow transactions
-      # to complete but still pick up the right records.
-      setting :delay_time, 2
-      # If true, dump the full table rather than incremental changes. Should
-      # only be used for very small tables.
-      setting :full_table, false
-      # If false, start from the current time instead of the beginning of time
-      # if this is the first time running the poller.
-      setting :start_from_beginning, true
       # The number of times to retry production when encountering a *non-Kafka* error.
       setting :retries, 1
+      # Amount of time, in seconds, to wait before catching updates, to allow transactions
+      # to complete but still pick up the right records. Should only be set for time-based mode.
+      setting :delay_time, 2
+      # Column to use to find updates. Must have an index on it.
+      setting :timestamp_column, :updated_at
+
+      # If true, dump the full table rather than incremental changes. Should
+      # only be used for very small tables. Time-based only.
+      setting :full_table, false
+      # If false, start from the current time instead of the beginning of time
+      # if this is the first time running the poller. Time-based only.
+      setting :start_from_beginning, true
+
+      # Column to set once publishing is complete - state-based only.
+      setting :state_column
+      # Column to update with e.g. published_at. State-based only.
+      setting :publish_timestamp_column
+      # Value to set the state_column to once published - state-based only.
+      setting :published_state
+      # Value to set the state_column to if publishing fails - state-based only.
+      setting :failed_state
     end
 
     deprecate 'kafka_logger', 'kafka.logger'

@@ -81,7 +81,7 @@ Lint/UnusedMethodArgument:
 
 Metrics/AbcSize:
   Severity: refactor
-  Max: 25
+  Max: 35
 
 Metrics/BlockLength:
   Enabled: false
