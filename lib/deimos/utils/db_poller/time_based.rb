@@ -36,7 +36,10 @@ module Deimos
           loop do
             Deimos.config.logger.debug("Polling #{@producer.topic}, batch #{status.current_batch}")
             batch = fetch_results(time_from, time_to).to_a
-            break if batch.empty?
+            if batch.empty?
+              @info.touch(:last_sent)
+              break
+            end
 
             process_and_touch_info(batch, status)
             time_from = last_updated(batch.last)

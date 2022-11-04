@@ -333,6 +333,20 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
           with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (3 batches, 0 errored batches, 7 processed messages)')
       end
 
+      it 'should update PollInfo timestamp after processing' do
+        poll_before = Deimos::PollInfo.last
+        poller.process_updates
+        poll_after = Deimos::PollInfo.last
+        expect(poll_after.last_sent).to be >= poll_before.last_sent
+      end
+
+      it 'should update PollInfo timestamp when there are no records to process' do
+        allow(poller).to receive(:fetch_results).and_return([])
+        poll_before = Deimos::PollInfo.last
+        poller.process_updates
+        poll_after = Deimos::PollInfo.last
+        expect(poll_after.last_sent).to be >= poll_before.last_sent
+      end
       describe 'errors' do
         before(:each) do
           poller.config.retries = 0
