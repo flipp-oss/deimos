@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+-  Fixes bug related to wait between runs when no records are fetched by updating poll_info
+
 # 1.18.1 - 2022-11-01
 
 - Fix the primary_key detection way in `state_based` mode

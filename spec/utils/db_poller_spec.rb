@@ -347,6 +347,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         poll_after = Deimos::PollInfo.last
         expect(poll_after.last_sent).to be >= poll_before.last_sent
       end
+
       describe 'errors' do
         before(:each) do
           poller.config.retries = 0
