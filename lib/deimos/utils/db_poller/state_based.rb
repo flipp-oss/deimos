@@ -18,7 +18,10 @@ module Deimos
           loop do
             Deimos.config.logger.debug("Polling #{@producer.topic}, batch #{status.current_batch}")
             batch = fetch_results.to_a
-            break if batch.empty?
+            if batch.empty?
+              @info.touch(:last_sent)
+              break
+            end
 
             success = process_batch_with_span(batch, status)
             finalize_batch(batch, success)
@@ -35,7 +38,7 @@ module Deimos
         # @param success [Boolean]
         # @return [void]
         def finalize_batch(batch, success)
-          @info.touch
+          @info.touch(:last_sent)
 
           state = success ? @config.published_state : @config.failed_state
           klass = batch.first.class
