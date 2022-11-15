@@ -22,6 +22,7 @@ Built on Phobos and hence Ruby-Kafka.
         * [Instrumentation](#instrumentation)
         * [Kafka Message Keys](#kafka-message-keys)
    * [Consumers](#consumers)
+        * [Active Record Consumer Generator](#active-record-consumer-generator)   
    * [Rails Integration](#rails-integration)
         * [Controller Mixin](#controller-mixin)
    * [Database Backend](#database-backend)
@@ -308,6 +309,49 @@ class MyConsumer < Deimos::Consumer
   end
 end
 ```
+
+## Active Record Consumer Generator
+
+Deimos provides a generator that streamlines Deimos consumer creation. It
+creates all the necessary components needed in a Ruby on Rails application when 
+creating a new Active Record Consumer. 
+
+It will take an existing schema and generate the following files based on its fields:
+ 
+    Database Migration          
+    Rails Model                 
+    Consumer Class              
+    Deimos Consumer Config 
+    Generated Schema Classes     
+ 
+  
+By default, any complex sub-types (such as records or arrays) are turned into JSON 
+(if supported) or string columns.
+
+Before running this generator, you must first copy the schema into your repo in the 
+correct path.
+
+To generate a migration, model, consumer class, consumer config and schema classes, run the following:
+
+Usage:
+
+    rails g deimos:active_record_consumer FULL_SCHEMA_NAME [CONFIG_FILE_PATH]
+    
+    Options are...
+            FULL_SCHEMA_NAME            (required) Fully qualified schema name, located in config.schema.path that defines the Avro schema for the Consumer.
+            CONFIG_FILE_PATH            (optional) Path to existing config file. If not specified, defaults to config/initializers/deimos.rb.
+    
+Example:
+
+    rails g deimos:active_record_consumer com.my-namespace.Widget
+    
+...would generate:
+
+    db/migrate/20221111134112_create_widgets.rb
+    app/models/widget.rb
+    app/lib/kafka/models/widget_consumer.rb
+    config/initializers/deimos.rb
+    app/lib/schema_classes/**/*.rb
 
 ### Fatal Errors
 

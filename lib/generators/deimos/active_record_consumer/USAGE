@@ -1,0 +1,23 @@
+Description:
+    Streamlines Deimos consumer creation. Creates all the necessary components needed in a Ruby on Rails application when creating a new Active Record Consumer.
+
+Usage:
+    bin/rails generate deimos:active_record_consumer FULL_SCHEMA_NAME [CONFIG_FILE_PATH]
+
+    Options are...
+        FULL_SCHEMA_NAME            (required) Fully qualified schema name, located in config.schema.path that defines the Avro schema for the Consumer.
+        CONFIG_FILE_PATH            (optional) Path to existing config file. If not specified, defaults to config/initializers/deimos.rb.
+
+Example:
+    bin/rails generate deimos:active_record_consumer com.test.Widget config/initializers/myconfig.config
+
+    This will create:
+        Database Migration          db/migrate/20221111134112_create_widgets.rb
+        Rails Model                 app/models/widget.rb
+        Consumer Class              app/lib/kafka/models/widget_consumer.rb
+        Deimos Consumer Config      config/initializers/deimos.rb or adds config to CONFIG_FILE_PATH
+        Generated Schema Classes    app/lib/schema_classes or config.schema.generated_class_path
+
+
+
+

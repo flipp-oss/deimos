@@ -1,0 +1,29 @@
+
+Deimos.configure do
+  logger Logger.new(STDOUT)
+  # Nested config field
+  kafka.seed_brokers ['my.kafka.broker:9092']
+
+  schema.generate_namespace_folders true
+  schema.generated_class_path 'app/lib/schemas'
+
+  # Multiple nested config fields via block
+  consumers do
+    session_timeout 30
+    offset_commit_interval 10
+  end
+
+  # Define a consumer
+  consumer do
+    class_name 'WidgetConsumer'
+    topic 'TopicToConsume'
+    schema 'Widget'
+    namespace 'com.my-namespace'
+    key_config field: :id
+    # include Phobos / RubyKafka configs
+    start_from_beginning true
+    heartbeat_interval 10
+    use_schema_classes true
+  end
+
+end
