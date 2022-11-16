@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.18.3 - 2022-11-16
+
+### Features :star:
+
+-  Added ActiveRecordConsumerGenerator, which streamlines the process into a single flow
+-  Creates a database migration, Rails model, consumer, consumer config, and Deimos schema classes
+
 # 1.18.2 - 2022-11-14
 
 -  Fixes bug related to wait between runs when no records are fetched by updating poll_info
