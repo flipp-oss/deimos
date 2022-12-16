@@ -128,8 +128,8 @@ module Deimos
         else
           @klass.import!(records, options)
         end
-
       end
+
       # config for associations
       # bulk_import_id is required only if handle_associations is set to true
       # alternatively set a config to add which associations need to be considered
@@ -223,10 +223,7 @@ module Deimos
       # @param records Array<ActiveRecord> - List of active records which will be subjected to model validations
       # @return valid Array<ActiveRecord> - Subset of records that passed the model validations
       def filter_records(records)
-        records.each do |p|
-          p.validate!
-        end
-        records
+        records.each(&:validate!)
       end
     end
   end

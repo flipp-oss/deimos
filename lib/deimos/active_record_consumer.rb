@@ -30,9 +30,13 @@ module Deimos
         config[:record_class] = klass
       end
 
+      # @param associations [List<String>] Optional list of associations that the consumer
+      # should save in addition to @klass
+      # @return [void]
       def association_list(associations)
         config[:association_list] = Array(associations)
       end
+
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
       # @return [void]
