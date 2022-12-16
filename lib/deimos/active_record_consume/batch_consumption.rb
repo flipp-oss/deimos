@@ -144,13 +144,9 @@ module Deimos
         entities.each { |entity| entity.id = table_by_bulk_import_id[entity.bulk_import_id].id }
         associations.each do |assoc|
           details = entities.map { |master|
-            details = master.send(assoc.name)
-            unless details.is_a?(Enumerable)
-              details = [details]
-            end
+            details = Array(master.send(assoc.name))
             details.each { |d| d.send("#{assoc.send(:foreign_key)}=", master.id) }
-
-            details.to_a
+            details
           }.flatten
 
           save_records_to_database(assoc.klass, assoc.klass.bulk_update_columns, details) unless details.empty?
