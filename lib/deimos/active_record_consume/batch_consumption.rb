@@ -88,36 +88,73 @@ module Deimos
       def upsert_records(messages)
         key_cols = key_columns(messages)
 
-        # Create payloads with payload + key attributes
-        upserts = messages.map do |m|
-          attrs = if self.method(:record_attributes).parameters.size == 2
-                    record_attributes(m.payload, m.key)
-                  else
-                    record_attributes(m.payload)
-                  end
-
-          attrs&.merge(record_key(m.key))
-        end
-
+        # Create ActiveRecord Models with payload + key attributes
+        upserts = build_models(messages)
         # If overridden record_attributes indicated no record, skip
         upserts.compact!
+        # apply ActiveRecord validations and fetch valid Records
+        valid_upserts = filter_models(upserts)
+
+        save_records_to_database(@klass, key_cols, valid_upserts)
+
+        import_associations(valid_upserts, key_cols) unless @association_list.empty?
+      end
+
+      def save_records_to_database(record_class, key_cols, records)
+        columns = :all
+        if record_class.respond_to?(:bulk_import_columns)
+          columns = record_class.bulk_import_columns
+        end
 
         options = if key_cols.empty?
                     {} # Can't upsert with no key, just do regular insert
                   elsif ActiveRecord::Base.connection.adapter_name.downcase =~ /mysql/
                     {
-                      on_duplicate_key_update: :all
+                      on_duplicate_key_update: columns
                     }
                   else
                     {
                       on_duplicate_key_update: {
                         conflict_target: key_cols,
-                        columns: :all
+                        columns: columns
                       }
                     }
                   end
 
-        @klass.import!(upserts, options)
+        if @klass.respond_to?(:bulk_import_columns)
+          @klass.import!(columns, records, options)
+        else
+          @klass.import!(records, options)
+        end
+
+      end
+      # config for associations
+      # bulk_import_id is required only if handle_associations is set to true
+      # alternatively set a config to add which associations need to be considered
+      # There could be many associations not relevant to master table. For example, products and merchant association
+      def import_associations(entities)
+        associations = @klass.reflect_on_all_associations.select { |assoc| @association_list.include?(assoc.name) }
+
+        # create DB migration for bulk insert id. I did it manually in item-platform
+        table_by_bulk_import_id =
+          @klass.where(bulk_import_id: entities.map(&:bulk_import_id)).
+            select(:id, :bulk_import_id).
+            index_by(&:bulk_import_id)
+        # update IDs in master table
+        entities.each { |entity| entity.id = table_by_bulk_import_id[entity.bulk_import_id].id }
+        associations.each do |assoc|
+          details = entities.map { |master|
+            details = master.send(assoc.name)
+            unless details.is_a?(Enumerable)
+              details = [details]
+            end
+            details.each { |d| d.send("#{assoc.send(:foreign_key)}=", master.id) }
+
+            details.to_a
+          }.flatten
+
+          save_records_to_database(assoc.klass, assoc.klass.bulk_update_columns, details) unless details.empty?
+        end
       end
 
       # Delete any records with a tombstone.
@@ -162,6 +199,41 @@ module Deimos
         return batch unless batch.first&.key.present?
 
         batch.reverse.uniq(&:key).reverse!
+      end
+
+      # Turns Kafka payload into ActiveRecord Objects by mapping relevant fields
+      # Override this method to build object and associations with message payload
+      # @param messages [Array<Deimos::Message>] the array of deimos messages in batch mode
+      # @return [Array<ActiveRecord>] Array of ActiveRecord objects
+      def build_models(messages)
+        messages.map do |m|
+          attrs = if self.method(:record_attributes).parameters.size == 2
+                    record_attributes(m.payload, m.key)
+                  else
+                    record_attributes(m.payload)
+                  end
+
+          attrs&.merge(record_key(m.key))
+          @klass.new(attrs)
+        end
+      end
+
+      # Filters list of Active Records by applying active record validations. Optionally, validation_context can
+      # be set in ActiveRecordConsumer to override the default `nil` context.
+      # Tip: Add validates_associated in ActiveRecord model to validate associated_models
+      # Optionally inherit this method and apply more filters in the application code
+      # @param records Array<ActiveRecord> - List of active records which will be subjected to model validations
+      # @return valid Array<ActiveRecord> - Subset of records that passed the model validations
+      def filter_models(records)
+        valid, invalid = records.partition do |p|
+          p.valid?(@validation_context)
+        end
+        invalid.each do |entity|
+          Deimos.config.logger.info('DB Validation failed --'\
+                                "Attributes: #{entity.attributes},"\
+                                " Errors:#{entity.errors.full_messages}")
+        end
+        valid
       end
     end
   end

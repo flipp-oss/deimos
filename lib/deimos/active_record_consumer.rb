@@ -30,6 +30,17 @@ module Deimos
         config[:record_class] = klass
       end
 
+      def validation_context(context)
+        config[:validation_context] = context
+      end
+
+      def association_list(associations)
+        if associations.is_a?(Array)
+          config[:association_list] = associations
+        else
+          config[:association_list] = [associations]
+        end
+      end
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
       # @return [void]
@@ -41,6 +52,8 @@ module Deimos
     # Setup
     def initialize
       @klass = self.class.config[:record_class]
+      @validation_context = self.class.config[:validation_context]
+      @association_list = self.class.config[:association_list]
       @converter = ActiveRecordConsume::SchemaModelConverter.new(self.class.decoder, @klass)
 
       if self.class.config[:key_schema]
