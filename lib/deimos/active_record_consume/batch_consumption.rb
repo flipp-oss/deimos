@@ -89,15 +89,15 @@ module Deimos
         key_cols = key_columns(messages)
 
         # Create ActiveRecord Models with payload + key attributes
-        upserts = build_models(messages)
+        upserts = build_records(messages)
         # If overridden record_attributes indicated no record, skip
         upserts.compact!
         # apply ActiveRecord validations and fetch valid Records
-        valid_upserts = filter_models(upserts)
+        valid_upserts = filter_records(upserts)
 
         save_records_to_database(@klass, key_cols, valid_upserts)
 
-        import_associations(valid_upserts, key_cols) unless @association_list.empty?
+        import_associations(valid_upserts) unless @association_list.blank?
       end
 
       def save_records_to_database(record_class, key_cols, records)
@@ -205,7 +205,7 @@ module Deimos
       # Override this method to build object and associations with message payload
       # @param messages [Array<Deimos::Message>] the array of deimos messages in batch mode
       # @return [Array<ActiveRecord>] Array of ActiveRecord objects
-      def build_models(messages)
+      def build_records(messages)
         messages.map do |m|
           attrs = if self.method(:record_attributes).parameters.size == 2
                     record_attributes(m.payload, m.key)
@@ -220,13 +220,13 @@ module Deimos
 
       # Filters list of Active Records by applying active record validations. Optionally, validation_context can
       # be set in ActiveRecordConsumer to override the default `nil` context.
-      # Tip: Add validates_associated in ActiveRecord model to validate associated_models
+      # Tip: Add validates_associated in ActiveRecord model to validate associated models
       # Optionally inherit this method and apply more filters in the application code
       # @param records Array<ActiveRecord> - List of active records which will be subjected to model validations
       # @return valid Array<ActiveRecord> - Subset of records that passed the model validations
-      def filter_models(records)
+      def filter_records(records)
         valid, invalid = records.partition do |p|
-          p.valid?(@validation_context)
+          p.valid?
         end
         invalid.each do |entity|
           Deimos.config.logger.info('DB Validation failed --'\
