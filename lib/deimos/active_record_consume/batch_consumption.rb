@@ -101,7 +101,9 @@ module Deimos
       end
 
       def save_records_to_database(record_class, key_cols, records)
-        columns = :all
+        # In-memory records contain created_at and updated_at as nil
+        # which messes up ActiveRecord-Import bulk_import method.
+        columns = record_class.columns.map(&:name) - %w(created_at updated_at)
         if record_class.respond_to?(:bulk_import_columns)
           columns = record_class.bulk_import_columns
         end
@@ -209,27 +211,22 @@ module Deimos
                     record_attributes(m.payload)
                   end
 
-          attrs&.merge(record_key(m.key))
-          @klass.new(attrs)
+          attrs = attrs&.merge(record_key(m.key))
+          @klass.new(attrs) unless attrs.nil?
         end
       end
 
-      # Filters list of Active Records by applying active record validations. Optionally, validation_context can
-      # be set in ActiveRecordConsumer to override the default `nil` context.
+      # Filters list of Active Records by applying active record validations.
       # Tip: Add validates_associated in ActiveRecord model to validate associated models
       # Optionally inherit this method and apply more filters in the application code
+      # The default implementation throws ActiveRecord::RecordInvalid by default
       # @param records Array<ActiveRecord> - List of active records which will be subjected to model validations
       # @return valid Array<ActiveRecord> - Subset of records that passed the model validations
       def filter_records(records)
-        valid, invalid = records.partition do |p|
-          p.valid?
+        records.each do |p|
+          p.validate!
         end
-        invalid.each do |entity|
-          Deimos.config.logger.info('DB Validation failed --'\
-                                "Attributes: #{entity.attributes},"\
-                                " Errors:#{entity.errors.full_messages}")
-        end
-        valid
+        records
       end
     end
   end
