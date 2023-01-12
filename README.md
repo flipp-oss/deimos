@@ -353,6 +353,45 @@ class MyBatchConsumer < Deimos::Consumer
   end
 end
 ```
+#### Saving data to Multiple Database tables
+
+> This feature is implemented and tested with MySQL database ONLY.
+
+Sometimes, the kafka message needs to be split to multiple database tables. For eg., if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables -- `Metadata` and `Images`.
+
+- `association_list` (Required) allows you to achieve this usecase. It is a list of ActiveRecord symbols to access the relevant association.
+- `bulk_import_id_column` (Optional) Defaults to `bulk_import_id`. Setup a column to link parent-child relationship which facilitate saving records to DB.
+
+It is required to override `build_records` and `bulk_import_columns` methods for this feature to work.
+- `build_records` - This method is required to set bulk_import_id column and map Kafka messages to ActiveRecord model objects.
+- `bulk_import_columns` - Use this to list Model attributes that should be saved during bulk_import step.
+
+```ruby
+class MyBatchConsumer < Deimos::ActiveRecordConsumer
+
+  record_class User
+  association_list :images
+
+  def build_records(messages)
+    # Initialise bulk_import_id and build ActiveRecord objects out of Kafka message attributes
+    messages.each do |m|
+      u = User.new(first_name: m.first_name, bulk_import_id: SecureRandom.uuid)
+      i = Image.new(attr1: m.image_url)
+      u.images << i
+      u
+    end
+  end
+  
+  def bulk_import_columns(klass)
+    case klass
+    when User
+      key_cols, cols = [["first_name"], all_cols - timestamps]
+    when Image
+      key_cols, cols = [["image_url", "image_name"], all_cols - timestamps - id]
+    end
+  end
+end
+```
 
 # Rails Integration
 

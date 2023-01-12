@@ -37,6 +37,11 @@ module Deimos
         config[:association_list] = Array(associations)
       end
 
+      # @param
+      def bulk_import_id_column(name)
+        config[:bulk_import_id_column] = name
+      end
+
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
       # @return [void]
@@ -49,6 +54,7 @@ module Deimos
     def initialize
       @klass = self.class.config[:record_class]
       @association_list = self.class.config[:association_list]
+      @bulk_import_id_column = self.class.config[:bulk_import_id_column] || :bulk_import_id
       @converter = ActiveRecordConsume::SchemaModelConverter.new(self.class.decoder, @klass)
 
       if self.class.config[:key_schema]
