@@ -357,14 +357,14 @@ end
 
 > This feature is implemented and tested with MySQL database ONLY.
 
-Sometimes, the kafka message needs to be split to multiple database tables. For eg., if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables -- `Metadata` and `Images`.
+Sometimes, the Kafka message needs to be saved to multiple database tables. For example, if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables: `Metadata` and `Images`.
 
-- `association_list` (Required) allows you to achieve this usecase. It is a list of ActiveRecord symbols to access the relevant association.
-- `bulk_import_id_column` (Optional) Defaults to `bulk_import_id`. Setup a column to link parent-child relationship which facilitate saving records to DB.
+- The `association_list` configuration allows you to achieve this use case.
+- The optional `bulk_import_id_column` config allows you to set up a column to link parent-child relationships while saving records to the database.
 
-It is required to override `build_records` and `bulk_import_columns` methods for this feature to work.
-- `build_records` - This method is required to set bulk_import_id column and map Kafka messages to ActiveRecord model objects.
-- `bulk_import_columns` - Use this to list Model attributes that should be saved during bulk_import step.
+You must override the `build_records` and `bulk_import_columns` methods on your ActiveRecord class for this feature to work.
+- `build_records` - This method is required to set the value of the `bulk_import_id` column and map Kafka messages to ActiveRecord model objects.
+- `bulk_import_columns` - Use this to list model attributes that should be saved during the bulk import step.
 
 ```ruby
 class MyBatchConsumer < Deimos::ActiveRecordConsumer
