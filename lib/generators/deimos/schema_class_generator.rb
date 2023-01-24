@@ -26,6 +26,8 @@ module Deimos
 
       source_root File.expand_path('schema_class/templates', __dir__)
 
+      class_option :skip_generate_from_schema_files, type: :boolean, default: false
+
       no_commands do
         # Retrieve the fields from this Avro Schema
         # @param schema [Avro::Schema::NamedSchema]
@@ -175,7 +177,7 @@ module Deimos
           generate_classes(schema_name, namespace, config.key_config)
         end
 
-        generate_from_schema_files(found_schemas)
+        generate_from_schema_files(found_schemas) unless options[:skip_generate_from_schema_files]
 
       end
 

@@ -27,7 +27,7 @@ RSpec.describe Deimos::Generators::ActiveRecordConsumerGenerator do
     end
   end
 
-  it 'should generate a migration, model, consumer class, config and schema classes' do
+  it 'should generate a migration, model, consumer class, config and schema class' do
     Deimos.configure do
       consumer do
         class_name 'ConsumerTest::MyConsumer'
@@ -43,7 +43,7 @@ RSpec.describe Deimos::Generators::ActiveRecordConsumerGenerator do
     expect(Dir["#{config_path}/*.rb"]).to be_empty
     expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
 
-    described_class.start(['com.my-namespace.Widget'])
+    described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key'])
 
     files = Dir["#{db_migration_path}/*.rb"]
     expect(files.length).to eq(1)
@@ -61,11 +61,11 @@ RSpec.describe Deimos::Generators::ActiveRecordConsumerGenerator do
     expect(files.length).to eq(1)
     expect(File.read(files[0])).to match_snapshot('consumer_generator_config')
 
-    files = Dir["#{schema_class_path}/**/*.rb"].map { |f| [f, File.read(f)] }.to_h
-    expect(files).to match_snapshot('consumer_generator_schema_classes', snapshot_serializer: MultiFileSerializer)
+    files = Dir["#{schema_class_path}/*/*.rb"]
+    expect(File.read(files[0])).to match_snapshot('consumer_generator_schema_classes')
   end
 
-  it 'should generate a migration, model, consumer class, schema classes and edit the passed in config file' do
+  it 'should generate a migration, model, consumer class, schema class and edit the passed in config file' do
     config_file_name = 'my_config.config'
     FileUtils.mkdir_p(config_path)
     Tempfile.new(config_file_name, config_path)
@@ -85,9 +85,24 @@ RSpec.describe Deimos::Generators::ActiveRecordConsumerGenerator do
     expect(Dir["#{model_path}/*.rb"]).to be_empty
     expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
 
-    described_class.start(['com.my-namespace.Widget', config_path_argument])
+    described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key',config_path_argument])
+
+    files = Dir["#{db_migration_path}/*.rb"]
+    expect(files.length).to eq(1)
+    expect(File.read(files[0])).to match_snapshot('consumer_generator_migration')
+
+    files = Dir["#{model_path}/*.rb"]
+    expect(files.length).to eq(1)
+    expect(File.read(files[0])).to match_snapshot('consumer_generator_model')
+
+    files = Dir["#{consumer_path}/*.rb"]
+    expect(files.length).to eq(1)
+    expect(File.read(files[0])).to match_snapshot('consumer_generator_consumer_class')
 
     expect(File.read(config_path_argument)).to match_snapshot('consumer_generator_config_with_config_arg')
+
+    files = Dir["#{schema_class_path}/*/*.rb"]
+    expect(File.read(files[0])).to match_snapshot('consumer_generator_schema_classes')
   end
 
 end

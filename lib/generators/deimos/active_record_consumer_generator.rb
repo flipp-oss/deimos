@@ -3,6 +3,7 @@
 require 'rails/generators'
 require 'rails/generators/active_record/migration'
 require 'generators/deimos/schema_class_generator'
+require 'generators/deimos/active_record_generator'
 require 'rails/version'
 require 'erb'
 
@@ -20,21 +21,47 @@ module Deimos
       else
         include ActiveRecord::Generators::Migration
       end
+
+      # @return [Array<String>]
+      KEY_CONFIG_OPTIONS = %w(none plain schema field).freeze
+
+      # @return [Array<String>]
+      KEY_CONFIG_OPTIONS_BOOL = %w(none plain).freeze
+
+      # @return [Array<String>]
+      KEY_CONFIG_OPTIONS_STRING = %w(schema field).freeze
+
       source_root File.expand_path('active_record_consumer/templates', __dir__)
 
       argument :full_schema, desc: 'The fully qualified schema name.', required: true
+      argument :key_config_type, desc: 'The kafka message key configuration type.', required: true
+      argument :key_config_value, desc: 'The kafka message key configuration value.', required: true
       argument :config_path, desc: 'The path to the deimos configuration file, relative to the root directory.', required: false
 
       no_commands do
 
-        # Creates database migration for creating new table
-        def create_db_migration
-          migration_template('migration.rb', "#{db_migrate_path}/create_#{table_name.underscore}.rb")
+        def validate_arguments
+          # key_config_hash = {}
+          # colon = self.full_schema.rindex(':')
+          # value = key_config[colon+1...-1].strip
+          # if value.rindex("'").present?
+          # key_config_hash[key_config[0...colon]] = key_config[colon+1...-1]
+          #
+          # self.full_schema[0...last_dot]
+
+          @key_config_hash = {}
+          if KEY_CONFIG_OPTIONS_BOOL.include?(key_config_type)
+            @key_config_hash[key_config_type] = true
+          elsif KEY_CONFIG_OPTIONS_STRING.include?(key_config_type)
+            @key_config_hash[key_config_type] = key_config_value
+          else
+            return ' nil'
+          end
         end
 
-        # Creates Rails Model
-        def create_rails_model
-          template('model.rb', "app/models/#{model_name}.rb")
+        # Creates database migration for creating new table and Rails Model
+        def create_db_migration_rails_model
+          Deimos::Generators::ActiveRecordGenerator.start([table_name,full_schema])
         end
 
         # Creates Kafka Consumer file
@@ -59,29 +86,7 @@ module Deimos
 
         # Generates schema classes
         def create_deimos_schema_class
-          Deimos::Generators::SchemaClassGenerator.start
-        end
-
-        # @return [String]
-        def db_migrate_path
-          if defined?(Rails.application) && Rails.application
-            paths = Rails.application.config.paths['db/migrate']
-            paths.respond_to?(:to_ary) ? paths.to_ary.first : paths.to_a.first
-          else
-            'db/migrate'
-          end
-        end
-
-        # @return [String]
-        def migration_version
-          "[#{ActiveRecord::Migration.current_version}]"
-        rescue StandardError
-          ''
-        end
-
-        # @return [String]
-        def table_class
-          table_name.classify
+          Deimos::Generators::SchemaClassGenerator.start(['--skip_generate_from_schema_files'])
         end
 
         # @return [String]
@@ -140,11 +145,24 @@ module Deimos
       # desc 'Generate necessary files and configuration for a new Active Record Consumer.'
       # @return [void]
       def generate
-        create_db_migration
-        create_rails_model
+        # if yes?('Would you like to install Rspec?')
+        #   gem 'rspec-rails', group: :test
+        #   after_bundle { generate 'rspec:install' }
+        # end
+        validate_arguments
+        create_db_migration_rails_model
         create_consumer
         create_consumer_config
         create_deimos_schema_class
+      end
+
+      private
+
+      # Determines if Schema Class Generation can be run.
+      # @raise if Schema Backend is not of a Avro-based class
+      def _validate
+        backend = Deimos.config.schema.backend.to_s
+        raise 'Schema Class Generation requires an Avro-based Schema Backend' if backend !~ /^avro/
       end
     end
   end
