@@ -40,23 +40,11 @@ module Deimos
 
       no_commands do
 
+        # validate schema, key_config and deimos config file
         def validate_arguments
-          # key_config_hash = {}
-          # colon = self.full_schema.rindex(':')
-          # value = key_config[colon+1...-1].strip
-          # if value.rindex("'").present?
-          # key_config_hash[key_config[0...colon]] = key_config[colon+1...-1]
-          #
-          # self.full_schema[0...last_dot]
-
-          @key_config_hash = {}
-          if KEY_CONFIG_OPTIONS_BOOL.include?(key_config_type)
-            @key_config_hash[key_config_type] = true
-          elsif KEY_CONFIG_OPTIONS_STRING.include?(key_config_type)
-            @key_config_hash[key_config_type] = key_config_value
-          else
-            return ' nil'
-          end
+          _validate_schema
+          _validate_key_config
+          _validate_config_path
         end
 
         # Creates database migration for creating new table and Rails Model
@@ -72,15 +60,19 @@ module Deimos
         # Adds consumer config to config file.
         # Defaults to deimos.rb if config_path arg is not specified.
         def create_consumer_config
-          config_file = 'deimos.rb'
-          config_file_path = "#{initializer_path}/#{config_file}"
-          config_file_path = config_path if config_path.present?
+          if @config_file_path.nil?
+            config_file = 'deimos.rb'
+            @config_file_path = "#{initializer_path}/#{config_file}"
+          end
 
-          if File.exist?(config_file_path)
-            config_template = File.expand_path(find_in_source_paths('config.rb'))
-            insert_into_file(config_file_path.to_s, CapturableERB.new(::File.binread(config_template)).result(binding))
+          config_template = File.expand_path(find_in_source_paths('consumer_config.rb'))
+          if File.exist?(@config_file_path)
+            insert_into_file(@config_file_path.to_s,
+                             CapturableERB.new(::File.binread(config_template)).result(binding),
+                             :after => "Deimos.configure do\n")
           else
-            template('config.rb', config_file_path.to_s)
+            @consumer_config = CapturableERB.new(::File.binread(config_template)).result(binding)
+            template('config.rb', @config_file_path.to_s)
           end
         end
 
@@ -160,9 +152,27 @@ module Deimos
 
       # Determines if Schema Class Generation can be run.
       # @raise if Schema Backend is not of a Avro-based class
-      def _validate
+      def _validate_schema
         backend = Deimos.config.schema.backend.to_s
         raise 'Schema Class Generation requires an Avro-based Schema Backend' if backend !~ /^avro/
+      end
+
+      def _validate_key_config
+        @key_config_hash = {}
+        if KEY_CONFIG_OPTIONS_BOOL.include?(key_config_type)
+          @key_config_hash[key_config_type] = true
+        elsif KEY_CONFIG_OPTIONS_STRING.include?(key_config_type)
+          @key_config_hash[key_config_type] = key_config_value
+        else
+          return ' nil'
+        end
+      end
+
+      def _validate_config_path
+        if config_path.present?
+          @config_file_path = "#{initializer_path}/#{config_path}"
+          raise 'Configuration file does not exist!' unless File.exist?(@config_file_path)
+        end
       end
     end
   end
