@@ -136,10 +136,10 @@ module Deimos
           end
         end
 
-        # @return [String] Returns the name of the first field in the schema, as the key
-        def key_field
-          fields.first.name
-        end
+        # # @return [String] Returns the name of the first field in the schema, as the key
+        # def key_field
+        #   fields.first.name
+        # end
       end
 
       # desc 'Generate necessary files and configuration for a new Active Record Consumer.'
@@ -165,14 +165,18 @@ module Deimos
         raise 'Schema Class Generation requires an Avro-based Schema Backend' if backend !~ /^avro/
       end
 
+#       key_config none: true - this indicates that you are not using keys at all for this topic. This must be set if your messages won't have keys - either all your messages in a topic need to have a key, or they all need to have no key. This is a good choice for events that aren't keyed - you can still set a partition key.
+#           key_config plain: true - this indicates that you are not using an encoded key. Use this for legacy topics - new topics should not use this setting.
+#           key_config schema: 'MyKeySchema-key' - this tells the producer to look for an existing key schema named MyKeySchema-key in the schema registry and to encode the key using it. Use this if you've already created a key schema or the key value does not exist in the existing payload (e.g. it is a compound or generated key).
+# key_config field: 'my_field' - this tells the producer to look for a field named my_field in the value schema. When a payload comes in, the producer will take that value from the payload and insert it in a dynamically generated key schema. This key schema does not need to live in your codebase. Instead, it will be a subset of the value schema with only the key field in it.
       def _validate_key_config
-        @key_config_hash = {}
+        @key_type = key_config_type
         if KEY_CONFIG_OPTIONS_BOOL.include?(key_config_type)
-          @key_config_hash[key_config_type] = true
+          @key_value = 'true'
         elsif KEY_CONFIG_OPTIONS_STRING.include?(key_config_type)
-          @key_config_hash[key_config_type] = key_config_value
+          @key_value = key_config_value
         else
-          return ' nil'
+          raise 'Invalid key config specified!'
         end
       end
 

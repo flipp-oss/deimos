@@ -5,7 +5,7 @@ Deimos.configure do
     topic 'TopicToConsume'
     schema 'Widget'
     namespace 'com.my-namespace'
-    key_config field: :id
+    key_config field: :a_string
     # include Phobos / RubyKafka configs
     start_from_beginning true
     heartbeat_interval 10
