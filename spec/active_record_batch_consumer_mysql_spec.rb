@@ -134,13 +134,25 @@ module ActiveRecordBatchConsumerTest
             end
           end
 
-          def bulk_import_columns(klass)
-            all_cols = klass.columns.map(&:name)
+          def key_columns(messages, klass)
             case klass.to_s
             when Widget.to_s
-              [%w(part_one part_two), all_cols - ['id']]
+              super
             when Detail.to_s
-              [%w(title), all_cols - ['id']]
+              %w(title widget_id)
+            else
+              []
+            end
+          end
+
+          def columns(record_class)
+            all_cols = record_class.columns.map(&:name)
+
+            case record_class.to_s
+            when Widget.to_s
+              super
+            when Detail.to_s
+              all_cols - ['id']
             else
               []
             end
@@ -184,15 +196,27 @@ module ActiveRecordBatchConsumerTest
             end
           end
 
-          def bulk_import_columns(klass)
-            all_cols = klass.columns.map(&:name)
+          def key_columns(messages, klass)
             case klass.to_s
             when Widget.to_s
-              [%w(part_one part_two), all_cols - ['id']]
+              super
             when Detail.to_s
-              [%w(title), all_cols - ['id']]
+              %w(title widget_id)
             when Locale.to_s
-              [%w(title language), all_cols - ['id']]
+              %w(title language)
+            else
+              []
+            end
+          end
+
+          def columns(record_class)
+            all_cols = record_class.columns.map(&:name)
+
+            case record_class.to_s
+            when Widget.to_s
+              super
+            when Detail.to_s, Locale.to_s
+              all_cols - ['id']
             else
               []
             end

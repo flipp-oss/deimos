@@ -503,7 +503,7 @@ module ActiveRecordBatchConsumerTest
         stub_const('MyBatchConsumer', consumer_class)
         expect {
           publish_batch([{ key: 2, payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
-        }.to raise_error(NotImplementedError)
+        }.to raise_error(Deimos::MissingImplementationError)
       end
     end
 
