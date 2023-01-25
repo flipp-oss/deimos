@@ -28,126 +28,131 @@ RSpec.describe Deimos::Generators::ActiveRecordConsumerGenerator do
     end
   end
 
-  it 'should generate a migration, model, consumer class, config and schema class with existing deimos.rb config file' do
-    config_file_name = 'deimos.rb'
-    FileUtils.mkdir_p(config_path)
-    deimos_file_path = "#{config_path}/#{config_file_name}"
-    File.new(deimos_file_path, "w")
-    File.open(deimos_file_path, "w") { |f| f.write "Deimos.configure do\n\nend" }
+  context 'with a regular flow' do
 
-    Deimos.configure do
-      consumer do
-        class_name 'ConsumerTest::MyConsumer'
-        topic 'MyTopic'
-        schema 'Widget'
-        namespace 'com.my-namespace'
-        key_config field: :a_string
+    it 'should generate a migration, model, consumer class, config and schema class with existing deimos.rb config file' do
+      config_file_name = 'deimos.rb'
+      FileUtils.mkdir_p(config_path)
+      deimos_file_path = "#{config_path}/#{config_file_name}"
+      File.new(deimos_file_path, "w")
+      File.open(deimos_file_path, "w") { |f| f.write "Deimos.configure do\n\nend" }
+
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'Widget'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
       end
+
+      expect(Dir["#{db_migration_path}/*.rb"]).to be_empty
+      expect(Dir["#{model_path}/*.rb"]).to be_empty
+      expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
+
+      described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key'])
+
+      files = Dir["#{db_migration_path}/*.rb"]
+      expect(files.length).to eq(1)
+      expect(File.read(files[0])).to match_snapshot('consumer_generator_migration')
+
+      files = Dir["#{model_path}/*.rb"]
+      expect(files.length).to eq(1)
+      expect(File.read(files[0])).to match_snapshot('consumer_generator_model')
+
+      files = Dir["#{consumer_path}/*.rb"]
+      expect(files.length).to eq(1)
+      expect(File.read(files[0])).to match_snapshot('consumer_generator_consumer_class')
+
+      files = Dir["#{config_path}/*.rb"]
+      expect(files.length).to eq(1)
+      expect(File.read(files[0])).to match_snapshot('consumer_generator_existing_deimos_config')
+
+      files = Dir["#{schema_class_path}/*/*.rb"]
+      expect(File.read(files[0])).to match_snapshot('consumer_generator_schema_classes')
     end
 
-    expect(Dir["#{db_migration_path}/*.rb"]).to be_empty
-    expect(Dir["#{model_path}/*.rb"]).to be_empty
-    expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
-
-    described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key'])
-
-    files = Dir["#{db_migration_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_migration')
-
-    files = Dir["#{model_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_model')
-
-    files = Dir["#{consumer_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_consumer_class')
-
-    files = Dir["#{config_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_existing_deimos_config')
-
-    files = Dir["#{schema_class_path}/*/*.rb"]
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_schema_classes')
   end
 
-  it 'should generate a migration, model, consumer class, config and schema class with no existing deimos.rb configuration file' do
 
-    Deimos.configure do
-      consumer do
-        class_name 'ConsumerTest::MyConsumer'
-        topic 'MyTopic'
-        schema 'Widget'
-        namespace 'com.my-namespace'
-        key_config field: :a_string
+  context 'with different config file input' do
+    it 'should generate correct config with no existing deimos.rb configuration file' do
+
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'Widget'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
       end
+
+      expect(Dir["#{db_migration_path}/*.rb"]).to be_empty
+      expect(Dir["#{model_path}/*.rb"]).to be_empty
+      expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
+
+      described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key'])
+
+      files = Dir["#{config_path}/deimos.rb"]
+      expect(files.length).to eq(1)
+      expect(File.read(files[0])).to match_snapshot('consumer_generator_new_deimos_config')
     end
 
-    expect(Dir["#{db_migration_path}/*.rb"]).to be_empty
-    expect(Dir["#{model_path}/*.rb"]).to be_empty
-    expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
+    it 'should generate correct config for the passed in config file that contains Deimos.configure' do
+      config_file_name = 'my_config.config'
+      FileUtils.mkdir_p(config_path)
+      my_config_file_path = "#{config_path}/#{config_file_name}"
+      File.new(my_config_file_path, "w")
+      File.open(my_config_file_path, "w") { |f| f.write "Deimos.configure do\n\nend" }
 
-    described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key'])
-
-    files = Dir["#{db_migration_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_migration')
-
-    files = Dir["#{model_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_model')
-
-    files = Dir["#{consumer_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_consumer_class')
-
-    files = Dir["#{config_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_new_deimos_config')
-
-    files = Dir["#{schema_class_path}/*/*.rb"]
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_schema_classes')
-  end
-
-  it 'should generate a migration, model, consumer class, schema class and edit the passed in config file' do
-    config_file_name = 'my_config.config'
-    FileUtils.mkdir_p(config_path)
-    my_config_file_path = "#{config_path}/#{config_file_name}"
-    File.new(my_config_file_path, "w")
-    File.open(my_config_file_path, "w") { |f| f.write "Deimos.configure do\n\nend" }
-
-    Deimos.configure do
-      consumer do
-        class_name 'ConsumerTest::MyConsumer'
-        topic 'MyTopic'
-        schema 'Widget'
-        namespace 'com.my-namespace'
-        key_config field: :a_string
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'Widget'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
       end
+
+      expect(Dir["#{db_migration_path}/*.rb"]).to be_empty
+      expect(Dir["#{model_path}/*.rb"]).to be_empty
+      expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
+
+      described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key',config_file_name])
+
+      files = Dir["#{config_path}/*.config"]
+      expect(files.length).to eq(1)
+      expect(File.read(my_config_file_path)).to match_snapshot('consumer_generator_config_arg')
     end
 
-    expect(Dir["#{db_migration_path}/*.rb"]).to be_empty
-    expect(Dir["#{model_path}/*.rb"]).to be_empty
-    expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
+    it 'should generate correct config for the passed in config file with missing Deimos.configure' do
+      config_file_name = 'my_config.config'
+      FileUtils.mkdir_p(config_path)
+      my_config_file_path = "#{config_path}/#{config_file_name}"
+      File.new(my_config_file_path, "w")
 
-    described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key',config_file_name])
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'Widget'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
+      end
 
-    files = Dir["#{db_migration_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_migration')
+      expect(Dir["#{db_migration_path}/*.rb"]).to be_empty
+      expect(Dir["#{model_path}/*.rb"]).to be_empty
+      expect(Dir["#{schema_class_path}/*.rb"]).to be_empty
 
-    files = Dir["#{model_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_model')
+      described_class.start(['com.my-namespace.Widget','schema','MyKeySchema-key',config_file_name])
 
-    files = Dir["#{consumer_path}/*.rb"]
-    expect(files.length).to eq(1)
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_consumer_class')
-
-    expect(File.read(my_config_file_path)).to match_snapshot('consumer_generator_config_with_config_arg')
-
-    files = Dir["#{schema_class_path}/*/*.rb"]
-    expect(File.read(files[0])).to match_snapshot('consumer_generator_schema_classes')
+      files = Dir["#{config_path}/*.config"]
+      expect(files.length).to eq(1)
+      expect(File.read(my_config_file_path)).to match_snapshot('consumer_generator_config_arg_missing_deimos_configure')
+    end
   end
-
 end

@@ -65,13 +65,21 @@ module Deimos
             @config_file_path = "#{initializer_path}/#{config_file}"
           end
 
-          config_template = File.expand_path(find_in_source_paths('consumer_config.rb'))
+          consumer_config_template = File.expand_path(find_in_source_paths('consumer_config.rb'))
           if File.exist?(@config_file_path)
-            insert_into_file(@config_file_path.to_s,
-                             CapturableERB.new(::File.binread(config_template)).result(binding),
-                             :after => "Deimos.configure do\n")
+            # if file has Deimos.configure statement then add consumers block after it
+            if File.readlines(@config_file_path).grep(/Deimos.configure do/).size > 0
+              insert_into_file(@config_file_path.to_s,
+                              CapturableERB.new(::File.binread(consumer_config_template)).result(binding),
+                              :after => "Deimos.configure do\n")
+            else
+              # if file does not have Deimos.configure statement then add it plus consumers block
+              @consumer_config = CapturableERB.new(::File.binread(consumer_config_template)).result(binding)
+              config_template = File.expand_path(find_in_source_paths('config.rb'))
+              insert_into_file(@config_file_path.to_s,CapturableERB.new(::File.binread(config_template)).result(binding))
+            end
           else
-            @consumer_config = CapturableERB.new(::File.binread(config_template)).result(binding)
+            @consumer_config = CapturableERB.new(::File.binread(consumer_config_template)).result(binding)
             template('config.rb', @config_file_path.to_s)
           end
         end
