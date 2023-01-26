@@ -108,7 +108,8 @@ module ActiveRecordBatchConsumerTest
           publish_batch([{ key: 2,
                            payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
         }.to raise_error('Create bulk_import_id on ActiveRecordBatchConsumerTest::Widget'\
-        ' and set it in build_records for associations')
+        ' and set it in `build_records` for associations. Run rails g deimos:bulk_import_id:setup'\
+        ' to create the migration.')
       end
     end
 

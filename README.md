@@ -357,15 +357,15 @@ end
 
 > This feature is implemented and tested with MySQL database ONLY.
 
-Sometimes, the Kafka message needs to be saved to multiple database tables. For example, if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables: `Metadata` and `Images`.
+Sometimes, the Kafka message needs to be saved to multiple database tables. For example, if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables: `User` and `Image`.
 
 - The `association_list` configuration allows you to achieve this use case.
-- The optional `bulk_import_id_column` config allows you to set up a column to link parent-child relationships while saving records to the database.
+- The optional `bulk_import_id_column` config allows you to specify column_name on `record_class` which can be used to retrieve IDs after save. Defaults to `bulk_import_id`
 
 You must override the `build_records` and `bulk_import_columns` methods on your ActiveRecord class for this feature to work.
 - `build_records` - This method is required to set the value of the `bulk_import_id` column and map Kafka messages to ActiveRecord model objects.
-- `bulk_import_columns` - Use this to list model attributes that should be saved during the bulk import step.
-
+- `columns(klass)` - Should return an array of column names that should be used by ActiveRecord klass during SQL insert operation.
+- `key_columns(messages, klass)` -  Should return an array of column name(s) that makes a row unique.
 ```ruby
 class MyBatchConsumer < Deimos::ActiveRecordConsumer
 
@@ -382,12 +382,21 @@ class MyBatchConsumer < Deimos::ActiveRecordConsumer
     end
   end
   
-  def bulk_import_columns(klass)
+  def key_columns(_records, klass)
     case klass
     when User
-      key_cols, cols = [["first_name"], all_cols - timestamps]
+      super
     when Image
-      key_cols, cols = [["image_url", "image_name"], all_cols - timestamps - id]
+      ["image_url", "image_name"]
+    end
+  end
+
+  def columns(klass)
+    case klass
+    when User
+      super
+    when Image
+      klass.columns.map(&:name) - [:created_at, :updated_at, :id]
     end
   end
 end

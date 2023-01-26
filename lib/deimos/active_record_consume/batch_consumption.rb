@@ -133,16 +133,16 @@ module Deimos
         # fill id to associated_objects foreign_key column
         @klass.reflect_on_all_associations.select { |assoc| @association_list.include?(assoc.name) }.
           each do |assoc|
-            details = entities.map { |entity|
+            sub_records = entities.map { |entity|
               # Get associated `has_one` or `has_many` records for each entity
-              details = Array(entity.send(assoc.name))
+              sub_records = Array(entity.send(assoc.name))
               # Set IDS from master to each of the records in `has_one` or `has_many` relation
-              details.each { |d| d.send("#{assoc.send(:foreign_key)}=", entity.id) }
-              details
+              sub_records.each { |d| d.send("#{assoc.send(:foreign_key)}=", entity.id) }
+              sub_records
             }.flatten
 
             columns = key_columns(nil, assoc.klass)
-            save_records_to_database(assoc.klass, columns, details) unless details.empty?
+            save_records_to_database(assoc.klass, columns, sub_records) if sub_records.any?
           end
       end
 
@@ -170,11 +170,14 @@ module Deimos
 
       # Get the set of attribute names that uniquely identify messages in the
       # batch. Requires at least one record.
+      # The parameters are mutually exclusive. records is used by default implementation.
       # @param records [Array<Message>] Non-empty list of messages.
-      # @param _klass [ActiveRecord::Class] Class Name can be used to fetch columns
+      # @param klass [ActiveRecord::Class] Class Name can be used to fetch columns
       # @return [Array<String>] List of attribute names.
       # @raise If records is empty.
-      def key_columns(records, _klass)
+      def key_columns(records, klass)
+        raise 'Must implement key_columns method for associations!' unless klass.nil?
+
         raise 'Cannot determine key from empty batch' if records.empty?
 
         first_key = records.first.key
@@ -239,9 +242,10 @@ module Deimos
       def _validate_associations(entities)
         raise Deimos::MissingImplementationError unless mysql_adapter?
 
-        unless entities.first.respond_to?(@bulk_import_id_column)
-          raise "Create bulk_import_id on #{entities.first.class} and set it in build_records for associations"
-        end
+        return if entities.first.respond_to?(@bulk_import_id_column)
+
+        raise "Create bulk_import_id on #{entities.first.class} and set it in `build_records` for associations." \
+              ' Run rails g deimos:bulk_import_id:setup to create the migration.'
       end
 
       # Fills Primary Key ID on in-memory objects.
