@@ -87,7 +87,7 @@ module Deimos
       # records to either be updated or inserted.
       # @return [void]
       def upsert_records(messages)
-        key_cols = key_columns(messages, nil)
+        key_cols = key_columns(messages, @klass)
 
         # Create ActiveRecord Models with payload + key attributes
         upserts = build_records(messages)
@@ -172,12 +172,10 @@ module Deimos
       # batch. Requires at least one record.
       # The parameters are mutually exclusive. records is used by default implementation.
       # @param records [Array<Message>] Non-empty list of messages.
-      # @param klass [ActiveRecord::Class] Class Name can be used to fetch columns
+      # @param _klass [ActiveRecord::Class] Class Name can be used to fetch columns
       # @return [Array<String>] List of attribute names.
       # @raise If records is empty.
-      def key_columns(records, klass)
-        raise 'Must implement key_columns method for associations!' unless klass.nil?
-
+      def key_columns(records, _klass)
         raise 'Cannot determine key from empty batch' if records.empty?
 
         first_key = records.first.key
