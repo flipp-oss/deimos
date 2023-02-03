@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix bug with the `disable_producers` method where producers may remain disabled after the block
+  is done processing if an error occurs inside it.
+
 # 1.18.2 - 2022-11-14
 
 -  Fixes bug related to wait between runs when no records are fetched by updating poll_info
