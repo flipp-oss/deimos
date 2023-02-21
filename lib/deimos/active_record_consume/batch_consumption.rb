@@ -3,6 +3,7 @@
 require 'deimos/active_record_consume/batch_slicer'
 require 'deimos/utils/deadlock_retry'
 require 'deimos/message'
+require 'deimos/exceptions'
 
 module Deimos
   module ActiveRecordConsume
@@ -86,38 +87,63 @@ module Deimos
       # records to either be updated or inserted.
       # @return [void]
       def upsert_records(messages)
-        key_cols = key_columns(messages)
+        key_cols = key_columns(messages, @klass)
 
-        # Create payloads with payload + key attributes
-        upserts = messages.map do |m|
-          attrs = if self.method(:record_attributes).parameters.size == 2
-                    record_attributes(m.payload, m.key)
-                  else
-                    record_attributes(m.payload)
-                  end
-
-          attrs&.merge(record_key(m.key))
-        end
-
+        # Create ActiveRecord Models with payload + key attributes
+        upserts = build_records(messages)
         # If overridden record_attributes indicated no record, skip
         upserts.compact!
+        # apply ActiveRecord validations and fetch valid Records
+        valid_upserts = filter_records(upserts)
+
+        return if valid_upserts.empty?
+
+        save_records_to_database(@klass, key_cols, valid_upserts)
+        import_associations(valid_upserts) unless @association_list.blank?
+      end
+
+      def save_records_to_database(record_class, key_cols, records)
+        columns = columns(record_class)
 
         options = if key_cols.empty?
                     {} # Can't upsert with no key, just do regular insert
-                  elsif ActiveRecord::Base.connection.adapter_name.downcase =~ /mysql/
+                  elsif mysql_adapter?
                     {
-                      on_duplicate_key_update: :all
+                      on_duplicate_key_update: columns
                     }
                   else
                     {
                       on_duplicate_key_update: {
                         conflict_target: key_cols,
-                        columns: :all
+                        columns: columns
                       }
                     }
                   end
+        record_class.import!(columns, records, options)
+      end
 
-        @klass.import!(upserts, options)
+      # Imports associated objects and import them to database table
+      # The base table is expected to contain bulk_import_id column for indexing associated objects with id
+      # @association_list configured on the consumer helps identify the ones required to be saved.
+      def import_associations(entities)
+        _validate_associations(entities)
+        _fill_primary_key_on_entities(entities)
+
+        # Select associations from config parameter association_list and
+        # fill id to associated_objects foreign_key column
+        @klass.reflect_on_all_associations.select { |assoc| @association_list.include?(assoc.name) }.
+          each do |assoc|
+            sub_records = entities.map { |entity|
+              # Get associated `has_one` or `has_many` records for each entity
+              sub_records = Array(entity.send(assoc.name))
+              # Set IDS from master to each of the records in `has_one` or `has_many` relation
+              sub_records.each { |d| d.send("#{assoc.send(:foreign_key)}=", entity.id) }
+              sub_records
+            }.flatten
+
+            columns = key_columns(nil, assoc.klass)
+            save_records_to_database(assoc.klass, columns, sub_records) if sub_records.any?
+          end
       end
 
       # Delete any records with a tombstone.
@@ -144,14 +170,27 @@ module Deimos
 
       # Get the set of attribute names that uniquely identify messages in the
       # batch. Requires at least one record.
+      # The parameters are mutually exclusive. records is used by default implementation.
       # @param records [Array<Message>] Non-empty list of messages.
+      # @param _klass [ActiveRecord::Class] Class Name can be used to fetch columns
       # @return [Array<String>] List of attribute names.
       # @raise If records is empty.
-      def key_columns(records)
+      def key_columns(records, _klass)
         raise 'Cannot determine key from empty batch' if records.empty?
 
         first_key = records.first.key
         record_key(first_key).keys
+      end
+
+      # Get the list of database table column names that should be saved to the database
+      # @param record_class [Class] ActiveRecord class associated to the Entity Object
+      # @return Array[String] list of table columns
+      def columns(record_class)
+        # In-memory records contain created_at and updated_at as nil
+        # which messes up ActiveRecord-Import bulk_import.
+        # It is necessary to ignore timestamp columns when using ActiveRecord objects
+        ignored_columns = %w(created_at updated_at)
+        record_class.columns.map(&:name) - ignored_columns
       end
 
       # Compact a batch of messages, taking only the last message for each
@@ -162,6 +201,61 @@ module Deimos
         return batch unless batch.first&.key.present?
 
         batch.reverse.uniq(&:key).reverse!
+      end
+
+      # Turns Kafka payload into ActiveRecord Objects by mapping relevant fields
+      # Override this method to build object and associations with message payload
+      # @param messages [Array<Deimos::Message>] the array of deimos messages in batch mode
+      # @return [Array<ActiveRecord>] Array of ActiveRecord objects
+      def build_records(messages)
+        messages.map do |m|
+          attrs = if self.method(:record_attributes).parameters.size == 2
+                    record_attributes(m.payload, m.key)
+                  else
+                    record_attributes(m.payload)
+                  end
+
+          attrs = attrs&.merge(record_key(m.key))
+          @klass.new(attrs) unless attrs.nil?
+        end
+      end
+
+      # Filters list of Active Records by applying active record validations.
+      # Tip: Add validates_associated in ActiveRecord model to validate associated models
+      # Optionally inherit this method and apply more filters in the application code
+      # The default implementation throws ActiveRecord::RecordInvalid by default
+      # @param records Array<ActiveRecord> - List of active records which will be subjected to model validations
+      # @return valid Array<ActiveRecord> - Subset of records that passed the model validations
+      def filter_records(records)
+        records.each(&:validate!)
+      end
+
+      # Returns true if MySQL Adapter is currently used
+      def mysql_adapter?
+        ActiveRecord::Base.connection.adapter_name.downcase =~ /mysql/
+      end
+
+      # Checks whether the entities has necessary columns for `association_list` to work
+      # @return void
+      def _validate_associations(entities)
+        raise Deimos::MissingImplementationError unless mysql_adapter?
+
+        return if entities.first.respond_to?(@bulk_import_id_column)
+
+        raise "Create bulk_import_id on #{entities.first.class} and set it in `build_records` for associations." \
+              ' Run rails g deimos:bulk_import_id:setup to create the migration.'
+      end
+
+      # Fills Primary Key ID on in-memory objects.
+      # Uses @bulk_import_id_column on in-memory records to fetch saved records in database.
+      # @return void
+      def _fill_primary_key_on_entities(entities)
+        table_by_bulk_import_id = @klass.
+          where(@bulk_import_id_column => entities.map { |e| e[@bulk_import_id_column] }).
+          select(:id, @bulk_import_id_column).
+          index_by { |e| e[@bulk_import_id_column] }
+        # update IDs in upsert entity
+        entities.each { |entity| entity.id = table_by_bulk_import_id[entity[@bulk_import_id_column]].id }
       end
     end
   end

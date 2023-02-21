@@ -487,5 +487,25 @@ module ActiveRecordBatchConsumerTest
           to match_array([have_attributes(id: 2, test_id: 'abc123')])
       end
     end
+
+    describe 'association_list feature for SQLite database' do
+      let(:consumer_class) do
+        Class.new(described_class) do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          record_class Widget
+          association_list :locales
+        end
+      end
+
+      it 'should throw NotImplemented error' do
+        stub_const('MyBatchConsumer', consumer_class)
+        expect {
+          publish_batch([{ key: 2, payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
+        }.to raise_error(Deimos::MissingImplementationError)
+      end
+    end
+
   end
 end

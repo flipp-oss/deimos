@@ -353,6 +353,54 @@ class MyBatchConsumer < Deimos::Consumer
   end
 end
 ```
+#### Saving data to Multiple Database tables
+
+> This feature is implemented and tested with MySQL database ONLY.
+
+Sometimes, the Kafka message needs to be saved to multiple database tables. For example, if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables: `User` and `Image`.
+
+- The `association_list` configuration allows you to achieve this use case.
+- The optional `bulk_import_id_column` config allows you to specify column_name on `record_class` which can be used to retrieve IDs after save. Defaults to `bulk_import_id`
+
+You must override the `build_records` and `bulk_import_columns` methods on your ActiveRecord class for this feature to work.
+- `build_records` - This method is required to set the value of the `bulk_import_id` column and map Kafka messages to ActiveRecord model objects.
+- `columns(klass)` - Should return an array of column names that should be used by ActiveRecord klass during SQL insert operation.
+- `key_columns(messages, klass)` -  Should return an array of column name(s) that makes a row unique.
+```ruby
+class MyBatchConsumer < Deimos::ActiveRecordConsumer
+
+  record_class User
+  association_list :images
+
+  def build_records(messages)
+    # Initialise bulk_import_id and build ActiveRecord objects out of Kafka message attributes
+    messages.each do |m|
+      u = User.new(first_name: m.first_name, bulk_import_id: SecureRandom.uuid)
+      i = Image.new(attr1: m.image_url)
+      u.images << i
+      u
+    end
+  end
+  
+  def key_columns(_records, klass)
+    case klass
+    when User
+      super
+    when Image
+      ["image_url", "image_name"]
+    end
+  end
+
+  def columns(klass)
+    case klass
+    when User
+      super
+    when Image
+      klass.columns.map(&:name) - [:created_at, :updated_at, :id]
+    end
+  end
+end
+```
 
 # Rails Integration
 
