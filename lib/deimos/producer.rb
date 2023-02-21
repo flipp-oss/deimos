@@ -37,9 +37,12 @@ module Deimos
       Thread.current[:frk_disabled_producers] ||= Set.new
       producers_to_disable = producer_classes -
                              Thread.current[:frk_disabled_producers].to_a
-      Thread.current[:frk_disabled_producers] += producers_to_disable
-      yield
-      Thread.current[:frk_disabled_producers] -= producers_to_disable
+      begin
+        Thread.current[:frk_disabled_producers] += producers_to_disable
+        yield
+      ensure
+        Thread.current[:frk_disabled_producers] -= producers_to_disable
+      end
     end
 
     # Are producers disabled? If a class is passed in, check only that class.

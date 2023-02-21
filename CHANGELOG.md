@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 - Feature: When consuming data in batch mode, this adds ability to save data to multiple tables with `association_list`.
+- Fix bug with the `disable_producers` method where producers may remain disabled after the block
+  is done processing if an error occurs inside it.
 
 # 1.18.2 - 2022-11-14
 
