@@ -48,6 +48,12 @@ module Deimos
       def compacted(val)
         config[:compacted] = val
       end
+
+      # @param limit [Integer] Maximum number of transactions in a single database call.
+      # @return [void]
+      def max_db_batch_size(limit)
+        config[:max_db_batch_size] = limit
+      end
     end
 
     # Setup
@@ -62,6 +68,7 @@ module Deimos
       end
 
       @compacted = self.class.config[:compacted] != false
+      @max_db_batch_size = self.class.config[:max_db_batch_size]
     end
 
     # Override this method (with `super`) if you want to add/change the default

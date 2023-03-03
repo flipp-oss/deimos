@@ -78,8 +78,21 @@ module Deimos
         # deleted record (no payload)
         removed, upserted = messages.partition(&:tombstone?)
 
-        upsert_records(upserted) if upserted.any?
-        remove_records(removed) if removed.any?
+        if upserted.any?
+          if @max_db_batch_size
+            upserted.each_slice(@max_db_batch_size) { |group| upsert_records(group) }
+          else
+            upsert_records(upserted)
+          end
+        end
+
+        return unless removed.any?
+
+        if @max_db_batch_size
+          removed.each_slice(@max_db_batch_size) { |group| remove_records(group) }
+        else
+          remove_records(removed)
+        end
       end
 
       # Upsert any non-deleted records

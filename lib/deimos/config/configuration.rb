@@ -424,6 +424,9 @@ module Deimos
       # Configure the usage of generated schema classes for this consumer
       # @return [Boolean]
       setting :use_schema_classes
+      # Optional maximum limit for batching database calls to reduce the load on the db.
+      # @return [Integer]
+      setting :max_db_batch_size
 
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.
