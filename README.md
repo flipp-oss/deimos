@@ -374,7 +374,7 @@ class MyBatchConsumer < Deimos::ActiveRecordConsumer
 
   def build_records(messages)
     # Initialise bulk_import_id and build ActiveRecord objects out of Kafka message attributes
-    messages.each do |m|
+    messages.map do |m|
       u = User.new(first_name: m.first_name, bulk_import_id: SecureRandom.uuid)
       i = Image.new(attr1: m.image_url)
       u.images << i
