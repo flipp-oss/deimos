@@ -360,7 +360,7 @@ end
 Sometimes, the Kafka message needs to be saved to multiple database tables. For example, if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables: `User` and `Image`.
 
 - The `association_list` configuration allows you to achieve this use case.
-- The optional `bulk_import_id_column` config allows you to specify column_name on `record_class` which can be used to retrieve IDs after save. Defaults to `bulk_import_id`
+- The `bulk_import_id_column` config allows you to specify column_name on `record_class` which can be used to retrieve IDs after save. Defaults to `bulk_import_id`. This config is *required* if you have associations but optional if you do not.
 
 You must override the `build_records` and `bulk_import_columns` methods on your ActiveRecord class for this feature to work.
 - `build_records` - This method is required to set the value of the `bulk_import_id` column and map Kafka messages to ActiveRecord model objects.
