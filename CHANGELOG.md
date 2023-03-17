@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.19.1 - 2023-03-17
+
+- Fix for `rails g deimos:bulk_import_id` generator.
+
 # 1.19.0 - 2023-02-21
 
 - Feature: When consuming data in batch mode, this adds ability to save data to multiple tables with `association_list`.

@@ -243,7 +243,7 @@ module Deimos
         return if entities.first.respond_to?(@bulk_import_id_column)
 
         raise "Create bulk_import_id on #{entities.first.class} and set it in `build_records` for associations." \
-              ' Run rails g deimos:bulk_import_id:setup to create the migration.'
+              ' Run rails g deimos:bulk_import_id {table} to create the migration.'
       end
 
       # Fills Primary Key ID on in-memory objects.
