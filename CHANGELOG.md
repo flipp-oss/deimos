@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.19.2 - 2023-03-20
+
+- Fix for saving associations where the primary key is not `id`.
+
 # 1.19.1 - 2023-03-17
 
 - Fix for `rails g deimos:bulk_import_id` generator.
