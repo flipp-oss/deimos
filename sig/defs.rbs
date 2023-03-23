@@ -1791,6 +1791,8 @@ module Deimos
       # _@return_ — The key attributes.
       def record_key: (String key) -> ::Hash[untyped, untyped]
 
+      def remove_associations: -> void
+
       # Perform database operations for a batch of messages without compaction.
       # All messages are split into slices containing only unique keys, and
       # each slice is handles as its own batch.

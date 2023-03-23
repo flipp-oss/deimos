@@ -89,6 +89,8 @@ module Deimos
       def upsert_records(messages)
         key_cols = key_columns(messages, @klass)
 
+        # Remove associations before update
+        remove_associations(messages)
         # Create ActiveRecord Models with payload + key attributes
         upserts = build_records(messages)
         # If overridden record_attributes indicated no record, skip
@@ -100,6 +102,19 @@ module Deimos
 
         save_records_to_database(@klass, key_cols, valid_upserts)
         import_associations(valid_upserts) unless @association_list.blank?
+      end
+
+      def remove_associations(messages)
+        keys = messages.map(&:key)
+        query = @klass.unscoped.where(:id => keys)
+        if query.exists?
+          entities = query.take(messages.length)
+          @klass.reflect_on_all_associations.select { |assoc| @association_list.include?(assoc.name) }.
+            each do |assoc|
+            assoc_values = entities.map { |entity| entity.send(assoc.active_record_primary_key) }
+            assoc.klass.unscoped.where(assoc.foreign_key => assoc_values).delete_all
+          end
+        end
       end
 
       def save_records_to_database(record_class, key_cols, records)
