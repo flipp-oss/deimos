@@ -83,6 +83,7 @@ key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../
 disabled|false|Set to true to skip starting an actual listener for this consumer on startup.
 group_id|nil|ID of the consumer group.
 use_schema_classes|nil|Set to true or false to enable or disable using the consumers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes)
+max_db_batch_size|nil|Maximum limit for batching database calls to reduce the load on the db.
 max_concurrency|1|Number of threads created for this listener. Each thread will behave as an independent consumer. They don't share any state.
 start_from_beginning|true|Once the consumer group has checkpointed its progress in the topic's partitions, the consumers will always start from the checkpointed offsets, regardless of config. As such, this setting only applies when the consumer initially starts consuming from a topic
 max_bytes_per_partition|512.kilobytes|Maximum amount of data fetched from a single partition at a time.

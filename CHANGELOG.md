@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Limit amount of transactions in a single database call with `max_db_batch_size`
+
 # 1.19.2 - 2023-03-20
 
 - Fix for saving associations where the primary key is not `id`.
