@@ -68,7 +68,6 @@ module Deimos
       end
 
       @compacted = self.class.config[:compacted] != false
-      @max_db_batch_size = self.class.config[:max_db_batch_size]
     end
 
     # Override this method (with `super`) if you want to add/change the default

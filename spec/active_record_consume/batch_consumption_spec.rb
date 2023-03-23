@@ -2,9 +2,7 @@
 
 RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
   let(:batch_consumer) do
-    Class.new do
-      extend Deimos::ActiveRecordConsume::BatchConsumption
-    end
+    Deimos::ActiveRecordConsumer.new
   end
 
   describe '#update_database' do
@@ -19,37 +17,37 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
         ]
       end
 
-      it 'should be called 1 time when record count < max batch size' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, records.count + 1)
-        expect(batch_consumer).to receive(:upsert_records).exactly(1)
+      it 'should be called 1 time when record size < max batch size' do
+        batch_consumer.class.config[:max_db_batch_size] = records.size + 1
+        expect(batch_consumer).to receive(:upsert_records).once
 
         batch_consumer.send(:update_database, records)
       end
 
-      it 'should be called 1 time when record count == max batch size' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, records.count)
-        expect(batch_consumer).to receive(:upsert_records).exactly(1)
+      it 'should be called 1 time when record size == max batch size' do
+        batch_consumer.class.config[:max_db_batch_size] = records.size
+        expect(batch_consumer).to receive(:upsert_records).once
 
         batch_consumer.send(:update_database, records)
       end
 
-      it 'should be called multiple times when record count > max batch size' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, records.size - 1)
-        expect(batch_consumer).to receive(:upsert_records).exactly(2)
+      it 'should be called multiple times when record size > max batch size' do
+        batch_consumer.class.config[:max_db_batch_size] = records.size - 1
+        expect(batch_consumer).to receive(:upsert_records).twice
 
         batch_consumer.send(:update_database, records)
       end
 
-      it 'should be called records.count times when max batch size is 1' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, 1)
+      it 'should be called records.size times when max batch size is 1' do
+        batch_consumer.class.config[:max_db_batch_size] = 1
         expect(batch_consumer).to receive(:upsert_records).exactly(records.size)
 
         batch_consumer.send(:update_database, records)
       end
 
       it 'should be called 1 time when batch size is nil' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, nil)
-        expect(batch_consumer).to receive(:upsert_records).exactly(1)
+        batch_consumer.class.config[:max_db_batch_size] = nil
+        expect(batch_consumer).to receive(:upsert_records).once
 
         batch_consumer.send(:update_database, records)
       end
@@ -66,37 +64,37 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
         ]
       end
 
-      it 'should be called 1 time when record count < max batch size' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, records.count + 1)
-        expect(batch_consumer).to receive(:remove_records).exactly(1)
+      it 'should be called 1 time when record size < max batch size' do
+        batch_consumer.class.config[:max_db_batch_size] = records.size + 1
+        expect(batch_consumer).to receive(:remove_records).once
 
         batch_consumer.send(:update_database, records)
       end
 
-      it 'should be called 1 time when record count == max batch size' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, records.count)
-        expect(batch_consumer).to receive(:remove_records).exactly(1)
+      it 'should be called 1 time when record size == max batch size' do
+        batch_consumer.class.config[:max_db_batch_size] = records.size
+        expect(batch_consumer).to receive(:remove_records).once
 
         batch_consumer.send(:update_database, records)
       end
 
-      it 'should be called multiple times when record count > max batch size' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, records.size - 1)
-        expect(batch_consumer).to receive(:remove_records).exactly(2)
+      it 'should be called multiple times when record size > max batch size' do
+        batch_consumer.class.config[:max_db_batch_size] = records.size - 1
+        expect(batch_consumer).to receive(:remove_records).twice
 
         batch_consumer.send(:update_database, records)
       end
 
-      it 'should be called record.count times when max batch size is 1' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, 1)
+      it 'should be called record.size times when max batch size is 1' do
+        batch_consumer.class.config[:max_db_batch_size] = 1
         expect(batch_consumer).to receive(:remove_records).exactly(records.size)
 
         batch_consumer.send(:update_database, records)
       end
 
       it 'should be called 1 time when batch size is nil' do
-        batch_consumer.instance_variable_set(:@max_db_batch_size, nil)
-        expect(batch_consumer).to receive(:remove_records).exactly(1)
+        batch_consumer.class.config[:max_db_batch_size] = nil
+        expect(batch_consumer).to receive(:remove_records).once
 
         batch_consumer.send(:update_database, records)
       end
