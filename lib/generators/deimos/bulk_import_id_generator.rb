@@ -12,8 +12,6 @@ module Deimos
       include Rails::Generators::Migration
       include ActiveRecord::Generators::Migration
 
-      namespace 'deimos:bulk_import_id:setup'
-
       argument :table_name, desc: 'The table to add bulk import column.', required: true
       argument :column_name, desc: 'The bulk import ID column name.', default: 'bulk_import_id'
 

@@ -151,7 +151,7 @@ module Deimos
               # Get associated `has_one` or `has_many` records for each entity
               sub_records = Array(entity.send(assoc.name))
               # Set IDS from master to each of the records in `has_one` or `has_many` relation
-              sub_records.each { |d| d.send("#{assoc.send(:foreign_key)}=", entity.id) }
+              sub_records.each { |d| d.send("#{assoc.foreign_key}=", entity.send(assoc.active_record_primary_key)) }
               sub_records
             }.flatten
 
@@ -257,7 +257,7 @@ module Deimos
         return if entities.first.respond_to?(@bulk_import_id_column)
 
         raise "Create bulk_import_id on #{entities.first.class} and set it in `build_records` for associations." \
-              ' Run rails g deimos:bulk_import_id:setup to create the migration.'
+              ' Run rails g deimos:bulk_import_id {table} to create the migration.'
       end
 
       # Fills Primary Key ID on in-memory objects.
