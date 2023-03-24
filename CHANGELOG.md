@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- add additional setting to Deimos.config - payload_log
+
 # 1.19.2 - 2023-03-20
 
 - Fix for saving associations where the primary key is not `id`.
