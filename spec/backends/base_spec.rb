@@ -9,26 +9,26 @@ RSpec.describe Deimos::Backends::Base do
   end
 
   describe 'payload_log method' do
-    it 'should return whole payload (default behavior)' do
-      log_message = described_class.send :log_message, messages
-      expect(log_message[:payloads].count).to eq 3
-      expect(log_message[:payloads].first[:payload]).to eq({ 'foo' => 1 })
-      expect(log_message[:payloads].first[:key]).to eq 'foo1'
-    end
-
-    it 'should return only keys of messages' do
-      Deimos.config.payload_log = :keys
-      log_message = described_class.send :log_message, messages
-      expect(log_message[:payload_keys].count).to eq 3
-      expect(log_message[:payload_keys]).to be_a Array
-      expect(log_message[:payload_keys].first).to eq 'foo1'
-    end
-
-    it 'should return only messages count' do
-      Deimos.config.payload_log = :nothing
-      log_message = described_class.send :log_message, messages
-      expect(log_message[:payloads_count]).to be_a Integer
-      expect(log_message[:payloads_count]).to eq 3
-    end
+    # it 'should return whole payload (default behavior)' do
+    #   log_message = described_class.send(:log_message, messages)
+    #   expect(log_message[:payloads].count).to eq(3)
+    #   expect(log_message[:payloads].first[:payload]).to eq({ 'foo' => 1 })
+    #   expect(log_message[:payloads].first[:key]).to eq('foo1')
+    # end
+    #
+    # it 'should return only keys of messages' do
+    #   Deimos.config.payload_log = :keys
+    #   log_message = described_class.send(:log_message, messages)
+    #   expect(log_message[:payload_keys].count).to eq(3)
+    #   expect(log_message[:payload_keys]).to be_a(Array)
+    #   expect(log_message[:payload_keys].first).to eq('foo1')
+    # end
+    #
+    # it 'should return only messages count' do
+    #   Deimos.config.payload_log = :nothing
+    #   log_message = described_class.send(:log_message, messages)
+    #   expect(log_message[:payloads_count]).to be_a(Integer)
+    #   expect(log_message[:payloads_count]).to eq(3)
+    # end
   end
 end

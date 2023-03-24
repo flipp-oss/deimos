@@ -20,20 +20,18 @@ module Deimos
           raise NotImplementedError
         end
 
-        private
+      private
 
         def log_message(messages)
           log_message = {
             message: 'Publishing messages',
-            topic: messages.first&.topic,
+            topic: messages.first&.topic
           }
 
           case Deimos.config.payload_log
           when :keys
             log_message.merge!(
-              payload_keys: messages.map do |message|
-                message.key
-              end
+              payload_keys: messages.map(&:key)
             )
           when :nothing
             log_message.merge!(
@@ -46,7 +44,7 @@ module Deimos
                   payload: message.payload,
                   key: message.key
                 }
-                end
+              end
             )
           end
 
