@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: add additional setting to Deimos.config - payload_log
+
 # 1.19.4 - 2023-03-23
 
 - Feature: Limit amount of transactions in a single database call with `max_db_batch_size`
