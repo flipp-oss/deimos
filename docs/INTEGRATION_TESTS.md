@@ -30,18 +30,18 @@ brew services stop mysql
 ### Setting up a local PostgreSQL server (Mac)
 ```bash
 # Install postgres if it's not already installed
-brew install postgres
+brew install postgresql
 
 # Initialize and Start up postgres db
-brew services start postgres
-initdb /usr/local/var/postgres
+brew services start postgresql
+initdb /usr/local/var/postgresql
 # Create the default database and user
 # Use the password "root"
-createuser -s --password postgres
+createuser -s --password postgresql
 
 # Cleanup once done with Postgres
-killall postgres
-brew services stop postgres
+killall postgresql
+brew services stop postgresql
 ```
 
 ## Running Integration Tests
