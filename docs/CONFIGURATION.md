@@ -10,12 +10,13 @@ Nested configuration is denoted in simple dot notation:
 configurations.
 
 ## Base Configuration
-Config name|Default|Description
------------|-------|-----------
-logger|`Logger.new(STDOUT)`|The logger that Deimos will use.
-phobos_logger|`Deimos.config.logger`|The logger passed to Phobos.
-metrics|`Deimos::Metrics::Mock.new`|The metrics backend use for reporting.
-tracer|`Deimos::Tracing::Mock.new`|The tracer backend used for debugging.
+Config name| Default                     |Description
+-----------|-----------------------------|-----------
+logger| `Logger.new(STDOUT)`        |The logger that Deimos will use.
+payload_log| `nil`                       |Determines the amount of data passed to the log.</br>`nil` - pass keys and payloads of each message</br>`:keys` - to pass only keys</br>`:nothing` - to pass only total count of messages 
+phobos_logger| `Deimos.config.logger`      |The logger passed to Phobos.
+metrics| `Deimos::Metrics::Mock.new` |The metrics backend use for reporting.
+tracer| `Deimos::Tracing::Mock.new` |The tracer backend used for debugging.
 
 ## Defining Producers
 
