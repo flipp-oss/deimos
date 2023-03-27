@@ -193,7 +193,9 @@ module ActiveRecordBatchConsumerTest
           def build_records(messages)
             messages.map do |m|
               payload = m.payload
-              w = Widget.new(test_id: payload['test_id'],
+              w = Widget.new(
+                id: payload['id'],
+                test_id: payload['test_id'],
                              some_int: payload['some_int'])
               w.locales << Locale.new(test_id: payload['test_id'], title: payload['title'], language: 'en')
               w.locales << Locale.new(test_id: payload['test_id'], title: payload['title'], language: 'fr')
@@ -236,13 +238,13 @@ module ActiveRecordBatchConsumerTest
         locale = Locale.all.take(4)
 
         publish_batch([{ key: 1,
-                         payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
+                         payload: { id: 1, test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
 
         widget = Widget.all.take(4)
         locale = Locale.all.take(4)
 
         publish_batch([{ key: 1,
-                         payload: { test_id: 'xyz', some_int: 5, title: 'New Widget Title' } }])
+                         payload: { id: 1, test_id: 'xyz', some_int: 5, title: 'New Widget Title' } }])
 
         widget = Widget.all.take(4)
         locale = Locale.all.take(4)
