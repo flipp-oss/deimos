@@ -106,8 +106,8 @@ module Deimos
 
       def remove_associations(messages)
         keys = messages.map(&:key)
-          @klass.reflect_on_all_associations.select { |assoc| @association_list.include?(assoc.name) }.
-            each do |assoc|
+        @klass.reflect_on_all_associations.select { |assoc| @association_list.include?(assoc.name) }.
+          each do |assoc|
             assoc.klass.unscoped.where(assoc.foreign_key => keys).delete_all
           end
       end

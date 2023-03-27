@@ -192,14 +192,15 @@ module ActiveRecordBatchConsumerTest
               w = Widget.new(
                 id: payload['id'],
                 test_id: payload['test_id'],
-                             some_int: payload['some_int'])
+                some_int: payload['some_int']
+              )
               w.locales << Locale.new(test_id: payload['test_id'], title: payload['title'], language: 'en')
               w.locales << Locale.new(test_id: payload['test_id'], title: payload['title'], language: 'fr')
               w
             end
           end
 
-          def key_columns(messages, klass)
+          def key_columns(_messages, klass)
             case klass.to_s
             when Widget.to_s
               %w(test_id)
@@ -244,7 +245,6 @@ module ActiveRecordBatchConsumerTest
         expect(locales[1].title).to eq('New Widget Title')
 
       end
-    end
     end
 
     context 'with one-to-many relationship in association_list and default bulk_import_id' do
@@ -311,4 +311,5 @@ module ActiveRecordBatchConsumerTest
         expect(Widget.first.id).to eq(Locale.second.widget_id)
       end
     end
+  end
 end
