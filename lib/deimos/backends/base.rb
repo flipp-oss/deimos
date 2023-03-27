@@ -33,7 +33,7 @@ module Deimos
             log_message.merge!(
               payload_keys: messages.map(&:key)
             )
-          when :nothing
+          when :count
             log_message.merge!(
               payloads_count: messages.count
             )

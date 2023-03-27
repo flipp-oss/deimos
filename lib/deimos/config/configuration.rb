@@ -96,7 +96,7 @@ module Deimos
     setting :logger, Logger.new(STDOUT)
 
     # @return [Symbol]
-    setting :payload_log
+    setting :payload_log, :full
 
     # @return [Logger]
     setting :phobos_logger, default_proc: proc { Deimos.config.logger.clone }

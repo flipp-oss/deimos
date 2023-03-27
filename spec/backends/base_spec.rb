@@ -25,7 +25,7 @@ RSpec.describe Deimos::Backends::Base do
     end
 
     it 'should return only messages count' do
-      Deimos.config.payload_log = :nothing
+      Deimos.config.payload_log = :count
       log_message = described_class.send(:log_message, messages)
       expect(log_message[:payloads_count]).to be_a(Integer)
       expect(log_message[:payloads_count]).to eq(3)
