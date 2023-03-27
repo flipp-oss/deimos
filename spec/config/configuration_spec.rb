@@ -90,7 +90,8 @@ describe Deimos, 'configuration' do
           offset_retention_time: nil,
           heartbeat_interval: 10,
           handler: 'ConsumerTest::MyConsumer',
-          use_schema_classes: nil
+          use_schema_classes: nil,
+          max_db_batch_size: nil
         }, {
           topic: 'my_batch_consume_topic',
           group_id: 'my_batch_group_id',
@@ -107,7 +108,8 @@ describe Deimos, 'configuration' do
           offset_retention_time: nil,
           heartbeat_interval: 10,
           handler: 'ConsumerTest::MyBatchConsumer',
-          use_schema_classes: nil
+          use_schema_classes: nil,
+          max_db_batch_size: nil
         }
       ],
       producer: {
@@ -258,7 +260,8 @@ describe Deimos, 'configuration' do
             offset_retention_time: 13,
             heartbeat_interval: 13,
             handler: 'MyConfigConsumer',
-            use_schema_classes: false
+            use_schema_classes: false,
+            max_db_batch_size: nil
           }
         ],
         producer: {
