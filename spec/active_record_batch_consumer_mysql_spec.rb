@@ -177,10 +177,6 @@ module ActiveRecordBatchConsumerTest
       end
     end
 
-    ##########
-    # #####
-    # #####
-    # #####
     context 'with one-to-many relationship in association_list and default bulk_import_id' do
       let(:consumer_class) do
         Class.new(described_class) do
@@ -231,26 +227,22 @@ module ActiveRecordBatchConsumerTest
         expect(Widget.first.id).to eq(Locale.second.widget_id)
       end
 
-      it 'should save item to widget and associated detail' do
+      it 'should save and update items to widget and associated detail' do
         stub_const('MyBatchConsumer', consumer_class)
-
-        widget = Widget.first
-        locale = Locale.all.take(4)
 
         publish_batch([{ key: 1,
                          payload: { id: 1, test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
 
-        widget = Widget.all.take(4)
-        locale = Locale.all.take(4)
-
         publish_batch([{ key: 1,
                          payload: { id: 1, test_id: 'xyz', some_int: 5, title: 'New Widget Title' } }])
 
-        widget = Widget.all.take(4)
-        locale = Locale.all.take(4)
-
         expect(Widget.count).to eq(1)
         expect(Locale.count).to eq(2)
+
+        locales = Locale.all.take(2)
+        expect(locales[0].title).to eq('New Widget Title')
+        expect(locales[1].title).to eq('New Widget Title')
+
       end
     end
     end
