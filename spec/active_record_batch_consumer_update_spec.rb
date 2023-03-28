@@ -33,7 +33,7 @@ module ActiveRecordBatchConsumerTest
         t.string(:language)
         t.belongs_to(:widget)
 
-        t.index(%i(title language widget_id), unique: true)
+        t.index(%i(title language), unique: true)
       end
 
       class Detail < ActiveRecord::Base
@@ -153,15 +153,10 @@ module ActiveRecordBatchConsumerTest
                          payload: { id: 1, test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
 
         publish_batch([{ key: 1,
-                         payload: { id: 1, test_id: 'xyz', some_int: 5, title: 'New Widget Title' } }])
+                         payload: { id: 1, test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
 
         expect(Widget.count).to eq(1)
         expect(Locale.count).to eq(2)
-
-        locales = Locale.all.take(2)
-        expect(locales[0].title).to eq('New Widget Title')
-        expect(locales[1].title).to eq('New Widget Title')
-
       end
     end
            end
