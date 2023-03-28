@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-# 1.19.5 - 2023-03-27
+# 1.19.6 - 2023-03-28
 
 - Fix when updating associations it was keeping old versions on the database.
+
+# 1.19.5 - 2023-03-27
+ 
+- Feature: add additional setting to Deimos.config - payload_log
 
 # 1.19.4 - 2023-03-23
 
