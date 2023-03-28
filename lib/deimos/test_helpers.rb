@@ -143,7 +143,7 @@ module Deimos
         Deimos::Backends::Test.sent_messages.any? do |m|
           hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
           hash_matcher.send(:match,
-                            message.respond_to?(:to_h) ? message.to_h : message,
+                            message&.respond_to?(:to_h) ? message.to_h : message,
                             m[:payload]&.with_indifferent_access) &&
             topic == m[:topic] &&
             (key.present? ? key == m[:key] : true) &&
