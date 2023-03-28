@@ -13,7 +13,7 @@ configurations.
 Config name| Default                     |Description
 -----------|-----------------------------|-----------
 logger| `Logger.new(STDOUT)`        |The logger that Deimos will use.
-payload_log| `:full`                     |Determines the amount of data passed to the log.</br>`:full` - pass keys and payloads of each message</br>`:keys` - to pass only keys</br>`:count` - to pass only total count of messages 
+payload_log| `:full`                     |Determines how much data is logged per payload.</br>`:full` - all keys and payloads are logged.</br>`:keys` - only keys are logged.</br>`:count` - only the total count of messages are logged.
 phobos_logger| `Deimos.config.logger`      |The logger passed to Phobos.
 metrics| `Deimos::Metrics::Mock.new` |The metrics backend use for reporting.
 tracer| `Deimos::Tracing::Mock.new` |The tracer backend used for debugging.
