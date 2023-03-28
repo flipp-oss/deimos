@@ -117,14 +117,16 @@ module Deimos
       end
 
       def remove_associations(assoc, keys)
-        foreign_keys = keys.map { |keys| keys[assoc.foreign_key] }.compact
-        associated_keys = keys.map { |keys| keys[associated_column] }.compact
-        if foreign_keys.length > 0 && associated_keys.length > 0
-          assoc.klass.unscoped.where.not(
-            assoc.foreign_key => foreign_keys,
-            associated_column => associated_keys
-            ).delete_all
+        foreign_keys = keys.map { |key| key[assoc.foreign_key] }.compact
+        associated_keys = keys.map { |key| key[associated_column] }.compact
+        if foreign_keys.length.zero? && associated_keys.length.zero?
+          return
         end
+
+        assoc.klass.unscoped.where.not(
+          assoc.foreign_key => foreign_keys,
+          associated_column => associated_keys
+        ).delete_all
       end
 
       def associated_column
@@ -168,14 +170,7 @@ module Deimos
               sub_records = Array(entity.send(assoc.name))
               # Set IDS from master to each of the records in `has_one` or `has_many` relation
 
-              keys = sub_records.map do |record|
-                if record.attributes['id'] == nil
-                  {
-                    associated_column => record.attributes[associated_column],
-                    assoc.foreign_key => record.attributes[assoc.foreign_key]
-                  }
-                end
-              end.compact
+              keys = extract_keys(sub_records)
 
               sub_records.each { |d| d.send("#{assoc.foreign_key}=", entity.send(assoc.active_record_primary_key)) }
               sub_records
@@ -185,6 +180,19 @@ module Deimos
             save_records_to_database(assoc.klass, columns, sub_records) if sub_records.any?
             remove_associations(assoc, keys)
           end
+      end
+
+      # Extract sub_record keys
+      def extract_keys(sub_records)
+        keys = sub_records.map do |record|
+          next if record.attributes['id'].nil?
+
+          {
+            associated_column => record.attributes[associated_column],
+            assoc.foreign_key => record.attributes[assoc.foreign_key]
+          }
+        end
+        keys.compact
       end
 
       # Delete any records with a tombstone.
