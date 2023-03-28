@@ -103,8 +103,6 @@ module Deimos
       def upsert_records(messages)
         key_cols = key_columns(messages, @klass)
 
-        # Remove associations before update
-        remove_associations(messages)
         # Create ActiveRecord Models with payload + key attributes
         upserts = build_records(messages)
         # If overridden record_attributes indicated no record, skip
@@ -118,12 +116,19 @@ module Deimos
         import_associations(valid_upserts) unless @association_list.blank?
       end
 
-      def remove_associations(messages)
-        keys = messages.map(&:key)
-        @klass.reflect_on_all_associations.select { |assoc| @association_list.include?(assoc.name) }.
-          each do |assoc|
-            assoc.klass.unscoped.where(assoc.foreign_key => keys).delete_all
-          end
+      def remove_associations(assoc, keys)
+        foreign_keys = keys.map { |keys| keys[assoc.foreign_key] }.compact
+        associated_keys = keys.map { |keys| keys[associated_column] }.compact
+        if foreign_keys.length > 0 && associated_keys.length > 0
+          assoc.klass.unscoped.where.not(
+            assoc.foreign_key => foreign_keys,
+            associated_column => associated_keys
+            ).delete_all
+        end
+      end
+
+      def associated_column
+        'id'
       end
 
       def save_records_to_database(record_class, key_cols, records)
@@ -152,6 +157,7 @@ module Deimos
       def import_associations(entities)
         _validate_associations(entities)
         _fill_primary_key_on_entities(entities)
+        keys = []
 
         # Select associations from config parameter association_list and
         # fill id to associated_objects foreign_key column
@@ -161,12 +167,23 @@ module Deimos
               # Get associated `has_one` or `has_many` records for each entity
               sub_records = Array(entity.send(assoc.name))
               # Set IDS from master to each of the records in `has_one` or `has_many` relation
+
+              keys = sub_records.map do |record|
+                if record.attributes['id'] == nil
+                  {
+                    associated_column => record.attributes[associated_column],
+                    assoc.foreign_key => record.attributes[assoc.foreign_key]
+                  }
+                end
+              end.compact
+
               sub_records.each { |d| d.send("#{assoc.foreign_key}=", entity.send(assoc.active_record_primary_key)) }
               sub_records
             }.flatten
 
             columns = key_columns(nil, assoc.klass)
             save_records_to_database(assoc.klass, columns, sub_records) if sub_records.any?
+            remove_associations(assoc, keys)
           end
       end
 

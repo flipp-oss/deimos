@@ -1770,6 +1770,11 @@ module Deimos
     # Methods for consuming batches of messages and saving them to the database
     # in bulk ActiveRecord operations.
     module BatchConsumption
+
+      # Associated column to be used when upserting associations
+      # Its mostly used for custom/composite keys
+      def associated_column: () -> String
+
       # Handle a batch of Kafka messages. Batches are split into "slices",
       # which are groups of independent messages that can be processed together
       # in a single database operation.
@@ -1791,6 +1796,7 @@ module Deimos
       # _@return_ — The key attributes.
       def record_key: (String key) -> ::Hash[untyped, untyped]
 
+      # Remove associations based on association key
       def remove_associations: -> void
 
       # Perform database operations for a batch of messages without compaction.

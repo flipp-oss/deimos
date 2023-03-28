@@ -33,7 +33,7 @@ module ActiveRecordBatchConsumerTest
         t.string(:language)
         t.belongs_to(:widget)
 
-        t.index(%i(title language), unique: true)
+        t.index(%i(title language widget_id), unique: true)
       end
 
       class Detail < ActiveRecord::Base
