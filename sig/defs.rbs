@@ -1771,9 +1771,10 @@ module Deimos
     # in bulk ActiveRecord operations.
     module BatchConsumption
 
-      # Associated column to be used when upserting associations
-      # Its mostly used for custom/composite keys
-      def associated_column: () -> String
+
+
+
+      def associations_index_map: -> untyped
 
       # Handle a batch of Kafka messages. Batches are split into "slices",
       # which are groups of independent messages that can be processed together

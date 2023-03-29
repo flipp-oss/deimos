@@ -118,19 +118,19 @@ module Deimos
 
       def remove_associations(assoc, keys)
         foreign_keys = keys.map { |key| key[assoc.foreign_key] }.compact
-        associated_keys = keys.map { |key| key[associated_column] }.compact
+        associated_keys = keys.map { |key| key[associations_index_map] }.compact
         if foreign_keys.length.zero? && associated_keys.length.zero?
           return
         end
 
         assoc.klass.unscoped.where.not(
           assoc.foreign_key => foreign_keys,
-          associated_column => associated_keys
+          associations_index_map => associated_keys
         ).delete_all
       end
 
-      def associated_column
-        'id'
+      def associations_index_map
+        raise 'Cannot determine indexes'
       end
 
       def save_records_to_database(record_class, key_cols, records)
@@ -165,12 +165,40 @@ module Deimos
         # fill id to associated_objects foreign_key column
         @klass.reflect_on_all_associations.select { |assoc| @association_list.include?(assoc.name) }.
           each do |assoc|
+
+            records_to_remove = []
             sub_records = entities.map { |entity|
               # Get associated `has_one` or `has_many` records for each entity
               sub_records = Array(entity.send(assoc.name))
               # Set IDS from master to each of the records in `has_one` or `has_many` relation
 
-              keys = extract_keys(sub_records)
+              new_records = sub_records.map { |record| record.attributes['id'] == nil ? record : nil }.compact
+              old_records = sub_records.map { |record| record.attributes['id'] != nil ? record : nil }.compact
+
+              indexes = associations_index_map[assoc.plural_name]
+
+              records_to_remove = old_records.map do |old_record|
+                remove_record = true
+                old_attributes = old_record.attributes
+                new_records.map do |new_record|
+                  new_attributes = new_record.attributes
+                  matching_attributes = true
+                  indexes.each do |index_key|
+                    if old_attributes[index_key] != new_attributes[index_key]
+                      matching_attributes = false
+                    end
+                  end
+                  if matching_attributes
+                    remove_record = false
+                  end
+                end
+                if remove_record
+                  old_record
+                end
+              end
+              records_to_remove = records_to_remove.compact
+
+              sub_records = Array(entity.send(assoc.name))
 
               sub_records.each { |d| d.send("#{assoc.foreign_key}=", entity.send(assoc.active_record_primary_key)) }
               sub_records
@@ -178,7 +206,11 @@ module Deimos
 
             columns = key_columns(nil, assoc.klass)
             save_records_to_database(assoc.klass, columns, sub_records) if sub_records.any?
-            remove_associations(assoc, keys)
+            if records_to_remove.length > 0
+              ids = records_to_remove.map { |record| record.attributes['id'] }
+              assoc.klass.unscoped.where(:id => ids).delete_all
+            end
+            #remove_associations(assoc, keys)
           end
       end
 
@@ -188,7 +220,7 @@ module Deimos
           next if record.attributes['id'].nil?
 
           {
-            associated_column => record.attributes[associated_column],
+            associations_index_map => record.attributes[associations_index_map],
             assoc.foreign_key => record.attributes[assoc.foreign_key]
           }
         end

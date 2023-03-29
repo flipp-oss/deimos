@@ -103,6 +103,12 @@ module ActiveRecordBatchConsumerTest
             end
           end
 
+          protected def associations_index_map
+            {
+              'locales' => %w(title language)
+            }
+          end
+
           def key_columns(messages, klass)
             case klass.to_s
             when Widget.to_s
