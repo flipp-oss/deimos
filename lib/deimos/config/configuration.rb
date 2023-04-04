@@ -481,6 +481,10 @@ module Deimos
       setting :published_state
       # Value to set the state_column to if publishing fails - state-based only.
       setting :failed_state
+
+      # Inherited state based poller class name to use for publishing
+      # to multiple kafka topics from a single state based poller
+      setting :poller_class, nil
     end
 
     deprecate 'kafka_logger', 'kafka.logger'

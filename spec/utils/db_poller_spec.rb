@@ -105,7 +105,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
 
     it 'should crash if initialized with an invalid producer' do
       config.producer_class = 'NoProducer'
-      expect { described_class.new(config) }.to raise_error('Class NoProducer not found!')
+      expect { described_class.new(config) }.to raise_error('uninitialized constant NoProducer')
     end
 
     describe '#retrieve_poll_info' do
@@ -364,11 +364,11 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
           end
           allow(MyProducer).to receive(:poll_query).and_call_original
           expect(poller).to receive(:process_batch).ordered.
-            with([widgets[0], widgets[1], widgets[2]]).and_call_original
+            with(MyProducer, [widgets[0], widgets[1], widgets[2]]).and_call_original
           expect(poller).to receive(:process_batch).ordered.
-            with([widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
+            with(MyProducer, [widgets[3], widgets[4], widgets[5]]).and_raise('OH NOES')
           expect(poller).to receive(:process_batch).ordered.
-            with([widgets[6]]).and_call_original
+            with(MyProducer, [widgets[6]]).and_call_original
 
           poller.process_updates
 

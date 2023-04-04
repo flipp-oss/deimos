@@ -21,17 +21,39 @@ module Deimos
         # @return [Hash]
         attr_reader :config
 
+        # Method to define producers if a single poller needs to publish to multiple topics.
+        # Producer classes should be constantized
+        # @return [Array<Producer>]
+        def self.multi_producers
+          []
+        end
+
         # @param config [FigTree::ConfigStruct]
         def initialize(config)
           @config = config
           @id = SecureRandom.hex
+          @producers = []
           begin
-            @producer = @config.producer_class.constantize
-          rescue NameError
-            raise "Class #{@config.producer_class} not found!"
-          end
-          unless @producer < Deimos::ActiveRecordProducer
-            raise "Class #{@producer.class.name} is not an ActiveRecordProducer!"
+            @poller_class = @config.poller_class.present? ? @config.poller_class.constantize : nil
+            if self.class.multi_producers.empty?
+              if @config.producer_class.nil?
+                raise 'No producers have been set for this DB poller!'
+              end
+
+              @producer = @config.producer_class.constantize
+              @producers << @producer
+              unless @producer < Deimos::ActiveRecordProducer
+                raise "Class #{@producer.class.name} is not an ActiveRecordProducer!"
+              end
+            else
+              @producers.append(self.class.multi_producers).flatten!.each do |producer|
+                unless producer < Deimos::ActiveRecordProducer
+                  raise "Class #{producer.class.name} is not an ActiveRecordProducer!"
+                end
+              end
+            end
+          rescue NameError => e
+            raise e.message.to_s
           end
         end
 
@@ -98,13 +120,16 @@ module Deimos
         # @return [Boolean]
         def process_batch_with_span(batch, status)
           retries = 0
+          span = nil
           begin
-            span = Deimos.config.tracer&.start(
-              'deimos-db-poller',
-              resource: @producer.class.name.gsub('::', '-')
-            )
-            process_batch(batch)
-            Deimos.config.tracer&.finish(span)
+            @producers.each do |producer|
+              span = Deimos.config.tracer&.start(
+                'deimos-db-poller',
+                resource: producer.class.name.gsub('::', '-')
+              )
+              process_batch(producer, batch)
+              Deimos.config.tracer&.finish(span)
+            end
             status.batches_processed += 1
           rescue Kafka::Error => e # keep trying till it fixes itself
             Deimos.config.logger.error("Error publishing through DB Poller: #{e.message}")
@@ -128,10 +153,11 @@ module Deimos
           true
         end
 
+        # @param producer Deimos::ActiveRecordProducer
         # @param batch [Array<ActiveRecord::Base>]
         # @return [void]
-        def process_batch(batch)
-          @producer.send_events(batch)
+        def process_batch(producer, batch)
+          producer.send_events(batch)
         end
       end
     end
