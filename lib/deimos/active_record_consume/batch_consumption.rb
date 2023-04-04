@@ -50,12 +50,10 @@ module Deimos
           {}
         elsif key.is_a?(Hash)
           @key_converter.convert(key)
+        elsif self.class.config[:key_field].nil?
+          { @klass.primary_key => key }
         else
-          if self.class.config[:key_field].nil?
-            { @klass.primary_key => key }
-          else
             { self.class.config[:key_field] => key }
-          end
         end
       end
 
