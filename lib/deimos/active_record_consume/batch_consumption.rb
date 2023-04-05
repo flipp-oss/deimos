@@ -175,7 +175,7 @@ module Deimos
       end
 
       def removing_repeated_associations(delete_map)
-        if delete_map.any?
+        return unless delete_map.any?
           delete_map.each do |d|
             assoc.klass.unscoped.
               where(d['primary_key_name'] => d['primary_key_value']).
