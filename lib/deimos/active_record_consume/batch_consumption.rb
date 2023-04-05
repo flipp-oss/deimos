@@ -170,15 +170,15 @@ module Deimos
 
             columns = key_columns(nil, assoc.klass)
             save_records_to_database(assoc.klass, columns, sub_records) if sub_records.any?
-            removing_repeated_associations(delete_map)
+            removing_repeated_associations(delete_map, columns, assoc.klass)
           end
       end
 
-      def removing_repeated_associations(delete_map)
-        return unless delete_map.any?
+      def removing_repeated_associations(delete_map, columns, assoc)
+        return unless columns.include? 'bulk_import_id' && delete_map.any?
 
         delete_map.each do |d|
-          assoc.klass.unscoped.
+          assoc.unscoped.
             where(d['primary_key_name'] => d['primary_key_value']).
             where.not('bulk_import_id' => d['bulk_import_id']).delete_all
         end
