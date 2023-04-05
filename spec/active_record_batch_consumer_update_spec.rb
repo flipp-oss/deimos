@@ -105,7 +105,7 @@ module ActiveRecordBatchConsumerTest
             end
           end
 
-          protected def associations_index_map
+          def associations_index_map
             {
               'locales' => %w(title language)
             }

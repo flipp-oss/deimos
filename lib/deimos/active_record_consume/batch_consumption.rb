@@ -175,7 +175,7 @@ module Deimos
       end
 
       def removing_repeated_associations(delete_map, columns, assoc)
-        return unless (columns.include? 'bulk_import_id') && delete_map.any?
+        return unless columns.include?('bulk_import_id') && delete_map.any?
 
         delete_map.each do |d|
           assoc.unscoped.
