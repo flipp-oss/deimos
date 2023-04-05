@@ -176,11 +176,11 @@ module Deimos
 
       def removing_repeated_associations(delete_map)
         return unless delete_map.any?
-          delete_map.each do |d|
-            assoc.klass.unscoped.
-              where(d['primary_key_name'] => d['primary_key_value']).
-              where.not('bulk_import_id' => d['bulk_import_id']).delete_all
-          end
+
+        delete_map.each do |d|
+          assoc.klass.unscoped.
+            where(d['primary_key_name'] => d['primary_key_value']).
+            where.not('bulk_import_id' => d['bulk_import_id']).delete_all
         end
       end
 
