@@ -144,6 +144,7 @@ module Deimos
       def import_associations(entities)
         _validate_associations(entities)
         _fill_primary_key_on_entities(entities)
+        delete_map = []
 
         # Select associations from config parameter association_list and
         # fill id to associated_objects foreign_key column
@@ -154,12 +155,33 @@ module Deimos
               sub_records = Array(entity.send(assoc.name))
               # Set IDS from master to each of the records in `has_one` or `has_many` relation
               sub_records.each { |d| d.send("#{assoc.foreign_key}=", entity.send(assoc.active_record_primary_key)) }
+
+              # Retrieve bulk_import_id data to deleting repeated lines
+              if entity.attributes['bulk_import_id'].present?
+                delete_map.push(
+                  'bulk_import_id' => entity.attributes['bulk_import_id'],
+                  'primary_key_value' => entity.attributes[assoc.active_record_primary_key],
+                  'primary_key_name' => assoc.foreign_key
+                )
+              end
+
               sub_records
             }.flatten
 
             columns = key_columns(nil, assoc.klass)
             save_records_to_database(assoc.klass, columns, sub_records) if sub_records.any?
+            removing_repeated_associations(delete_map)
           end
+      end
+
+      def removing_repeated_associations(delete_map)
+        if delete_map.any?
+          delete_map.each do |d|
+            assoc.klass.unscoped.
+              where(d['primary_key_name'] => d['primary_key_value']).
+              where.not('bulk_import_id' => d['bulk_import_id']).delete_all
+          end
+        end
       end
 
       # Delete any records with a tombstone.
