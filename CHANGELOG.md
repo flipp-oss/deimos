@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Add the delete capability for bulk_import_id associations
+
 # 1.19.6 - 2023-04-04
 
 - Fix: Fixing bug when having a not standard primary_key
