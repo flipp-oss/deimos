@@ -157,7 +157,7 @@ module Deimos
               sub_records.each { |d| d.send("#{assoc.foreign_key}=", entity.send(assoc.active_record_primary_key)) }
 
               # Retrieve bulk_import_id data to deleting repeated lines
-              delete_map = mapping_delete_query(entity, assoc)
+              delete_map = mapping_delete_query(entity, assoc, delete_map)
 
               sub_records
             }.flatten
@@ -168,8 +168,7 @@ module Deimos
           end
       end
 
-      def mapping_delete_query(entity, assoc)
-        delete_map = []
+      def mapping_delete_query(entity, assoc, delete_map)
         if entity.attributes['bulk_import_id'].present?
           delete_map.push('bulk_import_id' => entity.attributes['bulk_import_id'],
                           'primary_key_value' => entity.attributes[assoc.active_record_primary_key],
