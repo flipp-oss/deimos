@@ -2,9 +2,7 @@
 
 module ActiveRecordBatchConsumerTest
   describe Deimos::ActiveRecordConsumer,
-           'Batch Consumer with MySQL handling associations',
-           :integration,
-           db_config: DbConfigs::DB_OPTIONS.second do
+           'Batch Consumer with MySQL handling associations', :integration, db_config: DbConfigs::DB_OPTIONS.second do
     include_context('with DB')
 
     before(:all) do

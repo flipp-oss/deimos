@@ -169,11 +169,11 @@ module Deimos
       end
 
       def mapping_delete_query(entity, assoc, delete_map)
-        if entity.attributes['bulk_import_id'].present?
-          delete_map.push('bulk_import_id' => entity.attributes['bulk_import_id'],
-                          'primary_key_value' => entity.attributes[assoc.active_record_primary_key],
-                          'primary_key_name' => assoc.foreign_key)
-        end
+        return delete_map unless entity.attributes['bulk_import_id'].present?
+
+        delete_map.push('bulk_import_id' => entity.attributes['bulk_import_id'],
+                        'primary_key_value' => entity.attributes[assoc.active_record_primary_key],
+                        'primary_key_name' => assoc.foreign_key)
         delete_map
       end
 
