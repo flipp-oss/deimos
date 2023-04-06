@@ -166,5 +166,5 @@ module ActiveRecordBatchConsumerTest
         expect(Locale.count).to eq(2)
       end
     end
-           end
+  end
 end
