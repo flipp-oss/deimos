@@ -36,7 +36,7 @@ module ConsumerTest
                                  'some_int' => 123 }) do |payload, _metadata|
                                    expect(payload['test_id']).to eq('foo')
                                    expect(payload['some_int']).to eq(123)
-                                 end
+            end
           end
 
           it 'should consume a nil message' do
@@ -55,11 +55,11 @@ module ConsumerTest
             MyConsumer.new.around_consume({ 'test_id' => 'foo',
                                             'some_int' => 123 }, test_metadata) do |_payload, metadata|
                                               expect(metadata[:key]).to eq('foo')
-                                            end
+            end
             MyConsumer.new.around_consume({ 'test_id' => 'foo',
                                             'some_int' => 123 }, test_metadata) do |_payload, metadata|
                                               expect(metadata[:key]).to eq('foo')
-                                            end
+            end
           end
 
           it 'should consume a message on a topic' do
@@ -68,7 +68,7 @@ module ConsumerTest
                                  'some_int' => 123 }) do |payload, _metadata|
                                    expect(payload['test_id']).to eq('foo')
                                    expect(payload['some_int']).to eq(123)
-                                 end
+            end
           end
 
           it 'should fail on invalid message' do
@@ -194,7 +194,7 @@ module ConsumerTest
                              'updated_at' => Time.now.to_i,
                              'timestamp' => 2.minutes.ago.to_s }) do |payload, _metadata|
                                expect(payload['test_id']).to eq('foo')
-                             end
+        end
       end
 
       it 'should fail nicely when timestamp wrong format' do
@@ -205,14 +205,14 @@ module ConsumerTest
                              'updated_at' => Time.now.to_i,
                              'timestamp' => 'dffdf' }) do |payload, _metadata|
                                expect(payload['test_id']).to eq('foo')
-                             end
+        end
         test_consume_message('my_consume_topic',
                              { 'test_id' => 'foo',
                              'some_int' => 123,
                              'updated_at' => Time.now.to_i,
                              'timestamp' => '' }) do |payload, _metadata|
                                expect(payload['test_id']).to eq('foo')
-                             end
+        end
       end
 
     end

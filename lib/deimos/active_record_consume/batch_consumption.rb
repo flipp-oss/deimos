@@ -159,7 +159,7 @@ module Deimos
 
             columns = key_columns(nil, assoc.klass)
             save_records_to_database(assoc.klass, columns, sub_records) if sub_records.any?
-          end
+        end
       end
 
       # Delete any records with a tombstone.

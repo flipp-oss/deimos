@@ -133,12 +133,12 @@ module Deimos
         subscribers << ActiveSupport::Notifications.
           subscribe('phobos.listener.process_message') do
             frk_consumer.last_message_time = Time.zone.now
-          end
+        end
         subscribers << ActiveSupport::Notifications.
           subscribe('phobos.listener.start_handler') do
             frk_consumer.start_time = Time.zone.now
             frk_consumer.last_message_time = nil
-          end
+        end
         subscribers << ActiveSupport::Notifications.
           subscribe('heartbeat.consumer.kafka') do
             if frk_consumer.last_message_time
@@ -149,7 +149,7 @@ module Deimos
               Deimos.config.logger.error('Aborting - initial wait too long')
               raise Phobos::AbortError
             end
-          end
+        end
         listener.start
         subscribers.each { |s| ActiveSupport::Notifications.unsubscribe(s) }
       end

@@ -261,7 +261,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
             m.call(*args)
             expect(info.reload.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 32))
             expect(info.last_sent_id).to eq(widgets[1].id)
-          end
+        end
         expect(poller).to receive(:process_and_touch_info).ordered.
           with([widgets[2], widgets[3], widgets[4]], anything).and_call_original
         expect(poller).to receive(:process_and_touch_info).ordered.

@@ -44,7 +44,7 @@ module Deimos
                   payload: message.payload,
                   key: message.key
                 }
-              end
+                        end
             )
           end
 

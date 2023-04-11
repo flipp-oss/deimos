@@ -22,7 +22,7 @@ Layout/AccessModifierIndentation:
 #     baz
 #   end
 Layout/BlockAlignment:
-  EnforcedStyleAlignWith: start_of_block
+  EnforcedStyleAlignWith: start_of_line
 
 # something.
 #  method

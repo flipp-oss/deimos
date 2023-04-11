@@ -240,5 +240,5 @@ module ActiveRecordBatchConsumerTest
         expect(Widget.first.id).to eq(Locale.second.widget_id)
       end
     end
-           end
+  end
 end
