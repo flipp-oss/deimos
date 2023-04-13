@@ -24,7 +24,7 @@ module Deimos
         # Method to define producers if a single poller needs to publish to multiple topics.
         # Producer classes should be constantized
         # @return [Array<Producer>]
-        def self.multi_producers
+        def self.producers
           []
         end
 
@@ -32,21 +32,19 @@ module Deimos
         def initialize(config)
           @config = config
           @id = SecureRandom.hex
-          @producers = []
           begin
-            @poller_class = @config.poller_class.present? ? @config.poller_class.constantize : nil
-            if self.class.multi_producers.empty?
-              if @config.producer_class.nil?
-                raise 'No producers have been set for this DB poller!'
-              end
+            if @config.poller_class.nil? && @config.producer_class.nil?
+              raise 'No producers have been set for this DB poller!'
+            end
 
-              @producer = @config.producer_class.constantize
-              @producers << @producer
-              unless @producer < Deimos::ActiveRecordProducer
-                raise "Class #{@producer.class.name} is not an ActiveRecordProducer!"
+            @resource_class = @config.producer_class.present? ? @config.producer_class.constantize : @config.poller_class.constantize
+
+            if @config.poller_class.nil?
+              unless @resource_class < Deimos::ActiveRecordProducer
+                raise "Class #{@resource_class.class.name} is not an ActiveRecordProducer!"
               end
             else
-              @producers.append(self.class.multi_producers).flatten!.each do |producer|
+              @resource_class.producers.each do |producer|
                 unless producer < Deimos::ActiveRecordProducer
                   raise "Class #{producer.class.name} is not an ActiveRecordProducer!"
                 end
@@ -87,12 +85,12 @@ module Deimos
         # Grab the PollInfo or create if it doesn't exist.
         # @return [void]
         def retrieve_poll_info
-          @info = Deimos::PollInfo.find_by_producer(@config.producer_class) || create_poll_info
+          @info = Deimos::PollInfo.find_by_producer(@resource_class.to_s) || create_poll_info
         end
 
         # @return [Deimos::PollInfo]
         def create_poll_info
-          Deimos::PollInfo.create!(producer: @config.producer_class, last_sent: Time.new(0))
+          Deimos::PollInfo.create!(producer: @resource_class.to_s, last_sent: Time.new(0))
         end
 
         # Indicate whether this current loop should process updates. Most loops
@@ -122,14 +120,12 @@ module Deimos
           retries = 0
           span = nil
           begin
-            @producers.each do |producer|
-              span = Deimos.config.tracer&.start(
-                'deimos-db-poller',
-                resource: producer.class.name.gsub('::', '-')
-              )
-              process_batch(producer, batch)
-              Deimos.config.tracer&.finish(span)
-            end
+            span = Deimos.config.tracer&.start(
+              'deimos-db-poller',
+              resource: @resource_class.class.name.gsub('::', '-')
+            )
+            process_batch(batch)
+            Deimos.config.tracer&.finish(span)
             status.batches_processed += 1
           rescue Kafka::Error => e # keep trying till it fixes itself
             Deimos.config.logger.error("Error publishing through DB Poller: #{e.message}")
@@ -153,11 +149,28 @@ module Deimos
           true
         end
 
-        # @param producer Deimos::ActiveRecordProducer
+        # If multiple producers, loop through producers configured on poller subclass
+        # If single producer, @resource_class will be the constantized producer class
         # @param batch [Array<ActiveRecord::Base>]
         # @return [void]
-        def process_batch(producer, batch)
-          producer.send_events(batch)
+        def process_batch(batch)
+          if @config.producer_class.present?
+            @resource_class.send_events(batch)
+          else
+            @resource_class.producers.each do |producer|
+              producer.send_events(batch)
+            end
+          end
+        end
+
+        # Configure log identifier and messages to be used in subclasses
+        # # @return [String]
+        def log_identifier
+          if @config.producer_class.present?
+            "#{self.class.name}: #{@resource_class.topic}"
+          else
+            "#{self.class.name}: #{@resource_class.producers.map(&:topic)}"
+          end
         end
       end
     end
