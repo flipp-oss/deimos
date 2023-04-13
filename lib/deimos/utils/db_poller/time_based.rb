@@ -11,7 +11,7 @@ module Deimos
         # :nodoc:
         def create_poll_info
           new_time = @config.start_from_beginning ? Time.new(0) : Time.zone.now
-          Deimos::PollInfo.create!(producer: @config.producer_class,
+          Deimos::PollInfo.create!(producer: @resource_class.to_s,
                                    last_sent: new_time,
                                    last_sent_id: 0)
         end
@@ -51,10 +51,10 @@ module Deimos
         # @param time_to [ActiveSupport::TimeWithZone]
         # @return [ActiveRecord::Relation]
         def fetch_results(time_from, time_to)
-          id = if self.class.producers.any?
-                 @resource_class.producers.first.config[:record_class].primary_key
-               else
+          id = if @config.producer_class.present?
                  @resource_class.config[:record_class].primary_key
+               else
+                 @resource_class.producers.first.config[:record_class].primary_key
                end
           quoted_timestamp = ActiveRecord::Base.connection.quote_column_name(@config.timestamp_column)
           quoted_id = ActiveRecord::Base.connection.quote_column_name(id)

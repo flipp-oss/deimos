@@ -388,7 +388,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     end
   end
 
-  describe 'state_based_multi_producer_pollers' do
+  describe 'multi_producer_pollers' do
     include_context 'with widgets'
 
     let(:poller) do
