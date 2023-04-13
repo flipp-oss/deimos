@@ -118,7 +118,6 @@ module Deimos
         # @return [Boolean]
         def process_batch_with_span(batch, status)
           retries = 0
-          span = nil
           begin
             span = Deimos.config.tracer&.start(
               'deimos-db-poller',
