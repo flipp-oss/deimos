@@ -37,21 +37,13 @@ module Deimos
               raise 'No producers have been set for this DB poller!'
             end
 
-            @resource_class = @config.producer_class.present? ? @config.producer_class.constantize : @config.poller_class.constantize
+            @resource_class = self.class.producers.any? ? self.class : @config.producer_class.constantize
 
-            if @config.poller_class.nil?
-              unless @resource_class < Deimos::ActiveRecordProducer
-                raise "Class #{@resource_class.class.name} is not an ActiveRecordProducer!"
-              end
-            else
-              @resource_class.producers.each do |producer|
-                unless producer < Deimos::ActiveRecordProducer
-                  raise "Class #{producer.class.name} is not an ActiveRecordProducer!"
-                end
-              end
+            producer_classes.each do |producer_class|
+              validate_producer_class(producer_class)
             end
-          rescue NameError => e
-            raise e.message.to_s
+          rescue NameError
+            raise "Class #{@config.producer_class} not found!"
           end
         end
 
@@ -148,27 +140,34 @@ module Deimos
           true
         end
 
-        # If multiple producers, loop through producers configured on poller subclass
-        # If single producer, @resource_class will be the constantized producer class
+        # Publish batch using the configured producers
         # @param batch [Array<ActiveRecord::Base>]
         # @return [void]
         def process_batch(batch)
-          if @config.producer_class.present?
-            @resource_class.send_events(batch)
-          else
-            @resource_class.producers.each do |producer|
-              producer.send_events(batch)
-            end
+          producer_classes.each do |producer|
+            producer.send_events(batch)
           end
         end
 
         # Configure log identifier and messages to be used in subclasses
-        # # @return [String]
+        # @return [String]
         def log_identifier
-          if @config.producer_class.present?
-            "#{self.class.name}: #{@resource_class.topic}"
-          else
-            "#{self.class.name}: #{@resource_class.producers.map(&:topic)}"
+          "#{self.class.name}: #{producer_classes.map(&:topic)}"
+        end
+
+        # Return array of configured producers depending on poller class
+        # @return [Array<ActiveRecordProducer>]
+        def producer_classes
+          return self.class.producers if self.class.producers.any?
+
+          [@config.producer_class.constantize]
+        end
+
+        # Validate if a producer class is an ActiveRecordProducer or not
+        # @return [void]
+        def validate_producer_class(producer_class)
+          unless producer_class < Deimos::ActiveRecordProducer
+            raise "Class #{producer_class.class.name} is not an ActiveRecordProducer!"
           end
         end
       end

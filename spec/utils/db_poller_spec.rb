@@ -68,7 +68,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     include_context 'with widgets'
 
     let(:poller) do
-      poller = Deimos::Utils::DbPoller.class_for_config(config.mode).new(config)
+      poller = Deimos::Utils::DbPoller.class_for_config(config).new(config)
       allow(poller).to receive(:sleep)
       poller
     end
@@ -105,7 +105,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
 
     it 'should crash if initialized with an invalid producer' do
       config.producer_class = 'NoProducer'
-      expect { described_class.new(config) }.to raise_error('uninitialized constant NoProducer')
+      expect { described_class.new(config) }.to raise_error('Class NoProducer not found!')
     end
 
     describe '#retrieve_poll_info' do
@@ -392,7 +392,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     include_context 'with widgets'
 
     let(:poller) do
-      poller = Deimos::Utils::DbPoller.class_for_config(config.mode).new(config)
+      poller = Deimos::Utils::DbPoller.class_for_config(config).new(config)
       allow(poller).to receive(:sleep)
       poller
     end

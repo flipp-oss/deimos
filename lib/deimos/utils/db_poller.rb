@@ -12,7 +12,7 @@ module Deimos
         end
 
         pollers = Deimos.config.db_poller_objects.map do |poller_config|
-          self.class_for_config(poller_config.mode).new(poller_config)
+          self.class_for_config(poller_config).new(poller_config)
         end
         executor = Sigurd::Executor.new(pollers,
                                         sleep_seconds: 5,
@@ -21,15 +21,21 @@ module Deimos
         signal_handler.run!
       end
 
-      # @param config_name [Symbol]
+      # @param config_name [DBPollerConfig]
       # @return [Class<Deimos::Utils::DbPoller>]
       def self.class_for_config(config_name)
-        case config_name
-        when :state_based
-          Deimos::Utils::DbPoller::StateBased
+        if config_name.poller_class.present?
+          config_name.poller_class.constantize
         else
-          Deimos::Utils::DbPoller::TimeBased
+          case config_name.mode
+          when :state_based
+            Deimos::Utils::DbPoller::StateBased
+          else
+            Deimos::Utils::DbPoller::TimeBased
+          end
         end
+      rescue NameError
+          raise "Class #{config_name.poller_class} not found!"
       end
 
       PollStatus = Struct.new(:batches_processed, :batches_errored, :messages_processed) do
