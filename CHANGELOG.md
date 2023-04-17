@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## UNRELEASED
+- Feature: Updated the DB Poller logic to allow for inherited db poller classes to initialize producers and
+  be able to publish to multiple Kafka topics using the results from a single poll_query method
 
 # 1.19.7 - 2023-04-17
 

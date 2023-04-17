@@ -21,17 +21,29 @@ module Deimos
         # @return [Hash]
         attr_reader :config
 
+        # Method to define producers if a single poller needs to publish to multiple topics.
+        # Producer classes should be constantized
+        # @return [Array<Producer>]
+        def self.producers
+          []
+        end
+
         # @param config [FigTree::ConfigStruct]
         def initialize(config)
           @config = config
           @id = SecureRandom.hex
           begin
-            @producer = @config.producer_class.constantize
+            if @config.poller_class.nil? && @config.producer_class.nil?
+              raise 'No producers have been set for this DB poller!'
+            end
+
+            @resource_class = self.class.producers.any? ? self.class : @config.producer_class.constantize
+
+            producer_classes.each do |producer_class|
+              validate_producer_class(producer_class)
+            end
           rescue NameError
             raise "Class #{@config.producer_class} not found!"
-          end
-          unless @producer < Deimos::ActiveRecordProducer
-            raise "Class #{@producer.class.name} is not an ActiveRecordProducer!"
           end
         end
 
@@ -65,12 +77,12 @@ module Deimos
         # Grab the PollInfo or create if it doesn't exist.
         # @return [void]
         def retrieve_poll_info
-          @info = Deimos::PollInfo.find_by_producer(@config.producer_class) || create_poll_info
+          @info = Deimos::PollInfo.find_by_producer(@resource_class.to_s) || create_poll_info
         end
 
         # @return [Deimos::PollInfo]
         def create_poll_info
-          Deimos::PollInfo.create!(producer: @config.producer_class, last_sent: Time.new(0))
+          Deimos::PollInfo.create!(producer: @resource_class.to_s, last_sent: Time.new(0))
         end
 
         # Indicate whether this current loop should process updates. Most loops
@@ -101,7 +113,7 @@ module Deimos
           begin
             span = Deimos.config.tracer&.start(
               'deimos-db-poller',
-              resource: @producer.class.name.gsub('::', '-')
+              resource: @resource_class.name.gsub('::', '-')
             )
             process_batch(batch)
             Deimos.config.tracer&.finish(span)
@@ -128,10 +140,35 @@ module Deimos
           true
         end
 
+        # Publish batch using the configured producers
         # @param batch [Array<ActiveRecord::Base>]
         # @return [void]
         def process_batch(batch)
-          @producer.send_events(batch)
+          producer_classes.each do |producer|
+            producer.send_events(batch)
+          end
+        end
+
+        # Configure log identifier and messages to be used in subclasses
+        # @return [String]
+        def log_identifier
+          "#{@resource_class.name}: #{producer_classes.map(&:topic)}"
+        end
+
+        # Return array of configured producers depending on poller class
+        # @return [Array<ActiveRecordProducer>]
+        def producer_classes
+          return self.class.producers if self.class.producers.any?
+
+          [@config.producer_class.constantize]
+        end
+
+        # Validate if a producer class is an ActiveRecordProducer or not
+        # @return [void]
+        def validate_producer_class(producer_class)
+          unless producer_class < Deimos::ActiveRecordProducer
+            raise "Class #{producer_class.class.name} is not an ActiveRecordProducer!"
+          end
         end
       end
     end

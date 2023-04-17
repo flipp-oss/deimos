@@ -453,7 +453,7 @@ module Deimos
       # Mode to use for querying - :time_based (via updated_at) or :state_based.
       setting :mode, :time_based
       # Producer class to use for the poller.
-      setting :producer_class
+      setting :producer_class, nil
       # How often to run the poller, in seconds. If the poll takes longer than this
       # time, it will run again immediately and the timeout
       # will be pushed to the next e.g. 1 minute.
@@ -481,6 +481,9 @@ module Deimos
       setting :published_state
       # Value to set the state_column to if publishing fails - state-based only.
       setting :failed_state
+
+      # Inherited poller class name to use for publishing to multiple kafka topics from a single poller
+      setting :poller_class, nil
     end
 
     deprecate 'kafka_logger', 'kafka.logger'

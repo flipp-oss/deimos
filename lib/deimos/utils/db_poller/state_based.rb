@@ -10,13 +10,13 @@ module Deimos
         # Send messages for updated data.
         # @return [void]
         def process_updates
-          Deimos.config.logger.info("Polling #{@producer.topic}")
+          Deimos.config.logger.info("Polling #{log_identifier}")
           status = PollStatus.new(0, 0, 0)
 
           # poll_query gets all the relevant data from the database, as defined
           # by the producer itself.
           loop do
-            Deimos.config.logger.debug("Polling #{@producer.topic}, batch #{status.current_batch}")
+            Deimos.config.logger.debug("Polling #{log_identifier}, batch #{status.current_batch}")
             batch = fetch_results.to_a
             if batch.empty?
               @info.touch(:last_sent)
@@ -26,12 +26,12 @@ module Deimos
             success = process_batch_with_span(batch, status)
             finalize_batch(batch, success)
           end
-          Deimos.config.logger.info("Poll #{@producer.topic} complete (#{status.report}")
+          Deimos.config.logger.info("Poll #{log_identifier} complete (#{status.report}")
         end
 
         # @return [ActiveRecord::Relation]
         def fetch_results
-          @producer.poll_query.limit(BATCH_SIZE).order(@config.timestamp_column)
+          @resource_class.poll_query.limit(BATCH_SIZE).order(@config.timestamp_column)
         end
 
         # @param batch [Array<ActiveRecord::Base>]

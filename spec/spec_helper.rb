@@ -221,6 +221,8 @@ RSpec.shared_context('with widgets') do
       t.string(:test_id)
       t.integer(:some_int)
       t.boolean(:some_bool)
+      t.string(:publish_status)
+      t.datetime(:published_at)
       t.timestamps
     end
 

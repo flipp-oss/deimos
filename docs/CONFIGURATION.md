@@ -114,7 +114,7 @@ end
 ```
 
 Config name|Default|Description
------------|--|-----------
+-----------|-------|-----------
 producer_class|nil|ActiveRecordProducer class to use for sending messages.
 mode|:time_based|Whether to use time-based polling or state-based polling.
 run_every|60|Amount of time in seconds to wait between runs.
@@ -127,6 +127,7 @@ state_column|nil|If set, this represents the DB column to use to update publishi
 publish_timestamp_column|nil|If set, this represents the DB column to use to update when publishing is done. State-based only.
 published_state|nil|If set, the poller will update the `state_column` to this value when publishing succeeds. State-based only.
 failed_state|nil|If set, the poller will update the `state_column` to this value when publishing fails. State-based only.
+poller_class|nil|Inherited poller class name to use for publishing to multiple kafka topics from a single poller.
 
 ## Kafka Configuration
 
