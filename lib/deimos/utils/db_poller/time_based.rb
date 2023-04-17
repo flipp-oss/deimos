@@ -51,11 +51,7 @@ module Deimos
         # @param time_to [ActiveSupport::TimeWithZone]
         # @return [ActiveRecord::Relation]
         def fetch_results(time_from, time_to)
-          id = if @config.producer_class.present?
-                 @resource_class.config[:record_class].primary_key
-               else
-                 @resource_class.producers.first.config[:record_class].primary_key
-               end
+          id = self.producer_classes.first.config[:record_class].primary_key
           quoted_timestamp = ActiveRecord::Base.connection.quote_column_name(@config.timestamp_column)
           quoted_id = ActiveRecord::Base.connection.quote_column_name(id)
           @resource_class.poll_query(time_from: time_from,

@@ -113,7 +113,7 @@ module Deimos
           begin
             span = Deimos.config.tracer&.start(
               'deimos-db-poller',
-              resource: @resource_class.class.name.gsub('::', '-')
+              resource: @resource_class.name.gsub('::', '-')
             )
             process_batch(batch)
             Deimos.config.tracer&.finish(span)
@@ -152,7 +152,7 @@ module Deimos
         # Configure log identifier and messages to be used in subclasses
         # @return [String]
         def log_identifier
-          "#{self.class.name}: #{producer_classes.map(&:topic)}"
+          "#{@resource_class.name}: #{producer_classes.map(&:topic)}"
         end
 
         # Return array of configured producers depending on poller class
