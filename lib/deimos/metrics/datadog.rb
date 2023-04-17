@@ -16,10 +16,10 @@ module Deimos
         logger.info("DatadogMetricsProvider configured with: #{config}")
         @client = ::Datadog::Statsd.new(
           config[:host_ip],
-          config[:host_port]
+          config[:host_port],
+          tags: config[:tags],
+          namespace: config[:namespace]
         )
-        @client.tags = config[:tags]
-        @client.namespace = config[:namespace]
       end
 
       # :nodoc:
