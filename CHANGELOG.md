@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.21.1 - 2023-04-18
+
+- Fix: Datadog tracing now works with Datadog 1.x
+
 # 1.20.0 - 2023-04-17
 
 - Feature: Updated the DB Poller logic to allow for inherited db poller classes to initialize producers and

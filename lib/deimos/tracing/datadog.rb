@@ -15,7 +15,11 @@ module Deimos
 
       # :nodoc:
       def start(span_name, options={})
-        span = ::Datadog.tracer.trace(span_name)
+        span = if ::Datadog.respond_to?(:tracer)
+                 ::Datadog.tracer.trace(span_name)
+               else
+                 ::Datadog::Tracing.trace(span_name)
+               end
         span.service = @service
         span.resource = options[:resource]
         span
