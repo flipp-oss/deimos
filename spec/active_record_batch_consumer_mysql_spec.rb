@@ -22,6 +22,7 @@ module ActiveRecordBatchConsumerTest
       # create one-to-one association -- Details
       ActiveRecord::Base.connection.create_table(:details, force: true) do |t|
         t.string(:title)
+        t.string(:bulk_import_id)
         t.belongs_to(:widget)
 
         t.index(%i(title), unique: true)
@@ -31,9 +32,10 @@ module ActiveRecordBatchConsumerTest
       ActiveRecord::Base.connection.create_table(:locales, force: true) do |t|
         t.string(:title)
         t.string(:language)
+        t.string(:bulk_import_id)
         t.belongs_to(:widget)
 
-        t.index(%i(title language), unique: true)
+        t.index(%i(widget_id title language), unique: true)
       end
 
       class Detail < ActiveRecord::Base
@@ -48,7 +50,7 @@ module ActiveRecordBatchConsumerTest
       # Sample model
       class Widget < ActiveRecord::Base
         has_one :detail
-        has_many :locales
+        has_many :locales, dependent: :destroy
         validates :test_id, presence: true
 
         default_scope -> { where(deleted: false) }
@@ -90,14 +92,14 @@ module ActiveRecordBatchConsumerTest
           record_class Widget
           association_list :detail
 
-          def build_records(messages)
-            messages.map do |m|
-              payload = m.payload
-              w = Widget.new(test_id: payload['test_id'], some_int: payload['some_int'])
-              d = Detail.new(title: payload['title'])
-              w.detail = d
-              w
-            end
+          def record_attributes(payload, _key)
+            {
+              test_id: payload['test_id'],
+              some_int: payload['some_int'],
+              detail: {
+                      title: payload['title']
+                    }
+            }
           end
         end
       end
@@ -107,8 +109,7 @@ module ActiveRecordBatchConsumerTest
         expect {
           publish_batch([{ key: 2,
                            payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
-        }.to raise_error('Create bulk_import_id on ActiveRecordBatchConsumerTest::Widget'\
-        ' and set it in `build_records` for associations. Run rails g deimos:bulk_import_id {table}'\
+        }.to raise_error('Create bulk_import_id on the widgets table. Run rails g deimos:bulk_import_id {table}'\
         ' to create the migration.')
       end
     end
@@ -123,16 +124,15 @@ module ActiveRecordBatchConsumerTest
           association_list :detail
           bulk_import_id_column :custom_id
 
-          def build_records(messages)
-            messages.map do |m|
-              payload = m.payload
-              w = Widget.new(test_id: payload['test_id'],
-                             some_int: payload['some_int'],
-                             custom_id: SecureRandom.uuid)
-              d = Detail.new(title: payload['title'])
-              w.detail = d
-              w
-            end
+          def record_attributes(payload, _key)
+            {
+              test_id: payload['test_id'],
+              some_int: payload['some_int'],
+              custom_id: SecureRandom.uuid,
+              detail: {
+                title: payload['title']
+              }
+            }
           end
 
           def key_columns(messages, klass)
@@ -185,16 +185,99 @@ module ActiveRecordBatchConsumerTest
           record_class Widget
           association_list :locales
 
-          def build_records(messages)
-            messages.map do |m|
-              payload = m.payload
-              w = Widget.new(test_id: payload['test_id'],
-                             some_int: payload['some_int'],
-                             bulk_import_id: SecureRandom.uuid)
-              w.locales << Locale.new(title: payload['title'], language: 'en')
-              w.locales << Locale.new(title: payload['title'], language: 'fr')
-              w
+          def record_attributes(payload, _key)
+            {
+              test_id: payload['test_id'],
+              some_int: payload['some_int'],
+              locales: [
+                    {
+                      title: payload['title'],
+                      language: 'en'
+                    },
+                    {
+                      title: payload['title'],
+                      language: 'fr'
+                    }
+                  ]
+            }
+          end
+
+          def key_columns(messages, klass)
+            case klass.to_s
+            when Widget.to_s
+              super
+            when Detail.to_s
+              %w(title widget_id)
+            when Locale.to_s
+              %w(widget_id title language)
+            else
+              []
             end
+          end
+
+          def columns(record_class)
+            all_cols = record_class.columns.map(&:name)
+
+            case record_class.to_s
+            when Widget.to_s
+              super
+            when Detail.to_s, Locale.to_s
+              all_cols - ['id']
+            else
+              []
+            end
+          end
+        end
+      end
+
+      before(:all) do
+        ActiveRecord::Base.connection.add_column(:widgets, :bulk_import_id, :string, if_not_exists: true)
+        Widget.reset_column_information
+      end
+
+      it 'should save item to widget and associated details' do
+        stub_const('MyBatchConsumer', consumer_class)
+        publish_batch([{ key: 2,
+                         payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
+        expect(Widget.count).to eq(1)
+        expect(Locale.count).to eq(2)
+        expect(Widget.first.id).to eq(Locale.first.widget_id)
+        expect(Widget.first.id).to eq(Locale.second.widget_id)
+
+        # publish again - should add locales to the widget
+        publish_batch([{ key: 2,
+                         payload: { test_id: 'xyz', some_int: 7, title: 'Widget Title 2' } }])
+        expect(Widget.count).to eq(1)
+        expect(Widget.first.some_int).to eq(7)
+        expect(Locale.count).to eq(4)
+        expect(Locale.all.map(&:widget_id).uniq).to eq([Widget.first.id])
+      end
+    end
+
+    context 'with replace_associations on' do
+      let(:consumer_class) do
+        Class.new(described_class) do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          record_class Widget
+          association_list :locales
+
+          def record_attributes(payload, _key)
+            {
+              test_id: payload['test_id'],
+              some_int: payload['some_int'],
+              locales: [
+                    {
+                      title: payload['title'],
+                      language: 'en'
+                    },
+                    {
+                      title: payload['title'],
+                      language: 'fr'
+                    }
+                  ]
+            }
           end
 
           def key_columns(messages, klass)
@@ -229,8 +312,11 @@ module ActiveRecordBatchConsumerTest
         ActiveRecord::Base.connection.add_column(:widgets, :bulk_import_id, :string, if_not_exists: true)
         Widget.reset_column_information
       end
+      before(:each) do
+        consumer_class.config[:replace_associations] = true
+      end
 
-      it 'should save item to widget and associated details' do
+      it 'should save item to widget and replace associated details' do
         stub_const('MyBatchConsumer', consumer_class)
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
@@ -238,7 +324,17 @@ module ActiveRecordBatchConsumerTest
         expect(Locale.count).to eq(2)
         expect(Widget.first.id).to eq(Locale.first.widget_id)
         expect(Widget.first.id).to eq(Locale.second.widget_id)
+
+        # publish again - should replace locales
+        publish_batch([{ key: 2,
+                         payload: { test_id: 'xyz', some_int: 7, title: 'Widget Title 2' } }])
+        expect(Widget.count).to eq(1)
+        expect(Widget.first.some_int).to eq(7)
+        expect(Locale.count).to eq(2)
+        expect(Locale.all.map(&:title).uniq).to contain_exactly('Widget Title 2')
+        expect(Locale.all.map(&:widget_id).uniq).to contain_exactly(Widget.first.id)
       end
     end
-           end
+  end
+
 end

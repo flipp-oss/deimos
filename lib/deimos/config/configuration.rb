@@ -402,6 +402,10 @@ module Deimos
       # Configure the usage of generated schema classes for this producer
       # @return [Boolean]
       setting :use_schema_classes
+      # If true, and using the multi-table feature of ActiveRecordConsumers, replace associations
+      # instead of appending to them.
+      # @return [Boolean]
+      setting :replace_associations
     end
 
     setting_object :consumer do
