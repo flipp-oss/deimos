@@ -224,16 +224,16 @@ module Deimos
         record_list.fill_primary_keys!
 
         import_id = self.class.config[:replace_associations] ? SecureRandom.uuid : nil
-        primary_keys = record_list.primary_keys
         record_list.associations.each do |assoc|
           sub_records = record_list.map { |r| r.sub_records(assoc.name, import_id) }.flatten
           sub_record_list = BatchRecordList.new(sub_records)
 
           columns = key_columns(nil, assoc.klass)
-          if sub_records.any?
-            save_records_to_database(assoc.klass, columns, sub_record_list)
-            delete_old_records(assoc, import_id, primary_keys) if import_id
-          end
+          next unless sub_records.any?
+
+          save_records_to_database(assoc.klass, columns, sub_record_list)
+          primary_keys = record_list.primary_keys(assoc.name)
+          delete_old_records(assoc, import_id, primary_keys) if import_id
         end
       end
 

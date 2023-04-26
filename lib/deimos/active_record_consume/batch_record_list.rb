@@ -51,9 +51,13 @@ module Deimos
         end
       end
 
+      # @param [String] assoc_name
       # @return [Array<Integer,String>]
-      def primary_keys
-        self.batch_records.map(&:primary_key)
+      def primary_keys(assoc_name)
+        assoc = self.associations.find { |a| a.name == assoc_name }
+        self.records.map do |record|
+          record[assoc.active_record_primary_key]
+        end
       end
 
     end

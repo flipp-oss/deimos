@@ -54,7 +54,7 @@ module Deimos
         assoc = self.klass.reflect_on_association(assoc_name)
         Array.wrap(attr_list).map { |attrs|
           # Set the ID of the original object, e.g. widgets -> details, this will set widget_id.
-          attrs[assoc.foreign_key] = self.primary_key
+          attrs[assoc.foreign_key] = self.record[assoc.active_record_primary_key]
           if bulk_import_id
             attrs[self.bulk_import_column] = bulk_import_id
           end
@@ -63,11 +63,6 @@ module Deimos
       end
 
       # @return [String,Integer]
-      def primary_key
-        col = self.klass.primary_key
-        self.record[col]
-      end
-
     end
   end
 end
