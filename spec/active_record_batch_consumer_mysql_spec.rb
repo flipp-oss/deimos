@@ -88,57 +88,58 @@ module ActiveRecordBatchConsumerTest
       klass = Class.new(described_class) do
         cattr_accessor :record_attributes_proc
         cattr_accessor :should_consume_proc
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
-          record_class Widget
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config plain: true
+        record_class Widget
 
         def should_consume?(record)
           if self.should_consume_proc
             return self.should_consume_proc.call(record)
           end
+
           true
         end
 
-          def record_attributes(payload, _key)
-            if self.record_attributes_proc
-              return self.record_attributes_proc.call(payload)
-            end
+        def record_attributes(payload, _key)
+          if self.record_attributes_proc
+            return self.record_attributes_proc.call(payload)
+          end
 
-            {
-              test_id: payload['test_id'],
-              some_int: payload['some_int'],
-              detail: {
-                      title: payload['title']
-                    }
+          {
+            test_id: payload['test_id'],
+            some_int: payload['some_int'],
+            detail: {
+              title: payload['title']
             }
-          end
+          }
+        end
 
-          def key_columns(messages, klass)
-            case klass.to_s
-            when Widget.to_s
-              super
-            when Detail.to_s
-              %w(title widget_id)
-            when Locale.to_s
-              %w(widget_id title language)
-            else
-              []
-            end
+        def key_columns(messages, klass)
+          case klass.to_s
+          when Widget.to_s
+            super
+          when Detail.to_s
+            %w(title widget_id)
+          when Locale.to_s
+            %w(widget_id title language)
+          else
+            []
           end
+        end
 
-          def columns(record_class)
-            all_cols = record_class.columns.map(&:name)
+        def columns(record_class)
+          all_cols = record_class.columns.map(&:name)
 
-            case record_class.to_s
-            when Widget.to_s
-              super
-            when Detail.to_s, Locale.to_s
-              all_cols - ['id']
-            else
-              []
-            end
+          case record_class.to_s
+          when Widget.to_s
+            super
+          when Detail.to_s, Locale.to_s
+            all_cols - ['id']
+          else
+            []
           end
+        end
       end
       klass.config[:bulk_import_id_column] = :bulk_import_id
       klass
@@ -148,6 +149,7 @@ module ActiveRecordBatchConsumerTest
       before(:each) do
         ActiveRecord::Base.connection.remove_column(:widgets, :bulk_import_id)
       end
+
       after(:each) do
         ActiveRecord::Base.connection.add_column(:widgets, :bulk_import_id, :string)
       end
@@ -166,6 +168,7 @@ module ActiveRecordBatchConsumerTest
       before(:each) do
         consumer_class.config[:bulk_import_id_column] = :custom_id
       end
+
       before(:all) do
         ActiveRecord::Base.connection.add_column(:widgets, :custom_id, :string, if_not_exists: true)
         Widget.reset_column_information
@@ -186,19 +189,19 @@ module ActiveRecordBatchConsumerTest
         consumer_class.config[:replace_associations] = false
         consumer_class.record_attributes_proc = proc do |payload|
           {
-              test_id: payload['test_id'],
-              some_int: payload['some_int'],
-          locales: [
-                    {
-                      title: payload['title'],
-                      language: 'en'
-                    },
-                    {
-                      title: payload['title'],
-                      language: 'fr'
-                    }
-                  ]
-        }
+            test_id: payload['test_id'],
+            some_int: payload['some_int'],
+            locales: [
+              {
+                title: payload['title'],
+                language: 'en'
+              },
+              {
+                title: payload['title'],
+                language: 'fr'
+              }
+            ]
+          }
         end
       end
 
@@ -226,19 +229,19 @@ module ActiveRecordBatchConsumerTest
         consumer_class.config[:replace_associations] = true
         consumer_class.record_attributes_proc = proc do |payload|
           {
-              test_id: payload['test_id'],
-              some_int: payload['some_int'],
-          locales: [
-                    {
-                      title: payload['title'],
-                      language: 'en'
-                    },
-                    {
-                      title: payload['title'],
-                      language: 'fr'
-                    }
-                  ]
-        }
+            test_id: payload['test_id'],
+            some_int: payload['some_int'],
+            locales: [
+              {
+                title: payload['title'],
+                language: 'en'
+              },
+              {
+                title: payload['title'],
+                language: 'fr'
+              }
+            ]
+          }
         end
       end
 
@@ -271,12 +274,10 @@ module ActiveRecordBatchConsumerTest
         stub_const('MyBatchConsumer', consumer_class)
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } },
-                        { key: 3,
-                         payload: { test_id: 'abc', some_int: 15, title: 'Widget Title 2' } }
-                      ])
+                       { key: 3,
+                         payload: { test_id: 'abc', some_int: 15, title: 'Widget Title 2' } }])
         expect(Widget.count).to eq(1)
       end
     end
-  end
-
+           end
 end

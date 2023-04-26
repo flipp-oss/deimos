@@ -183,9 +183,11 @@ module Deimos
           next nil if attrs.nil?
 
           attrs = attrs.merge(record_key(m.key))
+          next unless attrs
+
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
-                          bulk_import_column: self.class.bulk_import_id_column) if attrs
+                          bulk_import_column: self.class.bulk_import_id_column)
         end
         BatchRecordList.new(records.compact)
       end
@@ -263,7 +265,6 @@ module Deimos
 
         clause.delete_all
       end
-
     end
   end
 end

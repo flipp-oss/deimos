@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Deimos
   module ActiveRecordConsume
     # Keeps track of both an ActiveRecord instance and more detailed attributes.
@@ -67,6 +69,5 @@ module Deimos
       end
 
     end
-
   end
 end

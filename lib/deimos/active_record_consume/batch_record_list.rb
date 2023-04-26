@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Deimos
   module ActiveRecordConsume
-
     # A set of BatchRecords which typically are worked with together (hence the batching!)
     class BatchRecordList
       # @return [Array<BatchRecord>]
@@ -58,4 +59,3 @@ module Deimos
     end
   end
 end
-
