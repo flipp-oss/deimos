@@ -13,6 +13,7 @@ module ActiveRecordBatchConsumerTest
         t.string(:part_one)
         t.string(:part_two)
         t.integer(:some_int)
+        t.string(:bulk_import_id)
         t.boolean(:deleted, default: false)
         t.timestamps
 
@@ -83,122 +84,33 @@ module ActiveRecordBatchConsumerTest
       test_consume_batch(MyBatchConsumer, payloads, keys: keys, call_original: true)
     end
 
-    context 'when association_list configured in consumer without model changes' do
-      let(:consumer_class) do
-        Class.new(described_class) do
+    let(:consumer_class) do
+      klass = Class.new(described_class) do
+        cattr_accessor :record_attributes_proc
+        cattr_accessor :should_consume_proc
           schema 'MySchema'
           namespace 'com.my-namespace'
           key_config plain: true
           record_class Widget
-          association_list :detail
+
+        def should_consume?(record)
+          if self.should_consume_proc
+            return self.should_consume_proc.call(record)
+          end
+          true
+        end
 
           def record_attributes(payload, _key)
+            if self.record_attributes_proc
+              return self.record_attributes_proc.call(payload)
+            end
+
             {
               test_id: payload['test_id'],
               some_int: payload['some_int'],
               detail: {
                       title: payload['title']
                     }
-            }
-          end
-        end
-      end
-
-      it 'should raise error when bulk_import_id is not found' do
-        stub_const('MyBatchConsumer', consumer_class)
-        expect {
-          publish_batch([{ key: 2,
-                           payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
-        }.to raise_error('Create bulk_import_id on the widgets table. Run rails g deimos:bulk_import_id {table}'\
-        ' to create the migration.')
-      end
-    end
-
-    context 'with one-to-one relation in association_list and custom bulk_import_id' do
-      let(:consumer_class) do
-        Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
-          record_class Widget
-          association_list :detail
-          bulk_import_id_column :custom_id
-
-          def record_attributes(payload, _key)
-            {
-              test_id: payload['test_id'],
-              some_int: payload['some_int'],
-              custom_id: SecureRandom.uuid,
-              detail: {
-                title: payload['title']
-              }
-            }
-          end
-
-          def key_columns(messages, klass)
-            case klass.to_s
-            when Widget.to_s
-              super
-            when Detail.to_s
-              %w(title widget_id)
-            else
-              []
-            end
-          end
-
-          def columns(record_class)
-            all_cols = record_class.columns.map(&:name)
-
-            case record_class.to_s
-            when Widget.to_s
-              super
-            when Detail.to_s
-              all_cols - ['id']
-            else
-              []
-            end
-          end
-        end
-      end
-
-      before(:all) do
-        ActiveRecord::Base.connection.add_column(:widgets, :custom_id, :string, if_not_exists: true)
-        Widget.reset_column_information
-      end
-
-      it 'should save item to widget and associated detail' do
-        stub_const('MyBatchConsumer', consumer_class)
-        publish_batch([{ key: 2,
-                         payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
-        expect(Widget.count).to eq(1)
-        expect(Detail.count).to eq(1)
-        expect(Widget.first.id).to eq(Detail.first.widget_id)
-      end
-    end
-
-    context 'with one-to-many relationship in association_list and default bulk_import_id' do
-      let(:consumer_class) do
-        Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
-          record_class Widget
-          association_list :locales
-
-          def record_attributes(payload, _key)
-            {
-              test_id: payload['test_id'],
-              some_int: payload['some_int'],
-              locales: [
-                    {
-                      title: payload['title'],
-                      language: 'en'
-                    },
-                    {
-                      title: payload['title'],
-                      language: 'fr'
-                    }
-                  ]
             }
           end
 
@@ -227,12 +139,67 @@ module ActiveRecordBatchConsumerTest
               []
             end
           end
-        end
+      end
+      klass.config[:bulk_import_id_column] = :bulk_import_id
+      klass
+    end
+
+    context 'when association configured in consumer without model changes' do
+      before(:each) do
+        ActiveRecord::Base.connection.remove_column(:widgets, :bulk_import_id)
+      end
+      after(:each) do
+        ActiveRecord::Base.connection.add_column(:widgets, :bulk_import_id, :string)
       end
 
+      it 'should raise error when bulk_import_id is not found' do
+        stub_const('MyBatchConsumer', consumer_class)
+        expect {
+          publish_batch([{ key: 2,
+                           payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
+        }.to raise_error('Create bulk_import_id on the widgets table. Run rails g deimos:bulk_import_id {table}'\
+        ' to create the migration.')
+      end
+    end
+
+    context 'with one-to-one relation in association and custom bulk_import_id' do
+      before(:each) do
+        consumer_class.config[:bulk_import_id_column] = :custom_id
+      end
       before(:all) do
-        ActiveRecord::Base.connection.add_column(:widgets, :bulk_import_id, :string, if_not_exists: true)
+        ActiveRecord::Base.connection.add_column(:widgets, :custom_id, :string, if_not_exists: true)
         Widget.reset_column_information
+      end
+
+      it 'should save item to widget and associated detail' do
+        stub_const('MyBatchConsumer', consumer_class)
+        publish_batch([{ key: 2,
+                         payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
+        expect(Widget.count).to eq(1)
+        expect(Detail.count).to eq(1)
+        expect(Widget.first.id).to eq(Detail.first.widget_id)
+      end
+    end
+
+    context 'with one-to-many relationship in association and default bulk_import_id' do
+      before(:each) do
+        consumer_class.config[:replace_associations] = false
+        consumer_class.record_attributes_proc = proc do |payload|
+          {
+              test_id: payload['test_id'],
+              some_int: payload['some_int'],
+          locales: [
+                    {
+                      title: payload['title'],
+                      language: 'en'
+                    },
+                    {
+                      title: payload['title'],
+                      language: 'fr'
+                    }
+                  ]
+        }
+        end
       end
 
       it 'should save item to widget and associated details' do
@@ -255,19 +222,13 @@ module ActiveRecordBatchConsumerTest
     end
 
     context 'with replace_associations on' do
-      let(:consumer_class) do
-        Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
-          record_class Widget
-          association_list :locales
-
-          def record_attributes(payload, _key)
-            {
+      before(:each) do
+        consumer_class.config[:replace_associations] = true
+        consumer_class.record_attributes_proc = proc do |payload|
+          {
               test_id: payload['test_id'],
               some_int: payload['some_int'],
-              locales: [
+          locales: [
                     {
                       title: payload['title'],
                       language: 'en'
@@ -277,43 +238,8 @@ module ActiveRecordBatchConsumerTest
                       language: 'fr'
                     }
                   ]
-            }
-          end
-
-          def key_columns(messages, klass)
-            case klass.to_s
-            when Widget.to_s
-              super
-            when Detail.to_s
-              %w(title widget_id)
-            when Locale.to_s
-              %w(title language)
-            else
-              []
-            end
-          end
-
-          def columns(record_class)
-            all_cols = record_class.columns.map(&:name)
-
-            case record_class.to_s
-            when Widget.to_s
-              super
-            when Detail.to_s, Locale.to_s
-              all_cols - ['id']
-            else
-              []
-            end
-          end
+        }
         end
-      end
-
-      before(:all) do
-        ActiveRecord::Base.connection.add_column(:widgets, :bulk_import_id, :string, if_not_exists: true)
-        Widget.reset_column_information
-      end
-      before(:each) do
-        consumer_class.config[:replace_associations] = true
       end
 
       it 'should save item to widget and replace associated details' do
@@ -333,6 +259,22 @@ module ActiveRecordBatchConsumerTest
         expect(Locale.count).to eq(2)
         expect(Locale.all.map(&:title).uniq).to contain_exactly('Widget Title 2')
         expect(Locale.all.map(&:widget_id).uniq).to contain_exactly(Widget.first.id)
+      end
+    end
+
+    context 'with invalid models' do
+      before(:each) do
+        consumer_class.should_consume_proc = proc { |val| val.some_int <= 10 }
+      end
+
+      it 'should only save valid models' do
+        stub_const('MyBatchConsumer', consumer_class)
+        publish_batch([{ key: 2,
+                         payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } },
+                        { key: 3,
+                         payload: { test_id: 'abc', some_int: 15, title: 'Widget Title 2' } }
+                      ])
+        expect(Widget.count).to eq(1)
       end
     end
   end

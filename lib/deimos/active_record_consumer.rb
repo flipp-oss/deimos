@@ -30,16 +30,9 @@ module Deimos
         config[:record_class] = klass
       end
 
-      # @param associations [List<String>] Optional list of associations that the consumer
-      # should save in addition to @klass
-      # @return [void]
-      def association_list(associations)
-        config[:association_list] = Array(associations)
-      end
-
-      # @param
-      def bulk_import_id_column(name)
-        config[:bulk_import_id_column] = name
+      # @return [String,nil]
+      def bulk_import_id_column
+        config[:bulk_import_id_column]
       end
 
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
@@ -59,8 +52,6 @@ module Deimos
     # Setup
     def initialize
       @klass = self.class.config[:record_class]
-      @association_list = self.class.config[:association_list]
-      @bulk_import_id_column = self.class.config[:bulk_import_id_column] || :bulk_import_id
       @converter = ActiveRecordConsume::SchemaModelConverter.new(self.class.decoder, @klass)
 
       if self.class.config[:key_schema]
