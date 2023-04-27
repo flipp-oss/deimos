@@ -142,13 +142,14 @@ module ActiveRecordBatchConsumerTest
           end
         end
       end
-      klass.config[:bulk_import_id_column] = :bulk_import_id
       klass
     end
 
     context 'when association configured in consumer without model changes' do
       before(:each) do
+        consumer_class.config[:bulk_import_id_column] = :bulk_import_id
         ActiveRecord::Base.connection.remove_column(:widgets, :bulk_import_id)
+        Widget.reset_column_information
       end
 
       after(:each) do
@@ -187,6 +188,7 @@ module ActiveRecordBatchConsumerTest
 
     context 'with one-to-many relationship in association and default bulk_import_id' do
       before(:each) do
+        consumer_class.config[:bulk_import_id_column] = :bulk_import_id
         consumer_class.config[:replace_associations] = false
         consumer_class.record_attributes_proc = proc do |payload|
           {
@@ -227,6 +229,7 @@ module ActiveRecordBatchConsumerTest
 
     context 'with replace_associations on' do
       before(:each) do
+        consumer_class.config[:bulk_import_id_column] = :bulk_import_id
         consumer_class.config[:replace_associations] = true
         consumer_class.record_attributes_proc = proc do |payload|
           {
@@ -268,6 +271,7 @@ module ActiveRecordBatchConsumerTest
 
     context 'with invalid models' do
       before(:each) do
+        consumer_class.config[:bulk_import_id_column] = :bulk_import_id
         consumer_class.should_consume_proc = proc { |val| val.some_int <= 10 }
       end
 

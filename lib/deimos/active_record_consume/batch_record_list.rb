@@ -46,7 +46,7 @@ module Deimos
         bulk_import_map = self.klass.
           where(self.bulk_import_column => self.batch_records.map(&:bulk_import_id)).
           select(primary_col, self.bulk_import_column).
-          index_by(&self.bulk_import_column)
+          index_by(&self.bulk_import_column).to_h
         self.batch_records.each do |r|
           r.record[primary_col] = bulk_import_map[r.bulk_import_id][primary_col]
         end
@@ -59,15 +59,6 @@ module Deimos
         self.records.map do |record|
           record[assoc.active_record_primary_key]
         end
-      end
-
-      # Checks whether the entities has necessary columns for association saving to work
-      # @return void
-      def validate_associations!
-        return if self.klass.column_names.include?(self.bulk_import_column.to_s)
-
-        raise "Create bulk_import_id on the #{self.klass.table_name} table." \
-              ' Run rails g deimos:bulk_import_id {table} to create the migration.'
       end
 
       # @param assoc [ActiveRecord::Reflection::AssociationReflection]

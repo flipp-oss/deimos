@@ -67,7 +67,6 @@ module Deimos
       # The base table is expected to contain bulk_import_id column for indexing associated objects with id
       # @param record_list [BatchRecordList]
       def import_associations(record_list)
-        record_list.validate_associations!
         record_list.fill_primary_keys!
 
         import_id = @replace_associations ? SecureRandom.uuid : nil
