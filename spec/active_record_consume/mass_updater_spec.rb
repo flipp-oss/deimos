@@ -45,31 +45,31 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
       Widget.reset_column_information
     end
 
-  describe '#mass_update' do
-    let(:batch) do
-      Deimos::ActiveRecordConsume::BatchRecordList.new(
-        [
-          Deimos::ActiveRecordConsume::BatchRecord.new(
-            klass: Widget,
-            attributes: {test_id: 'id1', some_int: 5, detail: { title: 'Title 1'}},
-            bulk_import_column: 'bulk_import_id'
-          ),
-          Deimos::ActiveRecordConsume::BatchRecord.new(
-            klass: Widget,
-            attributes: {test_id: 'id2', some_int: 10, detail: { title: 'Title 2'}},
-            bulk_import_column: 'bulk_import_id'
-          )
-        ]
-      )
-    end
+    describe '#mass_update' do
+      let(:batch) do
+        Deimos::ActiveRecordConsume::BatchRecordList.new(
+          [
+            Deimos::ActiveRecordConsume::BatchRecord.new(
+              klass: Widget,
+              attributes: { test_id: 'id1', some_int: 5, detail: { title: 'Title 1' } },
+              bulk_import_column: 'bulk_import_id'
+            ),
+            Deimos::ActiveRecordConsume::BatchRecord.new(
+              klass: Widget,
+              attributes: { test_id: 'id2', some_int: 10, detail: { title: 'Title 2' } },
+              bulk_import_column: 'bulk_import_id'
+            )
+          ]
+        )
+      end
 
-    it 'should mass update the batch' do
-      described_class.new(Widget).mass_update(batch)
-      expect(Widget.count).to eq(2)
-      expect(Detail.count).to eq(2)
-      expect(Widget.first.detail).not_to be_nil
-      expect(Widget.last.detail).not_to be_nil
-    end
+      it 'should mass update the batch' do
+        described_class.new(Widget).mass_update(batch)
+        expect(Widget.count).to eq(2)
+        expect(Detail.count).to eq(2)
+        expect(Widget.first.detail).not_to be_nil
+        expect(Widget.last.detail).not_to be_nil
+      end
 
-  end
+    end
 end
