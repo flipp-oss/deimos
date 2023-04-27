@@ -14,7 +14,7 @@ module Deimos
       def initialize(records)
         self.batch_records = records
         self.klass = records.first&.klass
-        self.bulk_import_column = records.first&.bulk_import_column
+        self.bulk_import_column = records.first&.bulk_import_column&.to_sym
       end
 
       # Filter out any invalid records.

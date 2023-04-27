@@ -70,6 +70,7 @@ module ActiveRecordBatchConsumerTest
 
     before(:each) do
       ActiveRecord::Base.connection.truncate_tables(%i(widgets details locales))
+      Widget.create!(test_id: 'bad_id', some_int: 100) # should not show up
     end
 
     prepend_before(:each) do
@@ -178,9 +179,9 @@ module ActiveRecordBatchConsumerTest
         stub_const('MyBatchConsumer', consumer_class)
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
-        expect(Widget.count).to eq(1)
+        expect(Widget.count).to eq(2)
         expect(Detail.count).to eq(1)
-        expect(Widget.first.id).to eq(Detail.first.widget_id)
+        expect(Widget.last.id).to eq(Detail.first.widget_id)
       end
     end
 
@@ -209,18 +210,18 @@ module ActiveRecordBatchConsumerTest
         stub_const('MyBatchConsumer', consumer_class)
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
-        expect(Widget.count).to eq(1)
+        expect(Widget.count).to eq(2)
         expect(Locale.count).to eq(2)
-        expect(Widget.first.id).to eq(Locale.first.widget_id)
-        expect(Widget.first.id).to eq(Locale.second.widget_id)
+        expect(Widget.last.id).to eq(Locale.first.widget_id)
+        expect(Widget.last.id).to eq(Locale.second.widget_id)
 
         # publish again - should add locales to the widget
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 7, title: 'Widget Title 2' } }])
-        expect(Widget.count).to eq(1)
-        expect(Widget.first.some_int).to eq(7)
+        expect(Widget.count).to eq(2)
+        expect(Widget.last.some_int).to eq(7)
         expect(Locale.count).to eq(4)
-        expect(Locale.all.map(&:widget_id).uniq).to eq([Widget.first.id])
+        expect(Locale.all.map(&:widget_id).uniq).to eq([Widget.last.id])
       end
     end
 
@@ -249,19 +250,19 @@ module ActiveRecordBatchConsumerTest
         stub_const('MyBatchConsumer', consumer_class)
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
-        expect(Widget.count).to eq(1)
+        expect(Widget.count).to eq(2)
         expect(Locale.count).to eq(2)
-        expect(Widget.first.id).to eq(Locale.first.widget_id)
-        expect(Widget.first.id).to eq(Locale.second.widget_id)
+        expect(Widget.last.id).to eq(Locale.first.widget_id)
+        expect(Widget.last.id).to eq(Locale.second.widget_id)
 
         # publish again - should replace locales
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 7, title: 'Widget Title 2' } }])
-        expect(Widget.count).to eq(1)
-        expect(Widget.first.some_int).to eq(7)
+        expect(Widget.count).to eq(2)
+        expect(Widget.last.some_int).to eq(7)
         expect(Locale.count).to eq(2)
         expect(Locale.all.map(&:title).uniq).to contain_exactly('Widget Title 2')
-        expect(Locale.all.map(&:widget_id).uniq).to contain_exactly(Widget.first.id)
+        expect(Locale.all.map(&:widget_id).uniq).to contain_exactly(Widget.last.id)
       end
     end
 
@@ -276,7 +277,7 @@ module ActiveRecordBatchConsumerTest
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } },
                        { key: 3,
                          payload: { test_id: 'abc', some_int: 15, title: 'Widget Title 2' } }])
-        expect(Widget.count).to eq(1)
+        expect(Widget.count).to eq(2)
       end
     end
            end
