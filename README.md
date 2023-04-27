@@ -362,7 +362,7 @@ Sometimes, the Kafka message needs to be saved to multiple database tables. For 
 - Return associations as keys in `record_attributes` to enable this feature.
 - The `bulk_import_id_column` config allows you to specify column_name on `record_class` which can be used to retrieve IDs after save. Defaults to `bulk_import_id`. This config is *required* if you have associations but optional if you do not.
 
-You must override the `record_attributes`, `column` and `key_columns` methods on your consumer class for this feature to work.
+You must override the `record_attributes` (and optionally `column` and `key_columns`) methods on your consumer class for this feature to work.
 - `record_attributes` - This method is required to map Kafka messages to ActiveRecord model objects.
 - `columns(klass)` - Should return an array of column names that should be used by ActiveRecord klass during SQL insert operation.
 - `key_columns(messages, klass)` -  Should return an array of column name(s) that makes a row unique.
@@ -389,10 +389,10 @@ class MyBatchConsumer < Deimos::ActiveRecordConsumer
     }
   end
   
-  def key_columns(_records, klass)
+  def key_columns(klass)
     case klass
     when User
-      super
+      nil # use default
     when Image
       ["image_url", "image_name"]
     end
@@ -401,7 +401,7 @@ class MyBatchConsumer < Deimos::ActiveRecordConsumer
   def columns(klass)
     case klass
     when User
-      super
+      nil # use default
     when Image
       klass.columns.map(&:name) - [:created_at, :updated_at, :id]
     end

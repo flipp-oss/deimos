@@ -115,10 +115,10 @@ module ActiveRecordBatchConsumerTest
           }
         end
 
-        def key_columns(messages, klass)
+        def key_columns(klass)
           case klass.to_s
           when Widget.to_s
-            super
+            nil
           when Detail.to_s
             %w(title widget_id)
           when Locale.to_s
@@ -133,7 +133,7 @@ module ActiveRecordBatchConsumerTest
 
           case record_class.to_s
           when Widget.to_s
-            super
+            nil
           when Detail.to_s, Locale.to_s
             all_cols - ['id']
           else

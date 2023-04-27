@@ -6,14 +6,15 @@ module Deimos
     class BatchRecordList
       # @return [Array<BatchRecord>]
       attr_accessor :batch_records
+      attr_accessor :klass, :bulk_import_column
 
       delegate :empty?, :map, to: :batch_records
 
       # @param records [Array<BatchRecord>]
       def initialize(records)
         self.batch_records = records
-        @klass = records.first&.klass
-        @bulk_import_column = records.first&.bulk_import_column
+        self.klass = records.first&.klass
+        self.bulk_import_column = records.first&.bulk_import_column
       end
 
       # Filter out any invalid records.
@@ -35,17 +36,17 @@ module Deimos
         return @associations if @associations
 
         keys = self.batch_records.map { |r| r.associations.keys }.flatten.uniq.map(&:to_sym)
-        @associations = @klass.reflect_on_all_associations.select { |assoc| keys.include?(assoc.name) }
+        @associations = self.klass.reflect_on_all_associations.select { |assoc| keys.include?(assoc.name) }
       end
 
       # Go back to the DB and use the bulk_import_id to set the actual primary key (`id`) of the
       # records.
       def fill_primary_keys!
-        primary_col = @klass.primary_key
-        bulk_import_map = @klass.
-          where(@bulk_import_column => self.batch_records.map(&:bulk_import_id)).
-          select(primary_col, @bulk_import_column).
-          index_by(&@bulk_import_column)
+        primary_col = self.klass.primary_key
+        bulk_import_map = self.klass.
+          where(self.bulk_import_column => self.batch_records.map(&:bulk_import_id)).
+          select(primary_col, self.bulk_import_column).
+          index_by(&self.bulk_import_column)
         self.batch_records.each do |r|
           r.record[primary_col] = bulk_import_map[r.bulk_import_id][primary_col]
         end
@@ -58,6 +59,27 @@ module Deimos
         self.records.map do |record|
           record[assoc.active_record_primary_key]
         end
+      end
+
+      # Checks whether the entities has necessary columns for association saving to work
+      # @return void
+      def validate_associations!
+        return if self.klass.column_names.include?(self.bulk_import_column.to_s)
+
+        raise "Create bulk_import_id on the #{self.klass.table_name} table." \
+              ' Run rails g deimos:bulk_import_id {table} to create the migration.'
+      end
+
+      # @param assoc [ActiveRecord::Reflection::AssociationReflection]
+      # @param import_id [String]
+      def delete_old_records(assoc, import_id)
+        return if self.batch_records.none?
+
+        primary_keys = self.primary_keys(assoc.name)
+        assoc.klass.
+          where(assoc.foreign_key => primary_keys).
+          where("#{self.bulk_import_column} != ?", import_id).
+          delete_all
       end
 
     end
