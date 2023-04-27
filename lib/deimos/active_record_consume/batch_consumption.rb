@@ -159,8 +159,8 @@ module Deimos
 
         return if record_list.empty?
 
-        key_col_proc = self.method(:key_columns).to_proc if self.respond_to?(:key_columns)
-        col_proc = self.method(:columns).to_proc if self.respond_to?(:columns)
+        key_col_proc = self.method(:key_columns).to_proc
+        col_proc = self.method(:columns).to_proc
 
         updater = MassUpdater.new(@klass,
                                   key_col_proc: key_col_proc,

@@ -337,6 +337,9 @@ module ActiveRecordBatchConsumerTest
         Widget.create!(test_id: 'xxx', some_int: 2, part_one: 'ghi', part_two: 'jkl')
         Widget.create!(test_id: 'yyy', some_int: 7, part_one: 'mno', part_two: 'pqr')
 
+        allow_any_instance_of(MyBatchConsumer).to receive(:key_columns).
+          and_return(%w(part_one part_two))
+
         publish_batch(
           [
             { key: { part_one: 'abc', part_two: 'def' }, # To be created

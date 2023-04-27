@@ -7,11 +7,7 @@ module Deimos
 
       # @param klass [Class < ActiveRecord::Base]
       def default_keys(klass)
-        klass.connection.
-          indexes(klass.table_name).
-          select(&:unique).
-          map(&:columns).
-          flatten
+        [klass.primary_key]
       end
 
       # @param klass [Class < ActiveRecord::Base]
