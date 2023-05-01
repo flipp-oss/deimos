@@ -359,33 +359,40 @@ end
 
 Sometimes, the Kafka message needs to be saved to multiple database tables. For example, if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables: `User` and `Image`.
 
-- The `association_list` configuration allows you to achieve this use case.
+- Return associations as keys in `record_attributes` to enable this feature.
 - The `bulk_import_id_column` config allows you to specify column_name on `record_class` which can be used to retrieve IDs after save. Defaults to `bulk_import_id`. This config is *required* if you have associations but optional if you do not.
 
-You must override the `build_records` and `bulk_import_columns` methods on your ActiveRecord class for this feature to work.
-- `build_records` - This method is required to set the value of the `bulk_import_id` column and map Kafka messages to ActiveRecord model objects.
+You must override the `record_attributes` (and optionally `column` and `key_columns`) methods on your consumer class for this feature to work.
+- `record_attributes` - This method is required to map Kafka messages to ActiveRecord model objects.
 - `columns(klass)` - Should return an array of column names that should be used by ActiveRecord klass during SQL insert operation.
 - `key_columns(messages, klass)` -  Should return an array of column name(s) that makes a row unique.
 ```ruby
+class User < ApplicationRecord
+  has_many :images
+end
+
 class MyBatchConsumer < Deimos::ActiveRecordConsumer
 
   record_class User
-  association_list :images
 
-  def build_records(messages)
-    # Initialise bulk_import_id and build ActiveRecord objects out of Kafka message attributes
-    messages.map do |m|
-      u = User.new(first_name: m.first_name, bulk_import_id: SecureRandom.uuid)
-      i = Image.new(attr1: m.image_url)
-      u.images << i
-      u
-    end
+  def record_attributes(payload, _key)
+    {
+      first_name: payload.first_name,
+      images: [
+                {
+                  attr1: payload.image_url
+                },
+                {
+                  attr2: payload.other_image_url
+                }
+              ]
+    }
   end
   
-  def key_columns(_records, klass)
+  def key_columns(klass)
     case klass
     when User
-      super
+      nil # use default
     when Image
       ["image_url", "image_name"]
     end
@@ -394,7 +401,7 @@ class MyBatchConsumer < Deimos::ActiveRecordConsumer
   def columns(klass)
     case klass
     when User
-      super
+      nil # use default
     when Image
       klass.columns.map(&:name) - [:created_at, :updated_at, :id]
     end

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Added `replace_associations` and changed default behavior for multi-table consuming. No longer relies on Rails direct associations and wonky magic for new vs. existing records.
+- Fix: `bulk_import_id` is now handled by Deimos and does not need to be set by application code.
+- ***BREAKING CHANGE*** Replaced `filter_records` with `should_consume?` on ActiveRecordConsumer.
+- ***BREAKING CHANGE*** Replaced the behavior of `build_records` on ActiveRecordConsumer with a more powerful `record_attributes`.
+- ***BREAKING CHANGE*** Removed the `association_list` config as it can now be inferred from the data.
+
 # 1.21.1 - 2023-04-18
 
 - Fix: Datadog tracing now works with Datadog 1.x
