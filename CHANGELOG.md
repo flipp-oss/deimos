@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.22 - 2023-05-01
+
 - Feature: Added `replace_associations` and changed default behavior for multi-table consuming. No longer relies on Rails direct associations and wonky magic for new vs. existing records.
 - Fix: `bulk_import_id` is now handled by Deimos and does not need to be set by application code.
 - ***BREAKING CHANGE*** Replaced `filter_records` with `should_consume?` on ActiveRecordConsumer.
