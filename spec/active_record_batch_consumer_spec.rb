@@ -32,6 +32,8 @@ module ActiveRecordBatchConsumerTest
 
     prepend_before(:each) do
       stub_const('MyBatchConsumer', consumer_class)
+      stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
+      consumer_class.config[:bulk_import_id_column] = :bulk_import_id # default
     end
 
     around(:each) do |ex|

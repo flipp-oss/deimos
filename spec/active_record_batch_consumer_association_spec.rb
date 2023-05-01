@@ -74,7 +74,9 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     end
 
     prepend_before(:each) do
+      consumer_class.config[:bulk_import_id_column] = :bulk_import_id
       stub_const('MyBatchConsumer', consumer_class)
+      stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
     end
 
     # Helper to publish a list of messages and call the consumer
@@ -157,7 +159,6 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       end
 
       it 'should raise error when bulk_import_id is not found' do
-        stub_const('MyBatchConsumer', consumer_class)
         expect {
           publish_batch([{ key: 2,
                            payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
@@ -169,6 +170,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     context 'with one-to-one relation in association and custom bulk_import_id' do
       before(:each) do
         consumer_class.config[:bulk_import_id_column] = :custom_id
+        consumer_class.config[:replace_associations] = false
       end
 
       before(:all) do
@@ -177,7 +179,6 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       end
 
       it 'should save item to widget and associated detail' do
-        stub_const('MyBatchConsumer', consumer_class)
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
         expect(Widget.count).to eq(2)
@@ -188,7 +189,6 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with one-to-many relationship in association and default bulk_import_id' do
       before(:each) do
-        consumer_class.config[:bulk_import_id_column] = :bulk_import_id
         consumer_class.config[:replace_associations] = false
         consumer_class.record_attributes_proc = proc do |payload|
           {
@@ -209,7 +209,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       end
 
       it 'should save item to widget and associated details' do
-        stub_const('MyBatchConsumer', consumer_class)
+        consumer_class.config[:replace_associations] = false
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
         expect(Widget.count).to eq(2)
@@ -229,7 +229,6 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with replace_associations on' do
       before(:each) do
-        consumer_class.config[:bulk_import_id_column] = :bulk_import_id
         consumer_class.config[:replace_associations] = true
         consumer_class.record_attributes_proc = proc do |payload|
           {
@@ -250,7 +249,6 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       end
 
       it 'should save item to widget and replace associated details' do
-        stub_const('MyBatchConsumer', consumer_class)
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
         expect(Widget.count).to eq(2)
@@ -271,12 +269,10 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with invalid models' do
       before(:each) do
-        consumer_class.config[:bulk_import_id_column] = :bulk_import_id
         consumer_class.should_consume_proc = proc { |val| val.some_int <= 10 }
       end
 
       it 'should only save valid models' do
-        stub_const('MyBatchConsumer', consumer_class)
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } },
                        { key: 3,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.22.1 - 2023-05-01
+
+- Fix: Bug introduced with 1.22 when associations are not used
+
 # 1.22 - 2023-05-01
 
 - Feature: Added `replace_associations` and changed default behavior for multi-table consuming. No longer relies on Rails direct associations and wonky magic for new vs. existing records.

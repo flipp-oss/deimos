@@ -183,9 +183,13 @@ module Deimos
           attrs = attrs.merge(record_key(m.key))
           next unless attrs
 
+          col = if @klass.column_names.include?(self.class.bulk_import_id_column.to_s)
+                  self.class.bulk_import_id_column
+                end
+
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
-                          bulk_import_column: self.class.bulk_import_id_column)
+                          bulk_import_column: col)
         end
         BatchRecordList.new(records.compact)
       end
