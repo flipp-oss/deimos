@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ActiveRecordBatchConsumerTest
+module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
   describe Deimos::ActiveRecordConsumer,
            'Batch Consumer with MySQL handling associations',
            :integration,

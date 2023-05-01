@@ -7,7 +7,7 @@ require_relative '../tracing/mock'
 require 'active_support/core_ext/numeric'
 
 # :nodoc:
-module Deimos
+module Deimos # rubocop:disable Metrics/ModuleLength
   include FigTree
 
   # :nodoc:
