@@ -67,7 +67,8 @@ module Deimos
         next nil if consumer.disabled
 
         hash = consumer.to_h.reject do |k, _|
-          %i(class_name schema namespace key_config backoff disabled).include?(k)
+          %i(class_name schema namespace key_config backoff disabled replace_associations
+             bulk_import_id_column).include?(k)
         end
         hash = hash.map { |k, v| [k, v.is_a?(Symbol) ? v.to_s : v] }.to_h
         hash[:handler] = consumer.class_name
