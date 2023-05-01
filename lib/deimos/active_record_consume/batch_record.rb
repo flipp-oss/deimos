@@ -26,7 +26,6 @@ module Deimos
         @klass = klass
         if bulk_import_column
           self.bulk_import_column = bulk_import_column
-          validate_import_id!
           self.bulk_import_id = SecureRandom.uuid
           attributes[bulk_import_column] = bulk_import_id
         end
@@ -35,6 +34,7 @@ module Deimos
         assoc_keys = attributes.keys.select { |k| klass.reflect_on_association(k) }
         # a hash with just the association keys, removing all actual column information.
         self.associations = attributes.slice(*assoc_keys)
+        validate_import_id! if self.associations.any?
       end
 
       # Checks whether the entities has necessary columns for association saving to work
