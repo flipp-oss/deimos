@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.22.2 - 2023-05-10
+- Feature: Add `DEIMOS_TASK_NAME` env variable when running a task (consumer, DB poller, DB producer).
+
 # 1.22.1 - 2023-05-01
 
 - Fix: Bug introduced with 1.22 when associations are not used
