@@ -12,6 +12,7 @@ namespace :deimos do
       config.producers.backend = :kafka if config.producers.backend == :kafka_async
     end
     ENV['DEIMOS_RAKE_TASK'] = 'true'
+    ENV['DEIMOS_TASK_NAME'] = 'consumer'
     STDOUT.sync = true
     Rails.logger.info('Running deimos:start rake task.')
     Phobos::CLI::Commands.start(%w(start --skip_config))
@@ -20,6 +21,7 @@ namespace :deimos do
   desc 'Starts the Deimos database producer'
   task db_producer: :environment do
     ENV['DEIMOS_RAKE_TASK'] = 'true'
+    ENV['DEIMOS_TASK_NAME'] = 'db_producer'
     STDOUT.sync = true
     Rails.logger.info('Running deimos:db_producer rake task.')
     thread_count = ENV['THREAD_COUNT'].to_i.zero? ? 1 : ENV['THREAD_COUNT'].to_i
@@ -28,6 +30,7 @@ namespace :deimos do
 
   task db_poller: :environment do
     ENV['DEIMOS_RAKE_TASK'] = 'true'
+    ENV['DEIMOS_TASK_NAME'] = 'db_poller'
     STDOUT.sync = true
     Rails.logger.info('Running deimos:db_poller rake task.')
     Deimos::Utils::DbPoller.start!
