@@ -324,13 +324,18 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         poller.process_updates
         poller.process_updates
 
-        expect(MyProducer).to have_received(:poll_query).twice.
+        expect(MyProducer).to have_received(:poll_query).
           with(time_from: time_value(secs: -1),
                time_to: time_value(secs: 120), # plus 122 seconds minus 2 seconds
                column_name: :updated_at,
                min_id: last_widget.id)
+        expect(MyProducer).to have_received(:poll_query).
+          with(time_from: time_value(secs: 122),
+               time_to: time_value(secs: 120), # yes this is weird but it's because of travel_to
+               column_name: :updated_at,
+               min_id: last_widget.id)
         expect(Deimos.config.logger).to have_received(:info).
-          with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (3 batches, 0 errored batches, 7 processed messages)')
+          with('Poll MyProducer: ["my-topic-with-id"] complete at 2015-05-05 00:59:58 -0400 (3 batches, 0 errored batches, 7 processed messages)')
       end
 
       it 'should update PollInfo timestamp after processing' do
@@ -382,7 +387,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
           expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
           expect(info.last_sent_id).to eq(widgets[6].id)
           expect(Deimos.config.logger).to have_received(:info).
-            with('Poll my-topic-with-id complete at 2015-05-05 00:59:58 -0400 (2 batches, 1 errored batches, 7 processed messages)')
+            with('Poll MyProducer: ["my-topic-with-id"] complete at 2015-05-05 00:59:58 -0400 (2 batches, 1 errored batches, 7 processed messages)')
         end
       end
     end
