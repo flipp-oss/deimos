@@ -474,7 +474,8 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # time, it will run again immediately and the timeout
       # will be pushed to the next e.g. 1 minute.
       setting :run_every, 60
-      # The number of times to retry production when encountering a *non-Kafka* error.
+      # The number of times to retry production when encountering a *non-Kafka* error. Set to nil
+      # for infinite retries.
       setting :retries, 1
       # Amount of time, in seconds, to wait before catching updates, to allow transactions
       # to complete but still pick up the right records. Should only be set for time-based mode.
