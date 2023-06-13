@@ -124,7 +124,7 @@ module Deimos
             retry
           rescue StandardError => e
             Deimos.config.logger.error("Error publishing through DB poller: #{e.message}}")
-            if retries < @config.retries
+            if @config.retries.nil? || retries < @config.retries
               retries += 1
               sleep(0.5)
               retry
