@@ -37,6 +37,10 @@ module Deimos
             log_message.merge!(
               payloads_count: messages.count
             )
+          when :headers
+            log_message.merge!(
+              payload_headers: messages.map(&:headers)
+            )
           else
             log_message.merge!(
               payloads: messages.map do |message|

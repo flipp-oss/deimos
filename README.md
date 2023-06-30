@@ -123,6 +123,7 @@ class MyProducer < Deimos::Producer
       }
       # You can also publish an array with self.publish_list(payloads)
       # You may specify the topic here with self.publish(payload, topic: 'my-topic')
+      # You may also specify the headers here with self.publish(payload, headers: { 'foo' => 'bar' })
       self.publish(payload)
     end
     
@@ -1171,13 +1172,14 @@ end
                             
 # A matcher which allows you to test that a message was sent on the given
 # topic, without having to know which class produced it.                         
-expect(topic_name).to have_sent(payload, key=nil)
+expect(topic_name).to have_sent(payload, key=nil, partition_key=nil, headers=nil)
 
 # Inspect sent messages
 message = Deimos::Backends::Test.sent_messages[0]
 expect(message).to eq({
   message: {'some-key' => 'some-value'},
   topic: 'my-topic',
+  headers: { 'foo' => 'bar' },
   key: 'my-id'
 })
 ```

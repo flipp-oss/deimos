@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix: Don't update last_sent to current time on every poll.
 - Feature: Allow for infinite retries in DB poller.
+- Feature: Add support for message headers.
 
 # 1.22.2 - 2023-05-10
 - Feature: Add `DEIMOS_TASK_NAME` env variable when running a task (consumer, DB poller, DB producer).
