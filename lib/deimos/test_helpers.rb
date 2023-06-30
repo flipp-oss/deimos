@@ -133,7 +133,7 @@ module Deimos
       str + "\nAll Messages received:\n#{message_string}"
     end
 
-    RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil|
+    RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil|
       message = if msg.respond_to?(:with_indifferent_access)
                   msg.with_indifferent_access
                 else
@@ -147,7 +147,14 @@ module Deimos
                             m[:payload]&.with_indifferent_access) &&
             topic == m[:topic] &&
             (key.present? ? key == m[:key] : true) &&
-            (partition_key.present? ? partition_key == m[:partition_key] : true)
+            (partition_key.present? ? partition_key == m[:partition_key] : true) &&
+            if headers.present?
+              hash_matcher.send(:match,
+                                headers&.with_indifferent_access,
+                                m[:headers]&.with_indifferent_access)
+            else
+              true
+            end
         end
       end
 

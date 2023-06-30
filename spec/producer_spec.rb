@@ -110,18 +110,20 @@ module ProducerTest
       expect('my-topic').not_to have_sent('test_id' => 'foo2', 'some_int' => 123)
     end
 
-    it 'should allow setting the topic from publish_list' do
+    it 'should allow setting the topic and headers from publish_list' do
       expect(described_class).to receive(:produce_batch).once.with(
         Deimos::Backends::Test,
         [
           Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
                               MyProducer,
                               topic: 'a-new-topic',
+                              headers: { 'foo' => 'bar' },
                               partition_key: 'foo',
                               key: 'foo'),
           Deimos::Message.new({ 'test_id' => 'bar', 'some_int' => 124 },
                               MyProducer,
                               topic: 'a-new-topic',
+                              headers: { 'foo' => 'bar' },
                               partition_key: 'bar',
                               key: 'bar')
         ]
@@ -130,9 +132,10 @@ module ProducerTest
       MyProducer.publish_list(
         [{ 'test_id' => 'foo', 'some_int' => 123 },
          { 'test_id' => 'bar', 'some_int' => 124 }],
-        topic: 'a-new-topic'
+        topic: 'a-new-topic',
+        headers: { 'foo' => 'bar' }
       )
-      expect('a-new-topic').to have_sent('test_id' => 'foo', 'some_int' => 123)
+      expect('a-new-topic').to have_sent({ 'test_id' => 'foo', 'some_int' => 123 }, nil, nil, { 'foo' => 'bar' })
       expect('my-topic').not_to have_sent('test_id' => 'foo', 'some_int' => 123)
       expect('my-topic').not_to have_sent('test_id' => 'foo2', 'some_int' => 123)
     end

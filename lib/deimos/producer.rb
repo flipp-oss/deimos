@@ -95,9 +95,10 @@ module Deimos
       # Publish the payload to the topic.
       # @param payload [Hash, SchemaClass::Record] with an optional payload_key hash key.
       # @param topic [String] if specifying the topic
+      # @param headers [Hash] if specifying headers
       # @return [void]
-      def publish(payload, topic: self.topic)
-        publish_list([payload], topic: topic)
+      def publish(payload, topic: self.topic, headers: nil)
+        publish_list([payload], topic: topic, headers: headers)
       end
 
       # Publish a list of messages.
@@ -107,8 +108,9 @@ module Deimos
       # @param force_send [Boolean] if true, ignore the configured backend
       # and send immediately to Kafka.
       # @param topic [String] if specifying the topic
+      # @param headers [Hash] if specifying headers
       # @return [void]
-      def publish_list(payloads, sync: nil, force_send: false, topic: self.topic)
+      def publish_list(payloads, sync: nil, force_send: false, topic: self.topic, headers: nil)
         return if Deimos.config.kafka.seed_brokers.blank? ||
                   Deimos.config.producers.disabled ||
                   Deimos.producers_disabled?(self)
@@ -122,7 +124,7 @@ module Deimos
           topic: topic,
           payloads: payloads
         ) do
-          messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, self) }
+          messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, self, headers: headers) }
           messages.each { |m| _process_message(m, topic) }
           messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
             self.produce_batch(backend_class, batch)
