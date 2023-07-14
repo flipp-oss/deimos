@@ -86,7 +86,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       schema(kafka_config.schema) if kafka_config.schema.present?
       namespace(kafka_config.namespace) if kafka_config.namespace.present?
       key_config(**kafka_config.key_config) if kafka_config.key_config.present?
-      schema_class_config(kafka_config.use_schema_classes) if kafka_config.use_schema_classes.present?
+      schema_class_config(kafka_config.use_schema_classes)
       if kafka_config.respond_to?(:bulk_import_id_column) # consumer
         klass.config.merge!(
           bulk_import_id_column: kafka_config.bulk_import_id_column,
