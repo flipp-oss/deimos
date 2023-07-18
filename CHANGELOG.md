@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.22.5 - 2023-07-18
+- Fix: Fixed buffer overflow crash with DB producer.
+
 # 1.22.4 - 2023-07-05
 - Feature: Add support for message headers.
 
