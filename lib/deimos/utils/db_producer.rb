@@ -97,11 +97,16 @@ module Deimos
         Deimos.instrument('db_producer.produce', topic: @current_topic, messages: compacted_messages) do
           begin
             produce_messages(compacted_messages.map(&:phobos_message))
-          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge
+          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge => e
             delete_messages(messages)
             @logger.error('Message batch too large, deleting...')
-            @logger.error(Deimos::KafkaMessage.decoded(messages))
-            raise
+            begin
+              @logger.error(Deimos::KafkaMessage.decoded(messages))
+            rescue StandardError => logging_exception # rubocop:disable Naming/RescuedExceptionsVariableName
+              @logger.error("Large message details logging failure: #{logging_exception.message}")
+            ensure
+              raise e
+            end
           end
         end
         delete_messages(messages)
