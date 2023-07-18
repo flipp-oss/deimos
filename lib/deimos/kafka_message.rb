@@ -39,11 +39,12 @@ module Deimos
     def self.decoded(messages=[])
       return [] if messages.empty?
 
-      decoder = self.decoder(messages.first.topic)&.new
+      decoder_class = self.decoder(messages.first.topic)
+      decoder = decoder_class&.new
       messages.map do |m|
         {
           key: m.key.present? ? decoder&.decode_key(m.key) || m.key : nil,
-          payload: decoder&.decoder&.decode(m.message) || m.message
+          payload: decoder_class&.decoder&.decode(m.message) || m.message
         }
       end
     end

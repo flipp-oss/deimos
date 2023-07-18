@@ -2,12 +2,13 @@
 
 each_db_config(Deimos::Utils::DbProducer) do
   let(:producer) do
-    producer = described_class.new
+    producer = described_class.new(logger)
     allow(producer).to receive(:sleep)
     allow(producer).to receive(:producer).and_return(phobos_producer)
     producer
   end
 
+  let(:logger) { nil }
   let(:phobos_producer) do
     pp = instance_double(Phobos::Producer::PublicAPI)
     allow(pp).to receive(:publish_list)
@@ -308,35 +309,6 @@ each_db_config(Deimos::Utils::DbProducer) do
       Deimos.unsubscribe(subscriber)
     end
 
-    it 'should delete messages on buffer overflow' do
-      messages = (1..4).map do |i|
-        Deimos::KafkaMessage.create!(
-          id: i,
-          topic: 'my-topic',
-          message: "mess#{i}",
-          partition_key: "key#{i}"
-        )
-      end
-      (5..8).each do |i|
-        Deimos::KafkaMessage.create!(
-          id: i,
-          topic: 'my-topic2',
-          message: "mess#{i}",
-          partition_key: "key#{i}"
-        )
-      end
-
-      expect(Deimos::KafkaTopicInfo).to receive(:lock).
-        with('my-topic', 'abc').and_return(true)
-      expect(producer).to receive(:produce_messages).and_raise(Kafka::BufferOverflow)
-      expect(producer).to receive(:retrieve_messages).and_return(messages)
-      expect(Deimos::KafkaTopicInfo).to receive(:register_error)
-
-      expect(Deimos::KafkaMessage.count).to eq(8)
-      producer.process_topic('my-topic')
-      expect(Deimos::KafkaMessage.count).to eq(4)
-    end
-
     it 'should retry deletes and not re-publish' do
       messages = (1..4).map do |i|
         Deimos::KafkaMessage.create!(
@@ -388,6 +360,102 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect { producer.delete_messages(messages) }.to raise_exception('OH NOES')
     end
 
+    context 'with buffer overflow exception' do
+      let(:messages) do
+        (1..4).map do |i|
+          Deimos::KafkaMessage.create!(
+            id: i,
+            key: i,
+            topic: 'my-topic',
+            message: { message: "mess#{i}" },
+            partition_key: "key#{i}"
+          )
+        end
+      end
+      let(:logger) do
+        logger = instance_double(Logger)
+        allow(logger).to receive(:error)
+        logger
+      end
+      let(:message_producer) do
+        Deimos.config.schema.backend = :mock
+        Deimos::ActiveRecordProducer.topic('my-topic')
+        Deimos::ActiveRecordProducer.key_config
+        Deimos::ActiveRecordProducer
+      end
+
+      around(:each) do |example|
+        config = Deimos::ActiveRecordProducer.config.clone
+        backend = Deimos.config.schema.backend
+
+        example.run
+      ensure
+        Deimos::ActiveRecordProducer.instance_variable_set(:@config, config)
+        Deimos.config.schema.backend = backend
+      end
+
+      before(:each) do
+        message_producer
+        (5..8).each do |i|
+          Deimos::KafkaMessage.create!(
+            id: i,
+            topic: 'my-topic2',
+            message: "mess#{i}",
+            partition_key: "key#{i}"
+          )
+        end
+        allow(Deimos::KafkaTopicInfo).to receive(:lock).
+          with('my-topic', 'abc').and_return(true)
+        allow(producer).to receive(:produce_messages).and_raise(Kafka::BufferOverflow)
+        allow(producer).to receive(:retrieve_messages).and_return(messages)
+        allow(Deimos::KafkaTopicInfo).to receive(:register_error)
+      end
+
+      it 'should delete messages on buffer overflow' do
+        expect(Deimos::KafkaMessage.count).to eq(8)
+        producer.process_topic('my-topic')
+        expect(Deimos::KafkaMessage.count).to eq(4)
+      end
+
+      it 'should notify on buffer overflow' do
+        subscriber = Deimos.subscribe('db_producer.produce') do |event|
+          expect(event.payload[:exception_object].message).to eq('Kafka::BufferOverflow')
+          expect(event.payload[:messages]).to eq(messages)
+        end
+        producer.process_topic('my-topic')
+        Deimos.unsubscribe(subscriber)
+        expect(logger).to have_received(:error).with('Message batch too large, deleting...')
+        expect(logger).to have_received(:error).with(
+          [
+            { key: '1', payload: 'payload-decoded' },
+            { key: '2', payload: 'payload-decoded' },
+            { key: '3', payload: 'payload-decoded' },
+            { key: '4', payload: 'payload-decoded' }
+          ]
+        )
+      end
+
+      context 'with exception on error logging attempt' do
+        let(:message_producer) do
+          Deimos::ActiveRecordProducer.topic('my-topic')
+          Deimos::ActiveRecordProducer
+        end
+
+        it 'should notify on buffer overflow disregarding decoding exception' do
+          subscriber = Deimos.subscribe('db_producer.produce') do |event|
+            expect(event.payload[:exception_object].message).to eq('Kafka::BufferOverflow')
+            expect(event.payload[:messages]).to eq(messages)
+          end
+          producer.process_topic('my-topic')
+          Deimos.unsubscribe(subscriber)
+          expect(logger).to have_received(:error).with('Message batch too large, deleting...')
+          expect(logger).to have_received(:error).with(
+            'Large message details logging failure: '\
+            'No key config given - if you are not decoding keys, please use `key_config plain: true`'
+          )
+        end
+      end
+    end
   end
 
   describe '#send_pending_metrics' do
