@@ -64,7 +64,7 @@ module Deimos
           ))
         Deimos.config.metrics&.increment(
           'handler',
-          by: metadata['batch_size'],
+          by: metadata[:batch_size],
           tags: %W(
             status:received
             topic:#{metadata[:topic]}
@@ -115,7 +115,7 @@ module Deimos
           ))
         Deimos.config.metrics&.increment(
           'handler',
-          by: metadata['batch_size'],
+          by: metadata[:batch_size],
           tags: %W(
             status:success
             topic:#{metadata[:topic]}
