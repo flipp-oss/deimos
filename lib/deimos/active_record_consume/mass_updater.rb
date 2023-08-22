@@ -69,7 +69,7 @@ module Deimos
       def import_associations(record_list)
         record_list.fill_primary_keys!
 
-        import_id = @replace_associations ? SecureRandom.uuid : nil
+        import_id = @replace_associations ? ULID.generate : nil
         record_list.associations.each do |assoc|
           sub_records = record_list.map { |r| r.sub_records(assoc.name, import_id) }.flatten
           next unless sub_records.any?
