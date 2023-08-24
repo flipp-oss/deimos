@@ -352,6 +352,11 @@ class MyBatchConsumer < Deimos::Consumer
       # Do something 
     end
   end
+
+  def post_process(records)
+    # ActiveRecord objects that have been used to save to the database.
+    # They contain primary keys only if associations are involved.
+  end
 end
 ```
 #### Saving data to Multiple Database tables

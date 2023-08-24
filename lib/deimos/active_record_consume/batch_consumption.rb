@@ -22,7 +22,7 @@ module Deimos
       # they are split
       # @param payloads [Array<Hash,Deimos::SchemaClass::Record>] Decoded payloads
       # @param metadata [Hash] Information about batch, including keys.
-      # @return [void]
+      # @return [Array<ActiveRecord::Base>]
       def consume_batch(payloads, metadata)
         messages = payloads.
           zip(metadata[:keys]).
@@ -31,20 +31,29 @@ module Deimos
         tags = %W(topic:#{metadata[:topic]})
 
         Deimos.instrument('ar_consumer.consume_batch', tags) do
+          upserts = []
           # The entire batch should be treated as one transaction so that if
           # any message fails, the whole thing is rolled back or retried
           # if there is deadlock
           Deimos::Utils::DeadlockRetry.wrap(tags) do
-            if @compacted || self.class.config[:no_keys]
-              update_database(compact_messages(messages))
-            else
-              uncompacted_update(messages)
-            end
+            upserts = if @compacted || self.class.config[:no_keys]
+                        update_database(compact_messages(messages))
+                      else
+                        uncompacted_update(messages)
+                      end
           end
+          post_process(upserts)
         end
       end
 
     protected
+
+      # Takes the ActiveRecord objects created during batch consumption and use them after the transaction is complete.
+      # @param [Array<ActiveRecord::Base>]
+      # @return [void]
+      def post_process(_records)
+        nil
+      end
 
       # Get the set of attribute names that uniquely identify messages in the
       # batch. Requires at least one record.
@@ -114,45 +123,48 @@ module Deimos
       # All messages are split into slices containing only unique keys, and
       # each slice is handles as its own batch.
       # @param messages [Array<Message>] List of messages.
-      # @return [void]
+      # @return [Array<ActiveRecord::Base>]
       def uncompacted_update(messages)
         BatchSlicer.
           slice(messages).
-          each(&method(:update_database))
+          each(&method(:update_database)).flatten
       end
 
       # Perform database operations for a group of messages.
       # All messages with payloads are passed to upsert_records.
       # All tombstones messages are passed to remove_records.
       # @param messages [Array<Message>] List of messages.
-      # @return [void]
+      # @return [Array<ActiveRecord::Base>]
       def update_database(messages)
         # Find all upserted records (i.e. that have a payload) and all
         # deleted record (no payload)
         removed, upserted = messages.partition(&:tombstone?)
 
         max_db_batch_size = self.class.config[:max_db_batch_size]
+        upserts = []
         if upserted.any?
+          upserts = if max_db_batch_size
+                      upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
+                    else
+                      upsert_records(upserted)
+                    end
+        end
+
+        if removed.any?
           if max_db_batch_size
-            upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
+            removed.each_slice(max_db_batch_size) { |group| remove_records(group) }
           else
-            upsert_records(upserted)
+            remove_records(removed)
           end
         end
 
-        return if removed.empty?
-
-        if max_db_batch_size
-          removed.each_slice(max_db_batch_size) { |group| remove_records(group) }
-        else
-          remove_records(removed)
-        end
+        upserts
       end
 
       # Upsert any non-deleted records
       # @param messages [Array<Message>] List of messages for a group of
       # records to either be updated or inserted.
-      # @return [void]
+      # @return [Array<ActiveRelation>]
       def upsert_records(messages)
         record_list = build_records(messages)
         record_list.filter!(self.method(:should_consume?).to_proc)

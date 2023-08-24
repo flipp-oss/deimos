@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 - Fix: Fixed handler metric for status:received, status:success in batch consumption
+- Feature: Adds post_process method for BatchConsumers to use the ActiveRecord objects after saving records to DB.
 
 # 1.22.5 - 2023-07-18
 - Fix: Fixed buffer overflow crash with DB producer.

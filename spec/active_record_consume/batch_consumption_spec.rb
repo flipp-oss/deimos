@@ -27,7 +27,6 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
       it 'should be called 1 time when record size == max batch size' do
         batch_consumer.class.config[:max_db_batch_size] = records.size
         expect(batch_consumer).to receive(:upsert_records).once
-
         batch_consumer.send(:update_database, records)
       end
 
@@ -97,6 +96,26 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
         expect(batch_consumer).to receive(:remove_records).once
 
         batch_consumer.send(:update_database, records)
+      end
+    end
+  end
+
+  describe '#consume_batch' do
+    describe 'post_process in compact mode' do
+      let(:payload) do
+        [
+          { v: 1 }, { v: 2 }, { v: 3 }, { v: 4 }, { v: 5 }
+        ]
+      end
+      let(:metadata) do
+        { keys: [1, 2, 3, 4, 5] }
+      end
+
+      it 'should be called once with a flat array of records' do
+        records = [Object, Object] # should be ActiveRecord object
+        expect(batch_consumer).to receive(:post_process).once.with(records)
+        expect(batch_consumer).to receive(:update_database) { records }
+        batch_consumer.send(:consume_batch, payload, metadata)
       end
     end
   end
