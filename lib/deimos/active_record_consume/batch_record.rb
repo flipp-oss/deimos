@@ -26,7 +26,11 @@ module Deimos
         @klass = klass
         if bulk_import_column
           self.bulk_import_column = bulk_import_column
-          self.bulk_import_id = ULID.generate
+          self.bulk_import_id = if klass.method_defined?(:generate_unique_id)
+                                  klass.generate_unique_id
+                                else
+                                  SecureRandom.uuid
+                                end
           attributes[bulk_import_column] = bulk_import_id
         end
         attributes = attributes.with_indifferent_access

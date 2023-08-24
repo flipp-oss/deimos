@@ -18,8 +18,9 @@ module Deimos
       # @param klass [Class < ActiveRecord::Base]
       # @param key_col_proc [Proc<Class < ActiveRecord::Base>]
       # @param col_proc [Proc<Class < ActiveRecord::Base>]
+      # @param unique_id_proc [Proc<Class < ActiveRecord::Base>]
       # @param replace_associations [Boolean]
-      def initialize(klass, key_col_proc: nil, col_proc: nil, replace_associations: true)
+      def initialize(klass, key_col_proc: nil, col_proc: nil, unique_id_proc: nil, replace_associations: true)
         @klass = klass
         @replace_associations = replace_associations
 
@@ -28,6 +29,8 @@ module Deimos
 
         @columns = {}
         @col_proc = col_proc
+
+        @unique_id_proc = unique_id_proc
       end
 
       # @param klass [Class < ActiveRecord::Base]
@@ -38,6 +41,11 @@ module Deimos
       # @param klass [Class < ActiveRecord::Base]
       def key_cols(klass)
         @key_cols[klass] ||= @key_col_proc&.call(klass) || self.default_keys(klass)
+      end
+
+      # @return [String]
+      def generate_unique_id
+        @unique_id_proc&.call || SecureRandom.uuid
       end
 
       # @param record_list [BatchRecordList]
@@ -69,7 +77,7 @@ module Deimos
       def import_associations(record_list)
         record_list.fill_primary_keys!
 
-        import_id = @replace_associations ? ULID.generate : nil
+        import_id = @replace_associations ? generate_unique_id : nil
         record_list.associations.each do |assoc|
           sub_records = record_list.map { |r| r.sub_records(assoc.name, import_id) }.flatten
           next unless sub_records.any?
@@ -82,9 +90,11 @@ module Deimos
       end
 
       # @param record_list [BatchRecordList]
+      # @return [Array<ActiveRecord::Base>]
       def mass_update(record_list)
         save_records_to_database(record_list)
         import_associations(record_list) if record_list.associations.any?
+        record_list.records
       end
 
     end

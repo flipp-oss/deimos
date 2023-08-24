@@ -22,7 +22,7 @@ module Deimos
       # they are split
       # @param payloads [Array<Hash,Deimos::SchemaClass::Record>] Decoded payloads
       # @param metadata [Hash] Information about batch, including keys.
-      # @return [void]
+      # @return [Array<ActiveRecord::Base>]
       def consume_batch(payloads, metadata)
         messages = payloads.
           zip(metadata[:keys]).
@@ -31,20 +31,29 @@ module Deimos
         tags = %W(topic:#{metadata[:topic]})
 
         Deimos.instrument('ar_consumer.consume_batch', tags) do
+          upserts = []
           # The entire batch should be treated as one transaction so that if
           # any message fails, the whole thing is rolled back or retried
           # if there is deadlock
           Deimos::Utils::DeadlockRetry.wrap(tags) do
-            if @compacted || self.class.config[:no_keys]
-              update_database(compact_messages(messages))
-            else
-              uncompacted_update(messages)
-            end
+            upserts = if @compacted || self.class.config[:no_keys]
+                        update_database(compact_messages(messages))
+                      else
+                        uncompacted_update(messages)
+                      end
           end
+          post_process(upserts)
         end
       end
 
     protected
+
+      # Takes the ActiveRecord objects created during batch consumption and use them after the transaction is complete.
+      # @param [Array<ActiveRecord::Base>]
+      # @return [void]
+      def post_process(_records)
+        nil
+      end
 
       # Get the set of attribute names that uniquely identify messages in the
       # batch. Requires at least one record.
@@ -98,6 +107,13 @@ module Deimos
         true
       end
 
+      # Method to generate Unique ID. By default, it uses GUID v4 however there are other efficient IDs
+      # like ULID. The implementing consumer can decide on the format of this unique ID based on their needs.
+      # @return [String]
+      def generate_unique_id
+        nil
+      end
+
     private
 
       # Compact a batch of messages, taking only the last message for each
@@ -125,19 +141,20 @@ module Deimos
       # All messages with payloads are passed to upsert_records.
       # All tombstones messages are passed to remove_records.
       # @param messages [Array<Message>] List of messages.
-      # @return [void]
+      # @return [Array<ActiveRecord::Base>]
       def update_database(messages)
         # Find all upserted records (i.e. that have a payload) and all
         # deleted record (no payload)
         removed, upserted = messages.partition(&:tombstone?)
 
         max_db_batch_size = self.class.config[:max_db_batch_size]
+        upserts = []
         if upserted.any?
-          if max_db_batch_size
-            upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
-          else
-            upsert_records(upserted)
-          end
+          upserts = if max_db_batch_size
+                      upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
+                    else
+                      upsert_records(upserted)
+                    end
         end
 
         return if removed.empty?
@@ -147,12 +164,13 @@ module Deimos
         else
           remove_records(removed)
         end
+        upserts
       end
 
       # Upsert any non-deleted records
       # @param messages [Array<Message>] List of messages for a group of
       # records to either be updated or inserted.
-      # @return [void]
+      # @return [Array<ActiveRelation>]
       def upsert_records(messages)
         record_list = build_records(messages)
         record_list.filter!(self.method(:should_consume?).to_proc)
@@ -161,10 +179,12 @@ module Deimos
 
         key_col_proc = self.method(:key_columns).to_proc
         col_proc = self.method(:columns).to_proc
+        unique_id_proc = self.method(:generate_unique_id).to_proc
 
         updater = MassUpdater.new(@klass,
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
+                                  unique_id_proc: unique_id_proc,
                                   replace_associations: self.class.config[:replace_associations])
         updater.mass_update(record_list)
       end
