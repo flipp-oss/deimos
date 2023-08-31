@@ -46,11 +46,11 @@ module Deimos
         attr_accessor :topic_name
         # @return [Hash<Integer, Integer>]
         attr_accessor :partition_current_offsets
-        # @return [ConsumerGroup]
+        # @return [Deimos::Utils::LagReporter::ConsumerGroup]
         attr_accessor :consumer_group
 
         # @param topic_name [String]
-        # @param group [ConsumerGroup]
+        # @param group [Deimos::Utils::LagReporter::ConsumerGroup]
         def initialize(topic_name, group)
           self.topic_name = topic_name
           self.consumer_group = group

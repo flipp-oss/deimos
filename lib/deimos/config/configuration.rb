@@ -11,7 +11,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
   include FigTree
 
   # :nodoc:
-  class FigTree::ConfigStruct
+  class ::FigTree::ConfigStruct
     include Deimos::PhobosConfig
   end
 
@@ -364,6 +364,10 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # Set to true to generate folders matching the last part of the schema namespace.
       # @return [Boolean]
       setting :generate_namespace_folders, false
+
+      # Set to true to output Sorbet `sig` declarations in schema classes.
+      setting :output_sorbet, false
+
     end
 
     # The configured metrics provider.

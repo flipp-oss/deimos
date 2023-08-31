@@ -18,6 +18,11 @@ module Deimos
         raise NotImplementedError
       end
 
+      # @return [Hash]
+      def to_h
+        self.as_json
+      end
+
       # @param key [String,Symbol]
       # @param val [Object]
       # @return [void]
@@ -25,7 +30,7 @@ module Deimos
         self.send("#{key}=", val)
       end
 
-      # @param other [SchemaClass::Base]
+      # @param other [Deimos::SchemaClass::Base]
       # @return [Boolean]
       def ==(other)
         comparison = other
@@ -44,7 +49,7 @@ module Deimos
 
       # Initializes this class from a given value
       # @param value [Object]
-      # @return [SchemaClass::Base]
+      # @return [Deimos::SchemaClass::Base]
       def self.initialize_from_value(value)
         raise NotImplementedError
       end

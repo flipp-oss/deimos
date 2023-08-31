@@ -23,7 +23,7 @@ module Deimos
 
         # Method to define producers if a single poller needs to publish to multiple topics.
         # Producer classes should be constantized
-        # @return [Array<Producer>]
+        # @return [Array<Deimos::Producer>]
         def self.producers
           []
         end
@@ -75,7 +75,6 @@ module Deimos
 
         # @return [void]
         # Grab the PollInfo or create if it doesn't exist.
-        # @return [void]
         def retrieve_poll_info
           @info = Deimos::PollInfo.find_by_producer(@resource_class.to_s) || create_poll_info
         end
@@ -106,7 +105,7 @@ module Deimos
         end
 
         # @param batch [Array<ActiveRecord::Base>]
-        # @param status [PollStatus]
+        # @param status [Deimos::Utils::DbPoller::PollStatus]
         # @return [Boolean]
         def process_batch_with_span(batch, status)
           retries = 0
@@ -156,7 +155,7 @@ module Deimos
         end
 
         # Return array of configured producers depending on poller class
-        # @return [Array<ActiveRecordProducer>]
+        # @return [Array<Deimos::ActiveRecordProducer>]
         def producer_classes
           return self.class.producers if self.class.producers.any?
 
@@ -164,6 +163,7 @@ module Deimos
         end
 
         # Validate if a producer class is an ActiveRecordProducer or not
+        # @param producer_class [Class<BasicObject>]
         # @return [void]
         def validate_producer_class(producer_class)
           unless producer_class < Deimos::ActiveRecordProducer

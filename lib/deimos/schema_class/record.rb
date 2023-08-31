@@ -21,8 +21,8 @@ module Deimos
       end
 
       # Merge a hash or an identical schema object with this one and return a new object.
-      # @param other_hash [Hash,SchemaClass::Base]
-      # @return [SchemaClass::Base]
+      # @param other_hash [Hash,Deimos::SchemaClass::Base]
+      # @return [Deimos::SchemaClass::Base]
       def merge(other_hash)
         obj = self.class.new(**self.to_h.symbolize_keys)
         other_hash.to_h.each do |k, v|
@@ -38,7 +38,7 @@ module Deimos
         self.try(key.to_sym)
       end
 
-      # @return [SchemaClass::Record]
+      # @return [Deimos::SchemaClass::Record]
       def with_indifferent_access
         self
       end
@@ -72,12 +72,6 @@ module Deimos
         validator.schema_fields.map(&:name)
       end
 
-      # @return [SchemaClass::Record]
-      def self.initialize_from_value(value)
-        return nil if value.nil?
-
-        value.is_a?(self) ? value : self.new(**value.symbolize_keys)
-      end
     end
   end
 end

@@ -17,6 +17,7 @@ RSpec.describe Schemas::MyNamespace::MySchemaWithComplexType do
         'record_1' => described_class::ARecord.new(a_record_field: 'field 5'),
         'record_2' => described_class::ARecord.new(a_record_field: 'field 6')
       },
+      some_enum_with_default: described_class::YetAnotherEnum.new('sym6'),
       some_enum_array: [described_class::AnEnum.new('sym1'),
                         described_class::AnEnum.new('sym2')]
     }
@@ -28,12 +29,15 @@ RSpec.describe Schemas::MyNamespace::MySchemaWithComplexType do
       klass = described_class.new(
         test_id: payload_hash[:test_id],
         test_float: payload_hash[:test_float],
+        test_int_array: payload_hash[:test_int_array],
+        some_integer_map: payload_hash[:some_integer_map],
+        some_enum_with_default: payload_hash[:some_enum_with_default],
         test_string_array: payload_hash[:test_string_array],
         some_record: payload_hash[:some_record],
         some_optional_record: payload_hash[:some_optional_record],
         some_record_array: payload_hash[:some_record_array],
         some_record_map: payload_hash[:some_record_map],
-        some_enum_array: payload_hash[:some_enum_array]
+        some_enum_array: payload_hash[:some_enum_array],
       )
       expect(klass).to be_instance_of(described_class)
     end
@@ -43,8 +47,8 @@ RSpec.describe Schemas::MyNamespace::MySchemaWithComplexType do
       expect(klass).to be_instance_of(described_class)
     end
 
-    it 'should initialize the class when missing attributes' do
-      payload_hash.delete(:test_id)
+    it 'should initialize the class when missing optional attributes' do
+      payload_hash.delete(:some_optional_record)
       klass = described_class.new(**payload_hash)
       expect(klass).to be_instance_of(described_class)
     end

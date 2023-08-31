@@ -19,7 +19,7 @@ module Deimos
 
       delegate :valid?, to: :record
 
-      # @param klass [Class < ActiveRecord::Base]
+      # @param klass [Class<ActiveRecord::Base>]
       # @param attributes [Hash] the full attribute list, including associations.
       # @param bulk_import_column [String]
       def initialize(klass:, attributes:, bulk_import_column: nil)
@@ -46,7 +46,7 @@ module Deimos
               ' Run rails g deimos:bulk_import_id {table} to create the migration.'
       end
 
-      # @return [Class < ActiveRecord::Base]
+      # @return [Class<ActiveRecord::Base>]
       def klass
         self.record.class
       end
@@ -58,7 +58,7 @@ module Deimos
       # parent bulk_insert_id, where each record has a unique UUID,
       # this is used to detect and delete old data, so this is basically a "session ID" for this
       # bulk upsert.
-      # @return [Array<BatchRecord>]
+      # @return [Array<Deimos::ActiveRecordConsume::BatchRecord>]
       def sub_records(assoc_name, bulk_import_id=nil)
         attr_list = self.associations[assoc_name.to_s]
         assoc = self.klass.reflect_on_association(assoc_name)

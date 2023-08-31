@@ -99,6 +99,70 @@ module Deimos
         schema.name.underscore.camelize.singularize
       end
 
+      # Converts Avro::Schema::NamedSchema's to String form for generated Sorbet docs.
+      # Recursively handles the typing for Arrays, Maps and Unions.
+      # @param avro_schema [Avro::Schema::NamedSchema]
+      # @param path [String]
+      # @param allow_enum_strings [Boolean] if true, wrap enums in T.any(String, <enum>)
+      # @return [String] A string representation of the Type of this SchemaField
+      def self.sorbet_type(avro_schema, path, allow_enum_strings: false)
+        case avro_schema.type_sym
+        when :boolean
+          'T::Boolean'
+        when :string, :bytes
+          'String'
+        when :int, :long
+          'Integer'
+        when :float, :double
+          'Float'
+        when :enum
+          prefix = ''
+          constant_name = schema_classname(avro_schema)
+          if path.present? && path != constant_name
+            prefix = "#{path}::"
+          end
+          enum_name = "Schemas::#{prefix}#{constant_name}"
+          if allow_enum_strings
+            "T.any(String, #{enum_name})"
+          else
+            enum_name
+          end
+        when :record
+          prefix = ''
+          constant_name = schema_classname(avro_schema)
+          if path.present? && path != constant_name
+            prefix = "#{path}::"
+          end
+          "Schemas::#{prefix}#{constant_name}"
+        when :array
+          arr_t = sorbet_type(avro_schema.items, path)
+          "T::Array[#{arr_t}]"
+        when :map
+          map_t = sorbet_type(avro_schema.values, path)
+          "T::Hash[String, #{map_t}]"
+        when :union
+          subtypes = avro_schema.schemas
+          if subtypes.any? { |t| t.type_sym == :null}
+            non_null = subtypes.select { |s| s.type_sym != :null}
+            if non_null.length == 1
+              "T.nilable(#{sorbet_type(non_null.first, path)})"
+            else
+              new_schema = avro_schema.dup
+              new_schema.instance_variable_set(:@schemas,
+                                               avro_schema.schemas.select { |t| t.type_sym != :null })
+              "T.nilable(#{sorbet_type(new_schema, path)})"
+            end
+          else
+            types = avro_schema.schemas.map do |t|
+              sorbet_type(t, path)
+            end
+            "T.any(#{types.join(', ')})"
+          end
+        else
+          raise "Unknown Avro type!"
+        end
+      end
+
       # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.
       # Recursively handles the typing for Arrays, Maps and Unions.
       # @param avro_schema [Avro::Schema::NamedSchema]

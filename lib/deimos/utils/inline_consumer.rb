@@ -110,7 +110,7 @@ module Deimos
 
       # Consume the last X messages from a topic.
       # @param topic [String]
-      # @param frk_consumer [Class]
+      # @param frk_consumer [Class<BasicObject>]
       # @param num_messages [Integer] If this number is >= the number
       #   of messages in the topic, all messages will be consumed.
       # @return [void]

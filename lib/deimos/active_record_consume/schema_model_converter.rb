@@ -5,7 +5,7 @@ module Deimos
     # Convert a message with a schema to an ActiveRecord model
     class SchemaModelConverter
       # Create new converter
-      # @param decoder [SchemaBackends::Base] Incoming message schema.
+      # @param decoder [Deimos::SchemaBackends::Base] Incoming message schema.
       # @param klass [ActiveRecord::Base] Model to map to.
       def initialize(decoder, klass)
         @decoder = decoder

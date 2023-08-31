@@ -115,8 +115,9 @@ module Deimos
       if messages.any?
         message_string = messages.map(&:inspect).join("\n")
         min_hash_diff = messages.min_by { |m| _hash_diff(m, message).keys.size }
-        diff = RSpec::Expectations.differ.
-          diff_as_object(message, min_hash_diff[:payload])
+        arg1 = message.respond_to?(:to_h) ? message.to_h.with_indifferent_access : message
+        arg2 = min_hash_diff[:payload].respond_to?(:to_h) ? min_hash_diff[:payload].to_h.with_indifferent_access : message
+        diff = RSpec::Expectations.differ.diff_as_object(arg1, arg2)
       end
       description = if message.respond_to?(:description)
                       message.description
@@ -186,7 +187,7 @@ module Deimos
     # that the schema is correct. If
     # a block is given, that block will be executed when `consume` is called.
     # Otherwise it will just confirm that `consume` is called at all.
-    # @param handler_class_or_topic [Class, String] Class which inherits from
+    # @param handler_class_or_topic [Class<BasicObject>, String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payload [Hash] the payload to consume
     # @param call_original [Boolean] if true, allow the consume handler
@@ -240,7 +241,7 @@ module Deimos
     end
 
     # Check to see that a given message will fail due to validation errors.
-    # @param handler_class [Class]
+    # @param handler_class [Class<BasicObject>]
     # @param payload [Hash]
     # @return [void]
     def test_consume_invalid_message(handler_class, payload)
@@ -254,7 +255,7 @@ module Deimos
     # i.e. that the schema is correct. If
     # a block is given, that block will be executed when `consume` is called.
     # Otherwise it will just confirm that `consume` is called at all.
-    # @param handler_class_or_topic [Class, String] Class which inherits from
+    # @param handler_class_or_topic [Class<BasicObject>, String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payloads [Array<Hash>] the payload to consume
     # @param keys [Array<Hash,String>]
@@ -318,7 +319,7 @@ module Deimos
     end
 
     # Check to see that a given message will fail due to validation errors.
-    # @param handler_class [Class]
+    # @param handler_class [Class<BasicObject>]
     # @param payloads [Array<Hash>]
     # @return [void]
     def test_consume_batch_invalid_message(handler_class, payloads)
@@ -375,7 +376,7 @@ module Deimos
     end
 
     # @param topic [String]
-    # @return [Class]
+    # @return [Class<BasicObject>]
     def _get_handler_class_from_topic(topic)
       listeners = Phobos.config['listeners']
       handler = listeners.find { |l| l.topic == topic }

@@ -18,6 +18,7 @@ module Deimos
 
         # @param batch [Array<ActiveRecord::Base>]
         # @param status [Deimos::Utils::DbPoller::PollStatus]
+        # @return [void]
         def process_and_touch_info(batch, status)
           process_batch_with_span(batch, status)
           self.touch_info(batch)

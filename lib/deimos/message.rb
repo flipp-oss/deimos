@@ -21,10 +21,11 @@ module Deimos
     attr_accessor  :producer_name
 
     # @param payload [Hash]
-    # @param producer [Class]
+    # @param producer [Class<BasicObject>]
     # @param topic [String]
     # @param key [String, Integer, Hash]
     # @param partition_key [Integer]
+    # @param headers [Hash]
     def initialize(payload, producer, topic: nil, key: nil, headers: nil, partition_key: nil)
       @payload = payload&.with_indifferent_access
       @producer_name = producer&.name
@@ -87,7 +88,7 @@ module Deimos
       }.delete_if { |k, v| k == :headers && v.nil? }
     end
 
-    # @param other [Message]
+    # @param other [Deimos::Message]
     # @return [Boolean]
     def ==(other)
       self.to_h == other.to_h

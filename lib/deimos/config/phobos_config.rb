@@ -8,18 +8,6 @@ module Deimos
   module PhobosConfig
     extend ActiveSupport::Concern
 
-    # @return [Hash]
-    def to_h
-      (FIELDS + [:handler]).map { |f|
-        val = self.send(f)
-        if f == :backoff && val
-          [:backoff, _backoff(val)]
-        elsif val.present?
-          [f, val]
-        end
-      }.to_h
-    end
-
     # @return [void]
     def reset!
       super

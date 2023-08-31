@@ -1,0 +1,16 @@
+gem:
+  exclude:
+    - parser
+    - sord
+    - parlour
+    - rubocop
+    - rbi
+    - tapioca
+  doc: false
+  workers: 5
+dsl:
+  # Add your `dsl` command parameters here:
+  #
+  # exclude:
+  # - SomeGeneratorName
+  # workers: 5
