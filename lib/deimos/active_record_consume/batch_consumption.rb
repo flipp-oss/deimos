@@ -34,13 +34,15 @@ module Deimos
           # The entire batch should be treated as one transaction so that if
           # any message fails, the whole thing is rolled back or retried
           # if there is deadlock
+          valid_upserts = []
           Deimos::Utils::DeadlockRetry.wrap(tags) do
-            if @compacted || self.class.config[:no_keys]
-              update_database(compact_messages(messages))
-            else
-              uncompacted_update(messages)
-            end
+            valid_upserts = if @compacted || self.class.config[:no_keys]
+                              update_database(compact_messages(messages))
+                            else
+                              uncompacted_update(messages)
+                            end
           end
+          post_process(valid_upserts)
         end
       end
 
@@ -132,21 +134,23 @@ module Deimos
         removed, upserted = messages.partition(&:tombstone?)
 
         max_db_batch_size = self.class.config[:max_db_batch_size]
+        valid_upserts = []
         if upserted.any?
+          valid_upserts = if max_db_batch_size
+                            upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
+                          else
+                            upsert_records(upserted)
+                          end
+        end
+
+        unless removed.empty?
           if max_db_batch_size
-            upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
+            removed.each_slice(max_db_batch_size) { |group| remove_records(group) }
           else
-            upsert_records(upserted)
+            remove_records(removed)
           end
         end
-
-        return if removed.empty?
-
-        if max_db_batch_size
-          removed.each_slice(max_db_batch_size) { |group| remove_records(group) }
-        else
-          remove_records(removed)
-        end
+        valid_upserts
       end
 
       # Upsert any non-deleted records
@@ -155,7 +159,7 @@ module Deimos
       # @return [void]
       def upsert_records(messages)
         record_list = build_records(messages)
-        record_list.filter!(self.method(:should_consume?).to_proc)
+        filter_records(record_list)
 
         return if record_list.empty?
 
@@ -167,6 +171,12 @@ module Deimos
                                   col_proc: col_proc,
                                   replace_associations: self.class.config[:replace_associations])
         updater.mass_update(record_list)
+      end
+
+      # @param record_list [BatchRecordList]
+      # @return [BatchRecordList]
+      def filter_records(record_list)
+        record_list.filter!(self.method(:should_consume?).to_proc)
       end
 
       # @param messages [Array<Deimos::Message>]
@@ -202,6 +212,13 @@ module Deimos
         clause = deleted_query(messages)
 
         clause.delete_all
+      end
+
+      # Additional processing after records have been successfully upserted
+      # @param _records [Array<ActiveRecord>] Records to be post processed
+      # @return [void]
+      def post_process(_records)
+        nil
       end
     end
   end

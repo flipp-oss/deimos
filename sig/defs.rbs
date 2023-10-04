@@ -1840,6 +1840,10 @@ module Deimos
       # 
       # _@return_ — Compacted batch.
       def compact_messages: (::Array[Message] batch) -> ::Array[Message]
+
+      private
+
+      def post_process: -> untyped
     end
 
     # Methods for consuming individual messages and saving them to the database
