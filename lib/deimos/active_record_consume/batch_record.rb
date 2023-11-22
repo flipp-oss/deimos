@@ -26,7 +26,9 @@ module Deimos
         @klass = klass
         if bulk_import_column
           self.bulk_import_column = bulk_import_column
-          self.bulk_import_id = SecureRandom.uuid
+          # TODO: Figure out how to use the setting
+          self.bulk_import_id = @klass.respond_to?(:generate_bulk_id) ?
+                                  @klass.generate_bulk_id : SecureRandom.uuid
           attributes[bulk_import_column] = bulk_import_id
         end
         attributes = attributes.with_indifferent_access

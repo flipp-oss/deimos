@@ -23,6 +23,12 @@ module Deimos
         self.batch_records.delete_if { |record| !method.call(record.record) }
       end
 
+      # Partition batch records by the given block
+      # @param block [Proc]
+      def partition(&block)
+        self.batch_records.partition(&block)
+      end
+
       # Get the original ActiveRecord objects.
       # @return [Array<ActiveRecord::Base>]
       def records

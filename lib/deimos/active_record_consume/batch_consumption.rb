@@ -180,13 +180,14 @@ module Deimos
       end
 
       # @param messages [Array<Deimos::Message>]
+      # @param lookup [Set | ActiveRecord::Relation | Hash]
       # @return [BatchRecordList]
-      def build_records(messages)
+      def build_records(messages, lookup = nil)
         records = messages.map do |m|
-          attrs = if self.method(:record_attributes).parameters.size == 2
-                    record_attributes(m.payload, m.key)
+          attrs = if self.method(:record_attributes).parameters.size == 3
+                    record_attributes(m.payload, m.key, lookup)
                   else
-                    record_attributes(m.payload)
+                    record_attributes(m.payload, lookup)
                   end
           next nil if attrs.nil?
 
