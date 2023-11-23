@@ -35,14 +35,15 @@ module Deimos
           # any message fails, the whole thing is rolled back or retried
           # if there is deadlock
           valid_upserts = []
+          invalid_upserts = []
           Deimos::Utils::DeadlockRetry.wrap(tags) do
-            valid_upserts = if @compacted || self.class.config[:no_keys]
+            valid_upserts, invalid_upserts = if @compacted || self.class.config[:no_keys]
                               update_database(compact_messages(messages))
                             else
                               uncompacted_update(messages)
                             end
           end
-          post_process(valid_upserts)
+          post_process(valid_upserts, invalid_upserts)
         end
       end
 
@@ -135,8 +136,10 @@ module Deimos
 
         max_db_batch_size = self.class.config[:max_db_batch_size]
         valid_upserts = []
+        invalid_upserts = []
         if upserted.any?
-          valid_upserts = if max_db_batch_size
+          valid_upserts, invalid_upserts = if max_db_batch_size
+                            #                  TODO: This makes a 2d array, need to compact
                             upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
                           else
                             upsert_records(upserted)
@@ -150,7 +153,7 @@ module Deimos
             remove_records(removed)
           end
         end
-        valid_upserts
+        [valid_upserts, invalid_upserts]
       end
 
       # Upsert any non-deleted records
@@ -159,7 +162,7 @@ module Deimos
       # @return [void]
       def upsert_records(messages)
         record_list = build_records(messages)
-        filter_records(record_list)
+        invalid = filter_records(record_list)
 
         return if record_list.empty?
 
@@ -169,26 +172,37 @@ module Deimos
         updater = MassUpdater.new(@klass,
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
-                                  replace_associations: self.class.config[:replace_associations])
-        updater.mass_update(record_list)
+                                  replace_associations: self.class.replace_associations)
+        [updater.mass_update(record_list), invalid]
       end
 
       # @param record_list [BatchRecordList]
       # @return [BatchRecordList]
       def filter_records(record_list)
-        record_list.filter!(self.method(:should_consume?).to_proc)
+        record_list.reject!(self.method(:should_consume?).to_proc)
+      end
+
+      # Returns a lookup entity to be used during record attributes
+      # @param _messages [Array<Deimos::Message>]
+      # @return [Hash, Set, ActiveRecord::Relation]
+      def record_lookup(_messages)
+        {}
       end
 
       # @param messages [Array<Deimos::Message>]
-      # @param lookup [Set | ActiveRecord::Relation | Hash]
       # @return [BatchRecordList]
-      def build_records(messages, lookup = nil)
+      def build_records(messages)
+        lookup = record_lookup(messages)
         records = messages.map do |m|
-          attrs = if self.method(:record_attributes).parameters.size == 3
+          attrs = case self.method(:record_attributes).parameters.size
+                  when 3
                     record_attributes(m.payload, m.key, lookup)
+                  when 2
+                    record_attributes(m.payload, m.key)
                   else
-                    record_attributes(m.payload, lookup)
+                    record_attributes(m.payload)
                   end
+
           next nil if attrs.nil?
 
           attrs = attrs.merge(record_key(m.key))
@@ -200,7 +214,9 @@ module Deimos
 
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
-                          bulk_import_column: col)
+                          bulk_import_column: col,
+                          bulk_id_generator: self.class.bulk_import_id_generator
+          )
         end
         BatchRecordList.new(records.compact)
       end
@@ -216,9 +232,10 @@ module Deimos
       end
 
       # Additional processing after records have been successfully upserted
-      # @param _records [Array<ActiveRecord>] Records to be post processed
+      # @param _valid_records [Array<ActiveRecord>] Records to be post processed
+      # @param _invalid_records [Array<BatchRecord>] Invalid records to be processed
       # @return [void]
-      def post_process(_records)
+      def post_process(_valid_records, _invalid_records)
         nil
       end
     end

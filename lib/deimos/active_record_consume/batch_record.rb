@@ -17,18 +17,17 @@ module Deimos
       # @return [String] The column name to use for bulk IDs - defaults to `bulk_import_id`.
       attr_accessor :bulk_import_column
 
-      delegate :valid?, to: :record
+      delegate :valid?, :errors, :send, :attributes, to: :record
 
       # @param klass [Class < ActiveRecord::Base]
       # @param attributes [Hash] the full attribute list, including associations.
       # @param bulk_import_column [String]
-      def initialize(klass:, attributes:, bulk_import_column: nil)
+      # @param bulk_id_generator [Proc]
+      def initialize(klass:, attributes:, bulk_import_column: nil, bulk_id_generator: nil)
         @klass = klass
         if bulk_import_column
           self.bulk_import_column = bulk_import_column
-          # TODO: Figure out how to use the setting
-          self.bulk_import_id = @klass.respond_to?(:generate_bulk_id) ?
-                                  @klass.generate_bulk_id : SecureRandom.uuid
+          self.bulk_import_id = bulk_id_generator&.call
           attributes[bulk_import_column] = bulk_import_id
         end
         attributes = attributes.with_indifferent_access
