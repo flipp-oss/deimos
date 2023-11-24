@@ -39,7 +39,7 @@ module Deimos
           Deimos::Utils::DeadlockRetry.wrap(tags) do
             valid_upserts, invalid_upserts = if @compacted || self.class.config[:no_keys]
                               update_database(compact_messages(messages))
-                            else
+                                             else
                               uncompacted_update(messages)
                             end
           end
@@ -139,9 +139,16 @@ module Deimos
         invalid_upserts = []
         if upserted.any?
           valid_upserts, invalid_upserts = if max_db_batch_size
-                            #                  TODO: This makes a 2d array, need to compact
-                            upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
-                          else
+                            upserted.each_slice(max_db_batch_size) { |group|
+                              upsert_records(group)
+                            }.
+                              reduce([[], []]) do |results, result|
+                                results[0].push(result[0])
+                                results[1].push(result[1])
+                              end
+                            valid_upserts.compact!
+                            invalid_upserts.compact!
+                                           else
                             upsert_records(upserted)
                           end
         end
@@ -172,7 +179,8 @@ module Deimos
         updater = MassUpdater.new(@klass,
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
-                                  replace_associations: self.class.replace_associations)
+                                  replace_associations: self.class.replace_associations,
+                                  batch_id_generator: self.class.batch_id_generator)
         [updater.mass_update(record_list), invalid]
       end
 
@@ -215,8 +223,7 @@ module Deimos
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
                           bulk_import_column: col,
-                          bulk_id_generator: self.class.bulk_import_id_generator
-          )
+                          bulk_id_generator: self.class.bulk_import_id_generator)
         end
         BatchRecordList.new(records.compact)
       end
