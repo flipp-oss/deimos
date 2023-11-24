@@ -139,15 +139,13 @@ module Deimos
         invalid_upserts = []
         if upserted.any?
           valid_upserts, invalid_upserts = if max_db_batch_size
-                            upserted.each_slice(max_db_batch_size) { |group|
-                              upsert_records(group)
-                            }.
-                              reduce([[], []]) do |results, result|
-                                results[0].push(result[0])
-                                results[1].push(result[1])
-                              end
-                            valid_upserts.compact!
-                            invalid_upserts.compact!
+                                             upserted.each_slice(max_db_batch_size) do |group|
+                                               valid, invalid = upsert_records(group)
+                                               valid_upserts.push(valid)
+                                               invalid_upserts.push(invalid)
+                                             end
+                                             valid_upserts.compact!
+                                             invalid_upserts.compact!
                                            else
                             upsert_records(upserted)
                           end
@@ -180,7 +178,7 @@ module Deimos
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
                                   replace_associations: self.class.replace_associations,
-                                  batch_id_generator: self.class.batch_id_generator)
+                                  batch_id_generator: self.class.bulk_import_id_generator)
         [updater.mass_update(record_list), invalid]
       end
 

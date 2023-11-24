@@ -39,6 +39,8 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
       end
     end
 
+    let(:bulk_id_generator) { proc { SecureRandom.uuid } }
+
     before(:each) do
       stub_const('Widget', widget_class)
       stub_const('Detail', detail_class)
@@ -52,19 +54,22 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
             Deimos::ActiveRecordConsume::BatchRecord.new(
               klass: Widget,
               attributes: { test_id: 'id1', some_int: 5, detail: { title: 'Title 1' } },
-              bulk_import_column: 'bulk_import_id'
+              bulk_import_column: 'bulk_import_id',
+              bulk_id_generator: bulk_id_generator
             ),
             Deimos::ActiveRecordConsume::BatchRecord.new(
               klass: Widget,
               attributes: { test_id: 'id2', some_int: 10, detail: { title: 'Title 2' } },
-              bulk_import_column: 'bulk_import_id'
+              bulk_import_column: 'bulk_import_id',
+              bulk_id_generator: bulk_id_generator
             )
           ]
         )
       end
 
       it 'should mass update the batch' do
-        described_class.new(Widget).mass_update(batch)
+        results = described_class.new(Widget).mass_update(batch)
+        expect(results.count).to eq(2)
         expect(Widget.count).to eq(2)
         expect(Detail.count).to eq(2)
         expect(Widget.first.detail).not_to be_nil
