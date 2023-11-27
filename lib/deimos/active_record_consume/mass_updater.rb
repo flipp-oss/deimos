@@ -19,10 +19,10 @@ module Deimos
       # @param key_col_proc [Proc<Class < ActiveRecord::Base>]
       # @param col_proc [Proc<Class < ActiveRecord::Base>]
       # @param replace_associations [Boolean]
-      def initialize(klass, key_col_proc: nil, col_proc: nil, replace_associations: true, batch_id_generator: nil)
+      def initialize(klass, key_col_proc: nil, col_proc: nil, replace_associations: true, bulk_import_id_generator: nil)
         @klass = klass
         @replace_associations = replace_associations
-        @batch_id_generator = batch_id_generator || proc { SecureRandom.uuid }
+        @bulk_import_id_generator = bulk_import_id_generator || proc { SecureRandom.uuid }
 
         @key_cols = {}
         @key_col_proc = key_col_proc
@@ -70,7 +70,7 @@ module Deimos
       def import_associations(record_list)
         record_list.fill_primary_keys!
 
-        import_id = @replace_associations ? @batch_id_generator.call : nil
+        import_id = @replace_associations ? @bulk_import_id_generator.call : nil
         record_list.associations.each do |assoc|
           sub_records = record_list.map { |r| r.sub_records(assoc.name, import_id) }.flatten
           next unless sub_records.any?
