@@ -25,7 +25,7 @@ module Deimos
 
       # @param method [Proc]
       # @param block [Block]
-      # @return [Array<BatchRecord>, Void]
+      # @return [Array<BatchRecord>,Void]
       def reject!(method=nil, &block)
         if method.nil?
           self.batch_records.reject!(&block)
