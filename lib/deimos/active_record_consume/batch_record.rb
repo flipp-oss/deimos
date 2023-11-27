@@ -22,11 +22,12 @@ module Deimos
       # @param klass [Class < ActiveRecord::Base]
       # @param attributes [Hash] the full attribute list, including associations.
       # @param bulk_import_column [String]
-      def initialize(klass:, attributes:, bulk_import_column: nil)
+      # @param bulk_id_generator [Proc]
+      def initialize(klass:, attributes:, bulk_import_column: nil, bulk_id_generator: nil)
         @klass = klass
         if bulk_import_column
           self.bulk_import_column = bulk_import_column
-          self.bulk_import_id = SecureRandom.uuid
+          self.bulk_import_id = bulk_id_generator&.call
           attributes[bulk_import_column] = bulk_import_id
         end
         attributes = attributes.with_indifferent_access

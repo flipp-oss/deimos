@@ -90,7 +90,9 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       if kafka_config.respond_to?(:bulk_import_id_column) # consumer
         klass.config.merge!(
           bulk_import_id_column: kafka_config.bulk_import_id_column,
-          replace_associations: kafka_config.replace_associations
+          replace_associations: kafka_config.replace_associations,
+          bulk_import_id_generator: kafka_config.bulk_import_id_generator ||
+            Deimos.config.consumers.bulk_import_id_generator
         )
       end
     end
@@ -242,6 +244,10 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # Not needed if reraise_errors is set to true.
       # @return [Block]
       setting(:fatal_error, proc { false })
+
+      # The default function to generate a bulk ID for bulk consumers
+      # @return [Block]
+      setting :bulk_import_id_generator, proc { SecureRandom.uuid }
     end
 
     setting :producers do
@@ -446,6 +452,12 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # If true, multi-table consumers will blow away associations rather than appending to them.
       # @return [Boolean]
       setting :replace_associations, true
+
+      # The default function to generate a bulk ID for this consumer
+      # Uses the consumers proc defined in the consumers config by default unless
+      # specified for individual consumers
+      # @return [Block]
+      setting :bulk_import_id_generator, nil
 
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.
