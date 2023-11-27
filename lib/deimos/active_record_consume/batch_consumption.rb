@@ -31,16 +31,19 @@ module Deimos
         tags = %W(topic:#{metadata[:topic]})
 
         Deimos.instrument('ar_consumer.consume_batch', tags) do
+          valid_upserts = []
+          invalid_upserts = []
           # The entire batch should be treated as one transaction so that if
           # any message fails, the whole thing is rolled back or retried
           # if there is deadlock
           Deimos::Utils::DeadlockRetry.wrap(tags) do
-            if @compacted || self.class.config[:no_keys]
-              update_database(compact_messages(messages))
-            else
-              uncompacted_update(messages)
-            end
+            valid_upserts, invalid_upserts = if @compacted || self.class.config[:no_keys]
+                                               update_database(compact_messages(messages))
+                                             else
+                                               uncompacted_update(messages)
+                                             end
           end
+          post_process(valid_upserts, invalid_upserts)
         end
       end
 
@@ -132,30 +135,39 @@ module Deimos
         removed, upserted = messages.partition(&:tombstone?)
 
         max_db_batch_size = self.class.config[:max_db_batch_size]
+        valid_upserts = []
+        invalid_upserts = []
         if upserted.any?
+          valid_upserts, invalid_upserts = if max_db_batch_size
+                                             upserted.each_slice(max_db_batch_size) do |group|
+                                               valid, invalid = upsert_records(group)
+                                               valid_upserts.push(valid)
+                                               invalid_upserts.push(invalid)
+                                             end
+                                             valid_upserts.compact!
+                                             invalid_upserts.compact!
+                                           else
+                                             upsert_records(upserted)
+                                           end
+        end
+
+        unless removed.empty?
           if max_db_batch_size
-            upserted.each_slice(max_db_batch_size) { |group| upsert_records(group) }
+            removed.each_slice(max_db_batch_size) { |group| remove_records(group) }
           else
-            upsert_records(upserted)
+            remove_records(removed)
           end
         end
-
-        return if removed.empty?
-
-        if max_db_batch_size
-          removed.each_slice(max_db_batch_size) { |group| remove_records(group) }
-        else
-          remove_records(removed)
-        end
+        [valid_upserts, invalid_upserts]
       end
 
       # Upsert any non-deleted records
       # @param messages [Array<Message>] List of messages for a group of
       # records to either be updated or inserted.
-      # @return [void]
+      # @return [Array<Array<ActiveRecord::Base>, Array<BatchRecord>]
       def upsert_records(messages)
         record_list = build_records(messages)
-        record_list.filter!(self.method(:should_consume?).to_proc)
+        invalid = filter_records(record_list)
 
         return if record_list.empty?
 
@@ -167,7 +179,13 @@ module Deimos
                                   col_proc: col_proc,
                                   replace_associations: self.class.replace_associations,
                                   batch_id_generator: self.class.bulk_import_id_generator)
-        updater.mass_update(record_list)
+        [updater.mass_update(record_list), invalid]
+      end
+
+      # @param record_list [BatchRecordList]
+      # @return [Array<BatchRecord>]
+      def filter_records(record_list)
+        record_list.reject!(self.method(:should_consume?).to_proc)
       end
 
       # Returns a lookup entity to be used during record attributes
@@ -215,6 +233,14 @@ module Deimos
         clause = deleted_query(messages)
 
         clause.delete_all
+      end
+
+      # Additional processing after records have been successfully upserted
+      # @param _valid_records [Array<ActiveRecord>] Records to be post processed
+      # @param _invalid_records [Array<BatchRecord>] Invalid records to be processed
+      # @return [void]
+      def post_process(_valid_records, _invalid_records)
+        nil
       end
     end
   end

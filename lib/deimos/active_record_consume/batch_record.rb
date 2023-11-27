@@ -17,7 +17,7 @@ module Deimos
       # @return [String] The column name to use for bulk IDs - defaults to `bulk_import_id`.
       attr_accessor :bulk_import_column
 
-      delegate :valid?, to: :record
+      delegate :valid?, :errors, :send, :attributes, to: :record
 
       # @param klass [Class < ActiveRecord::Base]
       # @param attributes [Hash] the full attribute list, including associations.

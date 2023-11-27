@@ -23,6 +23,24 @@ module Deimos
         self.batch_records.delete_if { |record| !method.call(record.record) }
       end
 
+      # @param method [Proc]
+      # @param block [Block]
+      # @return [Array<BatchRecord>]
+      def reject!(method=nil, &block)
+        if method.nil?
+          self.batch_records.reject!(&block)
+        else
+          case method.parameters.size
+          when 2
+            self.batch_records.select! do |record|
+              method.call(record.record, record.associations)
+            end
+          else
+            self.batch_records.select! { |record| method.call(record.record) }
+          end
+        end
+      end
+
       # Get the original ActiveRecord objects.
       # @return [Array<ActiveRecord::Base>]
       def records
