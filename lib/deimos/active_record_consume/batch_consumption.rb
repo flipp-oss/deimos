@@ -170,15 +170,27 @@ module Deimos
         updater.mass_update(record_list)
       end
 
+      # Returns a lookup entity to be used during record attributes
+      # @param _messages [Array<Deimos::Message>]
+      # @return [Hash, Set, ActiveRecord::Relation]
+      def record_lookup(_messages)
+        {}
+      end
+
       # @param messages [Array<Deimos::Message>]
       # @return [BatchRecordList]
       def build_records(messages)
+        lookup = record_lookup(messages)
         records = messages.map do |m|
-          attrs = if self.method(:record_attributes).parameters.size == 2
+          attrs = case self.method(:record_attributes).parameters.size
+                  when 3
+                    record_attributes(m.payload, m.key, lookup)
+                  when 2
                     record_attributes(m.payload, m.key)
                   else
                     record_attributes(m.payload)
                   end
+
           next nil if attrs.nil?
 
           attrs = attrs.merge(record_key(m.key))

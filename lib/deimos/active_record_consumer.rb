@@ -75,8 +75,9 @@ module Deimos
     # attributes set to the new/existing record.
     # @param payload [Hash,Deimos::SchemaClass::Record]
     # @param _key [String]
+    # @param _lookup [Set, ActiveRecord::Relation, Hash]
     # @return [Hash]
-    def record_attributes(payload, _key=nil)
+    def record_attributes(payload, _key=nil, _lookup=nil)
       @converter.convert(payload)
     end
 
