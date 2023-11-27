@@ -25,18 +25,18 @@ module Deimos
 
       # @param method [Proc]
       # @param block [Block]
-      # @return [Array<BatchRecord>]
+      # @return [Array<BatchRecord>, Void]
       def reject!(method=nil, &block)
         if method.nil?
           self.batch_records.reject!(&block)
         else
           case method.parameters.size
           when 2
-            self.batch_records.select! do |record|
+            self.batch_records.reject! do |record|
               method.call(record.record, record.associations)
             end
           else
-            self.batch_records.select! { |record| method.call(record.record) }
+            self.batch_records.reject! { |record| method.call(record.record) }
           end
         end
       end

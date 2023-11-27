@@ -151,7 +151,7 @@ module Deimos
                                            end
         end
 
-        unless removed.empty?
+        if removed.any?
           if max_db_batch_size
             removed.each_slice(max_db_batch_size) { |group| remove_records(group) }
           else
