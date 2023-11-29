@@ -117,18 +117,24 @@ module Deimos
       # All messages are split into slices containing only unique keys, and
       # each slice is handles as its own batch.
       # @param messages [Array<Message>] List of messages.
-      # @return [void]
+      # @return [Array<Array<ActiveRecord::Base>, Array<BatchRecord>>]
       def uncompacted_update(messages)
+        valid_records = []
+        invalid_records = []
         BatchSlicer.
-          slice(messages).
-          each(&method(:update_database))
+          slice(messages).each do |slice|
+          valid, invalid = self.update_database(slice)
+          valid_records.push(*valid) if valid.any?
+          invalid_records.push(*invalid) if invalid.any?
+          end
+        [valid_records, invalid_records]
       end
 
       # Perform database operations for a group of messages.
       # All messages with payloads are passed to upsert_records.
       # All tombstones messages are passed to remove_records.
       # @param messages [Array<Message>] List of messages.
-      # @return [void]
+      # @return [Array<Array<ActiveRecord::Base>, Array<BatchRecord>>]
       def update_database(messages)
         # Find all upserted records (i.e. that have a payload) and all
         # deleted record (no payload)
@@ -141,8 +147,8 @@ module Deimos
           valid_upserts, invalid_upserts = if max_db_batch_size
                                              upserted.each_slice(max_db_batch_size) do |group|
                                                valid, invalid = upsert_records(group)
-                                               valid_upserts.push(valid)
-                                               invalid_upserts.push(invalid)
+                                               valid_upserts.push(*valid) if valid.any?
+                                               invalid_upserts.push(*invalid) if invalid.any?
                                              end
                                              valid_upserts.compact!
                                              invalid_upserts.compact!
@@ -169,7 +175,7 @@ module Deimos
         record_list = build_records(messages)
         invalid = filter_records(record_list)
 
-        return if record_list.empty?
+        return [[], invalid] if record_list.empty?
 
         key_col_proc = self.method(:key_columns).to_proc
         col_proc = self.method(:columns).to_proc
@@ -185,24 +191,21 @@ module Deimos
       # @param record_list [BatchRecordList]
       # @return [Array<BatchRecord>]
       def filter_records(record_list)
-        record_list.reject!(self.method(:should_consume?).to_proc)
+        record_list.partition!(self.method(:should_consume?).to_proc)
       end
 
-      # Returns a lookup entity to be used during record attributes
+      # Process messages prior to saving to datbase
       # @param _messages [Array<Deimos::Message>]
-      # @return [Hash, Set, ActiveRecord::Relation]
-      def record_lookup(_messages)
-        {}
+      def pre_process(_messages)
+        nil
       end
 
       # @param messages [Array<Deimos::Message>]
       # @return [BatchRecordList]
       def build_records(messages)
-        lookup = record_lookup(messages)
+        pre_process(messages)
         records = messages.map do |m|
           attrs = case self.method(:record_attributes).parameters.size
-                  when 3
-                    record_attributes(m.payload, m.key, lookup)
                   when 2
                     record_attributes(m.payload, m.key)
                   else

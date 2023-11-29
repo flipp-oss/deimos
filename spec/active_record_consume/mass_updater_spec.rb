@@ -55,20 +55,25 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
               klass: Widget,
               attributes: { test_id: 'id1', some_int: 5, detail: { title: 'Title 1' } },
               bulk_import_column: 'bulk_import_id',
-              bulk_id_generator: bulk_id_generator
+              bulk_import_id_generator: bulk_id_generator
             ),
             Deimos::ActiveRecordConsume::BatchRecord.new(
               klass: Widget,
               attributes: { test_id: 'id2', some_int: 10, detail: { title: 'Title 2' } },
               bulk_import_column: 'bulk_import_id',
-              bulk_id_generator: bulk_id_generator
+              bulk_import_id_generator: bulk_id_generator
             )
           ]
         )
       end
 
       it 'should mass update the batch' do
-        described_class.new(Widget).mass_update(batch)
+        allow(SecureRandom).to receive(:uuid).and_return('1', '2')
+
+        results = described_class.new(Widget).mass_update(batch)
+        expect(results.count).to eq(2)
+        expect(results.map(&:test_id)).to match(%w(id1 id2))
+        expect(results.map(&:bulk_import_id)).to match(%w(1 2))
         expect(Widget.count).to eq(2)
         expect(Detail.count).to eq(2)
         expect(Widget.first.detail).not_to be_nil

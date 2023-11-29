@@ -24,21 +24,20 @@ module Deimos
       end
 
       # @param method [Proc]
-      # @param block [Block]
-      # @return [Array<BatchRecord>,Void]
-      def reject!(method=nil, &block)
-        if method.nil?
-          self.batch_records.reject!(&block)
-        else
-          case method.parameters.size
-          when 2
-            self.batch_records.reject! do |record|
-              method.call(record.record, record.associations)
-            end
-          else
-            self.batch_records.reject! { |record| method.call(record.record) }
+      # @return [Array<BatchRecord>]
+      def partition!(method)
+        valid, invalid = case method.parameters.size
+                         when 2
+          self.batch_records.partition do |record|
+            method.call(record.record, record.associations)
           end
-        end
+                         else
+          self.batch_records.partition do |record|
+            method.call(record.record)
+          end
+                         end
+        self.batch_records = valid
+        invalid
       end
 
       # Get the original ActiveRecord objects.
