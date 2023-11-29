@@ -123,7 +123,7 @@ module Deimos
         invalid_records = []
         BatchSlicer.
           slice(messages).each do |slice|
-          valid, invalid = self.update_database(slice)
+          valid, invalid = update_database(slice)
           valid_records.push(*valid) if valid.any?
           invalid_records.push(*invalid) if invalid.any?
           end
