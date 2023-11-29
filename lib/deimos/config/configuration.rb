@@ -79,6 +79,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
   # @!visibility private
   # @param kafka_config [FigTree::ConfigStruct]
+  # rubocop:disable  Metrics/PerceivedComplexity, Metrics/AbcSize
   def self.configure_producer_or_consumer(kafka_config)
     klass = kafka_config.class_name.constantize
     klass.class_eval do
@@ -90,15 +91,18 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       if kafka_config.respond_to?(:bulk_import_id_column) # consumer
         klass.config.merge!(
           bulk_import_id_column: kafka_config.bulk_import_id_column,
-          replace_associations: kafka_config.replace_associations.nil? ?
-                                  Deimos.config.consumers.replace_associations :
-                                  kafka_config.replace_associations,
+          replace_associations: if kafka_config.replace_associations.nil?
+                                  Deimos.config.consumers.replace_associations
+                                else
+                                  kafka_config.replace_associations
+                                end,
           bulk_import_id_generator: kafka_config.bulk_import_id_generator ||
             Deimos.config.consumers.bulk_import_id_generator
         )
       end
     end
   end
+  # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize
 
   define_settings do
 
@@ -249,7 +253,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
       # The default function to generate a bulk ID for bulk consumers
       # @return [Block]
-      setting :bulk_import_id_generator, proc { SecureRandom.uuid }
+      setting(:bulk_import_id_generator, proc { SecureRandom.uuid })
 
       # If true, multi-table consumers will blow away associations rather than appending to them.
       # Applies to all consumers unless specified otherwise

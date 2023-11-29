@@ -147,8 +147,8 @@ module Deimos
           valid_upserts, invalid_upserts = if max_db_batch_size
                                              upserted.each_slice(max_db_batch_size) do |group|
                                                valid, invalid = upsert_records(group)
-                                               valid_upserts.push(*valid) if valid.any?
-                                               invalid_upserts.push(*invalid) if invalid.any?
+                                               valid_upserts.push(*valid)
+                                               invalid_upserts.push(*invalid)
                                              end
                                              valid_upserts.compact!
                                              invalid_upserts.compact!

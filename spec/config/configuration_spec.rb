@@ -285,7 +285,7 @@ describe Deimos, 'configuration' do
 
   it 'should override global configurations' do
     described_class.configure do
-      consumers.bulk_import_id_generator proc { 'global' }
+      consumers.bulk_import_id_generator(-> { 'global' })
       consumers.replace_associations true
 
       consumer do
@@ -293,7 +293,7 @@ describe Deimos, 'configuration' do
         schema 'blah'
         topic 'blah'
         group_id 'myconsumerid'
-        bulk_import_id_generator proc { 'consumer' }
+        bulk_import_id_generator(-> { 'consumer' })
         replace_associations false
       end
 
