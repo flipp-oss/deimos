@@ -23,19 +23,25 @@ module Deimos
         self.batch_records.delete_if { |record| !method.call(record.record) }
       end
 
+      # Filter and return removed invalid batch records by the specified method or block
       # @param method [Proc]
+      # @param block [Proc]
       # @return [Array<BatchRecord>]
-      def partition!(method)
-        valid, invalid = case method.parameters.size
-                         when 2
-          self.batch_records.partition do |record|
-            method.call(record.record, record.associations)
-          end
+      def partition!(method=nil, &block)
+        valid, invalid = if method.nil?
+            self.batch_records.partition(&block)
                          else
-          self.batch_records.partition do |record|
-            method.call(record.record)
+            case method.parameters.size
+            when 2
+              self.batch_records.partition do |record|
+                method.call(record.record, record.associations)
+              end
+            else
+              self.batch_records.partition do |record|
+                method.call(record.record)
+              end
+            end
           end
-                         end
         self.batch_records = valid
         invalid
       end
