@@ -603,5 +603,144 @@ module ActiveRecordBatchConsumerTest
 
     end
 
+    describe 'post processing' do
+
+      context 'with uncompacted messages' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config plain: true
+            record_class Widget
+            compacted false
+
+            def should_consume?(record)
+              record.some_int.even?
+            end
+
+            def post_process(valid, invalid)
+              # Success
+              Widget.create!(valid.first.attributes.deep_merge(some_int: 2000, id: 3))
+
+              # Invalid
+              Widget.create!(invalid.first.record.attributes.deep_merge(id: 4)) if invalid.any?
+            end
+
+          end
+        end
+
+        it 'should process successful and failed records' do
+          Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+          Widget.create!(id: 2, test_id: 'def', some_int: 2)
+
+          publish_batch(
+            [
+              { key: 1,
+                payload: { test_id: 'abc', some_int: 11 } },
+              { key: 2,
+                payload: { test_id: 'def', some_int: 20 } }
+            ]
+          )
+
+          widget_one, widget_two, widget_three, widget_four = Widget.all.to_a
+
+          expect(widget_one.some_int).to eq(1)
+          expect(widget_two.some_int).to eq(20)
+          expect(widget_three.some_int).to eq(2000)
+          expect(widget_three.test_id).to eq(widget_two.test_id)
+          expect(widget_four.some_int).to eq(11)
+          expect(widget_four.test_id).to eq(widget_one.test_id)
+        end
+      end
+
+      context 'with post processing' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config plain: true
+            record_class Widget
+            compacted true
+
+            def should_consume?(record)
+              record.some_int.even?
+            end
+
+            def post_process(valid, invalid)
+              # Success
+              Widget.create!(valid.first.attributes.deep_merge(some_int: 2000, id: 3))
+
+              # Invalid
+              Widget.create!(invalid.first.record.attributes.deep_merge(id: 4)) if invalid.any?
+            end
+
+          end
+        end
+
+        it 'should process successful and failed records' do
+          Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+          Widget.create!(id: 2, test_id: 'def', some_int: 2)
+
+          publish_batch(
+            [
+              { key: 1,
+                payload: { test_id: 'abc', some_int: 11 } },
+              { key: 2,
+                payload: { test_id: 'def', some_int: 20 } }
+            ]
+          )
+
+          widget_one, widget_two, widget_three, widget_four = Widget.all.to_a
+
+          expect(widget_one.some_int).to eq(1)
+          expect(widget_two.some_int).to eq(20)
+          expect(widget_three.some_int).to eq(2000)
+          expect(widget_three.test_id).to eq(widget_two.test_id)
+          expect(widget_four.some_int).to eq(11)
+          expect(widget_four.test_id).to eq(widget_one.test_id)
+        end
+      end
+
+      context 'with post processing errors' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config plain: true
+            record_class Widget
+            compacted false
+
+            def post_process(_, _)
+              raise StandardError, 'Something went wrong'
+            end
+
+          end
+        end
+
+        it 'should save records if an exception occurs in post processing' do
+          Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+          Widget.create!(id: 2, test_id: 'def', some_int: 2)
+
+          expect {
+            publish_batch(
+              [
+                { key: 1,
+                  payload: { test_id: 'abc', some_int: 11 } },
+                { key: 2,
+                  payload: { test_id: 'def', some_int: 20 } }
+              ]
+            )
+          }.to raise_error(StandardError, 'Something went wrong')
+
+          widget_one, widget_two = Widget.all.to_a
+
+          expect(widget_one.some_int).to eq(11)
+          expect(widget_two.some_int).to eq(20)
+
+        end
+      end
+
+    end
+
   end
 end

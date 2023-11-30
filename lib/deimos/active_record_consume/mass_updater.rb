@@ -83,9 +83,11 @@ module Deimos
       end
 
       # @param record_list [BatchRecordList]
+      # @return [Array<ActiveRecord::Base>]
       def mass_update(record_list)
         save_records_to_database(record_list)
         import_associations(record_list) if record_list.associations.any?
+        record_list.records
       end
 
     end
