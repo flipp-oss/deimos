@@ -493,5 +493,46 @@ module ActiveRecordBatchConsumerTest
       end
     end
 
+    describe 'pre processing' do
+      context 'with uncompacted messages' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config plain: true
+            record_class Widget
+            compacted false
+
+            def pre_process(messages)
+              messages.each do |message|
+                message.payload[:some_int] = -message.payload[:some_int]
+              end
+            end
+
+          end
+        end
+
+        it 'should process successful and failed records' do
+          Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+          Widget.create!(id: 2, test_id: 'def', some_int: 2)
+
+          publish_batch(
+            [
+              { key: 1,
+                payload: { test_id: 'abc', some_int: 11 } },
+              { key: 2,
+                payload: { test_id: 'def', some_int: 20 } }
+            ]
+          )
+
+          widget_one, widget_two = Widget.all.to_a
+
+          expect(widget_one.some_int).to eq(-11)
+          expect(widget_two.some_int).to eq(-20)
+        end
+      end
+
+    end
+
   end
 end
