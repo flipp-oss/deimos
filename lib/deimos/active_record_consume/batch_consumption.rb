@@ -180,9 +180,9 @@ module Deimos
         record_list.filter!(self.method(:should_consume?).to_proc, consume_filter)
       end
 
-      # @return [NilClass,ActiveRecord::Relation,Hash,Set]
+      # @return [ActiveRecord::Relation,Hash,Set]
       def consume_filter
-        nil
+        { }
       end
 
       # Process messages prior to saving to database
@@ -220,10 +220,10 @@ module Deimos
       end
 
       # Additional processing after records have been successfully upserted
-      # @param _valid_records [Array<ActiveRecord>] Records to be post processed
-      # @param _invalid_records [Array<BatchRecord>] Invalid records to be processed
+      # @param _valid_active_records [Array<ActiveRecord>] Records to be post processed
+      # @param _invalid_batch_records [Array<BatchRecord>] Invalid records to be processed
       # @return [void]
-      def post_process(_valid_records, _invalid_records)
+      def post_process(_valid_active_records, _invalid_batch_records)
         nil
       end
 
