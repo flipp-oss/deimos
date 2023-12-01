@@ -169,9 +169,17 @@ module Deimos
         updater.mass_update(record_list)
       end
 
+      # Process messages prior to saving to database
+      # @param _messages [Array<Deimos::Message>]
+      # @return [Void]
+      def pre_process(_messages)
+        nil
+      end
+
       # @param messages [Array<Deimos::Message>]
       # @return [BatchRecordList]
       def build_records(messages)
+        pre_process(messages)
         records = messages.map do |m|
           attrs = if self.method(:record_attributes).parameters.size == 2
                     record_attributes(m.payload, m.key)
