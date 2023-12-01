@@ -512,7 +512,7 @@ module ActiveRecordBatchConsumerTest
           end
         end
 
-        it 'should process successful and failed records' do
+        it 'should pre-process records' do
           Widget.create!(id: 1, test_id: 'abc', some_int: 1)
           Widget.create!(id: 2, test_id: 'def', some_int: 2)
 
