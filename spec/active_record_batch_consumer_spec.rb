@@ -653,7 +653,7 @@ module ActiveRecordBatchConsumerTest
         end
       end
 
-      context 'with post processing' do
+      context 'with compacted messages' do
         let(:consumer_class) do
           Class.new(described_class) do
             schema 'MySchema'
