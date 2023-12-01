@@ -97,7 +97,7 @@ module Deimos
 
       # @param _record [ActiveRecord::Base]
       # @return [Boolean]
-      def should_consume?(_record)
+      def should_consume?(_record, _associations=nil)
         true
       end
 

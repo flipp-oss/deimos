@@ -91,17 +91,20 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       klass = Class.new(described_class) do
         cattr_accessor :record_attributes_proc
         cattr_accessor :should_consume_proc
+        cattr_accessor :should_consume_association_proc
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config plain: true
         record_class Widget
 
-        def should_consume?(record)
-          if self.should_consume_proc
+        def should_consume?(record, associations=nil)
+          if associations && self.should_consume_association_proc
+            return self.should_consume_association_proc.call(record, associations)
+          elsif self.should_consume_proc
             return self.should_consume_proc.call(record)
+          else
+            true
           end
-
-          true
         end
 
         def record_attributes(payload, _key)
@@ -280,5 +283,28 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
         expect(Widget.count).to eq(2)
       end
     end
-           end
+
+    context 'with invalid associations' do
+
+      before(:each) do
+        consumer_class.should_consume_association_proc = proc { |record, associations|
+          record.some_int <= 10 && associations['detail']['title'] != 'invalid'
+        }
+      end
+
+      it 'should only save valid associations' do
+        publish_batch([{
+                         key: 2,
+                         payload: { test_id: 'xyz', some_int: 5, title: 'valid' } },
+                       { key: 3,
+                         payload: { test_id: 'abc', some_int: 15, title: 'valid' } },
+                       { key: 4,
+                         payload: { test_id: 'abc', some_int: 9, title: 'invalid' } }
+                      ])
+        expect(Widget.count).to eq(2)
+        expect(Widget.second.some_int).to eq(5)
+      end
+    end
+
+  end
 end
