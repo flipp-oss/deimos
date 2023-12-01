@@ -169,7 +169,7 @@ module Deimos
         updater.mass_update(record_list)
       end
 
-      # Process messages prior to saving to datbase
+      # Process messages prior to saving to database
       # @param _messages [Array<Deimos::Message>]
       # @return [Void]
       def pre_process(_messages)

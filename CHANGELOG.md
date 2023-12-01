@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 - Fix: Fixed handler metric for status:received, status:success in batch consumption
+- Feature: Allow pre processing of messages prior to bulk consumption
 
 # 1.22.5 - 2023-07-18
 - Fix: Fixed buffer overflow crash with DB producer.
