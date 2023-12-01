@@ -17,7 +17,7 @@ module Deimos
         self.bulk_import_column = records.first&.bulk_import_column&.to_sym
       end
 
-      # Filter and return removed invalid batch records by the specified method or block
+      # Filter and return removed invalid batch records by the specified method
       # @param method [Proc]
       # @param consume_filter [NilClass, Hash, ActiveRecord::Relation, Set]
       # @return [Array<BatchRecord>]

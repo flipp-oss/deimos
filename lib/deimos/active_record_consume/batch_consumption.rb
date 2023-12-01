@@ -118,7 +118,7 @@ module Deimos
       # All messages are split into slices containing only unique keys, and
       # each slice is handles as its own batch.
       # @param messages [Array<Message>] List of messages.
-      # @return [Void]
+      # @return [void]
       def uncompacted_update(messages)
         BatchSlicer.
           slice(messages).
@@ -129,7 +129,7 @@ module Deimos
       # All messages with payloads are passed to upsert_records.
       # All tombstones messages are passed to remove_records.
       # @param messages [Array<Message>] List of messages.
-      # @return [Void]
+      # @return [void]
       def update_database(messages)
         # Find all upserted records (i.e. that have a payload) and all
         # deleted record (no payload)
@@ -156,7 +156,7 @@ module Deimos
       # Upsert any non-deleted records
       # @param messages [Array<Message>] List of messages for a group of
       # records to either be updated or inserted.
-      # @return [Void]
+      # @return [void]
       def upsert_records(messages)
         record_list = build_records(messages)
         @invalid_batch_records.concat(filter_records(record_list))
