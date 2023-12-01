@@ -91,17 +91,14 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       klass = Class.new(described_class) do
         cattr_accessor :record_attributes_proc
         cattr_accessor :should_consume_proc
-        cattr_accessor :should_consume_association_proc
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config plain: true
         record_class Widget
 
-        def should_consume?(record, associations=nil)
-          if associations && self.should_consume_association_proc
-            self.should_consume_association_proc.call(record, associations)
-          elsif self.should_consume_proc
-            self.should_consume_proc.call(record)
+        def should_consume?(batch_record, _)
+          if self.should_consume_proc
+            self.should_consume_proc.call(batch_record)
           else
             true
           end
@@ -287,8 +284,8 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     context 'with invalid associations' do
 
       before(:each) do
-        consumer_class.should_consume_association_proc = proc { |record, associations|
-          record.some_int <= 10 && associations['detail']['title'] != 'invalid'
+        consumer_class.should_consume_proc = proc { |record, _|
+          record.record.some_int <= 10 && record.associations['detail']['title'] != 'invalid'
         }
       end
 

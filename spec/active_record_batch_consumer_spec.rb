@@ -603,6 +603,56 @@ module ActiveRecordBatchConsumerTest
 
     end
 
+    describe 'should_consume?' do
+
+      let(:consumer_class) do
+        Class.new(described_class) do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          record_class Widget
+          compacted false
+
+          def should_consume?(record, lookup)
+            lookup.find_by(test_id: record.record.test_id, id: record.record.id).nil?
+          end
+
+          def consume_filter
+            Widget.where(id: 2, test_id: 'def')
+          end
+
+        end
+      end
+
+      it 'should skip records in the consume filter' do
+        Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+        Widget.create!(id: 2, test_id: 'def', some_int: 2)
+        publish_batch(
+          [
+            { key: 1,
+              payload: { test_id: 'abc', some_int: 11 } },
+            { key: 2,
+              payload: { test_id: 'def', some_int: 20 } }
+          ]
+        )
+
+        expect(Widget.count).to eq(2)
+        expect(Widget.all.to_a).to match_array([
+                                                 have_attributes(id: 1,
+                                                                 test_id: 'abc',
+                                                                 some_int: 11,
+                                                                 updated_at: start,
+                                                                 created_at: start),
+                                                 have_attributes(id: 2,
+                                                                 test_id: 'def',
+                                                                 some_int: 2,
+                                                                 updated_at: start,
+                                                                 created_at: start)
+                                               ])
+      end
+
+    end
+
     describe 'post processing' do
 
       context 'with uncompacted messages' do
@@ -614,8 +664,8 @@ module ActiveRecordBatchConsumerTest
             record_class Widget
             compacted false
 
-            def should_consume?(record)
-              record.some_int.even?
+            def should_consume?(record, _)
+              record.record.some_int.even?
             end
 
             def post_process(valid, invalid)
@@ -662,8 +712,8 @@ module ActiveRecordBatchConsumerTest
             record_class Widget
             compacted true
 
-            def should_consume?(record)
-              record.some_int.even?
+            def should_consume?(record, _)
+              record.record.some_int.even?
             end
 
             def post_process(valid, invalid)

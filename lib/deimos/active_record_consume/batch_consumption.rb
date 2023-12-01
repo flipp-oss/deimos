@@ -95,9 +95,10 @@ module Deimos
         @klass.unscoped.where(@klass.primary_key => keys)
       end
 
-      # @param _record [ActiveRecord::Base]
+      # @param _batch_record [BatchRecord]
+      # @param _filter [NilClass, Hash, ActiveRecord::Relation, Set]
       # @return [Boolean]
-      def should_consume?(_record, _associations=nil)
+      def should_consume?(_batch_record, _filter=nil)
         true
       end
 
@@ -176,7 +177,12 @@ module Deimos
       # @param record_list [BatchRecordList]
       # @return [Array<BatchRecord>]
       def filter_records(record_list)
-        record_list.partition!(self.method(:should_consume?).to_proc)
+        record_list.filter!(self.method(:should_consume?).to_proc, consume_filter)
+      end
+
+      # @return [NilClass,ActiveRecord::Relation,Hash,Set]
+      def consume_filter
+        nil
       end
 
       # Process messages prior to saving to database
