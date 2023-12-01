@@ -121,8 +121,7 @@ module Deimos
       def uncompacted_update(messages)
         valid_records = []
         invalid_records = []
-        BatchSlicer.
-          slice(messages).each do |slice|
+        BatchSlicer.slice(messages).each do |slice|
           valid, invalid = update_database(slice)
           valid_records.push(*valid) if valid.any?
           invalid_records.push(*invalid) if invalid.any?
