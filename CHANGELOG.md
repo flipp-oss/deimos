@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 - Fix: Fixed handler metric for status:received, status:success in batch consumption
 - Feature: Allow pre processing of messages prior to bulk consumption
+- Feature: Add global configuration for custom `bulk_import_id_generator` proc for all consumers
+- Feature: Add individual configuration for custom `bulk_import_id_generator` proc per consumer
+- Feature: Add global `replace_assocations` value for  for all consumers
+- Feature: Add individual `replace_assocations` value for for individual consumers
 
 # 1.22.5 - 2023-07-18
 - Fix: Fixed buffer overflow crash with DB producer.

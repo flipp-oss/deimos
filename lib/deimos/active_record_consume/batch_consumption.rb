@@ -198,7 +198,8 @@ module Deimos
 
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
-                          bulk_import_column: col)
+                          bulk_import_column: col,
+                          bulk_import_id_generator: self.class.bulk_import_id_generator)
         end
         BatchRecordList.new(records.compact)
       end
