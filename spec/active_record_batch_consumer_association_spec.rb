@@ -99,9 +99,9 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
         def should_consume?(record, associations=nil)
           if associations && self.should_consume_association_proc
-            return self.should_consume_association_proc.call(record, associations)
+            self.should_consume_association_proc.call(record, associations)
           elsif self.should_consume_proc
-            return self.should_consume_proc.call(record)
+            self.should_consume_proc.call(record)
           else
             true
           end
@@ -293,18 +293,17 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       end
 
       it 'should only save valid associations' do
-        publish_batch([{
-                         key: 2,
-                         payload: { test_id: 'xyz', some_int: 5, title: 'valid' } },
-                       { key: 3,
-                         payload: { test_id: 'abc', some_int: 15, title: 'valid' } },
-                       { key: 4,
-                         payload: { test_id: 'abc', some_int: 9, title: 'invalid' } }
+        publish_batch([
+                        { key: 2,
+                          payload: { test_id: 'xyz', some_int: 5, title: 'valid' } },
+                        { key: 3,
+                          payload: { test_id: 'abc', some_int: 15, title: 'valid' } },
+                        { key: 4,
+                          payload: { test_id: 'abc', some_int: 9, title: 'invalid' } }
                       ])
         expect(Widget.count).to eq(2)
         expect(Widget.second.some_int).to eq(5)
       end
     end
-
-  end
+           end
 end
