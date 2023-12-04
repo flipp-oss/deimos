@@ -30,7 +30,6 @@ module Deimos
 
         tags = %W(topic:#{metadata[:topic]})
         @valid_active_records = []
-        @invalid_batch_records = []
 
         Deimos.instrument('ar_consumer.consume_batch', tags) do
           # The entire batch should be treated as one transaction so that if
@@ -43,8 +42,15 @@ module Deimos
               uncompacted_update(messages)
             end
           end
-          post_process(@valid_active_records, @invalid_batch_records)
+          process_valid_records(@valid_active_records)
         end
+      end
+
+      # Additional processing after records have been unsuccessfully upserted
+      # @param _invalid_batch_records [Array<BatchRecord>] Invalid records to be processed
+      # @return [void]
+      def self.process_invalid_records(_invalid_batch_records)
+        nil
       end
 
     protected
@@ -96,9 +102,8 @@ module Deimos
       end
 
       # @param _batch_record [BatchRecord]
-      # @param _filter [NilClass, Hash, ActiveRecord::Relation, Set]
       # @return [Boolean]
-      def should_consume?(_batch_record, _filter=nil)
+      def should_consume?(_batch_record)
         true
       end
 
@@ -159,8 +164,14 @@ module Deimos
       # @return [void]
       def upsert_records(messages)
         record_list = build_records(messages)
-        @invalid_batch_records.concat(filter_records(record_list))
+        invalid = filter_records(record_list)
+        if invalid.any?
+          ActiveSupport::Notifications.instrument('batch_consumption.invalid_records', {
+                                                    records: invalid,
+                                                    consumer: self.class
+                                                  })
 
+        end
         return if record_list.empty?
 
         key_col_proc = self.method(:key_columns).to_proc
@@ -175,14 +186,9 @@ module Deimos
       end
 
       # @param record_list [BatchRecordList]
-      # @return [Array<BatchRecord>]
+      # @return [void]
       def filter_records(record_list)
-        record_list.filter!(self.method(:should_consume?).to_proc, consume_filter)
-      end
-
-      # @return [ActiveRecord::Relation,Hash,Set]
-      def consume_filter
-        { }
+        record_list.filter!(self.method(:should_consume?).to_proc)
       end
 
       # Process messages prior to saving to database
@@ -221,9 +227,8 @@ module Deimos
 
       # Additional processing after records have been successfully upserted
       # @param _valid_active_records [Array<ActiveRecord>] Records to be post processed
-      # @param _invalid_batch_records [Array<BatchRecord>] Invalid records to be processed
       # @return [void]
-      def post_process(_valid_active_records, _invalid_batch_records)
+      def process_valid_records(_valid_active_records)
         nil
       end
 

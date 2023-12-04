@@ -613,18 +613,18 @@ module ActiveRecordBatchConsumerTest
           record_class Widget
           compacted false
 
-          def should_consume?(record, lookup)
-            lookup.find_by(test_id: record.record.test_id, id: record.record.id).nil?
+          def should_consume?(record)
+            record.record.test_id != 'def'
           end
 
-          def consume_filter
-            Widget.where(id: 2, test_id: 'def')
+          def self.process_invalid_records(_)
+            nil
           end
 
         end
       end
 
-      it 'should skip records in the consume filter' do
+      it "should skip records that shouldn't be consumed" do
         Widget.create!(id: 1, test_id: 'abc', some_int: 1)
         Widget.create!(id: 2, test_id: 'def', some_int: 2)
         publish_batch(
@@ -664,16 +664,18 @@ module ActiveRecordBatchConsumerTest
             record_class Widget
             compacted false
 
-            def should_consume?(record, _)
+            def should_consume?(record)
               record.record.some_int.even?
             end
 
-            def post_process(valid, invalid)
+            def process_valid_records(valid)
               # Success
               Widget.create!(valid.first.attributes.deep_merge(some_int: 2000, id: 3))
+            end
 
+            def self.process_invalid_records(invalid)
               # Invalid
-              Widget.create!(invalid.first.record.attributes.deep_merge(id: 4)) if invalid.any?
+              Widget.create!(invalid.first.record.attributes.deep_merge(id: 4))
             end
 
           end
@@ -712,14 +714,16 @@ module ActiveRecordBatchConsumerTest
             record_class Widget
             compacted true
 
-            def should_consume?(record, _)
+            def should_consume?(record)
               record.record.some_int.even?
             end
 
-            def post_process(valid, invalid)
+            def process_valid_records(valid)
               # Success
               Widget.create!(valid.first.attributes.deep_merge(some_int: 2000, id: 3))
+            end
 
+            def self.process_invalid_records(invalid)
               # Invalid
               Widget.create!(invalid.first.record.attributes.deep_merge(id: 4)) if invalid.any?
             end
@@ -760,7 +764,7 @@ module ActiveRecordBatchConsumerTest
             record_class Widget
             compacted false
 
-            def post_process(_, _)
+            def process_valid_records(_)
               raise StandardError, 'Something went wrong'
             end
 

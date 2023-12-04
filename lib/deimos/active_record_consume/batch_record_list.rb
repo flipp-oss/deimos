@@ -19,11 +19,10 @@ module Deimos
 
       # Filter and return removed invalid batch records by the specified method
       # @param method [Proc]
-      # @param consume_filter [NilClass, Hash, ActiveRecord::Relation, Set]
       # @return [Array<BatchRecord>]
-      def filter!(method, consume_filter=nil)
+      def filter!(method)
         self.batch_records, invalid = self.batch_records.partition do |record|
-          method.call(record, consume_filter)
+          method.call(record)
         end
         invalid
       end
