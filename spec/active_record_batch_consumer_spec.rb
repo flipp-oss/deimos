@@ -11,6 +11,7 @@ module ActiveRecordBatchConsumerTest
         t.string(:part_two)
         t.integer(:some_int)
         t.boolean(:deleted, default: false)
+        t.string(:bulk_import_id)
         t.timestamps
 
         t.index(%i(part_one part_two), unique: true)
@@ -529,6 +530,74 @@ module ActiveRecordBatchConsumerTest
 
           expect(widget_one.some_int).to eq(-11)
           expect(widget_two.some_int).to eq(-20)
+        end
+      end
+    end
+
+    describe 'global configurations' do
+
+      context 'with a global bulk_import_id_generator' do
+
+        before(:each) do
+          Deimos.configure do
+            consumers.bulk_import_id_generator(proc { 'global' })
+          end
+        end
+
+        it 'should call the default bulk_import_id_generator proc' do
+          publish_batch(
+            [
+              { key: 1,
+                payload: { test_id: 'abc', some_int: 3 } }
+            ]
+          )
+
+          expect(all_widgets).
+            to match_array(
+              [
+                have_attributes(id: 1,
+                                test_id: 'abc',
+                                some_int: 3,
+                                updated_at: start,
+                                created_at: start,
+                                bulk_import_id: 'global')
+              ]
+            )
+
+        end
+
+      end
+
+      context 'with a class defined bulk_import_id_generator' do
+
+        before(:each) do
+          Deimos.configure do
+            consumers.bulk_import_id_generator(proc { 'global' })
+          end
+          consumer_class.config[:bulk_import_id_generator] = proc { 'custom' }
+        end
+
+        it 'should call the default bulk_import_id_generator proc' do
+
+          publish_batch(
+            [
+              { key: 1,
+                payload: { test_id: 'abc', some_int: 3 } }
+            ]
+          )
+
+          expect(all_widgets).
+            to match_array(
+              [
+                have_attributes(id: 1,
+                                test_id: 'abc',
+                                some_int: 3,
+                                updated_at: start,
+                                created_at: start,
+                                bulk_import_id: 'custom')
+              ]
+            )
+
         end
       end
 

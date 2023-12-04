@@ -35,6 +35,16 @@ module Deimos
         config[:bulk_import_id_column]
       end
 
+      # @return [Proc]
+      def bulk_import_id_generator
+        config[:bulk_import_id_generator]
+      end
+
+      # @return [Boolean]
+      def replace_associations
+        config[:replace_associations]
+      end
+
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
       # @return [void]

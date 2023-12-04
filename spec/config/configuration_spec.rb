@@ -91,7 +91,8 @@ describe Deimos, 'configuration' do
           heartbeat_interval: 10,
           handler: 'ConsumerTest::MyConsumer',
           use_schema_classes: nil,
-          max_db_batch_size: nil
+          max_db_batch_size: nil,
+          bulk_import_id_generator: nil
         }, {
           topic: 'my_batch_consume_topic',
           group_id: 'my_batch_group_id',
@@ -109,7 +110,8 @@ describe Deimos, 'configuration' do
           heartbeat_interval: 10,
           handler: 'ConsumerTest::MyBatchConsumer',
           use_schema_classes: nil,
-          max_db_batch_size: nil
+          max_db_batch_size: nil,
+          bulk_import_id_generator: nil
         }
       ],
       producer: {
@@ -261,7 +263,8 @@ describe Deimos, 'configuration' do
             heartbeat_interval: 13,
             handler: 'MyConfigConsumer',
             use_schema_classes: false,
-            max_db_batch_size: nil
+            max_db_batch_size: nil,
+            bulk_import_id_generator: nil
           }
         ],
         producer: {
@@ -278,5 +281,41 @@ describe Deimos, 'configuration' do
           delivery_interval: 1
         }
       )
+  end
+
+  it 'should override global configurations' do
+    described_class.configure do
+      consumers.bulk_import_id_generator(-> { 'global' })
+      consumers.replace_associations true
+
+      consumer do
+        class_name 'MyConfigConsumer'
+        schema 'blah'
+        topic 'blah'
+        group_id 'myconsumerid'
+        bulk_import_id_generator(-> { 'consumer' })
+        replace_associations false
+      end
+
+      consumer do
+        class_name 'MyConfigConsumer2'
+        schema 'blah'
+        topic 'blah'
+        group_id 'myconsumerid'
+      end
+    end
+
+    consumers = described_class.config.consumers
+    expect(consumers.replace_associations).to eq(true)
+    expect(consumers.bulk_import_id_generator.call).to eq('global')
+
+    custom = MyConfigConsumer.config
+    expect(custom[:replace_associations]).to eq(false)
+    expect(custom[:bulk_import_id_generator].call).to eq('consumer')
+
+    default = MyConfigConsumer2.config
+    expect(default[:replace_associations]).to eq(true)
+    expect(default[:bulk_import_id_generator].call).to eq('global')
+
   end
 end

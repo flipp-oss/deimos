@@ -165,7 +165,8 @@ module Deimos
         updater = MassUpdater.new(@klass,
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
-                                  replace_associations: self.class.config[:replace_associations])
+                                  replace_associations: self.class.replace_associations,
+                                  bulk_import_id_generator: self.class.bulk_import_id_generator)
         updater.mass_update(record_list)
       end
 
@@ -197,7 +198,8 @@ module Deimos
 
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
-                          bulk_import_column: col)
+                          bulk_import_column: col,
+                          bulk_import_id_generator: self.class.bulk_import_id_generator)
         end
         BatchRecordList.new(records.compact)
       end
