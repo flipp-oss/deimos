@@ -675,12 +675,14 @@ module ActiveRecordBatchConsumerTest
 
             def self.process_valid_records(valid)
               # Success
-              Widget.create!(valid.first.attributes.deep_merge(some_int: 2000, id: 3))
+              attrs = valid.first.attributes
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: 2000)
             end
 
             def self.process_invalid_records(invalid)
               # Invalid
-              Widget.create!(invalid.first.record.attributes.deep_merge(id: 4))
+              attrs = invalid.first.record.attributes
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
             end
 
             ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
@@ -709,14 +711,10 @@ module ActiveRecordBatchConsumerTest
             ]
           )
 
-          widget_one, widget_two, widget_three, widget_four = Widget.all.to_a
+          widget_one, widget_two = Widget.all.to_a
 
-          expect(widget_one.some_int).to eq(1)
-          expect(widget_two.some_int).to eq(20)
-          expect(widget_three.some_int).to eq(2000)
-          expect(widget_three.test_id).to eq(widget_two.test_id)
-          expect(widget_four.some_int).to eq(11)
-          expect(widget_four.test_id).to eq(widget_one.test_id)
+          expect(widget_one.some_int).to eq(11)
+          expect(widget_two.some_int).to eq(2000)
         end
       end
 
@@ -735,12 +733,14 @@ module ActiveRecordBatchConsumerTest
 
             def self.process_valid_records(valid)
               # Success
-              Widget.create!(valid.first.attributes.deep_merge(some_int: 2000, id: 3))
+              attrs = valid.first.attributes
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: 2000)
             end
 
             def self.process_invalid_records(invalid)
               # Invalid
-              Widget.create!(invalid.first.record.attributes.deep_merge(id: 4)) if invalid.any?
+              attrs = invalid.first.record.attributes
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
             end
 
             ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
@@ -769,14 +769,10 @@ module ActiveRecordBatchConsumerTest
             ]
           )
 
-          widget_one, widget_two, widget_three, widget_four = Widget.all.to_a
+          widget_one, widget_two = Widget.all.to_a
 
-          expect(widget_one.some_int).to eq(1)
-          expect(widget_two.some_int).to eq(20)
-          expect(widget_three.some_int).to eq(2000)
-          expect(widget_three.test_id).to eq(widget_two.test_id)
-          expect(widget_four.some_int).to eq(11)
-          expect(widget_four.test_id).to eq(widget_one.test_id)
+          expect(widget_one.some_int).to eq(11)
+          expect(widget_two.some_int).to eq(2000)
         end
       end
 

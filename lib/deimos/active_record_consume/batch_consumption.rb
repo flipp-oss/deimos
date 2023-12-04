@@ -49,20 +49,6 @@ module Deimos
         end
       end
 
-      # Additional processing after records have been successfully upserted
-      # @param _valid_active_records [Array<ActiveRecord>] Records to be post processed
-      # @return [void]
-      def self.process_valid_records(_valid_active_records)
-        nil
-      end
-
-      # Additional processing after records have been unsuccessfully upserted
-      # @param _invalid_batch_records [Array<BatchRecord>] Invalid records to be processed
-      # @return [void]
-      def self.process_invalid_records(_invalid_batch_records)
-        nil
-      end
-
     protected
 
       # Get the set of attribute names that uniquely identify messages in the
