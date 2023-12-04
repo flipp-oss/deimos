@@ -42,8 +42,18 @@ module Deimos
               uncompacted_update(messages)
             end
           end
-          process_valid_records(@valid_active_records)
+          ActiveSupport::Notifications.instrument('batch_consumption.valid_records', {
+                                                    records: @valid_active_records,
+                                                    consumer: self.class
+                                                  })
         end
+      end
+
+      # Additional processing after records have been successfully upserted
+      # @param _valid_active_records [Array<ActiveRecord>] Records to be post processed
+      # @return [void]
+      def self.process_valid_records(_valid_active_records)
+        nil
       end
 
       # Additional processing after records have been unsuccessfully upserted
@@ -223,13 +233,6 @@ module Deimos
                           bulk_import_id_generator: self.class.bulk_import_id_generator)
         end
         BatchRecordList.new(records.compact)
-      end
-
-      # Additional processing after records have been successfully upserted
-      # @param _valid_active_records [Array<ActiveRecord>] Records to be post processed
-      # @return [void]
-      def process_valid_records(_valid_active_records)
-        nil
       end
 
       # Delete any records with a tombstone.

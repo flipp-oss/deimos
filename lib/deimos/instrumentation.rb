@@ -80,9 +80,4 @@ module Deimos
     event = ActiveSupport::Notifications::Event.new(*args)
     KafkaListener.send_produce_error(event)
   end
-
-  ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
-    payload = ActiveSupport::Notifications::Event.new(*args).payload
-    payload[:consumer].process_invalid_records(payload[:records])
-  end
 end

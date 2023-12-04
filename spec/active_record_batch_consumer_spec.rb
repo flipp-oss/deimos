@@ -621,6 +621,11 @@ module ActiveRecordBatchConsumerTest
             nil
           end
 
+          ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
+            payload = ActiveSupport::Notifications::Event.new(*args).payload
+            payload[:consumer].process_invalid_records(payload[:records])
+          end
+
         end
       end
 
@@ -668,7 +673,7 @@ module ActiveRecordBatchConsumerTest
               record.record.some_int.even?
             end
 
-            def process_valid_records(valid)
+            def self.process_valid_records(valid)
               # Success
               Widget.create!(valid.first.attributes.deep_merge(some_int: 2000, id: 3))
             end
@@ -676,6 +681,16 @@ module ActiveRecordBatchConsumerTest
             def self.process_invalid_records(invalid)
               # Invalid
               Widget.create!(invalid.first.record.attributes.deep_merge(id: 4))
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_invalid_records(payload[:records])
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_valid_records(payload[:records])
             end
 
           end
@@ -718,7 +733,7 @@ module ActiveRecordBatchConsumerTest
               record.record.some_int.even?
             end
 
-            def process_valid_records(valid)
+            def self.process_valid_records(valid)
               # Success
               Widget.create!(valid.first.attributes.deep_merge(some_int: 2000, id: 3))
             end
@@ -726,6 +741,16 @@ module ActiveRecordBatchConsumerTest
             def self.process_invalid_records(invalid)
               # Invalid
               Widget.create!(invalid.first.record.attributes.deep_merge(id: 4)) if invalid.any?
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_invalid_records(payload[:records])
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_valid_records(payload[:records])
             end
 
           end
@@ -764,8 +789,13 @@ module ActiveRecordBatchConsumerTest
             record_class Widget
             compacted false
 
-            def process_valid_records(_)
+            def self.process_valid_records(_)
               raise StandardError, 'Something went wrong'
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_valid_records(payload[:records])
             end
 
           end
