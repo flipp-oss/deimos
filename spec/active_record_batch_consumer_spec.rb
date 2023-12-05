@@ -37,11 +37,6 @@ module ActiveRecordBatchConsumerTest
       consumer_class.config[:bulk_import_id_column] = :bulk_import_id # default
     end
 
-    before(:each) do
-      allow(Deimos.config.tracer.active_span).to receive(:set_tag)
-      allow(Deimos.config.tracer.active_span).to receive(:get_tag).with('topic').and_return(%w(topic:mytopic))
-    end
-
     around(:each) do |ex|
       # Set and freeze example time
       travel_to start do

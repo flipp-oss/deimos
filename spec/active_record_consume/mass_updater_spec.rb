@@ -45,7 +45,6 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
       stub_const('Widget', widget_class)
       stub_const('Detail', detail_class)
       Widget.reset_column_information
-      allow(Deimos.config.tracer.active_span).to receive(:get_tag).with('topic').and_return(%w(topic:mytopic))
     end
 
     describe '#mass_update' do

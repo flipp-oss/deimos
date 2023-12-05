@@ -10,6 +10,7 @@ module Deimos
       def initialize(logger=nil)
         @logger = logger || Logger.new(STDOUT)
         @logger.info('MockTracingProvider initialized')
+        @active_span = MockSpan.new
       end
 
       # @param span_name [String]
@@ -32,18 +33,22 @@ module Deimos
 
       # :nodoc:
       def active_span
-        nil
+        @active_span ||= MockSpan.new
       end
 
       # :nodoc:
       def set_tag(tag, value, span=nil)
-        nil
+        if span
+          span.set_tag(tag, value)
+        else
+          @span.set_tag(tag, value)
+        end
       end
 
       # Get a tag from a span with the specified tag.
       # @param tag [String]
       def get_tag(tag)
-        nil
+        @span.get_tag(tag)
       end
 
       # :nodoc:
@@ -51,6 +56,24 @@ module Deimos
         span[:exception] = exception
         name = span[:name]
         @logger.info("Mock span '#{name}' set an error: #{exception}")
+      end
+    end
+
+    # Mock Span class
+    class MockSpan
+      # :nodoc:
+      def initialize
+        @span = {}
+      end
+
+      # :nodoc:
+      def set_tag(tag, value)
+        @span[tag] = value
+      end
+
+      # :nodoc:
+      def get_tag(tag)
+        @span[tag]
       end
     end
   end
