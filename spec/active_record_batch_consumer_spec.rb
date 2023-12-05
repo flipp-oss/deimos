@@ -255,64 +255,6 @@ module ActiveRecordBatchConsumerTest
       end
     end
 
-    describe 'batch atomicity' do
-      it 'should roll back if there was an exception while deleting' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2)
-
-        travel 1.day
-
-        expect(Widget.connection).to receive(:delete).and_raise('Some error')
-
-        expect {
-          publish_batch(
-            [
-              { key: 1,
-                payload: { test_id: 'def', some_int: 3 } },
-              { key: 1,
-                payload: nil }
-            ]
-          )
-        }.to raise_error('Some error')
-
-        expect(all_widgets).
-          to match_array(
-            [
-              have_attributes(id: 1, test_id: 'abc', some_int: 2, updated_at: start, created_at: start)
-            ]
-          )
-      end
-
-      it 'should roll back if there was an invalid instance while upserting' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2) # Updated but rolled back
-        Widget.create!(id: 3, test_id: 'ghi', some_int: 3) # Removed but rolled back
-
-        travel 1.day
-
-        expect {
-          publish_batch(
-            [
-              { key: 1,
-                payload: { test_id: 'def', some_int: 3 } },
-              { key: 2,
-                payload: nil },
-              { key: 2,
-                payload: { test_id: '', some_int: 4 } }, # Empty string is not valid for test_id
-              { key: 3,
-                payload: nil }
-            ]
-          )
-        }.to raise_error(ActiveRecord::RecordInvalid)
-
-        expect(all_widgets).
-          to match_array(
-            [
-              have_attributes(id: 1, test_id: 'abc', some_int: 2, updated_at: start, created_at: start),
-              have_attributes(id: 3, test_id: 'ghi', some_int: 3, updated_at: start, created_at: start)
-            ]
-          )
-      end
-    end
-
     describe 'compound keys' do
       let(:consumer_class) do
         Class.new(described_class) do
