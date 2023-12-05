@@ -45,6 +45,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
       stub_const('Widget', widget_class)
       stub_const('Detail', detail_class)
       Widget.reset_column_information
+      allow(Deimos.config.tracer.active_span).to receive(:get_tag).with('topic').and_return(%w(topic:mytopic))
     end
 
     describe '#mass_update' do
@@ -69,8 +70,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
 
       it 'should mass update the batch' do
         allow(SecureRandom).to receive(:uuid).and_return('1', '2')
-        results = described_class.new(Widget, %w(topic:my-topic),
-                                      bulk_import_id_generator: bulk_id_generator).mass_update(batch)
+        results = described_class.new(Widget, bulk_import_id_generator: bulk_id_generator).mass_update(batch)
         expect(results.count).to eq(2)
         expect(results.map(&:test_id)).to match(%w(id1 id2))
         expect(Widget.count).to eq(2)

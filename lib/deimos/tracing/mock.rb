@@ -40,6 +40,12 @@ module Deimos
         nil
       end
 
+      # Get a tag from a span with the specified tag.
+      # @param tag [String]
+      def get_tag(tag)
+        nil
+      end
+
       # :nodoc:
       def set_error(span, exception)
         span[:exception] = exception

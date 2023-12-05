@@ -42,6 +42,12 @@ module Deimos
         raise NotImplementedError
       end
 
+      # Get a tag from a span with the specified tag.
+      # @param tag [String]
+      def get_tag(tag)
+        raise NotImplementedError
+      end
+
     end
   end
 end

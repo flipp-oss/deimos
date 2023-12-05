@@ -28,15 +28,16 @@ module Deimos
           zip(metadata[:keys]).
           map { |p, k| Deimos::Message.new(p, nil, key: k) }
 
-        @tags = %W(topic:#{metadata[:topic]})
+        Deimos.config.tracer.active_span.set_tag('topic', metadata[:topic])
 
-        Deimos.instrument('ar_consumer.consume_batch', @tags) do
+        Deimos.instrument('ar_consumer.consume_batch',
+                          Deimos.config.tracer.active_span.get_tag('topic')) do
           if @compacted || self.class.config[:no_keys]
             update_database(compact_messages(messages))
           else
             uncompacted_update(messages)
           end
-        end
+                          end
       end
 
     protected
@@ -152,12 +153,11 @@ module Deimos
       def upsert_records(messages)
         record_list = build_records(messages)
         invalid = filter_records(record_list)
-        unless invalid.blank?
+        if invalid.any?
           ActiveSupport::Notifications.instrument('batch_consumption.invalid_records', {
                                                     records: invalid,
                                                     consumer: self.class
                                                   })
-
         end
         return if record_list.empty?
 
@@ -165,7 +165,6 @@ module Deimos
         col_proc = self.method(:columns).to_proc
 
         updater = MassUpdater.new(@klass,
-                                  @tags,
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
                                   replace_associations: self.class.replace_associations,
@@ -221,9 +220,11 @@ module Deimos
       # deleted records.
       # @return [void]
       def remove_records(messages)
-        clause = deleted_query(messages)
+        Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
+          clause = deleted_query(messages)
 
-        clause.delete_all
+          clause.delete_all
+        end
       end
     end
   end
