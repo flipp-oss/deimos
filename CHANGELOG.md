@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature: Add individual configuration for custom `bulk_import_id_generator` proc per consumer
 - Feature: Add global `replace_assocations` value for  for all consumers
 - Feature: Add individual `replace_assocations` value for for individual consumers
-- ***BREAKING CHANGE***: `should_consume?` method uses record of type `BatchRecord` instead of `ActiveRecord` when determining records to consume
+- Feature: `should_consume?` method accepts BatchRecord associations
 - Feature: Reintroduce `filter_records` for bulk filtering of records prior to insertion
 - Feature: Return valid and invalid records saved during consumption for further processing in `batch_consumption.valid_records` and `batch_consumption.invalid_records` ActiveSupport Notifications
 

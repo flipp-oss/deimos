@@ -87,9 +87,10 @@ module Deimos
         @klass.unscoped.where(@klass.primary_key => keys)
       end
 
-      # @param _batch_record [BatchRecord]
+      # @param _record [ActiveRecord::Base]
+      # @param _associations [Hash]
       # @return [Boolean]
-      def should_consume?(_batch_record)
+      def should_consume?(_record, _associations=nil)
         true
       end
 

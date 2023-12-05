@@ -556,7 +556,7 @@ module ActiveRecordBatchConsumerTest
           compacted false
 
           def should_consume?(record)
-            record.record.test_id != 'def'
+            record.test_id != 'def'
           end
 
           def self.process_invalid_records(_)
@@ -612,7 +612,7 @@ module ActiveRecordBatchConsumerTest
             compacted false
 
             def should_consume?(record)
-              record.record.some_int.even?
+              record.some_int.even?
             end
 
             def self.process_valid_records(valid)
@@ -670,7 +670,7 @@ module ActiveRecordBatchConsumerTest
             compacted true
 
             def should_consume?(record)
-              record.record.some_int.even?
+              record.some_int.even?
             end
 
             def self.process_valid_records(valid)

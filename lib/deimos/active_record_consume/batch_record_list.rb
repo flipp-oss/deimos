@@ -21,8 +21,13 @@ module Deimos
       # @param method [Proc]
       # @return [Array<BatchRecord>]
       def filter!(method)
-        self.batch_records, invalid = self.batch_records.partition do |record|
-          method.call(record)
+        self.batch_records, invalid = self.batch_records.partition do |batch_record|
+          case method.parameters.size
+          when 2
+            method.call(batch_record.record, batch_record.associations)
+          else
+            method.call(batch_record.record)
+          end
         end
         invalid
       end

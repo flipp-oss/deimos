@@ -96,9 +96,14 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
         key_config plain: true
         record_class Widget
 
-        def should_consume?(batch_record)
+        def should_consume?(record, associations)
           if self.should_consume_proc
-            self.should_consume_proc.call(batch_record)
+            case self.should_consume_proc.parameters.size
+            when 2
+              self.should_consume_proc.call(record, associations)
+            else
+              self.should_consume_proc.call(record)
+            end
           else
             true
           end
@@ -269,7 +274,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with invalid models' do
       before(:each) do
-        consumer_class.should_consume_proc = proc { |val| val.record.some_int <= 10 }
+        consumer_class.should_consume_proc = proc { |record| record.some_int <= 10 }
       end
 
       it 'should only save valid models' do
@@ -284,8 +289,8 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     context 'with invalid associations' do
 
       before(:each) do
-        consumer_class.should_consume_proc = proc { |record|
-          record.record.some_int <= 10 && record.associations['detail']['title'] != 'invalid'
+        consumer_class.should_consume_proc = proc { |record, associations|
+          record.some_int <= 10 && associations['detail']['title'] != 'invalid'
         }
       end
 
