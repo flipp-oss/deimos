@@ -41,7 +41,7 @@ module Deimos
         if span
           span.set_tag(tag, value)
         else
-          @span.set_tag(tag, value)
+          active_span.set_tag(tag, value)
         end
       end
 
