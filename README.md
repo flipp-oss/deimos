@@ -189,6 +189,12 @@ produced by Phobos and RubyKafka):
    * exception_object
    * messages - the batch of messages (in the form of `Deimos::KafkaMessage`s)
      that failed - this should have only a single message in the batch.
+* `batch_consumption.valid_records` - sent when the consumer has successfully upserted records. Limited by `max_db_batch_size`.
+  * consumer: class of the consumer that upserted these records
+  * records: Records upserted into the DB (of type `ActiveRecord::Base`)
+* `batch_consumption.invalid_records` - sent when the consumer has rejected records returned from `filtered_records`. Limited by `max_db_batch_size`.
+  * consumer: class of the consumer that rejected these records
+  * records: Rejected records (of type `Deimos::ActiveRecordConsume::BatchRecord`)
   
 Similarly: 
 ```ruby
