@@ -28,16 +28,16 @@ module Deimos
           zip(metadata[:keys]).
           map { |p, k| Deimos::Message.new(p, nil, key: k) }
 
-        Deimos.config.tracer.active_span.set_tag('topic', metadata[:topic])
+        tag = metadata[:topic]
+        Deimos.config.tracer.active_span.set_tag('topic', tag)
 
-        Deimos.instrument('ar_consumer.consume_batch',
-                          Deimos.config.tracer.active_span.get_tag('topic')) do
+        Deimos.instrument('ar_consumer.consume_batch', tag) do
           if @compacted || self.class.config[:no_keys]
             update_database(compact_messages(messages))
           else
             uncompacted_update(messages)
           end
-                          end
+        end
       end
 
     protected

@@ -45,6 +45,11 @@ module Deimos
         (span || active_span).set_tag(tag, value)
       end
 
+      # :nodoc:
+      def get_tag(tag)
+        active_span.get_tag(tag)
+      end
+
     end
   end
 end
