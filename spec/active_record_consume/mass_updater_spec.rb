@@ -79,5 +79,40 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
         expect(Widget.last.detail).not_to be_nil
       end
 
+      context 'with deadlock retries' do
+        before(:each) do
+          allow(Deimos::Utils::DeadlockRetry).to receive(:sleep)
+        end
+
+        it 'should upsert rows after deadlocks' do
+          allow(Widget).to receive(:import!).and_raise(
+            ActiveRecord::Deadlocked.new('Lock wait timeout exceeded')
+          ).twice.ordered
+          allow(Widget).to receive(:import!).and_raise(
+            ActiveRecord::Deadlocked.new('Lock wait timeout exceeded')
+          ).once.and_call_original
+
+          results = described_class.new(Widget, bulk_import_id_generator: bulk_id_generator).mass_update(batch)
+          expect(results.count).to eq(2)
+          expect(results.map(&:test_id)).to match(%w(id1 id2))
+          expect(Widget.count).to eq(2)
+          expect(Detail.count).to eq(2)
+          expect(Widget.first.detail).not_to be_nil
+          expect(Widget.last.detail).not_to be_nil
+        end
+
+        it 'should not upsert after encountering multiple deadlocks' do
+          allow(Widget).to receive(:import!).and_raise(
+            ActiveRecord::Deadlocked.new('Lock wait timeout exceeded')
+          ).exactly(3).times
+          expect {
+            described_class.new(Widget, bulk_import_id_generator: bulk_id_generator).mass_update(batch)
+          }.to raise_error(ActiveRecord::Deadlocked)
+          expect(Widget.count).to eq(0)
+          expect(Detail.count).to eq(0)
+        end
+
+      end
+
     end
 end

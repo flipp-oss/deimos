@@ -206,6 +206,48 @@ module ActiveRecordBatchConsumerTest
                 ]
               )
           end
+
+          it 'should handle deletes with deadlock retries' do
+            allow(Deimos::Utils::DeadlockRetry).to receive(:sleep)
+            allow(instance_double(ActiveRecord::Relation)).to receive(:delete_all).and_raise(
+              ActiveRecord::Deadlocked.new('Lock wait timeout exceeded')
+            ).twice.ordered
+
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2)
+
+            publish_batch(
+              [
+                { key: 1,
+                  payload: nil },
+                { key: 1,
+                  payload: nil }
+              ]
+            )
+
+            expect(all_widgets).to be_empty
+          end
+
+          it 'should not delete after multiple deadlock retries' do
+            allow(Deimos::Utils::DeadlockRetry).to receive(:sleep)
+            allow(instance_double(ActiveRecord::Relation)).to receive(:delete_all).and_raise(
+              ActiveRecord::Deadlocked.new('Lock wait timeout exceeded')
+            ).exactly(3).times
+
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2)
+
+            publish_batch(
+              [
+                { key: 1,
+                  payload: nil },
+                { key: 1,
+                  payload: nil }
+              ]
+            )
+
+            expect(Widget.count).to eq(0)
+
+          end
+
         end
       end
     end
