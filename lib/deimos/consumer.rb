@@ -19,8 +19,16 @@ module Deimos
     class << self
       # @return [Deimos::SchemaBackends::Base]
       def decoder
-        @decoder ||= Deimos.schema_backend(schema: config[:schema],
-                                           namespace: config[:namespace])
+        # @decoder ||= Deimos.schema_backend(schema: config[:schema], namespace: config[:namespace])
+
+        return @decoder if @decoder
+
+        @decoder = if Utils::SchemaClass.use?(config.to_h)
+                     schema_class = "Schemas::#{config[:schema]}".constantize.new
+                     Deimos.schema_backend(schema: schema_class.schema, namespace: schema_class.namespace)
+                   else
+                     Deimos.schema_backend(schema: config[:schema], namespace: config[:namespace])
+                   end
       end
 
       # @return [Deimos::SchemaBackends::Base]
