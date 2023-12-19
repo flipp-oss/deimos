@@ -34,14 +34,12 @@ module ConsumerTest
           self.some_int = some_int
         end
 
-        def as_json
-          def as_json(_opts={})
-            {
-              'test_id' => @test_id,
-              'some_int' => @some_int,
-              'payload_key' => @payload_key&.as_json
-            }
-          end
+        def as_json(_opts={})
+          {
+            'test_id' => @test_id,
+            'some_int' => @some_int,
+            'payload_key' => @payload_key&.as_json
+          }
         end
       end
       stub_const('Schemas::MySchema', schema_class)

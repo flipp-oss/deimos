@@ -19,8 +19,6 @@ module Deimos
     class << self
       # @return [Deimos::SchemaBackends::Base]
       def decoder
-        # @decoder ||= Deimos.schema_backend(schema: config[:schema], namespace: config[:namespace])
-
         return @decoder if @decoder
 
         @decoder = if Utils::SchemaClass.use?(config.to_h)
