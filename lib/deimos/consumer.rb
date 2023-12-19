@@ -24,6 +24,9 @@ module Deimos
         return @decoder if @decoder
 
         @decoder = if Utils::SchemaClass.use?(config.to_h)
+                     # Initialize an instance of the provided schema
+                     # in the event the schema class is an override, the inherited
+                     # schema and namespace will be applied
                      schema_class = "Schemas::#{config[:schema]}".constantize.new
                      Deimos.schema_backend(schema: schema_class.schema, namespace: schema_class.namespace)
                    else

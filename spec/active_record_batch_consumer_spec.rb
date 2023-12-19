@@ -35,6 +35,35 @@ module ActiveRecordBatchConsumerTest
       stub_const('MyBatchConsumer', consumer_class)
       stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
       consumer_class.config[:bulk_import_id_column] = :bulk_import_id # default
+      schema_class = Class.new(Deimos::SchemaClass::Record) do
+        def schema
+          'MySchema'
+        end
+
+        def namespace
+          'com.my-namespace'
+        end
+
+        attr_accessor :test_id
+        attr_accessor :some_int
+
+        def initialize(test_id: nil,
+                       some_int: nil)
+          self.test_id = test_id
+          self.some_int = some_int
+        end
+
+        def as_json
+          def as_json(_opts={})
+            {
+              'test_id' => @test_id,
+              'some_int' => @some_int,
+              'payload_key' => @payload_key&.as_json
+            }
+          end
+        end
+      end
+      stub_const('Schemas::MySchema', schema_class)
     end
 
     around(:each) do |ex|

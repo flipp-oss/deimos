@@ -11,15 +11,12 @@ module Deimos
         raise 'Tracing config must specify service_name' if config[:service_name].nil?
 
         @service = config[:service_name]
+        @tracer = ::Datadog.respond_to?(:tracer) ? ::Datadog.tracer : ::Datadog::Tracing
       end
 
       # :nodoc:
       def start(span_name, options={})
-        span = if ::Datadog.respond_to?(:tracer)
-                 ::Datadog.tracer.trace(span_name)
-               else
-                 ::Datadog::Tracing.trace(span_name)
-               end
+        span = @tracer.trace(span_name)
         span.service = @service
         span.resource = options[:resource]
         span
@@ -32,7 +29,7 @@ module Deimos
 
       # :nodoc:
       def active_span
-        ::Datadog.tracer.active_span
+        @tracer.active_span
       end
 
       # :nodoc:

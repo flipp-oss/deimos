@@ -66,6 +66,76 @@ module ActiveRecordConsumerTest
       stub_const('MyCustomFetchConsumer', consumer_class)
 
       Time.zone = 'Eastern Time (US & Canada)'
+
+      schema_class = Class.new(Deimos::SchemaClass::Record) do
+        def schema
+          'MySchema'
+        end
+
+        def namespace
+          'com.my-namespace'
+        end
+
+        attr_accessor :test_id
+        attr_accessor :some_int
+
+        def initialize(test_id: nil,
+                       some_int: nil)
+          self.test_id = test_id
+          self.some_int = some_int
+        end
+
+        def as_json
+          def as_json(_opts={})
+            {
+              'test_id' => @test_id,
+              'some_int' => @some_int,
+              'payload_key' => @payload_key&.as_json
+            }
+          end
+        end
+      end
+      stub_const('Schemas::MySchema', schema_class)
+
+      schema_datetime_class = Class.new(Deimos::SchemaClass::Record) do
+        def schema
+          'MySchemaWithDateTimes'
+        end
+
+        def namespace
+          'com.my-namespace'
+        end
+
+        attr_accessor :test_id
+        attr_accessor :some_int
+        attr_accessor :updated_at
+        attr_accessor :some_datetime_int
+        attr_accessor :timestamp
+
+        def initialize(test_id: nil,
+                       some_int: nil,
+                       updated_at: nil,
+                       some_datetime_int: nil,
+                       timestamp: nil)
+          self.test_id = test_id
+          self.some_int = some_int
+          self.updated_at = updated_at
+          self.some_datetime_int = some_datetime_int
+          self.timestamp = timestamp
+        end
+
+        def as_json(_opts={})
+          {
+            'test_id' => @test_id,
+            'some_int' => @some_int,
+            'updated_at' => @updated_at,
+            'some_datetime_int' => @some_datetime_int,
+            'timestamp' => @timestamp,
+            'payload_key' => @payload_key&.as_json
+          }
+        end
+      end
+      stub_const('Schemas::MySchemaWithDateTimes', schema_datetime_class)
     end
 
     describe 'consume' do
