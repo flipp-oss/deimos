@@ -17,6 +17,14 @@ module Deimos
           modules
         end
 
+        # @param schema [String]
+        # @param namespace [String]
+        # @return [String]
+        def schema_constant(schema, namespace='')
+          constants = modules_for(namespace) + [schema.underscore.camelize.singularize]
+          constants.join('::').safe_constantize
+        end
+
         # Converts a raw payload into an instance of the Schema Class
         # @param payload [Hash, Deimos::SchemaClass::Base]
         # @param schema [String]
@@ -25,8 +33,7 @@ module Deimos
         def instance(payload, schema, namespace='')
           return payload if payload.is_a?(Deimos::SchemaClass::Base)
 
-          constants = modules_for(namespace) + [schema.underscore.camelize.singularize]
-          klass = constants.join('::').safe_constantize
+          klass = schema_constant(schema, namespace)
           return payload if klass.nil? || payload.nil?
 
           klass.new(**payload.symbolize_keys)

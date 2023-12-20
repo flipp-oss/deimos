@@ -38,12 +38,6 @@ module Deimos
         @value
       end
 
-      # @return [SchemaClass::Enum]
-      def self.initialize_from_value(value)
-        return nil if value.nil?
-
-        value.is_a?(self) ? value : self.new(value)
-      end
     end
   end
 end

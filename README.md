@@ -919,6 +919,10 @@ One additional configuration option indicates whether nested records should be g
 
 You can generate a tombstone message (with only a key and no value) by calling the `YourSchemaClass.tombstone(key)` method. If you're using a `:field` key config, you can pass in just the key scalar value. If using a key schema, you can pass it in as a hash or as another schema class.
 
+### Sorbet functionality
+
+Deimos ships with a Tapioca DSL compiler that will automatically generate `.rbi` files when you run `tapioca dsl`. Alternatively, you can set the `schema.output_sorbet` option to true to generate `sig` declarations inline within generated code.
+
 ### Consumer
 
 The consumer interface uses the `decode_message` method to turn JSON hash into the Schemas

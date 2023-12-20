@@ -207,6 +207,7 @@ schema.use_schema_classes|false|Set this to true to use generated schema classes
 schema.generated_class_path|`app/lib/schema_classes`|Local path to generated schema classes.
 schema.nest_child_schemas|false|Set to true to nest subschemas within the generated class for the parent schema.
 schema.generate_namespace_folders|false|Set to true to generate folders for schemas matching the last part of the namespace.
+schema.output_sorbet|false|Set to true to output `sig` declarations in generated schema classes. This will suppress generation of `rbi` files when running `tapioca dsl`.
 
 ## Database Producer Configuration
 

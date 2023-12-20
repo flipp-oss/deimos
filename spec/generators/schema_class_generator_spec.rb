@@ -66,7 +66,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           topic 'MyTopic'
           schema 'MySchemaWithComplexTypes'
           namespace 'com.my-namespace'
-          key_config field: :a_string
+          key_config field: :test_id
         end
       end
     end
@@ -98,7 +98,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
           topic 'MyTopic'
           schema 'MySchemaWithCircularReference'
           namespace 'com.my-namespace'
-          key_config field: :a_string
+          key_config none: true
         end
       end
     end

@@ -23,6 +23,8 @@ module Deimos
         []
       end
 
+      # @param _field [Deimos::SchemaField]
+      # @param value [Object]
       # @override
       def coerce_field(_field, value)
         value

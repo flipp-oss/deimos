@@ -39,6 +39,7 @@ module Deimos
 
       # For a given table_name and column_name, create a migration to add the column
       # column_name defaults to bulk_import_id
+      # @return [void]
       def generate
         Rails.logger.info("Arguments: #{table_name},#{column_name}")
         migration_template('migration.rb',

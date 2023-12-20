@@ -127,7 +127,7 @@ module Deimos
       end
 
       # List of field names belonging to the schema. To be defined by subclass.
-      # @return [Array<SchemaField>]
+      # @return [Array<Deimos::SchemaField>]
       def schema_fields
         raise NotImplementedError
       end
@@ -135,7 +135,7 @@ module Deimos
       # Given a value and a field definition (as defined by whatever the
       # underlying schema library is), coerce the given value to
       # the given field type.
-      # @param field [SchemaField]
+      # @param field [Deimos::SchemaField]
       # @param value [Object]
       # @return [Object]
       def coerce_field(field, value)
@@ -147,7 +147,7 @@ module Deimos
       # return `:bigint`. There are also special values that need to be returned:
       # `:array`, `:map` and `:record`, for types representing those structures.
       # `:enum` is also recognized.
-      # @param field [SchemaField]
+      # @param field [Deimos::SchemaField]
       # @return [Symbol]
       def sql_type(field)
         raise NotImplementedError

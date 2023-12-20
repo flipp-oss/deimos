@@ -69,7 +69,7 @@ module Deimos
         }
       end
 
-      # @return [Array<Deimos::ActiveRecordProducer>] the producers to run.
+      # @return [Array<Class<Deimos::ActiveRecordProducer>>] the producers to run.
       def kafka_producers
         if self.respond_to?(:kafka_producer)
           Deimos.config.logger.warn(message: DEPRECATION_WARNING)

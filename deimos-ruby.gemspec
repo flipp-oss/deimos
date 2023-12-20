@@ -42,7 +42,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rspec-snapshot', '~> 2.0')
   spec.add_development_dependency('rubocop', '0.89.0')
   spec.add_development_dependency('rubocop-rspec', '1.42.0')
-  spec.add_development_dependency('sord', '>= 5.0')
+  spec.add_development_dependency('sorbet')
   spec.add_development_dependency('sqlite3', '~> 1.3')
-  spec.add_development_dependency('steep', '~> 1.0')
+  spec.add_development_dependency('tapioca')
 end

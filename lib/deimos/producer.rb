@@ -11,7 +11,7 @@ module Deimos
     # Run a block without allowing any messages to be produced to Kafka.
     # Optionally add a list of producer classes to limit the disabling to those
     # classes.
-    # @param producer_classes [Array<Class>, Class]
+    # @param producer_classes [Array<Class<BasicObject>>, Class<BasicObject>]
     # @return [void]
     def disable_producers(*producer_classes, &block)
       if producer_classes.any?
@@ -47,7 +47,7 @@ module Deimos
 
     # Are producers disabled? If a class is passed in, check only that class.
     # Otherwise check if the global disable flag is set.
-    # @param producer_class [Class]
+    # @param producer_class [Class<BasicObject>]
     # @return [Boolean]
     def producers_disabled?(producer_class=nil)
       Thread.current[:frk_disable_all_producers] ||
@@ -93,7 +93,7 @@ module Deimos
       end
 
       # Publish the payload to the topic.
-      # @param payload [Hash, SchemaClass::Record] with an optional payload_key hash key.
+      # @param payload [Hash, Deimos::SchemaClass::Record] with an optional payload_key hash key.
       # @param topic [String] if specifying the topic
       # @param headers [Hash] if specifying headers
       # @return [void]
@@ -102,7 +102,7 @@ module Deimos
       end
 
       # Publish a list of messages.
-      # @param payloads [Array<Hash, SchemaClass::Record>] with optional payload_key hash key.
+      # @param payloads [Array<Hash, Deimos::SchemaClass::Record>] with optional payload_key hash key.
       # @param sync [Boolean] if given, override the default setting of
       # whether to publish synchronously.
       # @param force_send [Boolean] if true, ignore the configured backend
@@ -178,7 +178,7 @@ module Deimos
 
     private
 
-      # @param message [Message]
+      # @param message [Deimos::Message]
       # @param topic [String]
       def _process_message(message, topic)
         # this violates the Law of Demeter but it has to happen in a very

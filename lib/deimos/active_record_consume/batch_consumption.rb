@@ -49,7 +49,7 @@ module Deimos
       # Get the set of attribute names that uniquely identify messages in the
       # batch. Requires at least one record.
       # The parameters are mutually exclusive. records is used by default implementation.
-      # @param _klass [Class < ActiveRecord::Base] Class Name can be used to fetch columns
+      # @param _klass [Class <ActiveRecord::Base>] Class Name can be used to fetch columns
       # @return [Array<String>,nil] List of attribute names.
       # @raise If records is empty.
       def key_columns(_klass)
@@ -57,7 +57,7 @@ module Deimos
       end
 
       # Get the list of database table column names that should be saved to the database
-      # @param _klass [Class < ActiveRecord::Base] ActiveRecord class associated to the Entity Object
+      # @param _klass [Class<ActiveRecord::Base>] ActiveRecord class associated to the Entity Object
       # @return [Array<String>,nil] list of table columns
       def columns(_klass)
         nil
@@ -82,7 +82,7 @@ module Deimos
 
       # Create an ActiveRecord relation that matches all of the passed
       # records. Used for bulk deletion.
-      # @param records [Array<Message>] List of messages.
+      # @param records [Array<Deimos::Message>] List of messages.
       # @return [ActiveRecord::Relation] Matching relation.
       def deleted_query(records)
         keys = records.
@@ -102,8 +102,8 @@ module Deimos
 
       # Compact a batch of messages, taking only the last message for each
       # unique key.
-      # @param batch [Array<Message>] Batch of messages.
-      # @return [Array<Message>] Compacted batch.
+      # @param batch [Array<Deimos::Message>] Batch of messages.
+      # @return [Array<Deimos::Message>] Compacted batch.
       def compact_messages(batch)
         return batch unless batch.first&.key.present?
 
@@ -113,7 +113,7 @@ module Deimos
       # Perform database operations for a batch of messages without compaction.
       # All messages are split into slices containing only unique keys, and
       # each slice is handles as its own batch.
-      # @param messages [Array<Message>] List of messages.
+      # @param messages [Array<Deimos::Message>] List of messages.
       # @return [void]
       def uncompacted_update(messages)
         BatchSlicer.
@@ -124,7 +124,7 @@ module Deimos
       # Perform database operations for a group of messages.
       # All messages with payloads are passed to upsert_records.
       # All tombstones messages are passed to remove_records.
-      # @param messages [Array<Message>] List of messages.
+      # @param messages [Array<Deimos::Message>] List of messages.
       # @return [void]
       def update_database(messages)
         # Find all upserted records (i.e. that have a payload) and all
@@ -150,7 +150,7 @@ module Deimos
       end
 
       # Upsert any non-deleted records
-      # @param messages [Array<Message>] List of messages for a group of
+      # @param messages [Array<Deimos::Message>] List of messages for a group of
       # records to either be updated or inserted.
       # @return [void]
       def upsert_records(messages)
@@ -178,7 +178,7 @@ module Deimos
       end
 
       # @param messages [Array<Deimos::Message>]
-      # @return [BatchRecordList]
+      # @return [Deimos::ActiveRecordConsume::BatchRecordList]
       def build_records(messages)
         pre_process(messages)
         records = messages.map do |m|
@@ -205,7 +205,7 @@ module Deimos
       end
 
       # Delete any records with a tombstone.
-      # @param messages [Array<Message>] List of messages for a group of
+      # @param messages [Array<Deimos::Message>] List of messages for a group of
       # deleted records.
       # @return [void]
       def remove_records(messages)

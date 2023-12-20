@@ -4,13 +4,16 @@ module Deimos
   module ActiveRecordConsume
     # A set of BatchRecords which typically are worked with together (hence the batching!)
     class BatchRecordList
-      # @return [Array<BatchRecord>]
+      # @return [Array<Deimos::ActiveRecordConsume::BatchRecord>]
       attr_accessor :batch_records
-      attr_accessor :klass, :bulk_import_column
+      # @return [Class<BasicObject>]
+      attr_accessor :klass
+      # @return [String]
+      attr_accessor :bulk_import_column
 
       delegate :empty?, :map, to: :batch_records
 
-      # @param records [Array<BatchRecord>]
+      # @param records [Array<Deimos::ActiveRecordConsume::BatchRecord>]
       def initialize(records)
         self.batch_records = records
         self.klass = records.first&.klass
@@ -19,6 +22,7 @@ module Deimos
 
       # Filter out any invalid records.
       # @param method [Proc]
+      # @return [void]
       def filter!(method)
         self.batch_records.delete_if { |record| !method.call(record.record) }
       end
@@ -41,6 +45,7 @@ module Deimos
 
       # Go back to the DB and use the bulk_import_id to set the actual primary key (`id`) of the
       # records.
+      # @return [void]
       def fill_primary_keys!
         primary_col = self.klass.primary_key
         bulk_import_map = self.klass.
@@ -63,6 +68,7 @@ module Deimos
 
       # @param assoc [ActiveRecord::Reflection::AssociationReflection]
       # @param import_id [String]
+      # @return [void]
       def delete_old_records(assoc, import_id)
         return if self.batch_records.none?
 

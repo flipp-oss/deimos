@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature: Add global `replace_assocations` value for  for all consumers
 - Feature: Add individual `replace_assocations` value for for individual consumers
 
+- Feature: Generate Sorbet declarations in schema classes.
+- BREAKING CHANGE: The `initialize_from_value` method has been moved from the base class to the generated classes. You will need to regenerate your schema classes after upgrading.
+- BREAKING CHANGE: The `to_h` method in the `PhobosConfig` module has been removed, as it's not used within Deimos. If for some odd reason you were still using this method, please don't (even better, please stop using `phobos.yml`).
+- BREAKING CHANGE: Fields that are not optional (that don't allow null and have no default value) are now generated as a required keyword parameter instead of an optional one. Any code that isn't passing a value is probably already breaking, although you might not realize it, so if anything this should make your code better, not worse. 😄
+- CHANGE: Removed generated `rbs` files in favor of `rbi` files. Sorbet has much better support than RBS and there are plans to allow for translation between the two within `tapioca`.
+
 # 1.22.5 - 2023-07-18
 - Fix: Fixed buffer overflow crash with DB producer.
 

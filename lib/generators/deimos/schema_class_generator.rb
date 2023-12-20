@@ -29,11 +29,23 @@ module Deimos
       no_commands do
         # Retrieve the fields from this Avro Schema
         # @param schema [Avro::Schema::NamedSchema]
-        # @return [Array<SchemaField>]
+        # @return [Array<Deimos::SchemaField>]
         def fields(schema)
           schema.fields.map do |field|
             Deimos::SchemaField.new(field.name, field.type, [], field.default)
           end
+        end
+
+        # Converts Deimos::SchemaField's to String form for generated Sorbet docs
+        # @param field [Deimos::SchemaField]
+        # @param allow_enum_strings [Boolean] if true, use T.any(String, <enum>) instead of just
+        # enum. This way you can pass a string into something that expects an enum and it
+        # will wrap it.
+        # @return [String] A string representation of the Type of this SchemaField
+        def sorbet_field_type(field, allow_enum_strings: false)
+          Deimos::SchemaBackends::AvroBase.sorbet_type(field.type,
+                                                       @top_level_schema,
+                                                       allow_enum_strings: allow_enum_strings)
         end
 
         # Converts Deimos::SchemaField's to String form for generated YARD docs
@@ -52,6 +64,7 @@ module Deimos
         def generate_classes(schema_name, namespace, key_config)
           schema_base = Deimos.schema_backend(schema: schema_name, namespace: namespace)
           schema_base.load_schema
+          @top_level_schema = schema_name
           if key_config&.dig(:schema)
             key_schema_base = Deimos.schema_backend(schema: key_config[:schema], namespace: namespace)
             key_schema_base.load_schema
@@ -176,7 +189,36 @@ module Deimos
         end
 
         generate_from_schema_files(found_schemas)
+        if defined?(Tapioca) && !Deimos.config.schema.output_sorbet
+          require 'tapioca/internal'
 
+          Tapioca::Cli.start(['dsl', "--only=Tapioca::Compilers::Deimos"])
+        end
+
+      end
+
+      # @param key_config [Hash]
+      # @param schema [Avro::Schema]
+      # @param key_schema [Avro::Schema]
+      # @return [String]
+      def self.tombstone_type(key_config, schema, key_schema)
+        return nil unless key_config
+
+        if key_config[:plain]
+          'String'
+        elsif key_config[:field]
+          field = schema.fields.find { |f| f.name == key_config[:field].to_s }
+          if field.nil?
+            raise "#{schema.name} has a key config with field #{key_config[:field]} but the field was not found!"
+          end
+          Deimos::SchemaBackends::AvroBase.sorbet_type(field.type,
+                                                       schema.name,
+                                                       allow_enum_strings: true)
+        elsif key_schema
+          Deimos::SchemaBackends::AvroBase.sorbet_type(key_schema,
+                                                       schema.name,
+                                                       allow_enum_strings: true)
+        end
       end
 
     private
@@ -228,10 +270,11 @@ module Deimos
         @initialization_definition = _initialization_definition
         @field_assignments = _field_assignments
         @tombstone_assignment = _tombstone_assignment(key_config, key_schema)
+        @tombstone_type = self.class.tombstone_type(key_config, schema, key_schema)
       end
 
       def _tombstone_assignment(key_config, key_schema)
-        return nil unless key_config
+        return nil if !key_config || key_config[:none].present?
 
         if key_config[:plain]
           "record.tombstone_key = key"
@@ -245,23 +288,50 @@ module Deimos
         end
       end
 
+      # @param field [Schema::Field]
+      # @return [Boolean]
+      def optional?(field)
+        return true if field.default != :no_default
+        return false if field.type.type_sym != :union
+
+        field.type.schemas.any? { |s| s.type == 'null' }
+      end
+
       # Defines the initialization method for Schema Records with one keyword argument per line
       # @return [String] A string which defines the method signature for the initialize method
       def _initialization_definition
-        arguments = @fields.map do |schema_field|
+        optional, required = @fields.partition { |f| optional?(f) }
+        arguments = required.map do |schema_field|
+          "#{schema_field.name}: ".strip
+        end
+        arguments += optional.map do |schema_field|
           arg = "#{schema_field.name}:"
           arg += _field_default(schema_field)
           arg.strip
         end
 
-        result = "def initialize(#{arguments.first}"
+        result = ''
+        if Deimos.config.schema.output_sorbet
+          result = _initializer_sig(required, optional) + "\n\n"
+        end
+
+        result += "def initialize(#{arguments.first}"
         arguments[1..-1].each_with_index do |arg, _i|
           result += ",#{INITIALIZE_WHITESPACE}#{arg}"
         end
         "#{result})"
       end
 
-      # @param field [SchemaField]
+      def _initializer_sig(required, optional)
+        fields = required + optional
+        result = "sig {params(\n"
+        params = fields.map do |field|
+          "    #{field.name}: #{sorbet_field_type(field, allow_enum_strings: true)}"
+        end
+        result + params.join(",\n") + ").void}"
+      end
+
+      # @param field [Deimos::SchemaField]
       # @return [String]
       def _field_default(field)
         default = field.default
@@ -293,7 +363,11 @@ module Deimos
           field_initialization = method_argument
 
           if is_schema_class
-            field_initialization = "#{field_base_type}.initialize_from_value(value)"
+            if Deimos.config.schema.output_sorbet && !sorbet_field_type(field).starts_with?('T.nilable')
+              field_initialization = "T.must(#{field_base_type}.initialize_from_value(value))"
+            else
+              field_initialization = "#{field_base_type}.initialize_from_value(value)"
+            end
           end
 
           result << {
@@ -302,6 +376,8 @@ module Deimos
             is_schema_class: is_schema_class,
             method_argument: method_argument,
             deimos_type: deimos_field_type(field),
+            sorbet_type: sorbet_field_type(field, allow_enum_strings: true),
+            sorbet_return_type: sorbet_field_type(field),
             field_initialization: field_initialization
           }
         end

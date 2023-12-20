@@ -61,7 +61,7 @@ module Deimos
           @schema_base ||= Deimos.schema_backend_class.new(schema: schema, namespace: namespace)
         end
 
-        # @return [Array<SchemaField>]
+        # @return [Array<Deimos::SchemaField>]
         def fields
           schema_base.schema_fields
         end

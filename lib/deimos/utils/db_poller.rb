@@ -21,7 +21,7 @@ module Deimos
         signal_handler.run!
       end
 
-      # @param config_name [DBPollerConfig]
+      # @param config_name [FigTree::ConfigStruct]
       # @return [Class<Deimos::Utils::DbPoller>]
       def self.class_for_config(config_name)
         if config_name.poller_class.present?

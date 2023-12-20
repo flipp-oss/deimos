@@ -13,7 +13,7 @@ module Deimos
   class ActiveRecordProducer < Producer
     class << self
       # Indicate the class this producer is working on.
-      # @param klass [Class]
+      # @param klass [Class<BasicObject>]
       # @param refetch [Boolean] if true, and we are given a hash instead of
       # a record object, refetch the record to pass into the `generate_payload`
       # method.
@@ -75,7 +75,7 @@ module Deimos
       # @param min_id [Numeric] the minimum ID (i.e. all IDs must be greater
       # than this value).
       # @return [ActiveRecord::Relation]
-      def poll_query(time_from:, time_to:, column_name: :updated_at, min_id:)
+      def poll_query(time_from:, time_to:, min_id:, column_name: :updated_at)
         klass = config[:record_class]
         table = ActiveRecord::Base.connection.quote_table_name(klass.table_name)
         column = ActiveRecord::Base.connection.quote_column_name(column_name)
@@ -91,7 +91,8 @@ module Deimos
       end
 
       # Post process records after publishing
-      # @param records [Array<ActiveRecord::Base>]
+      # @param _records [Array<ActiveRecord::Base>]
+      # @return [void]
       def post_process(_records)
       end
 
