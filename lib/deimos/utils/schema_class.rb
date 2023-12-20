@@ -10,10 +10,23 @@ module Deimos
         # @return [Array<String>]
         def modules_for(namespace)
           modules = ['Schemas']
-          namespace_folder = namespace.split('.').last
-          if Deimos.config.schema.generate_namespace_folders && namespace_folder
-            modules.push(namespace_folder.underscore.classify)
+
+          if Deimos.config.schema.generate_namespace_folders
+            namespace_map = Deimos.config.schema.schema_namespace_map.sort_by{|k,v| -k.length}.to_h
+            namespace_override = namespace_map.keys.detect{ |k| namespace.include?(k) }
+
+            module_namespace = if namespace_override.present?
+              # don't use Schemas default module
+              modules = Array(namespace_map[namespace_override].dup)
+              namespace.gsub(/#{namespace_override}.?/, '')
+            else
+              namespace
+            end
+
+            namespace_folders = module_namespace.split('.').map{ |f| f.underscore.camelize }
+            modules.concat(namespace_folders) if namespace_folders.any?
           end
+
           modules
         end
 
