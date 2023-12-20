@@ -128,7 +128,7 @@ module Schemas; module MyNamespace
     end
 
     def self.tombstone(key)
-      record = self.new
+      record = self.allocate
       record.tombstone_key = key
       record.a_string = key
       record
