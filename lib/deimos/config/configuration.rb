@@ -381,6 +381,12 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # Set to true to generate folders matching the last part of the schema namespace.
       # @return [Boolean]
       setting :generate_namespace_folders, false
+
+      # Use this option to reduce nesting when using generate_namespace_folders.
+      # For example: { 'com.mycompany.suborg' => 'SchemaClasses' }
+      # would replace a namespace matching the given key with the module name SchemaClasses.
+      # @return [Hash]
+      setting :schema_namespace_map, {}
     end
 
     # The configured metrics provider.
