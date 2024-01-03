@@ -32,7 +32,6 @@ module ConsumerTest
     describe 'consume_batch' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
-          include_context('with SchemaClasses')
 
           let(:schema_class_batch) do
             batch.map do |p|
@@ -41,7 +40,10 @@ module ConsumerTest
           end
 
           before(:each) do
-            Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
+            Deimos.configure do |config|
+              config.schema.use_schema_classes = use_schema_classes
+              config.schema.generate_namespace_folders = true
+            end
           end
 
           it 'should provide backwards compatibility for BatchConsumer class' do

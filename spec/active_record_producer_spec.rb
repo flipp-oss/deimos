@@ -69,7 +69,10 @@ describe Deimos::ActiveRecordProducer do
     SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
       context "with Schema Class consumption #{setting}" do
         before(:each) do
-          Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
+          Deimos.configure do |config|
+            config.schema.use_schema_classes = use_schema_classes
+            config.schema.generate_namespace_folders = true
+          end
         end
 
         it 'should send events correctly' do

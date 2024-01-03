@@ -27,10 +27,12 @@ module ConsumerTest
     describe 'consume' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
-          include_context('with SchemaClasses')
 
           before(:each) do
-            Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
+            Deimos.configure do |config|
+              config.schema.use_schema_classes = use_schema_classes
+              config.schema.generate_namespace_folders = true
+            end
           end
 
           it 'should consume a message' do
@@ -132,25 +134,15 @@ module ConsumerTest
       end
 
       context 'with overriden schema classes' do
-        include_context('with SchemaClasses')
 
         before(:each) do
-          Deimos.configure { |config| config.schema.use_schema_classes = true }
+          Deimos.configure do |config|
+            config.schema.use_schema_classes = true
+            config.schema.generate_namespace_folders = true
+          end
         end
 
         prepend_before(:each) do
-          schema_class = Class.new(Schemas::MySchema) do
-
-            attr_accessor :super_int
-
-            def initialize(test_id: nil,
-                           some_int: nil)
-              super
-              self.super_int = some_int.nil? ? 10 : some_int * 9000
-            end
-          end
-          stub_const('Schemas::MyUpdatedSchema', schema_class)
-
           consumer_class = Class.new(described_class) do
             schema 'MyUpdatedSchema'
             namespace 'com.my-namespace'
