@@ -240,6 +240,72 @@ RSpec.shared_context('with widgets') do
   end
 end
 
+RSpec.shared_context('with SchemaClasses') do
+  # rubocop:disable RSpec/InstanceVariable
+  class Schemas::MySchema < Deimos::SchemaClass::Record
+    def schema
+      'MySchema'
+    end
+
+    def namespace
+      'com.my-namespace'
+    end
+
+    attr_accessor :test_id, :some_int
+
+    def initialize(test_id: nil, some_int: nil)
+      super
+      self.test_id = test_id
+      self.some_int = some_int
+    end
+
+    def as_json(_opts={})
+      {
+        'test_id' => @test_id,
+        'some_int' => @some_int,
+        'payload_key' => @payload_key&.as_json
+      }
+    end
+  end
+
+  class Schemas::MySchemaWithDateTimes < Deimos::SchemaClass::Record
+    def schema
+      'MySchemaWithDateTimes'
+    end
+
+    def namespace
+      'com.my-namespace'
+    end
+
+    attr_accessor :test_id, :some_int, :updated_at, :some_datetime_int, :timestamp
+
+    def initialize(test_id: nil,
+                   some_int: nil,
+                   updated_at: nil,
+                   some_datetime_int: nil,
+                   timestamp: nil)
+      super
+      self.test_id = test_id
+      self.some_int = some_int
+      self.updated_at = updated_at
+      self.some_datetime_int = some_datetime_int
+      self.timestamp = timestamp
+    end
+
+    def as_json(_opts={})
+      {
+        'test_id' => @test_id,
+        'some_int' => @some_int,
+        'updated_at' => @updated_at,
+        'some_datetime_int' => @some_datetime_int,
+        'timestamp' => @timestamp,
+        'payload_key' => @payload_key&.as_json
+      }
+    end
+  end
+  # rubocop:enable RSpec/InstanceVariable
+end
+
 RSpec.shared_context('with DB') do
   before(:all) do
     setup_db(self.class.metadata[:db_config] || DbConfigs::DB_OPTIONS.last)

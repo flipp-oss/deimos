@@ -16,33 +16,6 @@ module ConsumerTest
         end
       end
       stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
-      schema_class = Class.new(Deimos::SchemaClass::Record) do
-        def schema
-          'MySchema'
-        end
-
-        def namespace
-          'com.my-namespace'
-        end
-
-        attr_accessor :test_id
-        attr_accessor :some_int
-
-        def initialize(test_id: nil,
-                       some_int: nil)
-          self.test_id = test_id
-          self.some_int = some_int
-        end
-
-        def as_json(_opts={})
-          {
-            'test_id' => @test_id,
-            'some_int' => @some_int,
-            'payload_key' => @payload_key&.as_json
-          }
-        end
-      end
-      stub_const('Schemas::MySchema', schema_class)
     end
 
     let(:batch) do
@@ -59,6 +32,7 @@ module ConsumerTest
     describe 'consume_batch' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
+          include_context('with SchemaClasses')
 
           let(:schema_class_batch) do
             batch.map do |p|

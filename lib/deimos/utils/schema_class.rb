@@ -25,11 +25,19 @@ module Deimos
         def instance(payload, schema, namespace='')
           return payload if payload.is_a?(Deimos::SchemaClass::Base)
 
-          constants = modules_for(namespace) + [schema.underscore.camelize.singularize]
-          klass = constants.join('::').safe_constantize
+          klass = klass(schema, namespace)
           return payload if klass.nil? || payload.nil?
 
           klass.new(**payload.symbolize_keys)
+        end
+
+        # Determine and return the SchemaClass with the provided schema and namespace
+        # @param schema [String]
+        # @param namespace [String]
+        # @return [Deimos::SchemaClass]
+        def klass(schema, namespace)
+          constants = modules_for(namespace) + [schema.underscore.camelize.singularize]
+          constants.join('::').safe_constantize
         end
 
         # @param config [Hash] Producer or Consumer config

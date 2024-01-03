@@ -57,7 +57,20 @@ module Deimos
     # @param namespace [String]
     # @return [Deimos::SchemaBackends::Base]
     def schema_backend(schema:, namespace:)
-      schema_backend_class.new(schema: schema, namespace: namespace)
+      if Utils::SchemaClass.use?(config.to_h)
+        # Initialize an instance of the provided schema
+        # in the event the schema class is an override, the inherited
+        # schema and namespace will be applied
+        schema_class = Utils::SchemaClass.klass(schema, namespace)
+        if schema_class.nil?
+          schema_backend_class.new(schema: schema, namespace: namespace)
+        else
+          schema_instance = schema_class.new
+          schema_backend_class.new(schema: schema_instance.schema, namespace: schema_instance.namespace)
+        end
+      else
+        schema_backend_class.new(schema: schema, namespace: namespace)
+      end
     end
 
     # @param schema [String]

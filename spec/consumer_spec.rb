@@ -22,38 +22,13 @@ module ConsumerTest
         end
       end
       stub_const('ConsumerTest::MyConsumer', consumer_class)
-      schema_class = Class.new(Deimos::SchemaClass::Record) do
-        def schema
-          'MySchema'
-        end
-
-        def namespace
-          'com.my-namespace'
-        end
-
-        attr_accessor :test_id
-        attr_accessor :some_int
-
-        def initialize(test_id: nil,
-                       some_int: nil)
-          self.test_id = test_id
-          self.some_int = some_int
-        end
-
-        def as_json(_opts={})
-          {
-            'test_id' => @test_id,
-            'some_int' => @some_int,
-            'payload_key' => @payload_key&.as_json
-          }
-        end
-      end
-      stub_const('Schemas::MySchema', schema_class)
     end
 
     describe 'consume' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
+          include_context('with SchemaClasses')
+
           before(:each) do
             Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
           end
@@ -154,6 +129,51 @@ module ConsumerTest
             }.to raise_error('This should not be called unless call_original is set')
           end
         end
+      end
+
+      context 'with overriden schema classes' do
+        include_context('with SchemaClasses')
+
+        before(:each) do
+          Deimos.configure { |config| config.schema.use_schema_classes = true }
+        end
+
+        prepend_before(:each) do
+          schema_class = Class.new(Schemas::MySchema) do
+
+            attr_accessor :super_int
+
+            def initialize(test_id: nil,
+                           some_int: nil)
+              super
+              self.super_int = some_int.nil? ? 10 : some_int * 9000
+            end
+          end
+          stub_const('Schemas::MyUpdatedSchema', schema_class)
+
+          consumer_class = Class.new(described_class) do
+            schema 'MyUpdatedSchema'
+            namespace 'com.my-namespace'
+            key_config field: 'test_id'
+
+            # :nodoc:
+            def consume(_payload, _metadata)
+              raise 'This should not be called unless call_original is set'
+            end
+          end
+          stub_const('ConsumerTest::MyConsumer', consumer_class)
+        end
+
+        it 'should consume messages' do
+          test_consume_message('my_consume_topic',
+                               { 'test_id' => 'foo',
+                                 'some_int' => 1 }) do |payload, _metadata|
+            expect(payload['test_id']).to eq('foo')
+            expect(payload['some_int']).to eq(1)
+            expect(payload['super_int']).to eq(9000)
+                                 end
+        end
+
       end
     end
 
