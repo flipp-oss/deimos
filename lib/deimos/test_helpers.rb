@@ -28,6 +28,7 @@ module Deimos
           deimos_config.kafka.seed_brokers ||= ['test_broker']
           deimos_config.schema.backend = Deimos.schema_backend_class.mock_backend
           deimos_config.producers.backend = :test
+          deimos_config.tracer = Deimos::Tracing::Mock.new
         end
       end
 

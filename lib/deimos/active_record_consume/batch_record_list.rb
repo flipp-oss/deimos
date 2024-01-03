@@ -17,10 +17,19 @@ module Deimos
         self.bulk_import_column = records.first&.bulk_import_column&.to_sym
       end
 
-      # Filter out any invalid records.
+      # Filter and return removed invalid batch records by the specified method
       # @param method [Proc]
+      # @return [Array<BatchRecord>]
       def filter!(method)
-        self.batch_records.delete_if { |record| !method.call(record.record) }
+        self.batch_records, invalid = self.batch_records.partition do |batch_record|
+          case method.parameters.size
+          when 2
+            method.call(batch_record.record, batch_record.associations)
+          else
+            method.call(batch_record.record)
+          end
+        end
+        invalid
       end
 
       # Get the original ActiveRecord objects.

@@ -100,6 +100,8 @@ offset_commit_threshold|0|Number of messages that can be processed before their 
 offset_retention_time|nil|The time period that committed offsets will be retained, in seconds. Defaults to the broker setting.
 heartbeat_interval|10|Interval between heartbeats; must be less than the session window.
 backoff|`(1000..60_000)`|Range representing the minimum and maximum number of milliseconds to back off after a consumer error.
+replace_associations|nil| Whether to delete existing associations for records during bulk consumption for this consumer. If no value is specified the provided/default value from the `consumers` configuration will be used.
+bulk_import_id_generator|nil| Block to determine the `bulk_import_id` generated during bulk consumption. If no block is specified the provided/default block from the `consumers` configuration will be used.
 
 ## Defining Database Pollers
 
@@ -172,6 +174,8 @@ consumers.backoff|`(1000..60_000)`|Range representing the minimum and maximum nu
 consumers.reraise_errors|false|Default behavior is to swallow uncaught exceptions and log to the metrics provider. Set this to true to instead raise all errors. Note that raising an error will ensure that the message cannot be processed - if there is a bad message which will always raise that error, your consumer will not be able to proceed past it and will be stuck forever until you fix your code. See also the `fatal_error` configuration. This is automatically set to true when using the `TestHelpers` module in RSpec.
 consumers.report_lag|false|Whether to send the `consumer_lag` metric. This requires an extra thread per consumer.
 consumers.fatal_error|`proc { false }`|Block taking an exception, payload and metadata and returning true if this should be considered a fatal error and false otherwise. E.g. you can use this to always fail if the database is available. Not needed if reraise_errors is set to true.
+consumers.replace_associations|true|Whether to delete existing associations for records during bulk consumption prior to inserting new associated records
+consumers.bulk_import_id_generator|`proc { SecureRandom.uuid }`| Block to determine the `bulk_import_id` generated during bulk consumption. Block will be used for all bulk consumers unless explicitly set for individual consumers
 
 ## Producer Configuration
 

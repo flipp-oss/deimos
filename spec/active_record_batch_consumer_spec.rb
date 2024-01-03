@@ -74,8 +74,12 @@ module ActiveRecordBatchConsumerTest
     describe 'consume_batch' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
+
           before(:each) do
-            Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
+            Deimos.configure do |config|
+              config.schema.use_schema_classes = use_schema_classes
+              config.schema.generate_namespace_folders = true
+            end
           end
 
           it 'should handle an empty batch' do
@@ -206,6 +210,48 @@ module ActiveRecordBatchConsumerTest
                 ]
               )
           end
+
+          it 'should handle deletes with deadlock retries' do
+            allow(Deimos::Utils::DeadlockRetry).to receive(:sleep)
+            allow(instance_double(ActiveRecord::Relation)).to receive(:delete_all).and_raise(
+              ActiveRecord::Deadlocked.new('Lock wait timeout exceeded')
+            ).twice.ordered
+
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2)
+
+            publish_batch(
+              [
+                { key: 1,
+                  payload: nil },
+                { key: 1,
+                  payload: nil }
+              ]
+            )
+
+            expect(all_widgets).to be_empty
+          end
+
+          it 'should not delete after multiple deadlock retries' do
+            allow(Deimos::Utils::DeadlockRetry).to receive(:sleep)
+            allow(instance_double(ActiveRecord::Relation)).to receive(:delete_all).and_raise(
+              ActiveRecord::Deadlocked.new('Lock wait timeout exceeded')
+            ).exactly(3).times
+
+            Widget.create!(id: 1, test_id: 'abc', some_int: 2)
+
+            publish_batch(
+              [
+                { key: 1,
+                  payload: nil },
+                { key: 1,
+                  payload: nil }
+              ]
+            )
+
+            expect(Widget.count).to eq(0)
+
+          end
+
         end
       end
     end
@@ -250,64 +296,6 @@ module ActiveRecordBatchConsumerTest
               have_attributes(id: 1, test_id: 'abc', some_int: 3),
               have_attributes(id: 2, test_id: 'def', some_int: 4),
               have_attributes(id: 3, test_id: 'hij', some_int: 9)
-            ]
-          )
-      end
-    end
-
-    describe 'batch atomicity' do
-      it 'should roll back if there was an exception while deleting' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2)
-
-        travel 1.day
-
-        expect(Widget.connection).to receive(:delete).and_raise('Some error')
-
-        expect {
-          publish_batch(
-            [
-              { key: 1,
-                payload: { test_id: 'def', some_int: 3 } },
-              { key: 1,
-                payload: nil }
-            ]
-          )
-        }.to raise_error('Some error')
-
-        expect(all_widgets).
-          to match_array(
-            [
-              have_attributes(id: 1, test_id: 'abc', some_int: 2, updated_at: start, created_at: start)
-            ]
-          )
-      end
-
-      it 'should roll back if there was an invalid instance while upserting' do
-        Widget.create!(id: 1, test_id: 'abc', some_int: 2) # Updated but rolled back
-        Widget.create!(id: 3, test_id: 'ghi', some_int: 3) # Removed but rolled back
-
-        travel 1.day
-
-        expect {
-          publish_batch(
-            [
-              { key: 1,
-                payload: { test_id: 'def', some_int: 3 } },
-              { key: 2,
-                payload: nil },
-              { key: 2,
-                payload: { test_id: '', some_int: 4 } }, # Empty string is not valid for test_id
-              { key: 3,
-                payload: nil }
-            ]
-          )
-        }.to raise_error(ActiveRecord::RecordInvalid)
-
-        expect(all_widgets).
-          to match_array(
-            [
-              have_attributes(id: 1, test_id: 'abc', some_int: 2, updated_at: start, created_at: start),
-              have_attributes(id: 3, test_id: 'ghi', some_int: 3, updated_at: start, created_at: start)
             ]
           )
       end
@@ -597,6 +585,225 @@ module ActiveRecordBatchConsumerTest
                                 bulk_import_id: 'custom')
               ]
             )
+
+        end
+      end
+
+    end
+
+    describe 'should_consume?' do
+
+      let(:consumer_class) do
+        Class.new(described_class) do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          record_class Widget
+          compacted false
+
+          def should_consume?(record)
+            record.test_id != 'def'
+          end
+
+          def self.process_invalid_records(_)
+            nil
+          end
+
+          ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
+            payload = ActiveSupport::Notifications::Event.new(*args).payload
+            payload[:consumer].process_invalid_records(payload[:records])
+          end
+
+        end
+      end
+
+      it "should skip records that shouldn't be consumed" do
+        Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+        Widget.create!(id: 2, test_id: 'def', some_int: 2)
+        publish_batch(
+          [
+            { key: 1,
+              payload: { test_id: 'abc', some_int: 11 } },
+            { key: 2,
+              payload: { test_id: 'def', some_int: 20 } }
+          ]
+        )
+
+        expect(Widget.count).to eq(2)
+        expect(Widget.all.to_a).to match_array([
+                                                 have_attributes(id: 1,
+                                                                 test_id: 'abc',
+                                                                 some_int: 11,
+                                                                 updated_at: start,
+                                                                 created_at: start),
+                                                 have_attributes(id: 2,
+                                                                 test_id: 'def',
+                                                                 some_int: 2,
+                                                                 updated_at: start,
+                                                                 created_at: start)
+                                               ])
+      end
+
+    end
+
+    describe 'post processing' do
+
+      context 'with uncompacted messages' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config plain: true
+            record_class Widget
+            compacted false
+
+            def should_consume?(record)
+              record.some_int.even?
+            end
+
+            def self.process_valid_records(valid)
+              # Success
+              attrs = valid.first.attributes
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: 2000)
+            end
+
+            def self.process_invalid_records(invalid)
+              # Invalid
+              attrs = invalid.first.record.attributes
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_invalid_records(payload[:records])
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_valid_records(payload[:records])
+            end
+
+          end
+        end
+
+        it 'should process successful and failed records' do
+          Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+          Widget.create!(id: 2, test_id: 'def', some_int: 2)
+
+          publish_batch(
+            [
+              { key: 1,
+                payload: { test_id: 'abc', some_int: 11 } },
+              { key: 2,
+                payload: { test_id: 'def', some_int: 20 } }
+            ]
+          )
+
+          widget_one, widget_two = Widget.all.to_a
+
+          expect(widget_one.some_int).to eq(11)
+          expect(widget_two.some_int).to eq(2000)
+        end
+      end
+
+      context 'with compacted messages' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config plain: true
+            record_class Widget
+            compacted true
+
+            def should_consume?(record)
+              record.some_int.even?
+            end
+
+            def self.process_valid_records(valid)
+              # Success
+              attrs = valid.first.attributes
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: 2000)
+            end
+
+            def self.process_invalid_records(invalid)
+              # Invalid
+              attrs = invalid.first.record.attributes
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_invalid_records(payload[:records])
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_valid_records(payload[:records])
+            end
+
+          end
+        end
+
+        it 'should process successful and failed records' do
+          Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+          Widget.create!(id: 2, test_id: 'def', some_int: 2)
+
+          publish_batch(
+            [
+              { key: 1,
+                payload: { test_id: 'abc', some_int: 11 } },
+              { key: 2,
+                payload: { test_id: 'def', some_int: 20 } }
+            ]
+          )
+
+          widget_one, widget_two = Widget.all.to_a
+
+          expect(widget_one.some_int).to eq(11)
+          expect(widget_two.some_int).to eq(2000)
+        end
+      end
+
+      context 'with post processing errors' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config plain: true
+            record_class Widget
+            compacted false
+
+            def self.process_valid_records(_)
+              raise StandardError, 'Something went wrong'
+            end
+
+            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
+              payload = ActiveSupport::Notifications::Event.new(*args).payload
+              payload[:consumer].process_valid_records(payload[:records])
+            end
+
+          end
+        end
+
+        it 'should save records if an exception occurs in post processing' do
+          Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+          Widget.create!(id: 2, test_id: 'def', some_int: 2)
+
+          expect {
+            publish_batch(
+              [
+                { key: 1,
+                  payload: { test_id: 'abc', some_int: 11 } },
+                { key: 2,
+                  payload: { test_id: 'def', some_int: 20 } }
+              ]
+            )
+          }.to raise_error(StandardError, 'Something went wrong')
+
+          widget_one, widget_two = Widget.all.to_a
+
+          expect(widget_one.some_int).to eq(11)
+          expect(widget_two.some_int).to eq(20)
 
         end
       end

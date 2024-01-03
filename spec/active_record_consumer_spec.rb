@@ -3,6 +3,7 @@
 require 'date'
 
 # Wrapped in a module to prevent class leakage
+# rubocop:disable Metrics/ModuleLength
 module ActiveRecordConsumerTest
   describe Deimos::ActiveRecordConsumer, 'Message Consumer' do
     before(:all) do
@@ -66,13 +67,84 @@ module ActiveRecordConsumerTest
       stub_const('MyCustomFetchConsumer', consumer_class)
 
       Time.zone = 'Eastern Time (US & Canada)'
+
+      schema_class = Class.new(Deimos::SchemaClass::Record) do
+        def schema
+          'MySchema'
+        end
+
+        def namespace
+          'com.my-namespace'
+        end
+
+        attr_accessor :test_id
+        attr_accessor :some_int
+
+        def initialize(test_id: nil,
+                       some_int: nil)
+          self.test_id = test_id
+          self.some_int = some_int
+        end
+
+        def as_json(_opts={})
+          {
+            'test_id' => @test_id,
+            'some_int' => @some_int,
+            'payload_key' => @payload_key&.as_json
+          }
+        end
+      end
+      stub_const('Schemas::MySchema', schema_class)
+
+      schema_datetime_class = Class.new(Deimos::SchemaClass::Record) do
+        def schema
+          'MySchemaWithDateTimes'
+        end
+
+        def namespace
+          'com.my-namespace'
+        end
+
+        attr_accessor :test_id
+        attr_accessor :some_int
+        attr_accessor :updated_at
+        attr_accessor :some_datetime_int
+        attr_accessor :timestamp
+
+        def initialize(test_id: nil,
+                       some_int: nil,
+                       updated_at: nil,
+                       some_datetime_int: nil,
+                       timestamp: nil)
+          self.test_id = test_id
+          self.some_int = some_int
+          self.updated_at = updated_at
+          self.some_datetime_int = some_datetime_int
+          self.timestamp = timestamp
+        end
+
+        def as_json(_opts={})
+          {
+            'test_id' => @test_id,
+            'some_int' => @some_int,
+            'updated_at' => @updated_at,
+            'some_datetime_int' => @some_datetime_int,
+            'timestamp' => @timestamp,
+            'payload_key' => @payload_key&.as_json
+          }
+        end
+      end
+      stub_const('Schemas::MySchemaWithDateTimes', schema_datetime_class)
     end
 
     describe 'consume' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
           before(:each) do
-            Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
+            Deimos.configure do |config|
+              config.schema.use_schema_classes = use_schema_classes
+              config.schema.generate_namespace_folders = true
+            end
           end
 
           it 'should receive events correctly' do
@@ -182,3 +254,4 @@ module ActiveRecordConsumerTest
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength

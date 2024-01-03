@@ -19,7 +19,8 @@ module Deimos
       # @param key_col_proc [Proc<Class < ActiveRecord::Base>]
       # @param col_proc [Proc<Class < ActiveRecord::Base>]
       # @param replace_associations [Boolean]
-      def initialize(klass, key_col_proc: nil, col_proc: nil, replace_associations: true, bulk_import_id_generator: nil)
+      def initialize(klass, key_col_proc: nil, col_proc: nil,
+                     replace_associations: true, bulk_import_id_generator: nil)
         @klass = klass
         @replace_associations = replace_associations
         @bulk_import_id_generator = bulk_import_id_generator
@@ -83,9 +84,16 @@ module Deimos
       end
 
       # @param record_list [BatchRecordList]
+      # @return [Array<ActiveRecord::Base>]
       def mass_update(record_list)
-        save_records_to_database(record_list)
-        import_associations(record_list) if record_list.associations.any?
+        # The entire batch should be treated as one transaction so that if
+        # any message fails, the whole thing is rolled back or retried
+        # if there is deadlock
+        Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
+          save_records_to_database(record_list)
+          import_associations(record_list) if record_list.associations.any?
+        end
+        record_list.records
       end
 
     end

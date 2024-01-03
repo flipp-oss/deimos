@@ -96,12 +96,17 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
         key_config plain: true
         record_class Widget
 
-        def should_consume?(record)
+        def should_consume?(record, associations)
           if self.should_consume_proc
-            return self.should_consume_proc.call(record)
+            case self.should_consume_proc.parameters.size
+            when 2
+              self.should_consume_proc.call(record, associations)
+            else
+              self.should_consume_proc.call(record)
+            end
+          else
+            true
           end
-
-          true
         end
 
         def record_attributes(payload, _key)
@@ -269,7 +274,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with invalid models' do
       before(:each) do
-        consumer_class.should_consume_proc = proc { |val| val.some_int <= 10 }
+        consumer_class.should_consume_proc = proc { |record| record.some_int <= 10 }
       end
 
       it 'should only save valid models' do
@@ -278,6 +283,28 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
                        { key: 3,
                          payload: { test_id: 'abc', some_int: 15, title: 'Widget Title 2' } }])
         expect(Widget.count).to eq(2)
+      end
+    end
+
+    context 'with invalid associations' do
+
+      before(:each) do
+        consumer_class.should_consume_proc = proc { |record, associations|
+          record.some_int <= 10 && associations['detail']['title'] != 'invalid'
+        }
+      end
+
+      it 'should only save valid associations' do
+        publish_batch([
+                        { key: 2,
+                          payload: { test_id: 'xyz', some_int: 5, title: 'valid' } },
+                        { key: 3,
+                          payload: { test_id: 'abc', some_int: 15, title: 'valid' } },
+                        { key: 4,
+                          payload: { test_id: 'abc', some_int: 9, title: 'invalid' } }
+                      ])
+        expect(Widget.count).to eq(2)
+        expect(Widget.second.some_int).to eq(5)
       end
     end
            end

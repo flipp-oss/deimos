@@ -28,18 +28,14 @@ module Deimos
           zip(metadata[:keys]).
           map { |p, k| Deimos::Message.new(p, nil, key: k) }
 
-        tags = %W(topic:#{metadata[:topic]})
+        tag = metadata[:topic]
+        Deimos.config.tracer.active_span.set_tag('topic', tag)
 
-        Deimos.instrument('ar_consumer.consume_batch', tags) do
-          # The entire batch should be treated as one transaction so that if
-          # any message fails, the whole thing is rolled back or retried
-          # if there is deadlock
-          Deimos::Utils::DeadlockRetry.wrap(tags) do
-            if @compacted || self.class.config[:no_keys]
-              update_database(compact_messages(messages))
-            else
-              uncompacted_update(messages)
-            end
+        Deimos.instrument('ar_consumer.consume_batch', tag) do
+          if @compacted || self.class.config[:no_keys]
+            update_database(compact_messages(messages))
+          else
+            uncompacted_update(messages)
           end
         end
       end
@@ -93,8 +89,9 @@ module Deimos
       end
 
       # @param _record [ActiveRecord::Base]
+      # @param _associations [Hash]
       # @return [Boolean]
-      def should_consume?(_record)
+      def should_consume?(_record, _associations=nil)
         true
       end
 
@@ -155,8 +152,13 @@ module Deimos
       # @return [void]
       def upsert_records(messages)
         record_list = build_records(messages)
-        record_list.filter!(self.method(:should_consume?).to_proc)
-
+        invalid = filter_records(record_list)
+        if invalid.any?
+          ActiveSupport::Notifications.instrument('batch_consumption.invalid_records', {
+                                                    records: invalid,
+                                                    consumer: self.class
+                                                  })
+        end
         return if record_list.empty?
 
         key_col_proc = self.method(:key_columns).to_proc
@@ -167,7 +169,16 @@ module Deimos
                                   col_proc: col_proc,
                                   replace_associations: self.class.replace_associations,
                                   bulk_import_id_generator: self.class.bulk_import_id_generator)
-        updater.mass_update(record_list)
+        ActiveSupport::Notifications.instrument('batch_consumption.valid_records', {
+                                                  records: updater.mass_update(record_list),
+                                                  consumer: self.class
+                                                })
+      end
+
+      # @param record_list [BatchRecordList]
+      # @return [Array<BatchRecord>]
+      def filter_records(record_list)
+        record_list.filter!(self.method(:should_consume?).to_proc)
       end
 
       # Process messages prior to saving to database
@@ -209,9 +220,11 @@ module Deimos
       # deleted records.
       # @return [void]
       def remove_records(messages)
-        clause = deleted_query(messages)
+        Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
+          clause = deleted_query(messages)
 
-        clause.delete_all
+          clause.delete_all
+        end
       end
     end
   end

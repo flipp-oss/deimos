@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # :nodoc:
+# rubocop:disable Metrics/ModuleLength
 module ConsumerTest
   describe Deimos::Consumer, 'Message Consumer' do
     prepend_before(:each) do
@@ -26,8 +27,12 @@ module ConsumerTest
     describe 'consume' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
+
           before(:each) do
-            Deimos.configure { |config| config.schema.use_schema_classes = use_schema_classes }
+            Deimos.configure do |config|
+              config.schema.use_schema_classes = use_schema_classes
+              config.schema.generate_namespace_folders = true
+            end
           end
 
           it 'should consume a message' do
@@ -127,6 +132,41 @@ module ConsumerTest
           end
         end
       end
+
+      context 'with overriden schema classes' do
+
+        before(:each) do
+          Deimos.configure do |config|
+            config.schema.use_schema_classes = true
+            config.schema.generate_namespace_folders = true
+          end
+        end
+
+        prepend_before(:each) do
+          consumer_class = Class.new(described_class) do
+            schema 'MyUpdatedSchema'
+            namespace 'com.my-namespace'
+            key_config field: 'test_id'
+
+            # :nodoc:
+            def consume(_payload, _metadata)
+              raise 'This should not be called unless call_original is set'
+            end
+          end
+          stub_const('ConsumerTest::MyConsumer', consumer_class)
+        end
+
+        it 'should consume messages' do
+          test_consume_message('my_consume_topic',
+                               { 'test_id' => 'foo',
+                                 'some_int' => 1 }) do |payload, _metadata|
+            expect(payload['test_id']).to eq('foo')
+            expect(payload['some_int']).to eq(1)
+            expect(payload['super_int']).to eq(9000)
+                                 end
+        end
+
+      end
     end
 
     describe 'decode_key' do
@@ -218,3 +258,4 @@ module ConsumerTest
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength
