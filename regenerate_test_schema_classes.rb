@@ -24,7 +24,7 @@ Deimos.configure do |deimos_config|
   deimos_config.schema.generate_namespace_folders = true
   deimos_config.schema.schema_namespace_map = {
     'com' => 'Schemas',
-    'com.my-namespace.my-suborg' => ['Schemas', 'MyNamespace']
+    'com.my-namespace.my-suborg' => %w(Schemas MyNamespace)
   }
 
   consumer do
