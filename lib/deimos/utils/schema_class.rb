@@ -11,20 +11,19 @@ module Deimos
         def modules_for(namespace)
           modules = ['Schemas']
           namespace_override = nil
+          module_namespace = namespace
 
           if Deimos.config.schema.generate_namespace_folders
             if Deimos.config.schema.schema_namespace_map.present?
               namespace_keys = Deimos.config.schema.schema_namespace_map.keys.sort_by { |k| -k.length }
-              namespace_override = namespace_keys.find { |k| namespace.include?(k) }
+              namespace_override = namespace_keys.find { |k| module_namespace.include?(k) }
             end
 
-            module_namespace = if namespace_override.present?
-                                 # don't use Schemas default module
-                                 modules = Array(Deimos.config.schema.schema_namespace_map[namespace_override])
-                                 namespace.gsub(/#{namespace_override}.?/, '')
-                               else
-                                 namespace
-                               end
+            if namespace_override.present?
+              # override default module
+              modules = Array(Deimos.config.schema.schema_namespace_map[namespace_override])
+              module_namespace = module_namespace.gsub(/#{namespace_override}\.?/, '')
+            end
 
             namespace_folders = module_namespace.split('.').map { |f| f.underscore.camelize }
             modules.concat(namespace_folders) if namespace_folders.any?
