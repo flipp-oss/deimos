@@ -1,0 +1,45 @@
+class WidgetConsumer < Deimos::ActiveRecordConsumer
+    record_class Widget
+
+  # Optional override of the way to fetch records based on payload and
+  # key. Default is to use the key to search the primary key of the table.
+  # Only used in non-batch mode.
+  def fetch_record(klass, payload, key)
+    super
+  end
+
+  # Optional override on how to set primary key for new records.
+  # Default is to set the class's primary key to the message's decoded key.
+  # Only used in non-batch mode.
+  def assign_key(record, payload, key)
+    super
+  end
+
+  # Optional override of the default behavior, which is to call `destroy`
+  # on the record - e.g. you can replace this with "archiving" the record
+  # in some way.
+  # Only used in non-batch mode.
+  def destroy_record(record)
+    super
+  end
+
+  # Optional override to change the attributes of the record before they
+  # are saved.
+  def record_attributes(payload, key)
+    super.merge(:some_field => 'some_value')
+  end
+
+  # Optional override to change the attributes used for identifying records
+  def record_key(payload)
+    super
+  end
+
+  # Optional override, returns true by default.
+  # When this method returns true, a record corresponding to the message
+  # is created/updated.
+  # When this method returns false, message processing is skipped and a
+  # corresponding record will NOT be created/updated.
+  def process_message?(payload)
+    super
+  end
+end

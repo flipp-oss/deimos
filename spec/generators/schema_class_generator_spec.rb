@@ -255,4 +255,25 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
     end
   end
 
+  context 'with skip_generate_from_schema_files option' do
+    before(:each) do
+      Deimos.configure do
+        consumer do
+          class_name 'ConsumerTest::MyConsumer'
+          topic 'MyTopic'
+          schema 'Widget'
+          namespace 'com.my-namespace'
+          key_config field: :a_string
+        end
+      end
+    end
+
+    it 'should only generate class for consumer defined in config' do
+      Deimos.with_config('schema.nest_child_schemas' => false) do
+        described_class.start(['--skip_generate_from_schema_files'])
+        expect(files).to match_snapshot('widget-skip-generate-from-schema-files', snapshot_serializer: MultiFileSerializer)
+      end
+    end
+  end
+
 end

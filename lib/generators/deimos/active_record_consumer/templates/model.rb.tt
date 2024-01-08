@@ -1,0 +1,5 @@
+class <%= table_name.classify %> < ApplicationRecord
+<%- fields.select { |f| f.enum_values.any? }.each do |field| -%>
+  enum <%= field.name %>: {<%= field.enum_values.map { |v| "#{v}: '#{v}'"}.join(', ') %>}
+<% end -%>
+end
