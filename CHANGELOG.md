@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## UNRELEASED
+
+# 1.23.0 - 2024-01-09
+
 - Fix: Fixed handler metric for status:received, status:success in batch consumption
 - Feature: Allow pre processing of messages prior to bulk consumption
 - Feature: Add global configuration for custom `bulk_import_id_generator` proc for all consumers
