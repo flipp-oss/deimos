@@ -125,7 +125,8 @@ describe Deimos, 'configuration' do
         compression_threshold: 1,
         max_queue_size: 10_000,
         delivery_threshold: 0,
-        delivery_interval: 0
+        delivery_interval: 0,
+        persistent_connections: false
       }
     )
   end
@@ -278,7 +279,8 @@ describe Deimos, 'configuration' do
           compression_threshold: 2,
           max_queue_size: 10,
           delivery_threshold: 1,
-          delivery_interval: 1
+          delivery_interval: 1,
+          persistent_connections: true
         }
       )
   end
