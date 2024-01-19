@@ -52,7 +52,8 @@ module Deimos
           compression_threshold: self.producers.compression_threshold,
           max_queue_size: self.producers.max_queue_size,
           delivery_threshold: self.producers.delivery_threshold,
-          delivery_interval: self.producers.delivery_interval
+          delivery_interval: self.producers.delivery_interval,
+          persistent_connections: self.producers.persistent_connections
         },
         consumer: {
           session_timeout: self.consumers.session_timeout,
