@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Add configuration to skip messages that are too large to publish via DB poller.
+
 # 1.23.2 - 2024-01-22
 - Fix: Send a `publish_error` metric for errors other than `DeliveryFailed`.
 

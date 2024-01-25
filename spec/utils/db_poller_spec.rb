@@ -191,6 +191,48 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         expect(Deimos.config.tracer).to have_received(:finish).with('a span')
       end
 
+      context 'with skip_too_large_messages on' do
+        before(:each) { config.skip_too_large_messages = true }
+
+        it 'should skip and move on' do
+          error = Kafka::MessageSizeTooLarge.new('OH NOES')
+          allow(poller).to receive(:sleep)
+          allow(poller).to receive(:process_batch) do
+            raise error
+          end
+          poller.retrieve_poll_info
+          poller.process_batch_with_span(widgets, status)
+          expect(poller).not_to have_received(:sleep)
+          expect(Deimos.config.tracer).to have_received(:set_error).with('a span', error)
+          expect(status.batches_errored).to eq(1)
+          expect(status.batches_processed).to eq(0)
+          expect(status.messages_processed).to eq(3)
+
+        end
+      end
+
+      context 'with skip_too_large_messages off' do
+        it 'should retry forever' do
+          called_once = false
+          allow(poller).to receive(:sleep)
+          allow(poller).to receive(:process_batch) do
+            unless called_once
+              called_once = true
+              raise Kafka::MessageSizeTooLarge, 'OH NOES'
+            end
+          end
+          poller.retrieve_poll_info
+          poller.process_batch_with_span(widgets, status)
+          expect(poller).to have_received(:sleep).once.with(0.5)
+          expect(Deimos.config.tracer).to have_received(:finish).with('a span')
+          expect(status.batches_errored).to eq(0)
+          expect(status.batches_processed).to eq(1)
+          expect(status.messages_processed).to eq(3)
+
+        end
+
+      end
+
       it 'should retry on Kafka error' do
         called_once = false
         allow(poller).to receive(:sleep)

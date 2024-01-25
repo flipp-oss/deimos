@@ -118,6 +118,18 @@ module Deimos
             process_batch(batch)
             Deimos.config.tracer&.finish(span)
             status.batches_processed += 1
+          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge,
+                 Kafka::RecordListTooLarge => e
+            Deimos.config.logger.error("Error publishing through DB Poller: #{e.message}")
+            if @config.skip_too_large_messages
+              Deimos.config.logger.error("Skipping messages #{batch.map(&:id).join(', ')} since they are too large")
+              Deimos.config.tracer&.set_error(span, e)
+              status.batches_errored += 1
+              return false
+            else # do the same thing as regular Kafka::Error
+              sleep(0.5)
+              retry
+            end
           rescue Kafka::Error => e # keep trying till it fixes itself
             Deimos.config.logger.error("Error publishing through DB Poller: #{e.message}")
             sleep(0.5)
