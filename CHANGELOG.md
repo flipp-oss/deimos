@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.23.2 - 2024-01-22
+- Fix: Send a `publish_error` metric for errors other than `DeliveryFailed`.
+
 # 1.23.0 - 2024-01-09
 
 - Fix: Fixed handler metric for status:received, status:success in batch consumption

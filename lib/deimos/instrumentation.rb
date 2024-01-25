@@ -77,7 +77,7 @@ module Deimos
       else
         Deimos.config.metrics&.increment(
           'publish_error',
-          by: event.respond_to?(:[]) ? event[:message_count] : 1
+          by: event.payload[:message_count] || 1
         )
       end
     end
