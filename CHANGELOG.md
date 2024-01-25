@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.23.3 - 2024-01-25
 - Feature: Add configuration to skip messages that are too large to publish via DB poller.
 
 # 1.23.2 - 2024-01-22
