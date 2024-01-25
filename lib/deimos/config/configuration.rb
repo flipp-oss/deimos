@@ -500,6 +500,9 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # The number of times to retry production when encountering a *non-Kafka* error. Set to nil
       # for infinite retries.
       setting :retries, 1
+      # If true, rather than shutting down when finding a message that is too large, log an
+      # error and skip it.
+      setting :skip_too_large_messages, false
       # Amount of time, in seconds, to wait before catching updates, to allow transactions
       # to complete but still pick up the right records. Should only be set for time-based mode.
       setting :delay_time, 2
