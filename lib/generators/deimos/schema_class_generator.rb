@@ -124,12 +124,13 @@ module Deimos
           if Deimos.config.schema.generate_namespace_folders
             # Use entire namespace for folders
             # but don't add directories that are already in the path
-            directories = @modules.map { |m|
-              Deimos.config.schema.generated_class_path.include?(m.underscore) ? nil : m.underscore
-            }.compact
+            directories = @modules.map(&:underscore).select do |m|
+              Deimos.config.schema.generated_class_path.exclude?(m)
+            end
 
             file_prefix = "#{directories.join('/')}/#{file_prefix}"
           end
+
           filename = "#{Deimos.config.schema.generated_class_path}/#{file_prefix}.rb"
           template(SCHEMA_CLASS_FILE, filename, force: true)
         end
