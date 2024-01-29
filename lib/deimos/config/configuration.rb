@@ -384,7 +384,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
       # Use this option to reduce nesting when using generate_namespace_folders.
       # For example: { 'com.mycompany.suborg' => 'SchemaClasses' }
-      # would replace a namespace matching the given key with the module name SchemaClasses.
+      # would replace a prefixed with the given key with the module name SchemaClasses.
       # @return [Hash]
       setting :schema_namespace_map, {}
     end
