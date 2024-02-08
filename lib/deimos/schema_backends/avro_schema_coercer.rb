@@ -29,6 +29,9 @@ module Deimos
     def coerce_record(type, val)
       record = val.map do |name, value|
         field = type.fields.find { |f| f.name == name }
+
+        raise "Field #{name} does not exist in Avro::Schema" if field.nil?
+
         coerce_type(field.type, value)
       end
       val.keys.zip(record).to_h
