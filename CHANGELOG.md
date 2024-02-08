@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.23.4 - 2024-02-08
+- Fix: Undefined method `type` for nil:NilClass
+
 # 1.23.3 - 2024-01-25
 - Feature: Add configuration to skip messages that are too large to publish via DB poller.
 
