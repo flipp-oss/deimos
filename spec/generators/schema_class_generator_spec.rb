@@ -217,7 +217,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
 
     context 'with namespace folders' do
       it 'should generate the correct classes' do
-        Deimos.with_config('schema.generate_namespace_folders' => true) do
+        Deimos.with_config('schema.use_full_namespace' => true) do
           described_class.start
           expect(files).to match_snapshot('namespace_folders', snapshot_serializer: MultiFileSerializer)
         end
@@ -228,7 +228,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
       it 'should generate the correct classes' do
         Deimos.with_config(
           {
-            'schema.generate_namespace_folders' => true,
+            'schema.use_full_namespace' => true,
             'schema.schema_namespace_map' => {
               'com' => 'Schemas',
               'com.my-namespace.my-suborg' => %w(Schemas MyNamespace)

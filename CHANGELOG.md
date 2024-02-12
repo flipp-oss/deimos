@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature: `should_consume?` method accepts BatchRecord associations
 - Feature: Reintroduce `filter_records` for bulk filtering of records prior to insertion
 - Feature: Return valid and invalid records saved during consumption for further processing in `batch_consumption.valid_records` and `batch_consumption.invalid_records` ActiveSupport Notifications
-- Feature: Add configuration option `schema_namespace_map` to reduce nesting for generated schema classes
+- Feature: Rename configuration option `generate_namespace_folders` to `use_full_namespace`. This will now use the entire namespace when generating schema classes
+- Feature: Add configuration option `schema_namespace_map` to enable full control over the namespace for generated schema classes. Requires `use_full_namespace`
 
 # 1.22.5 - 2023-07-18
 - Fix: Fixed buffer overflow crash with DB producer.

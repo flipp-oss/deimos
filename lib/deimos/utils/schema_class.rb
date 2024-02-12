@@ -13,7 +13,7 @@ module Deimos
           namespace_override = nil
           module_namespace = namespace
 
-          if Deimos.config.schema.generate_namespace_folders
+          if Deimos.config.schema.use_full_namespace
             if Deimos.config.schema.schema_namespace_map.present?
               namespace_keys = Deimos.config.schema.schema_namespace_map.keys.sort_by { |k| -k.length }
               namespace_override = namespace_keys.find { |k| module_namespace.include?(k) }

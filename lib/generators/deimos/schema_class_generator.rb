@@ -121,7 +121,7 @@ module Deimos
           @main_class_definition = class_template
 
           file_prefix = schema.name.underscore.singularize
-          if Deimos.config.schema.generate_namespace_folders
+          if Deimos.config.schema.use_full_namespace
             # Use entire namespace for folders
             # but don't add directories that are already in the path
             directories = @modules.map(&:underscore).select do |m|

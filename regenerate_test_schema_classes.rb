@@ -21,7 +21,7 @@ Deimos.configure do |deimos_config|
   deimos_config.schema.path = "spec/schemas"
   deimos_config.schema.backend = :avro_validation
   deimos_config.schema.generated_class_path = './spec/schemas'
-  deimos_config.schema.generate_namespace_folders = true
+  deimos_config.schema.use_full_namespace = true
   deimos_config.schema.schema_namespace_map = {
     'com' => 'Schemas',
     'com.my-namespace.my-suborg' => %w(Schemas MyNamespace)
