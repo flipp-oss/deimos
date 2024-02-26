@@ -1,0 +1,18 @@
+{
+  "namespace": "com.my-namespace.my-suborg",
+  "name": "MyLongNamespaceSchema",
+  "type": "record",
+  "doc": "Test schema",
+  "fields": [
+    {
+      "name": "test_id",
+      "type": "string",
+      "doc": "test string"
+    },
+    {
+      "name": "some_int",
+      "type": "int",
+      "doc": "test int"
+    }
+  ]
+}

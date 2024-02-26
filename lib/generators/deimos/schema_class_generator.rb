@@ -121,9 +121,16 @@ module Deimos
           @main_class_definition = class_template
 
           file_prefix = schema.name.underscore.singularize
-          if Deimos.config.schema.generate_namespace_folders
-            file_prefix = "#{@modules.last.underscore.singularize}/#{file_prefix}"
+          if Deimos.config.schema.use_full_namespace
+            # Use entire namespace for folders
+            # but don't add directories that are already in the path
+            directories = @modules.map(&:underscore).select do |m|
+              Deimos.config.schema.generated_class_path.exclude?(m)
+            end
+
+            file_prefix = "#{directories.join('/')}/#{file_prefix}"
           end
+
           filename = "#{Deimos.config.schema.generated_class_path}/#{file_prefix}.rb"
           template(SCHEMA_CLASS_FILE, filename, force: true)
         end
