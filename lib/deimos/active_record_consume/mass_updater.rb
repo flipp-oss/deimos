@@ -51,7 +51,7 @@ module Deimos
         options = if @key_cols.empty?
                     {} # Can't upsert with no key, just do regular insert
                   elsif ActiveRecord::Base.connection.adapter_name.downcase =~ /mysql/ ||
-                    ActiveRecord::Base.connection.adapter_name.downcase =~ /trilogy/
+                        ActiveRecord::Base.connection.adapter_name.downcase =~ /trilogy/
                     {
                       on_duplicate_key_update: columns
                     }
