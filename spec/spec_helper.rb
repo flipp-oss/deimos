@@ -95,6 +95,13 @@ module DbConfigs
       host: ENV['MYSQL_HOST'] || '127.0.0.1'
     },
     {
+      adapter: 'trilogy',
+      port: 3306,
+      username: 'root',
+      database: 'test',
+      host: ENV['MYSQL_HOST'] || '127.0.0.1'
+    },
+    {
       adapter: 'sqlite3',
       database: 'test.sqlite3'
     } # this one always needs to be last for non-integration tests

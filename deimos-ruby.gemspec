@@ -25,6 +25,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency('sigurd', '>= 0.1.0', '< 1.0')
 
   spec.add_development_dependency('activerecord-import')
+  spec.add_development_dependency('activerecord-trilogy-adapter')
   spec.add_development_dependency('avro', '~> 1.9')
   spec.add_development_dependency('database_cleaner', '~> 1.7')
   spec.add_development_dependency('ddtrace', '>= 0.11')
