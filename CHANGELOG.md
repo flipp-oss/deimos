@@ -7,9 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-# 1.24.1 - 2024-03-26
-- Fix: ActiveRecordConsumer batch consumption was not working with the trilogy adapter.
-
 # 1.24.0 - 2024-02-26
 
 ***BREAKING CHANGE****
