@@ -2,16 +2,14 @@
 
 require 'active_support'
 
-require 'phobos'
 require 'deimos/version'
-require 'deimos/config/configuration'
+require 'deimos/configuration'
 require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
 require 'deimos/consumer'
 require 'deimos/batch_consumer'
 require 'deimos/instrumentation'
-require 'deimos/utils/lag_reporter'
 
 require 'deimos/backends/base'
 require 'deimos/backends/kafka'
@@ -22,8 +20,6 @@ require 'deimos/schema_backends/base'
 require 'deimos/utils/schema_class'
 require 'deimos/schema_class/enum'
 require 'deimos/schema_class/record'
-
-require 'deimos/monkey_patches/phobos_cli'
 
 require 'deimos/railtie' if defined?(Rails)
 require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
@@ -37,7 +33,6 @@ if defined?(ActiveRecord)
   require 'deimos/utils/db_poller'
 end
 
-require 'deimos/utils/inline_consumer'
 require 'yaml'
 require 'erb'
 
@@ -117,13 +112,3 @@ module Deimos
   end
 end
 
-at_exit do
-  begin
-    Deimos::Backends::KafkaAsync.shutdown_producer
-    Deimos::Backends::Kafka.shutdown_producer
-  rescue StandardError => e
-    Deimos.config.logger.error(
-      "Error closing producer on shutdown: #{e.message} #{e.backtrace.join("\n")}"
-    )
-  end
-end

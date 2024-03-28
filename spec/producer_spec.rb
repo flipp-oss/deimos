@@ -153,7 +153,6 @@ module ProducerTest
             topic: 'my-topic',
             partition_key: 'key',
             metadata: {
-              producer_name: 'MyProducerWithID',
               decoded_payload: payload
             },
             key: 'key'
@@ -209,7 +208,6 @@ module ProducerTest
             topic: 'prefix.my-topic',
             partition_key: 'foo',
             metadata: {
-              producer_name: 'MyProducer',
               decoded_payload: payload
             },
             key: 'foo'
@@ -226,7 +224,6 @@ module ProducerTest
             topic: 'my-topic',
             partition_key: 'foo',
             metadata: {
-              producer_name: 'MyProducer',
               decoded_payload: payload
             },
             key: 'foo'

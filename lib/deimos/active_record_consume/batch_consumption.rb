@@ -14,28 +14,26 @@ module Deimos
     # Methods for consuming batches of messages and saving them to the database
     # in bulk ActiveRecord operations.
     module BatchConsumption
+      include Deimos::Consume::BatchConsumption
+
       # Handle a batch of Kafka messages. Batches are split into "slices",
       # which are groups of independent messages that can be processed together
       # in a single database operation.
       # If two messages in a batch have the same key, we cannot process them
       # in the same operation as they would interfere with each other. Thus
       # they are split
-      # @param payloads [Array<Hash,Deimos::SchemaClass::Record>] Decoded payloads
-      # @param metadata [Hash] Information about batch, including keys.
       # @return [void]
-      def consume_batch(payloads, metadata)
-        messages = payloads.
-          zip(metadata[:keys]).
-          map { |p, k| Deimos::Message.new(p, nil, key: k) }
+      def consume_batch
+        deimos_messages = messages.map { |p, k| Deimos::Message.new(p.payload, nil, key: p.key) }
 
-        tag = metadata[:topic]
+        tag = messages.metadata.topic
         Deimos.config.tracer.active_span.set_tag('topic', tag)
 
         Deimos.instrument('ar_consumer.consume_batch', tag) do
           if @compacted || self.class.config[:no_keys]
-            update_database(compact_messages(messages))
+            update_database(compact_messages(deimos_messages))
           else
-            uncompacted_update(messages)
+            uncompacted_update(deimos_messages)
           end
         end
       end

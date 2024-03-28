@@ -8,7 +8,7 @@
 
 A Ruby framework for marrying Kafka, a schema definition like Avro, and/or ActiveRecord and provide
 a useful toolbox of goodies for Ruby-based Kafka development.
-Built on Phobos and hence Ruby-Kafka.
+Built on Karafka.
 
 <!--ts-->
    * [Additional Documentation](#additional-documentation)

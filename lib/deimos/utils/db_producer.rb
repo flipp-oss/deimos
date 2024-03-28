@@ -82,7 +82,6 @@ module Deimos
       rescue StandardError => e
         @logger.error("Error processing messages for topic #{@current_topic}: #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
         KafkaTopicInfo.register_error(@current_topic, @id)
-        shutdown_producer
       end
 
       # Process a single batch in a topic.
@@ -197,16 +196,6 @@ module Deimos
         end
       end
 
-      # Shut down the sync producer if we have to. Phobos will automatically
-      # create a new one. We should call this if the producer can be in a bad
-      # state and e.g. we need to clear the buffer.
-      # @return [void]
-      def shutdown_producer
-        if self.class.producer.respond_to?(:sync_producer_shutdown) # Phobos 1.8.3
-          self.class.producer.sync_producer_shutdown
-        end
-      end
-
       # Produce messages in batches, reducing the size 1/10 if the batch is too
       # large. Does not retry batches of messages that have already been sent.
       # @param batch [Array<Hash>]
@@ -229,7 +218,6 @@ module Deimos
         rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge,
                Kafka::RecordListTooLarge => e
           if batch_size == 1
-            shutdown_producer
             raise
           end
 
@@ -239,7 +227,6 @@ module Deimos
                        else
                          (batch_size / 10).to_i
                        end
-          shutdown_producer
           retry
         end
       end

@@ -11,56 +11,22 @@ module Deimos
   # or consume_batch, depending on the delivery mode of your listener.
   # `consume` -> use `delivery :message` or `delivery :batch`
   # `consume_batch` -> use `delivery :inline_batch`
-  class Consumer
+  class Consumer < Karafka::BaseConsumer
     include Consume::MessageConsumption
     include Consume::BatchConsumption
     include SharedConfig
 
-    class << self
-      # @return [Deimos::SchemaBackends::Base]
-      def decoder
-        @decoder ||= Deimos.schema_backend(schema: config[:schema],
-                                           namespace: config[:namespace])
+    def consume
+      _with_span do
+        if Deimos.consumer_config(messages.metadata.topic, :batch)
+          consume_batch
+        else
+          messages.each do |message|
+            consume_message(message)
+            mark_as_consumed(message)
+          end
+        end
       end
-
-      # @return [Deimos::SchemaBackends::Base]
-      def key_decoder
-        @key_decoder ||= Deimos.schema_backend(schema: config[:key_schema],
-                                               namespace: config[:namespace])
-      end
-    end
-
-    # Helper method to decode an encoded key.
-    # @param key [String]
-    # @return [Object] the decoded key.
-    def decode_key(key)
-      return nil if key.nil?
-
-      config = self.class.config
-      unless config[:key_configured]
-        raise 'No key config given - if you are not decoding keys, please use '\
-          '`key_config plain: true`'
-      end
-
-      if config[:key_field]
-        self.class.decoder.decode_key(key, config[:key_field])
-      elsif config[:key_schema]
-        self.class.key_decoder.decode(key, schema: config[:key_schema])
-      else # no encoding
-        key
-      end
-    end
-
-    # Helper method to decode an encoded message.
-    # @param payload [Object]
-    # @return [Object] the decoded message.
-    def decode_message(payload)
-      decoded_payload = payload.nil? ? nil : self.class.decoder.decode(payload)
-      return decoded_payload unless Utils::SchemaClass.use?(self.class.config.to_h)
-
-      Utils::SchemaClass.instance(decoded_payload,
-                                  self.class.config[:schema],
-                                  self.class.config[:namespace])
     end
 
   private

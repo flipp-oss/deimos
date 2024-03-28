@@ -2,7 +2,6 @@
 
 require 'deimos/message'
 require 'deimos/shared_config'
-require 'phobos/producer'
 require 'active_support/notifications'
 
 # :nodoc:

@@ -17,8 +17,6 @@ module Deimos
     attr_accessor  :encoded_payload
     # @return [String]
     attr_accessor  :topic
-    # @return [String]
-    attr_accessor  :producer_name
 
     # @param payload [Hash]
     # @param producer [Class]
@@ -27,7 +25,6 @@ module Deimos
     # @param partition_key [Integer]
     def initialize(payload, producer, topic: nil, key: nil, headers: nil, partition_key: nil)
       @payload = payload&.with_indifferent_access
-      @producer_name = producer&.name
       @topic = topic
       @key = key
       @headers = headers&.with_indifferent_access
@@ -64,11 +61,7 @@ module Deimos
         key: @encoded_key,
         headers: @headers,
         partition_key: @partition_key || @encoded_key,
-        payload: @encoded_payload,
-        metadata: {
-          decoded_payload: @payload,
-          producer_name: @producer_name
-        }
+        payload: @encoded_payload
       }.delete_if { |k, v| k == :headers && v.nil? }
     end
 
@@ -82,7 +75,6 @@ module Deimos
         payload: @payload,
         metadata: {
           decoded_payload: @payload,
-          producer_name: @producer_name
         }
       }.delete_if { |k, v| k == :headers && v.nil? }
     end

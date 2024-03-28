@@ -49,14 +49,5 @@ module Deimos
       end
     end
 
-    # @return [Hash]
-    def phobos_message
-      {
-        payload: self.message,
-        partition_key: self.partition_key,
-        key: self.key,
-        topic: self.topic
-      }
-    end
   end
 end

@@ -6,7 +6,6 @@ module Deimos
     # are invoked for every individual message.
     module MessageConsumption
       extend ActiveSupport::Concern
-      include Phobos::Handler
 
       # @param payload [String]
       # @param metadata [Hash]
@@ -28,10 +27,9 @@ module Deimos
       end
 
       # Consume incoming messages.
-      # @param _payload [String]
-      # @param _metadata [Hash]
+      # @param _message [Karafka::Messages::Message]
       # @return [void]
-      def consume(_payload, _metadata)
+      def consume_message(_message)
         raise NotImplementedError
       end
 

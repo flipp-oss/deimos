@@ -4,27 +4,18 @@ module Deimos
   module Backends
     # Backend which produces to Kafka via an async producer.
     class KafkaAsync < Base
-      include Phobos::Producer
-
-      # Shut down the producer cleanly.
-      # @return [void]
-      def self.shutdown_producer
-        producer.async_producer_shutdown
-        producer.kafka_client&.close
-      end
-
       # :nodoc:
       def self.execute(producer_class:, messages:)
         Deimos.instrument(
           'produce',
           producer: producer_class,
-          topic: producer_class.topic,
+          topic: messages.first.topic,
           payloads: messages.map(&:payload)
         ) do
-          producer.async_publish_list(messages.map(&:encoded_hash))
+          Karafka.producer.produce_many_async(messages.map(&:encoded_hash))
           Deimos.config.metrics&.increment(
             'publish',
-            tags: %W(status:success topic:#{producer_class.topic}),
+            tags: %W(status:success topic:#{messages.first.topic}),
             by: messages.size
           )
         end

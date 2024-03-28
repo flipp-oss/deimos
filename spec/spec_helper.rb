@@ -199,11 +199,9 @@ RSpec.configure do |config|
     Deimos.configure do |deimos_config|
       deimos_config.producers.backend = :test
       deimos_config.schema.nest_child_schemas = true
-      deimos_config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.yml')
       deimos_config.schema.path = File.join(File.expand_path(__dir__), 'schemas')
       deimos_config.consumers.reraise_errors = true
       deimos_config.schema.registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
-      deimos_config.kafka.seed_brokers = ENV['KAFKA_SEED_BROKER'] || 'localhost:9092'
       deimos_config.logger = Logger.new('/dev/null')
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation

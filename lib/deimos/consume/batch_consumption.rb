@@ -7,7 +7,6 @@ module Deimos
     # of messages to be handled at once
     module BatchConsumption
       extend ActiveSupport::Concern
-      include Phobos::BatchHandler
 
       # @param batch [Array<String>]
       # @param metadata [Hash]
@@ -35,11 +34,7 @@ module Deimos
         _handle_batch_error(e, payloads, metadata)
       end
 
-      # Consume a batch of incoming messages.
-      # @param _payloads [Array<Phobos::BatchMessage>]
-      # @param _metadata [Hash]
-      # @return [void]
-      def consume_batch(_payloads, _metadata)
+      def consume_batch
         raise NotImplementedError
       end
 
