@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'active_support'
+require 'karafka'
 
 require 'deimos/version'
 require 'deimos/configuration'

@@ -110,8 +110,7 @@ module Deimos
       # @param headers [Hash] if specifying headers
       # @return [void]
       def publish_list(payloads, sync: nil, force_send: false, topic: self.topic, headers: nil)
-        return if Deimos.config.kafka.seed_brokers.blank? ||
-                  Deimos.config.producers.disabled ||
+        return if Deimos.config.producers.disabled ||
                   Deimos.producers_disabled?(self)
 
         raise 'Topic not specified. Please specify the topic.' if topic.blank?

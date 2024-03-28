@@ -4,6 +4,7 @@ require 'deimos/active_record_consume/batch_slicer'
 require 'deimos/active_record_consume/batch_record'
 require 'deimos/active_record_consume/batch_record_list'
 require 'deimos/active_record_consume/mass_updater'
+require 'deimos/consume/batch_consumption'
 
 require 'deimos/utils/deadlock_retry'
 require 'deimos/message'

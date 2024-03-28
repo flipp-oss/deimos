@@ -5,7 +5,6 @@ module Deimos
     # Class which continually polls the kafka_messages table
     # in the database and sends Kafka messages.
     class DbProducer
-      include Phobos::Producer
       attr_accessor :id, :current_topic
 
       # @return [Integer]

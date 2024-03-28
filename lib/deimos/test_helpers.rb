@@ -50,7 +50,7 @@ module Deimos
       end
     end
 
-    def normalize_message(m)
+    def self.normalize_message(m)
       return nil if m.nil?
 
       if m.respond_to?(:to_h)
@@ -68,9 +68,9 @@ module Deimos
       message_string = ''
       diff = nil
       min_hash_diff = nil
-      message = normalize_message(message)
+      message = Deimos::TestHelpers.normalize_message(message)
       if messages.any?
-        message_string = messages.map { |m| normalize_message(m.payload).inspect}.join("\n")
+        message_string = messages.map { |m| Deimos::TestHelpers.normalize_message(m.payload).inspect}.join("\n")
         min_hash_diff = messages.min_by { |m| _hash_diff(m, message)&.keys&.size }
         diff = RSpec::Expectations.differ.diff_as_object(message, min_hash_diff.payload)
       end
@@ -83,10 +83,10 @@ module Deimos
     end
 
     RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil|
-      message = normalize_message(msg)
+      message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
-        produced_messages.any? do |m|
-          message_hash = normalize_message(message&.payload)
+        running_example.produced_messages.any? do |m|
+          message_hash = Deimos::TestHelpers.normalize_message(message&.payload)
           hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message_hash)
           hash_matcher.send(:match,
                             message_hash,
