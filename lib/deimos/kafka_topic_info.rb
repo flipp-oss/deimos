@@ -6,6 +6,7 @@ module Deimos
     self.table_name = 'kafka_topic_info'
 
     class << self
+      
       # Lock a topic for the given ID. Returns whether the lock was successful.
       # @param topic [String]
       # @param lock_id [String]
