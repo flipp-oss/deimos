@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 1.24.2 - 2024-05-01
+- Fix: Deprecation notice with Rails 7.
+
 # 1.24.1 - 2024-03-26
 - Fix: ActiveRecordConsumer batch consumption was not working with the trilogy adapter.
 
