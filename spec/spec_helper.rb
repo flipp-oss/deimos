@@ -14,6 +14,8 @@ require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
 require 'rspec/snapshot'
+require "trilogy_adapter/connection"
+ActiveRecord::Base.public_send :extend, TrilogyAdapter::Connection
 Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
 
 # Constants used for consumer specs
