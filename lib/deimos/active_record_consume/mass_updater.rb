@@ -20,10 +20,13 @@ module Deimos
       # @param col_proc [Proc<Class < ActiveRecord::Base>]
       # @param replace_associations [Boolean]
       def initialize(klass, key_col_proc: nil, col_proc: nil,
-                     replace_associations: true, bulk_import_id_generator: nil)
+                     replace_associations: true, bulk_import_id_generator: nil, backfill_associations: false,
+                     bulk_import_id_column: nil)
         @klass = klass
         @replace_associations = replace_associations
         @bulk_import_id_generator = bulk_import_id_generator
+        @backfill_associations = backfill_associations
+        @bulk_import_id_column = bulk_import_id_column&.to_s
 
         @key_cols = {}
         @key_col_proc = key_col_proc
@@ -43,7 +46,7 @@ module Deimos
       end
 
       # @param record_list [BatchRecordList]
-      def save_records_to_database(record_list)
+      def save_records_to_database(record_list, backfill_associations=false)
         columns = self.columns(record_list.klass)
         key_cols = self.key_cols(record_list.klass)
         record_list.records.each(&:validate!)
@@ -63,6 +66,7 @@ module Deimos
                       }
                     }
                   end
+        options[:on_duplicate_key_ignore] = true if backfill_associations
         record_list.klass.import!(columns, record_list.records, options)
       end
 
@@ -84,6 +88,38 @@ module Deimos
         end
       end
 
+      def backfill_associations(record_list)
+        associations = {}
+        record_list.associations.each do |a|
+          klass = a.name.to_s.capitalize.constantize
+          col = @bulk_import_id_column if klass.column_names.include?(@bulk_import_id_column)
+          associations[[a.name.to_s, a.name.to_s.capitalize.constantize, col]] = []
+        end
+        record_list.batch_records.each do |primary_batch_record|
+          associations.each_key do |assoc, klass, col|
+            batch_record = BatchRecord.new(klass: klass,
+                                           attributes: primary_batch_record.associations[assoc],
+                                           bulk_import_column: col,
+                                           bulk_import_id_generator: @bulk_import_id_generator)
+            # Associate this associated batch record's record with the primary record to
+            # retrieve foreign_key after associated records have been saved and primary
+            # keys have been filled
+            primary_batch_record.record.send(:"#{assoc}=", batch_record.record)
+            associations[[assoc, klass, col]] << batch_record
+          end
+        end
+        associations.each_value do |records|
+          assoc_record_list = BatchRecordList.new(records)
+          save_records_to_database(assoc_record_list)
+          import_associations(assoc_record_list)
+        end
+        record_list.records.each do |record|
+          associations.each_key do |assoc, _|
+            record.send(:"#{assoc}_id=", record.send(assoc.to_sym).id)
+          end
+        end
+      end
+
       # @param record_list [BatchRecordList]
       # @return [Array<ActiveRecord::Base>]
       def mass_update(record_list)
@@ -91,8 +127,13 @@ module Deimos
         # any message fails, the whole thing is rolled back or retried
         # if there is deadlock
         Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
-          save_records_to_database(record_list)
-          import_associations(record_list) if record_list.associations.any?
+          if @backfill_associations
+            backfill_associations(record_list)
+            save_records_to_database(record_list, true)
+          else
+            save_records_to_database(record_list)
+            import_associations(record_list) if record_list.associations.any?
+          end
         end
         record_list.records
       end

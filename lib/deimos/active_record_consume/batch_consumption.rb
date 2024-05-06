@@ -83,7 +83,7 @@ module Deimos
       def deleted_query(records)
         keys = records.
           map { |m| record_key(m.key)[@klass.primary_key] }.
-          reject(&:nil?)
+          compact
 
         @klass.unscoped.where(@klass.primary_key => keys)
       end
@@ -168,7 +168,9 @@ module Deimos
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
                                   replace_associations: self.class.replace_associations,
-                                  bulk_import_id_generator: self.class.bulk_import_id_generator)
+                                  bulk_import_id_generator: self.class.bulk_import_id_generator,
+                                  backfill_associations: self.class.backfill_associations,
+                                  bulk_import_id_column: self.class.bulk_import_id_column)
         ActiveSupport::Notifications.instrument('batch_consumption.valid_records', {
                                                   records: updater.mass_update(record_list),
                                                   consumer: self.class

@@ -97,7 +97,8 @@ module Deimos # rubocop:disable Metrics/ModuleLength
                                   kafka_config.replace_associations
                                 end,
           bulk_import_id_generator: kafka_config.bulk_import_id_generator ||
-            Deimos.config.consumers.bulk_import_id_generator
+            Deimos.config.consumers.bulk_import_id_generator,
+          backfill_associations: kafka_config.backfill_associations
         )
       end
     end
@@ -475,6 +476,8 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # specified for individual consumers
       # @return [Block]
       setting :bulk_import_id_generator, nil
+
+      setting :backfill_associations, false
 
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.

@@ -45,6 +45,10 @@ module Deimos
         config[:replace_associations]
       end
 
+      def backfill_associations
+        config[:backfill_associations]
+      end
+
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
       # @return [void]
