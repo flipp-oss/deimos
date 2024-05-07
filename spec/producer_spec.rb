@@ -616,7 +616,7 @@ module ProducerTest
     end
 
     describe "max_batch_size" do
-      it 'should default to publishing batch size of 500' do
+      it 'should use top-level default value if max_batch_size is not defined by the producer' do
         expect(MyProducer.config[:max_batch_size]).to eq(500)
       end
 
