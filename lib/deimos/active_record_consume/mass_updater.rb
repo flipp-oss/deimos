@@ -46,7 +46,7 @@ module Deimos
       end
 
       # @param record_list [BatchRecordList]
-      def save_records_to_database(record_list, backfill_associations=false)
+      def save_records_to_database(record_list)
         columns = self.columns(record_list.klass)
         key_cols = self.key_cols(record_list.klass)
         record_list.records.each(&:validate!)
@@ -66,7 +66,6 @@ module Deimos
                       }
                     }
                   end
-        options[:on_duplicate_key_ignore] = true if backfill_associations
         record_list.klass.import!(columns, record_list.records, options)
       end
 
@@ -88,15 +87,16 @@ module Deimos
         end
       end
 
+      # Upsert associated records prior to upserting primary records
+      # @param record_list [BatchRecordList]
       def backfill_associations(record_list)
         associations = {}
-        record_list.associations.each do |a|
-          klass = a.name.to_s.capitalize.constantize
-          col = @bulk_import_id_column if klass.column_names.include?(@bulk_import_id_column)
-          associations[[a.name.to_s, a.name.to_s.capitalize.constantize, col]] = []
+        record_list.associations.each do |assoc|
+          col = @bulk_import_id_column if assoc.klass.column_names.include?(@bulk_import_id_column)
+          associations[[assoc.name, assoc.klass, col, assoc.foreign_key]] = []
         end
         record_list.batch_records.each do |primary_batch_record|
-          associations.each_key do |assoc, klass, col|
+          associations.each_key do |assoc, klass, col, foreign_key|
             batch_record = BatchRecord.new(klass: klass,
                                            attributes: primary_batch_record.associations[assoc],
                                            bulk_import_column: col,
@@ -105,7 +105,7 @@ module Deimos
             # retrieve foreign_key after associated records have been saved and primary
             # keys have been filled
             primary_batch_record.record.send(:"#{assoc}=", batch_record.record)
-            associations[[assoc, klass, col]] << batch_record
+            associations[[assoc, klass, col, foreign_key]] << batch_record
           end
         end
         associations.each_value do |records|
@@ -114,8 +114,8 @@ module Deimos
           import_associations(assoc_record_list)
         end
         record_list.records.each do |record|
-          associations.each_key do |assoc, _|
-            record.send(:"#{assoc}_id=", record.send(assoc.to_sym).id)
+          associations.each_key do |assoc, _, _, foreign_key|
+            record.send(:"#{foreign_key}=", record.send(assoc).id)
           end
         end
       end
@@ -129,7 +129,7 @@ module Deimos
         Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
           if @backfill_associations
             backfill_associations(record_list)
-            save_records_to_database(record_list, true)
+            save_records_to_database(record_list)
           else
             save_records_to_database(record_list)
             import_associations(record_list) if record_list.associations.any?
