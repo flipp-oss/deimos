@@ -4,9 +4,11 @@
 
 2.x is a major rewrite from 1.0.
 
-- need let(:consumer) in specs
+- remove test_consume_invalid_message
+- Remove call_original and skip_expectation from test functions
 - `batch` config instead of `delivery_method`
 - Can we use avro_validation?
+- Remove deprecated stub_producers_and_consumers!, stub_producer, stub_consumer, stub_batch_consumer
 
 TODO: 
 - Logging and metrics via notifications

@@ -136,11 +136,5 @@ module Deimos
       signal_handler.run!
     end
 
-    def register_waterdrop_middleware!
-
-    end
-
   end
 end
-
-Deimos.register_waterdrop_middleware!

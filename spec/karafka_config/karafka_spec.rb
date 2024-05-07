@@ -7,11 +7,10 @@ RSpec.describe 'Karafka configs' do
   let(:consumer_class) do
     Class.new(Deimos::Consumer) do
       def consume_message(message)
-        $found_stuff = 'YES'
+        $found_stuff = message.payload
       end
     end
   end
-  let(:consumer) { karafka.consumer_for('MyTopic') }
 
   it 'should be able to pick up a consumer' do
     stub_const('MyConsumer', consumer_class)
@@ -25,7 +24,7 @@ RSpec.describe 'Karafka configs' do
     end
 
     test_consume_message('MyTopic', {test_id: "id1", some_int: 5}, key: {"test_id": "id1"})
-    expect($found_stuff).to eq('YES')
+    expect($found_stuff).to eq({'test_id' => "id1", 'some_int' => 5})
   end
 
 end

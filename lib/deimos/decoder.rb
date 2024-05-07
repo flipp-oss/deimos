@@ -42,7 +42,7 @@ module Deimos
 
     # @param message [Karafka::Messages::Message]
     def call(message)
-      @key_field ? decode_key(message.key) : decode_message(message.payload)
+      @key_field ? decode_key(message.metadata.raw_key) : decode_message(message.raw_payload)
     end
   end
 end
