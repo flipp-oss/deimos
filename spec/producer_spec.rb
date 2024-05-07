@@ -74,6 +74,21 @@ module ProducerTest
 
     end
 
+    let(:my_topic_records) do
+      [
+      Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
+                          MyProducer,
+                          topic: 'my-topic',
+                          partition_key: 'foo',
+                          key: 'foo'),
+        Deimos::Message.new({ 'test_id' => 'bar', 'some_int' => 124 },
+                            MyProducer,
+                            topic: 'my-topic',
+                            partition_key: 'bar',
+                            key: 'bar')
+      ]
+    end
+
     it 'should fail on invalid message with error handler' do
       subscriber = Deimos.subscribe('produce') do |event|
         expect(event.payload[:payloads]).to eq([{ 'invalid' => 'key' }])
@@ -86,19 +101,7 @@ module ProducerTest
 
     it 'should produce a message' do
       expect(described_class).to receive(:produce_batch).once.with(
-        Deimos::Backends::Test,
-        [
-          Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
-                              MyProducer,
-                              topic: 'my-topic',
-                              partition_key: 'foo',
-                              key: 'foo'),
-          Deimos::Message.new({ 'test_id' => 'bar', 'some_int' => 124 },
-                              MyProducer,
-                              topic: 'my-topic',
-                              partition_key: 'bar',
-                              key: 'bar')
-        ]
+        Deimos::Backends::Test, my_topic_records
       ).and_call_original
 
       MyProducer.publish_list(
@@ -108,6 +111,17 @@ module ProducerTest
       expect('my-topic').to have_sent('test_id' => 'foo', 'some_int' => 123)
       expect('your-topic').not_to have_sent('test_id' => 'foo', 'some_int' => 123)
       expect('my-topic').not_to have_sent('test_id' => 'foo2', 'some_int' => 123)
+    end
+
+    it 'should call produce_batch multiple times when max_batch_size < records size' do
+      max_batch_size = my_topic_records.size - 1
+      Deimos.configure { producers.max_batch_size = max_batch_size }
+      expect(described_class).to receive(:produce_batch).twice
+
+      MyProducer.publish_list(
+        [{ 'test_id' => 'foo', 'some_int' => 123 },
+         { 'test_id' => 'bar', 'some_int' => 124 }]
+      )
     end
 
     it 'should allow setting the topic and headers from publish_list' do

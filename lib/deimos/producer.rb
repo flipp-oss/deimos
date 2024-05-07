@@ -59,9 +59,6 @@ module Deimos
   class Producer
     include SharedConfig
 
-    # @return [Integer]
-    MAX_BATCH_SIZE = 500
-
     class << self
 
       # @return [Hash]
@@ -126,7 +123,7 @@ module Deimos
         ) do
           messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, self, headers: headers) }
           messages.each { |m| _process_message(m, topic) }
-          messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
+          messages.in_groups_of(Deimos.config.producers.max_batch_size, false) do |batch|
             self.produce_batch(backend_class, batch)
           end
         end

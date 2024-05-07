@@ -198,6 +198,7 @@ producers.schema_namespace|nil|Default namespace for all producers. Can remain n
 producers.topic_prefix|nil|Add a prefix to all topic names. This can be useful if you're using the same Kafka broker for different environments that are producing the same topics.
 producers.disabled|false|Disable all actual message producing. Generally more useful to use the `disable_producers` method instead.
 producers.backend|`:kafka_async`|Currently can be set to `:db`, `:kafka`, or `:kafka_async`. If using Kafka directly, a good pattern is to set to async in your user-facing app, and sync in your consumers or delayed workers.
+producers.max_batch_size|500|Maximum batch size for publishing.
 
 ## Schema Configuration
 
