@@ -68,7 +68,7 @@ module ActiveRecordBatchConsumerTest
       keys = messages.map { |m| m[:key] }
       payloads = messages.map { |m| m[:payload] }
 
-      test_consume_batch(MyBatchConsumer, payloads, keys: keys, call_original: true)
+      test_consume_batch(MyBatchConsumer, payloads, keys: keys)
     end
 
     describe 'consume_batch' do

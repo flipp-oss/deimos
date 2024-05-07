@@ -30,7 +30,7 @@ module Deimos
       # @param _message [Karafka::Messages::Message]
       # @return [void]
       def consume_message(_message)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
     private

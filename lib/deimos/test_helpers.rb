@@ -25,7 +25,7 @@ module Deimos
         Deimos.configure do |deimos_config|
           deimos_config.logger = Logger.new(STDOUT)
           deimos_config.consumers.reraise_errors = true
-          deimos_config.schema.backend = Deimos.schema_backend_class.mock_backend
+          deimos_config.schema.backend = :avro_local
           deimos_config.producers.backend = :test
           deimos_config.tracer = Deimos::Tracing::Mock.new
         end
@@ -127,45 +127,44 @@ module Deimos
     # Deimos::Consumer or the topic as a string
     # @param payload [Hash] the payload to consume
     # @param key [Object] the key to use.
+    # @param call_original [Symbol] legacy parameter.
     # @param partition_key [Object] the partition key to use.
     # @return [void]
     def test_consume_message(handler_class_or_topic,
                              payload,
                              key: nil,
-                             partition_key: nil,
-                             &block)
-      test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key], &block)
+                             call_original: :not_given,
+                             partition_key: nil)
+      if call_original != :not_given
+        puts "test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
+      end
+      test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key])
     end
 
     # Test that a given handler will consume a given batch payload correctly,
     # i.e. that the schema is correct. If
     # a block is given, that block will be executed when `consume` is called.
     # Otherwise it will just confirm that `consume` is called at all.
-    # @param handler_class_or_topic [Class, String] Class which inherits from
+    # @param _handler_class_or_topic [Class, String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payloads [Array<Hash>] the payload to consume
-    # @param keys [Array<Hash,String>]
-    # @param partition_keys [Array<Integer>]
+    # @param call_original [Symbol] legacy parameter.
+    # @param keys [Array<Object>]
+    # @param partition_keys [Array<Object>]
     # @return [void]
-    def test_consume_batch(handler_class_or_topic,
+    def test_consume_batch(_handler_class_or_topic,
                            payloads,
                            keys: [],
-                           partition_keys: [],
-                           &block)
-      handler_class = nil
-      topic_name = nil
-      if handler_class_or_topic.is_a?(String)
-        topic_name = handler_class_or_topic
-        handler_class = Deimos.consumer_config(topic_name, :class_name).constantize
-      else
-        handler_class = handler_class_or_topic
-        topic_name = Deimos.topic_for_consumer(handler_class_or_topic)
+                           call_original: :not_given,
+                           partition_keys: [])
+      if call_original != :not_given
+        puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
-      if block_given?
-        allow(handler_class).to receive(:consume, &block)
-      end
+      deimos_consumer = consumer.coordinator.topic.consumer
       payloads.each_with_index do |payload, i|
-        karafka.produce(payload, key: keys[i], partition_key: partition_keys[i], topic: topic_name)
+        encoded_payload = deimos_consumer.encoder.encode(payload)
+        encoded_key = deimos_consumer.key_encoder.encode(keys[i]) if deimos_consumer.key_encoder
+        karafka.produce(encoded_payload, {key: encoded_key, partition_key: partition_keys[i]}, topic: consumer.topic.name)
       end
       consumer.consume
     end

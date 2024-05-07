@@ -35,7 +35,7 @@ module Deimos
       end
 
       def consume_batch
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
     protected

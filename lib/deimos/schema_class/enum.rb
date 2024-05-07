@@ -30,7 +30,7 @@ module Deimos
       # Returns all the valid symbols for this enum.
       # @return [Array<String>]
       def symbols
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # @return [String]

@@ -14,6 +14,7 @@ require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
 require 'rspec/snapshot'
+require 'karafka/testing/rspec/helpers'
 Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
 
 # Constants used for consumer specs
@@ -164,6 +165,8 @@ end
 RSpec.configure do |config|
   config.extend(DbConfigs)
   include DbConfigs
+  config.include Karafka::Testing::RSpec::Helpers
+
   config.include TestRunners
   config.full_backtrace = true
 

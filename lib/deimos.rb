@@ -9,7 +9,6 @@ require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
 require 'deimos/consumer'
-require 'deimos/batch_consumer'
 require 'deimos/instrumentation'
 
 require 'deimos/backends/base'
@@ -87,6 +86,32 @@ module Deimos
       self.schema_backend(schema: schema, namespace: namespace).decode(payload)
     end
 
+    # This block should be executed within the context of a Karafka routing `topic` block.
+    # @param topic_obj [Karafka::Routing::Topic]
+    # @param consumer_class [Class < Deimos::Consumer]
+    def route(topic_obj, consumer_class, schema:, namespace: nil, key_config: nil, use_schema_classes: nil,
+              max_db_batch_size: nil, bulk_import_id_column: nil, replace_associations: nil,
+              bulk_import_id_generator: nil
+              )
+      Deimos.config.consumer_objects.delete_if { |c| c.topic == topic_obj.name}
+      Deimos.configure do
+        consumer do
+          class_name consumer_class.name
+          topic topic_obj.name
+          schema schema
+          namespace namespace
+          key_config key_config
+          use_schema_classes use_schema_classes
+          max_db_batch_size max_db_batch_size
+          bulk_import_id_column bulk_import_id_column
+          replace_associations replace_associations
+          bulk_import_id_generator bulk_import_id_generator
+        end
+      end
+      topic_obj.consumer consumer_class
+      topic_obj.deserializers(**consumer_class.karafka_decoders)
+    end
+
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     # @return [void]
@@ -110,6 +135,12 @@ module Deimos
       signal_handler = Sigurd::SignalHandler.new(executor)
       signal_handler.run!
     end
+
+    def register_waterdrop_middleware!
+
+    end
+
   end
 end
 
+Deimos.register_waterdrop_middleware!

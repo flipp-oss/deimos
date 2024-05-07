@@ -2,10 +2,14 @@ module Deimos
   class Decoder
     attr_accessor :key_config
 
-    def initialize(schema:, namespace:, key_config: nil, use_schema_classes: nil)
+    # @param schema [String]
+    # @param namespace [String]
+    # @param key_field [Symbol]
+    # @param use_schema_classes [Boolean]
+    def initialize(schema:, namespace:, key_field: nil, use_schema_classes: nil)
       @schema = schema
       @namespace = namespace
-      @key_config = key_config
+      @key_field = key_field
       @use_schema_classes = use_schema_classes
     end
 
@@ -15,15 +19,14 @@ module Deimos
     end
 
     def decode_key(key)
-      return nil if key.nil?
+      return nil if key.nil? || @key_field.nil?
 
-      if @key_config[:schema]
-        self.backend.decode(key, schema: @key_config[:schema])
-      elsif @key_config[:field]
-        self.backend.decode_key(key, @key_config[:field])
-      else
-        raise "Could not decode #{key}: Unknown field config #{@key_config}"
-      end
+      decoded_key = self.backend.decode_key(key, @key_field)
+      return decoded_key unless Utils::SchemaClass.use?(@use_schema_classes)
+
+      Utils::SchemaClass.instance(decoded_key,
+                                  "#{@schema}_key",
+                                  @namespace)
     end
 
     def decode_message(payload)
@@ -39,7 +42,7 @@ module Deimos
 
     # @param message [Karafka::Messages::Message]
     def call(message)
-      @key_config ? decode_key(message.key) : decode_message(message.payload)
+      @key_field ? decode_key(message.key) : decode_message(message.payload)
     end
   end
 end

@@ -20,6 +20,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     self.config.consumer_objects.each do |consumer|
       configure_producer_or_consumer(consumer)
     end
+    generate_key_schemas
     validate_db_backend if self.config.producers.backend == :db
   end
 
@@ -33,9 +34,9 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     end
 
     # @param handler_class [Class]
-    # @return [FigTree::ConfigStruct]
+    # @return [FigTree::ConfigStruct,nil]
     def topic_for_consumer(handler_class)
-      self.config.consumer_objects.find { |o| o.class_name.constantize == handler_class}.topic
+      self.config.consumer_objects.find { |o| o.class_name.constantize == handler_class}&.topic
     end
 
     # @param topic [String]
@@ -43,6 +44,16 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     # @return [Object]
     def producer_config(topic, key)
       self.config.producer_objects.find { |o| o.topic == topic }[key]
+    end
+
+    def generate_key_schemas
+      objects = Deimos::Producer.descendants + Deimos::Consumer.descendants
+      objects.each do |obj|
+        next unless obj.config[:key_field]
+
+        Deimos.schema_backend(schema: obj.config[:schema], namespace: obj.config[:namespace]).
+          generate_key_schema(obj.config[:key_field])
+      end
     end
 
     # Loads generated classes
@@ -76,9 +87,16 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     def configure_producer_or_consumer(kafka_config)
       klass = kafka_config.class_name.constantize
       klass.class_eval do
+        topic(kafka_config.topic) if kafka_config.topic.present? && klass.respond_to?(:topic)
+        schema(kafka_config.schema) if kafka_config.schema.present?
+        namespace(kafka_config.namespace) if kafka_config.namespace.present?
+        key_config(**kafka_config.key_config) if kafka_config.key_config.present?
+        schema_class_config(kafka_config.use_schema_classes) if kafka_config.use_schema_classes.present?
+        if kafka_config.respond_to?(:batch)
+          klass.config[:batch] = kafka_config.batch
+        end
         if kafka_config.respond_to?(:bulk_import_id_column) # consumer
           klass.config.merge!(
-            batch: kafka_config.batch,
             bulk_import_id_column: kafka_config.bulk_import_id_column,
             replace_associations: if kafka_config.replace_associations.nil?
                                     Deimos.config.consumers.replace_associations

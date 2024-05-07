@@ -200,7 +200,7 @@ module ActiveRecordConsumerTest
             test_consume_message(MyCustomFetchConsumer, {
                                    test_id: 'id1',
                                    some_int: 3
-                                 }, call_original: true)
+                                 })
             expect(widget1.reload.updated_at.in_time_zone).
               to eq(Time.local(2020, 5, 6, 5, 5, 5))
             travel_back
@@ -225,13 +225,13 @@ module ActiveRecordConsumerTest
             test_consume_message(MyCustomFetchConsumer, {
                                    test_id: 'id1',
                                    some_int: 3
-                                 }, call_original: true)
+                                 })
             expect(widget1.reload.some_int).to eq(3)
             expect(Widget.count).to eq(1)
             test_consume_message(MyCustomFetchConsumer, {
                                    test_id: 'id2',
                                    some_int: 4
-                                 }, call_original: true)
+                                 })
             expect(Widget.count).to eq(2)
             expect(Widget.find_by_test_id('id1').some_int).to eq(3)
             expect(Widget.find_by_test_id('id2').some_int).to eq(4)

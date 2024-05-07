@@ -5,4 +5,4 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in boilerplate.gemspec
 gemspec
 
-gem 'karafka', git: "https://github.com/karafka/karafka/"
+gem 'karafka-testing', path: '../karafka-testing'

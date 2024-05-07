@@ -17,7 +17,7 @@ module Deimos
         # @param messages [Array<Deimos::Message>]
         # @return [void]
         def execute(producer_class:, messages:)
-          raise NotImplementedError
+          raise MissingImplementationError
         end
 
       private

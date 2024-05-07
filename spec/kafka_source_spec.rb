@@ -371,10 +371,10 @@ module KafkaSourceSpec
         WidgetBuggy.reset_column_information
       end
 
-      it 'raises a NotImplementedError exception' do
+      it 'raises a MissingImplementationError exception' do
         expect {
           WidgetBuggy.create(widget_id: 1, name: 'Widget 1')
-        }.to raise_error(NotImplementedError)
+        }.to raise_error(MissingImplementationError)
       end
     end
   end

@@ -1,5 +1,16 @@
 # Upgrading Deimos
 
+## Upgrading to 2.x
+
+2.x is a major rewrite from 1.0.
+
+- need let(:consumer) in specs
+- `batch` config instead of `delivery_method`
+- Can we use avro_validation?
+
+TODO: 
+- Logging and metrics via notifications
+
 ## Upgrading from < 1.5.0 to >= 1.5.0
 
 If you are using Confluent's schema registry to Avro-encode your
