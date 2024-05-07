@@ -6,15 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## UNRELEASED
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-- Feature: Enable `producers.persistent_connections` phobos setting
->>>>>>> 3ea5999 (Allow on per producer level)
 - Feature: Added `max_batch_size` config to producer to allow custom batch size for publishing.
-=======
-- Feature: Added `max_batch_size` config to allow custom batch size for publishing per producer.
->>>>>>> 4806c5b (Allow on per producer level)
 
 # 1.24.3 - 2024-05-13
 - Feature: Enable `producers.persistent_connections` phobos setting
