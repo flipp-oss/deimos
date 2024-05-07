@@ -47,7 +47,6 @@ namespace|nil|Namespace of the schema to use when finding it locally.
 key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
 use_schema_classes|nil|Set to true or false to enable or disable using the producers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes)
 
-
 ## Defining Consumers
 
 Consumers are defined almost identically to producers:
