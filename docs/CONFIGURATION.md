@@ -46,7 +46,6 @@ schema|nil|Name of the schema to use to encode data before producing.
 namespace|nil|Namespace of the schema to use when finding it locally.
 key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
 use_schema_classes|nil|Set to true or false to enable or disable using the producers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes)
-max_batch_size|500|Maximum publishing batch size. Defaults to top-level configuration of 500.
 
 
 ## Defining Consumers
