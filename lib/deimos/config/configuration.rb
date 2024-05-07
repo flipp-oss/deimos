@@ -442,7 +442,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       setting :replace_associations
       # Maximum publishing batch size for this producer.
       # @return [Integer]
-      setting :max_batch_size, 500
+      setting :max_batch_size
     end
 
     setting_object :consumer do
