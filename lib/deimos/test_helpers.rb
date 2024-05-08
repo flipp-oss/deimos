@@ -186,8 +186,9 @@ module Deimos
       karafka.set_consumer(consumer)
 
        payloads.each_with_index do |payload, i|
-         encoded_payload = handler_class.encoder.encode(payload)
-         encoded_key = handler_class.key_encoder.encode(keys[i]) if handler_class.key_encoder
+         encoded_payload = consumer.topic.deserializers[:payload].backend.encode(payload)
+         key_encoder = consumer.topic.deserializers[:key]
+         encoded_key = key_encoder.encode_key(keys[i]) if key_encoder
          karafka.produce(encoded_payload, {key: encoded_key, partition_key: partition_keys[i]}, topic: consumer.topic.name)
        end
        consumer.consume

@@ -36,17 +36,17 @@ RSpec.describe 'Karafka configs' do
     stub_const('MyConsumer', consumer_class)
     KarafkaApp.routes.draw do
       topic 'MyTopic' do
-        Deimos.route(self, MyConsumer,
-                     schema: 'MySchema',
-                     namespace: 'com.my-namespace',
-                     key_config: {field: :test_id})
+        consumer MyConsumer
+        schema(schema: 'MySchema',
+               namespace: 'com.my-namespace',
+               key_config: {field: :test_id})
       end
     end
 
-    test_consume_message('MyTopic', {test_id: "id1", some_int: 5}, key: {"test_id": "id1"})
+    test_consume_message('MyTopic', {test_id: "id1", some_int: 5}, key: "id1")
     expect($found_stuff).to eq({'test_id' => "id1", 'some_int' => 5})
     $found_stuff = nil
-    test_consume_message(MyConsumer, {test_id: "id1", some_int: 5}, key: {"test_id": "id1"})
+    test_consume_message(MyConsumer, {test_id: "id1", some_int: 5}, key: "id1")
     expect($found_stuff).to eq({'test_id' => "id1", 'some_int' => 5})
   end
 

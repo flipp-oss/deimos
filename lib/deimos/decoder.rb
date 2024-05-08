@@ -1,7 +1,5 @@
 module Deimos
   class Decoder
-    attr_accessor :key_config
-
     # @param schema [String]
     # @param namespace [String]
     # @param key_field [Symbol]
@@ -16,6 +14,11 @@ module Deimos
     def backend
       @backend ||= Deimos.schema_backend(schema: @schema,
                                          namespace: @namespace)
+    end
+
+    # for use in test helpers
+    def encode_key(key)
+      self.backend.encode_key(@key_field, key)
     end
 
     def decode_key(key)

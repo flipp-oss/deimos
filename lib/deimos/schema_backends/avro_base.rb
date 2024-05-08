@@ -20,7 +20,11 @@ module Deimos
 
       # @override
       def encode_key(key_id, key, topic: nil)
-        @key_schema ||= @schema_store.find("#{@schema}_key")
+        begin
+          @key_schema ||= @schema_store.find("#{@schema}_key")
+        rescue AvroTurf::SchemaNotFoundError
+          @key_schema = generate_key_schema(key_id)
+        end
         field_name = _field_name_from_schema(@key_schema)
         payload = { field_name => key }
         encode(payload, schema: @key_schema['name'], topic: topic)

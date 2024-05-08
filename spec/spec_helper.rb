@@ -210,7 +210,7 @@ RSpec.configure do |config|
       deimos_config.schema.registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
       deimos_config.logger = Logger.new('/dev/null')
       deimos_config.logger.level = Logger::INFO
-      deimos_config.schema.backend = :avro_validation
+      deimos_config.schema.backend = :avro_local
       deimos_config.schema.generated_class_path = 'spec/schemas'
     end
   end

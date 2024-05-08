@@ -5,16 +5,17 @@
 2.x is a major rewrite from 1.0.
 
 - remove test_consume_invalid_message and test_consume_batch_invalid_message
-- Remove call_original and skip_expectation from test functions
+- Deprecate call_original and skip_expectation from test functions
 - `batch` config instead of `delivery_method`
-- Can we use avro_validation?
+- Can/should we use avro_validation?
 - Remove deprecated stub_producers_and_consumers!, stub_producer, stub_consumer, stub_batch_consumer
+- You can publish messages without a Producer - Producer can be used for DB backends, method for partition key, disabling
 
 TODO: 
 - producer middleware
 - producer spec
 - Add producers / schemas to Karafka routes
-- See if we can stop storing schema/namespace on consumers
+- See if we can stop storing schema/namespace on consumers - `topic.deserializers[:payload].backend`
 - Logging and metrics via notifications
 
 For producers:

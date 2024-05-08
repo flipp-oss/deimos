@@ -21,6 +21,9 @@ require 'deimos/utils/schema_class'
 require 'deimos/schema_class/enum'
 require 'deimos/schema_class/record'
 
+require 'deimos/ext/active_record_route'
+require 'deimos/ext/consumer_route'
+
 require 'deimos/railtie' if defined?(Rails)
 require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
 
