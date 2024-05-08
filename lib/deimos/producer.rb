@@ -122,7 +122,7 @@ module Deimos
           topic: topic,
           payloads: payloads
         ) do
-          messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, self, headers: headers) }
+          messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, headers: headers) }
           messages.each { |m| _process_message(m, topic) }
           messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
             self.produce_batch(backend_class, batch)

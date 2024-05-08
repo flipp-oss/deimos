@@ -2,7 +2,6 @@
 
 require 'deimos/consume/batch_consumption'
 require 'deimos/consume/message_consumption'
-require 'deimos/decoder'
 
 # Class to consume messages coming from a Kafka topic
 # Note: According to the docs, instances of your handler will be created
@@ -27,33 +26,6 @@ module Deimos
         return nil unless config[:key_field]
 
         Deimos.schema_backend(schema: "#{config[:schema]}_key", namespace: config[:namespace])
-      end
-
-      def karafka_decoders
-        decoders = {
-          payload: Decoder.new(
-            schema: config[:schema],
-            namespace: config[:namespace],
-            use_schema_classes: config[:use_schema_classes]
-          )
-        }
-        if self.config[:encode_key]
-          if self.config[:key_field]
-            decoders[:key] = Decoder.new(
-              schema: config[:schema],
-              namespace: config[:namespace],
-              use_schema_classes: config[:use_schema_classes],
-              key_field: config[:key_field]
-            )
-          else
-            decoders[:key] = Decoder.new(
-              schema: self.config[:key_schema] || self.schema,
-              namespace: self.namespace,
-              use_schema_classes: self.config[:use_schema_classes],
-            )
-          end
-        end
-        decoders
       end
 
     end

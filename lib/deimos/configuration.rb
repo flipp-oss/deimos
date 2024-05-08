@@ -34,9 +34,14 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     end
 
     # @param handler_class [Class]
-    # @return [FigTree::ConfigStruct,nil]
+    # @return [String,nil]
     def topic_for_consumer(handler_class)
-      self.config.consumer_objects.find { |o| o.class_name.constantize == handler_class}&.topic
+      Karafka::App.routes.flat_map(&:topics).flat_map(&:to_a).each do |topic|
+        if topic.consumer == handler_class
+          return topic.name
+        end
+      end
+      nil
     end
 
     # @param topic [String]
@@ -258,10 +263,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # Configure the usage of generated schema classes for this producer
       # @return [Boolean]
       setting :use_schema_classes
-      # If true, and using the multi-table feature of ActiveRecordConsumers, replace associations
-      # instead of appending to them.
-      # @return [Boolean]
-      setting :replace_associations
     end
 
     setting_object :consumer do

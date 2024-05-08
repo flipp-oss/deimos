@@ -19,11 +19,10 @@ module Deimos
     attr_accessor  :topic
 
     # @param payload [Hash]
-    # @param producer [Class]
     # @param topic [String]
     # @param key [String, Integer, Hash]
     # @param partition_key [Integer]
-    def initialize(payload, producer, topic: nil, key: nil, headers: nil, partition_key: nil)
+    def initialize(payload, topic: nil, key: nil, headers: nil, partition_key: nil)
       @payload = payload&.with_indifferent_access
       @topic = topic
       @key = key

@@ -66,3 +66,4 @@ end
 # Visit the setup documentation to get started and enhance your experience.
 #
 # https://karafka.io/docs/Web-UI-Getting-Started
+Karafka.producer.middleware.append(Deimos::ProducerMiddleware)

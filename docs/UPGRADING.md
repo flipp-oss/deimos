@@ -12,11 +12,31 @@
 - You can publish messages without a Producer - Producer can be used for DB backends, method for partition key, disabling
 
 TODO: 
-- producer middleware
+
+- topic_for_consumer - remove
 - producer spec
-- Add producers / schemas to Karafka routes
 - See if we can stop storing schema/namespace on consumers - `topic.deserializers[:payload].backend`
+- 
 - Logging and metrics via notifications
+- Error messages: 
+```
+        if key.nil?
+          return nil if config[:no_keys] # no key is fine, otherwise it's a problem
+
+          raise 'No key given but a key is required! Use `key_config none: true` to avoid using keys.'
+        end
+        if config[:encode_key] && config[:key_field].nil? &&
+           config[:key_schema].nil?
+          raise 'No key config given - if you are not encoding keys, please use `key_config plain: true`'
+        end
+```
+Need to add `Karafka.producer.middleware.append(Deimos::ProducerMiddleware)` somewhere
+
+
+Testing:
+- legacy mode
+- all key config combinations for both producer and consumer
+- Override defaults (e.g. producers.namespace)
 
 For producers:
 * disabling producers
