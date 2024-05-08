@@ -98,7 +98,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
                                 end,
           bulk_import_id_generator: kafka_config.bulk_import_id_generator ||
             Deimos.config.consumers.bulk_import_id_generator,
-          backfill_associations: kafka_config.backfill_associations
+          save_associations_first: kafka_config.save_associations_first
         )
       end
     end
@@ -477,7 +477,10 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # @return [Block]
       setting :bulk_import_id_generator, nil
 
-      setting :backfill_associations, false
+      # If enabled save associated records prior to saving the main record class
+      # This will also set foreign keys for associated records
+      # @return [Boolean]
+      setting :save_associations_first, false
 
       # These are the phobos "listener" configs. See CONFIGURATION.md for more
       # info.

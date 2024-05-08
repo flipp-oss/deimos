@@ -114,7 +114,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
 
       end
 
-      context 'with backfill_associations' do
+      context 'with save_associations_first' do
         before(:all) do
           ActiveRecord::Base.connection.create_table(:fidgets, force: true) do |t|
             t.string(:test_id)
@@ -175,7 +175,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
             case klass.to_s
             when 'Widget', 'Fidget'
               %w(id)
-            when 'WidgetFidgets'
+            when 'WidgetFidget'
               %w(widget_id fidget_id)
             when 'FidgetDetail', 'Detail'
               %w(title)
@@ -189,10 +189,10 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
         before(:each) do
           stub_const('Fidget', fidget_class)
           stub_const('FidgetDetail', fidget_detail_class)
-          stub_const('WidgetFidgets', widget_fidget_class)
+          stub_const('WidgetFidget', widget_fidget_class)
           Widget.reset_column_information
           Fidget.reset_column_information
-          WidgetFidgets.reset_column_information
+          WidgetFidget.reset_column_information
         end
 
         # rubocop:disable RSpec/MultipleExpectations, RSpec/ExampleLength
@@ -200,7 +200,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
           batch = Deimos::ActiveRecordConsume::BatchRecordList.new(
             [
               Deimos::ActiveRecordConsume::BatchRecord.new(
-                klass: WidgetFidgets,
+                klass: WidgetFidget,
                 attributes: {
                   widget: { test_id: 'id1', some_int: 10, detail: { title: 'Widget Title 1' } },
                   fidget: { test_id: 'id1', some_int: 10, fidget_detail: { title: 'Fidget Title 1' } },
@@ -210,7 +210,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
                 bulk_import_id_generator: bulk_id_generator
               ),
               Deimos::ActiveRecordConsume::BatchRecord.new(
-                klass: WidgetFidgets,
+                klass: WidgetFidget,
                 attributes: {
                   widget: { test_id: 'id2', some_int: 20, detail: { title: 'Widget Title 2' } },
                   fidget: { test_id: 'id2', some_int: 20, fidget_detail: { title: 'Fidget Title 2' } },
@@ -222,18 +222,18 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
             ]
           )
 
-          results = described_class.new(WidgetFidgets,
+          results = described_class.new(WidgetFidget,
                                         bulk_import_id_generator: bulk_id_generator,
                                         bulk_import_id_column: 'bulk_import_id',
                                         key_col_proc: key_proc,
-                                        backfill_associations: true).mass_update(batch)
+                                        save_associations_first: true).mass_update(batch)
           expect(results.count).to eq(2)
           expect(Widget.count).to eq(2)
           expect(Detail.count).to eq(2)
           expect(Fidget.count).to eq(2)
           expect(FidgetDetail.count).to eq(2)
 
-          WidgetFidgets.all.each_with_index do |widget_fidget, ind|
+          WidgetFidget.all.each_with_index do |widget_fidget, ind|
             widget = Widget.find_by(id: widget_fidget.widget_id)
             expect(widget.test_id).to eq("id#{ind + 1}")
             expect(widget.some_int).to eq((ind + 1) * 10)

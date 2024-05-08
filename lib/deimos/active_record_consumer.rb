@@ -45,8 +45,9 @@ module Deimos
         config[:replace_associations]
       end
 
-      def backfill_associations
-        config[:backfill_associations]
+      # @return [Boolean]
+      def save_associations_first
+        config[:save_associations_first]
       end
 
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,

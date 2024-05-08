@@ -93,7 +93,7 @@ describe Deimos, 'configuration' do
           use_schema_classes: nil,
           max_db_batch_size: nil,
           bulk_import_id_generator: nil,
-          backfill_associations: false
+          save_associations_first: false
         }, {
           topic: 'my_batch_consume_topic',
           group_id: 'my_batch_group_id',
@@ -113,7 +113,7 @@ describe Deimos, 'configuration' do
           use_schema_classes: nil,
           max_db_batch_size: nil,
           bulk_import_id_generator: nil,
-          backfill_associations: false
+          save_associations_first: false
         }
       ],
       producer: {
@@ -268,7 +268,7 @@ describe Deimos, 'configuration' do
             use_schema_classes: false,
             max_db_batch_size: nil,
             bulk_import_id_generator: nil,
-            backfill_associations: false
+            save_associations_first: false
           }
         ],
         producer: {
@@ -300,7 +300,7 @@ describe Deimos, 'configuration' do
         group_id 'myconsumerid'
         bulk_import_id_generator(-> { 'consumer' })
         replace_associations false
-        backfill_associations true
+        save_associations_first true
       end
 
       consumer do
@@ -318,12 +318,12 @@ describe Deimos, 'configuration' do
     custom = MyConfigConsumer.config
     expect(custom[:replace_associations]).to eq(false)
     expect(custom[:bulk_import_id_generator].call).to eq('consumer')
-    expect(custom[:backfill_associations]).to eq(true)
+    expect(custom[:save_associations_first]).to eq(true)
 
     default = MyConfigConsumer2.config
     expect(default[:replace_associations]).to eq(true)
     expect(default[:bulk_import_id_generator].call).to eq('global')
-    expect(default[:backfill_associations]).to eq(false)
+    expect(default[:save_associations_first]).to eq(false)
 
   end
 end

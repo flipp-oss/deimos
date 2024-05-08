@@ -20,12 +20,12 @@ module Deimos
       # @param col_proc [Proc<Class < ActiveRecord::Base>]
       # @param replace_associations [Boolean]
       def initialize(klass, key_col_proc: nil, col_proc: nil,
-                     replace_associations: true, bulk_import_id_generator: nil, backfill_associations: false,
+                     replace_associations: true, bulk_import_id_generator: nil, save_associations_first: false,
                      bulk_import_id_column: nil)
         @klass = klass
         @replace_associations = replace_associations
         @bulk_import_id_generator = bulk_import_id_generator
-        @backfill_associations = backfill_associations
+        @save_associations_first = save_associations_first
         @bulk_import_id_column = bulk_import_id_column&.to_s
 
         @key_cols = {}
@@ -87,38 +87,42 @@ module Deimos
         end
       end
 
+      # rubocop:disable Metrics/AbcSize
       # Upsert associated records prior to upserting primary records
       # @param record_list [BatchRecordList]
-      def backfill_associations(record_list)
-        associations = {}
+      def save_associations_first(record_list)
+        associations = Hash.new([])
         record_list.associations.each do |assoc|
           col = @bulk_import_id_column if assoc.klass.column_names.include?(@bulk_import_id_column)
-          associations[[assoc.name, assoc.klass, col, assoc.foreign_key]] = []
+          associations[[assoc, col]] = []
         end
         record_list.batch_records.each do |primary_batch_record|
-          associations.each_key do |assoc, klass, col, foreign_key|
-            batch_record = BatchRecord.new(klass: klass,
-                                           attributes: primary_batch_record.associations[assoc],
+          associations.each_key do |assoc, col|
+            batch_record = BatchRecord.new(klass: assoc.klass,
+                                           attributes: primary_batch_record.associations[assoc.name],
                                            bulk_import_column: col,
                                            bulk_import_id_generator: @bulk_import_id_generator)
             # Associate this associated batch record's record with the primary record to
             # retrieve foreign_key after associated records have been saved and primary
             # keys have been filled
-            primary_batch_record.record.send(:"#{assoc}=", batch_record.record)
-            associations[[assoc, klass, col, foreign_key]] << batch_record
+            primary_batch_record.record.assign_attributes({ assoc.name => batch_record.record })
+            associations[[assoc, col]] << batch_record
           end
         end
         associations.each_value do |records|
           assoc_record_list = BatchRecordList.new(records)
-          save_records_to_database(assoc_record_list)
+          Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
+            save_records_to_database(assoc_record_list)
+          end
           import_associations(assoc_record_list)
         end
         record_list.records.each do |record|
-          associations.each_key do |assoc, _, _, foreign_key|
-            record.send(:"#{foreign_key}=", record.send(assoc).id)
+          associations.each_key do |assoc, _|
+            record.assign_attributes({ assoc.foreign_key => record.send(assoc.name).id })
           end
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       # @param record_list [BatchRecordList]
       # @return [Array<ActiveRecord::Base>]
@@ -126,11 +130,14 @@ module Deimos
         # The entire batch should be treated as one transaction so that if
         # any message fails, the whole thing is rolled back or retried
         # if there is deadlock
-        Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
-          if @backfill_associations
-            backfill_associations(record_list)
+
+        if @save_associations_first
+          save_associations_first(record_list)
+          Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
             save_records_to_database(record_list)
-          else
+          end
+        else
+          Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
             save_records_to_database(record_list)
             import_associations(record_list) if record_list.associations.any?
           end
