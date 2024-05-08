@@ -167,13 +167,6 @@ module Deimos
                                                namespace: config[:namespace])
       end
 
-      # Override this in active record producers to add
-      # non-schema fields to check for updates
-      # @return [Array<String>] fields to check for updates
-      def watched_attributes
-        self.encoder.schema_fields.map(&:name)
-      end
-
     private
 
       # @param message [Message]

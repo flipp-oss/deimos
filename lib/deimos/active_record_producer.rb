@@ -95,6 +95,13 @@ module Deimos
       def post_process(_records)
       end
 
+      # Override this in active record producers to add
+      # non-schema fields to check for updates
+      # @return [Array<String>] fields to check for updates
+      def watched_attributes
+        self.encoder.schema_fields.map(&:name)
+      end
+
     end
   end
 end

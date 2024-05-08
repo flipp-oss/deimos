@@ -57,6 +57,7 @@ module Deimos
     # @return [Hash]
     def encoded_hash
       {
+        deimos: true,
         topic: @topic,
         key: @encoded_key,
         headers: @headers,

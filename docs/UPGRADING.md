@@ -11,9 +11,22 @@
 - Remove deprecated stub_producers_and_consumers!, stub_producer, stub_consumer, stub_batch_consumer
 
 TODO: 
+- producer middleware
 - producer spec
-- Logging and metrics via notifications
 - Add producers / schemas to Karafka routes
+- See if we can stop storing schema/namespace on consumers
+- Logging and metrics via notifications
+
+For producers:
+* disabling producers
+* DB backend
+* partition_key via method
+
+
+For middleware:
+* topic prefix
+* encoding, adding fields etc.
+
 
 ## Upgrading from < 1.5.0 to >= 1.5.0
 

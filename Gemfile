@@ -4,3 +4,6 @@ source 'https://rubygems.org'
 
 # Specify your gem's dependencies in boilerplate.gemspec
 gemspec
+
+gem 'karafka-testing', path: '../karafka-testing'
+gem 'waterdrop', path: '../waterdrop'
