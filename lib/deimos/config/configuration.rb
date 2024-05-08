@@ -100,6 +100,8 @@ module Deimos # rubocop:disable Metrics/ModuleLength
             Deimos.config.consumers.bulk_import_id_generator,
           save_associations_first: kafka_config.save_associations_first
         )
+      else # producer
+        klass.config[:max_batch_size] = kafka_config.max_batch_size || Deimos.config.producers.max_batch_size
       end
     end
   end
