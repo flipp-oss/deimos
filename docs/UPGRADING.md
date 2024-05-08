@@ -4,14 +4,16 @@
 
 2.x is a major rewrite from 1.0.
 
-- remove test_consume_invalid_message
+- remove test_consume_invalid_message and test_consume_batch_invalid_message
 - Remove call_original and skip_expectation from test functions
 - `batch` config instead of `delivery_method`
 - Can we use avro_validation?
 - Remove deprecated stub_producers_and_consumers!, stub_producer, stub_consumer, stub_batch_consumer
 
 TODO: 
+- producer spec
 - Logging and metrics via notifications
+- Add producers / schemas to Karafka routes
 
 ## Upgrading from < 1.5.0 to >= 1.5.0
 

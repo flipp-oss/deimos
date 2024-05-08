@@ -32,7 +32,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('guard', '~> 2')
   spec.add_development_dependency('guard-rspec', '~> 4')
   spec.add_development_dependency('guard-rubocop', '~> 1')
-  spec.add_development_dependency('karafka-testing')
   spec.add_development_dependency('mysql2', '~> 0.5')
   spec.add_development_dependency('pg', '~> 1.1')
   spec.add_development_dependency('rails', '~> 6')

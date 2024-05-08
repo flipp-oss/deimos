@@ -20,6 +20,7 @@ module Deimos
 
       # @override
       def encode_key(key_id, key, topic: nil)
+        @key_schema ||= @schema_store.find("#{@schema}_key")
         field_name = _field_name_from_schema(@key_schema)
         payload = { field_name => key }
         encode(payload, schema: @key_schema['name'], topic: topic)

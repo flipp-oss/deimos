@@ -239,21 +239,21 @@ module Deimos
 
         consumer = karafka.consumer_for(topic_name)
       end
-      key ||= _key_from_consumer(handler_class)
       messages = payloads.map.with_index do |payload, i|
+        key = keys[i]
+        key ||= _key_from_consumer(handler_class)
         payload.stringify_keys! if payload.respond_to?(:stringify_keys!)
 
-        Karafka::Messages::Message.new(payload,
-                                       Karafka::Messages::Metadata.new({
-                                                                         raw_key: keys[i],
-                                                                         deserializers: consumer.topic.deserializers,
-                                                                         timestamp: Time.zone.now,
-                                                                         topic: consumer.topic.name,
-                                                                         partition: 1,
-                                                                         offset: payloads.size,
-                                                                         raw_headers: {}
-                                                                       })
-          )
+        metadata = Karafka::Messages::Metadata.new({
+                                                     raw_key: key,
+                                                     deserializers: consumer.topic.deserializers,
+                                                     timestamp: Time.zone.now,
+                                                     topic: consumer.topic.name,
+                                                     partition: 1,
+                                                     offset: payloads.size,
+                                                     raw_headers: {}
+                                                   })
+        Karafka::Messages::Message.new(payload, metadata)
       end
       batch_metadata = Karafka::Messages::Builders::BatchMetadata.call(
         messages,
@@ -266,44 +266,6 @@ module Deimos
         batch_metadata
       )
       consumer.consume
-    end
-
-    # Check to see that a given message will fail due to validation errors.
-    # @param handler_class [Class]
-    # @param payloads [Array<Hash>]
-    # @return [void]
-    def test_consume_batch_invalid_message(handler_class, payloads)
-      topic_name = 'my-topic'
-      handler = handler_class.new
-      allow(handler_class).to receive(:new).and_return(handler)
-      listener = double('listener',
-                        handler_class: handler_class,
-                        encoding: nil)
-      batch_messages = payloads.map do |payload|
-        key ||= _key_from_consumer(handler_class)
-
-        double('message',
-               'key' => key,
-               'partition' => 1,
-               'offset' => 1,
-               'value' => payload)
-      end
-      batch = double('fetched_batch',
-                     'messages' => batch_messages,
-                     'topic' => topic_name,
-                     'partition' => 1,
-                     'offset_lag' => 0)
-
-      action = Phobos::Actions::ProcessBatchInline.new(
-        listener: listener,
-        batch: batch,
-        metadata: { topic: topic_name }
-      )
-      allow(action).to receive(:backoff_interval).and_return(0)
-      allow(action).to receive(:handle_error) { |e| raise e }
-
-      expect { action.send(:execute) }.
-        to raise_error
     end
 
   private
@@ -323,50 +285,6 @@ module Deimos
       else
         1
       end
-    end
-
-    # @param topic [String]
-    # @return [Class]
-    def _get_handler_class_from_topic(topic)
-      listeners = Phobos.config['listeners']
-      handler = listeners.find { |l| l.topic == topic }
-      raise "No consumer found in Phobos configuration for topic #{topic}!" if handler.nil?
-
-      handler.handler.constantize
-    end
-
-    # Test that a given handler will execute a `method` on an `input` correctly,
-    # If a block is given, that block will be executed when `method` is called.
-    # Otherwise it will just confirm that `method` is called at all.
-    # @param method [Symbol]
-    # @param input [Object]
-    # @param handler [Deimos::Consumer]
-    # @param call_original [Boolean]
-    def _handler_expectation(method,
-                             input,
-                             handler,
-                             call_original,
-                             &block)
-      schema_class = handler.class.config[:schema]
-      namespace = handler.class.config[:namespace]
-      expected = input.dup
-
-      config = handler.class.config
-      use_schema_classes = config[:use_schema_classes]
-      use_schema_classes = use_schema_classes.present? ? use_schema_classes : Deimos.config.schema.use_schema_classes
-
-      if use_schema_classes && schema_class.present?
-        expected = if input.is_a?(Array)
-                     input.map do |payload|
-                       Utils::SchemaClass.instance(payload, schema_class, namespace)
-                     end
-                   else
-                     Utils::SchemaClass.instance(input, schema_class, namespace)
-                   end
-      end
-
-      expectation = expect(handler).to receive(method).with(expected, anything, &block)
-      expectation.and_call_original if call_original
     end
   end
 end
