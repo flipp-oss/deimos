@@ -87,17 +87,17 @@ module Deimos
         end
       end
 
-      # rubocop:disable Metrics/AbcSize
-      # Upsert associated records prior to upserting primary records
-      # @param record_list [BatchRecordList]
-      def save_associations_first(record_list)
-        associations = Hash.new([])
+      # Assign associated records to corresponding primary records
+      # @param record_list [BatchRecordList] RecordList of primary records for this consumer
+      # @return [Hash]
+      def assign_associations(record_list)
+        associations_info = {}
         record_list.associations.each do |assoc|
           col = @bulk_import_id_column if assoc.klass.column_names.include?(@bulk_import_id_column)
-          associations[[assoc, col]] = []
+          associations_info[[assoc, col]] = []
         end
         record_list.batch_records.each do |primary_batch_record|
-          associations.each_key do |assoc, col|
+          associations_info.each_key do |assoc, col|
             batch_record = BatchRecord.new(klass: assoc.klass,
                                            attributes: primary_batch_record.associations[assoc.name],
                                            bulk_import_column: col,
@@ -106,10 +106,17 @@ module Deimos
             # retrieve foreign_key after associated records have been saved and primary
             # keys have been filled
             primary_batch_record.record.assign_attributes({ assoc.name => batch_record.record })
-            associations[[assoc, col]] << batch_record
+            associations_info[[assoc, col]] << batch_record
           end
         end
-        associations.each_value do |records|
+        associations_info
+      end
+
+      # Save associated records and fill foreign keys on RecordList records
+      # @param record_list [BatchRecordList] RecordList of primary records for this consumer
+      # @param associations_info [Hash] Contains association info
+      def save_associations_first(record_list, associations_info)
+        associations_info.each_value do |records|
           assoc_record_list = BatchRecordList.new(records)
           Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
             save_records_to_database(assoc_record_list)
@@ -117,12 +124,11 @@ module Deimos
           import_associations(assoc_record_list)
         end
         record_list.records.each do |record|
-          associations.each_key do |assoc, _|
+          associations_info.each_key do |assoc, _|
             record.assign_attributes({ assoc.foreign_key => record.send(assoc.name).id })
           end
         end
       end
-      # rubocop:enable Metrics/AbcSize
 
       # @param record_list [BatchRecordList]
       # @return [Array<ActiveRecord::Base>]
@@ -132,7 +138,8 @@ module Deimos
         # if there is deadlock
 
         if @save_associations_first
-          save_associations_first(record_list)
+          associations_info = assign_associations(record_list)
+          save_associations_first(record_list, associations_info)
           Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
             save_records_to_database(record_list)
           end
