@@ -168,7 +168,7 @@ module Deimos
                                   col_proc: col_proc,
                                   replace_associations: self.replace_associations,
                                   bulk_import_id_generator: self.bulk_import_id_generator,
-                                  save_associations_first: self.class.save_associations_first,
+                                  save_associations_first: self.save_associations_first,
                                   bulk_import_id_column: self.bulk_import_id_column)
         Karafka.monitor.instrument('deimos.batch_consumption.valid_records', {
           records: updater.mass_update(record_list),

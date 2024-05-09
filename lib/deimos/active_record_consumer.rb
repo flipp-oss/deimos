@@ -30,11 +30,6 @@ module Deimos
         config[:record_class] = klass
       end
 
-      # @return [Boolean]
-      def save_associations_first
-        config[:save_associations_first]
-      end
-
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
       # @return [void]
@@ -63,6 +58,11 @@ module Deimos
     # @return [Proc]
     def bulk_import_id_generator
       topic.bulk_import_id_generator
+    end
+
+    # @return [Boolean]
+    def save_associations_first
+      topic.save_associations_first
     end
 
     def key_decoder

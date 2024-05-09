@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'deimos/metrics/provider'
+require 'karafka/instrumentation/vendors/datadog/metrics_listener'
+require 'waterdrop/instrumentation/vendors/datadog/metrics_listener'
 
 module Deimos
   module Metrics
@@ -15,6 +17,7 @@ module Deimos
         raise 'Metrics config must specify namespace' if config[:namespace].nil?
 
         logger.info("DatadogMetricsProvider configured with: #{config}")
+
         @client = ::Datadog::Statsd.new(
           config[:host_ip],
           config[:host_port],
@@ -25,7 +28,7 @@ module Deimos
         setup_waterdrop(config)
       end
 
-      def setup_karafka(config)
+      def setup_karafka(config={})
         karafka_listener = ::Karafka::Instrumentation::Vendors::Datadog::MetricsListener.new do |karafka_config|
           karafka_config.client = @client
           if config[:karafka_namespace]
@@ -54,6 +57,7 @@ module Deimos
             karafka_config.rd_kafka_metrics = [] # handled in Karafka
           end
         end
+        Karafka::Setup::Config.setup if Karafka.producer.nil?
         Karafka.producer.monitor.subscribe(waterdrop_listener)
       end
 

@@ -9,6 +9,7 @@ module Deimos
                   each_message
                   reraise_errors
                   fatal_error
+                  save_associations_first
       )
       Config = Struct.new(*FIELDS, keyword_init: true)
 

@@ -127,6 +127,7 @@ The following are additional settings that can be added to the `topic` block in 
 | bulk_import_id_column    | `:bulk_import_id` | Name of the column to use for multi-table imports.                                                                                                                                                                                                 |
 | replace_associations     | true              | If false, append to associations in multi-table imports rather than replacing them.                                                                                                                                                                |
 | bulk_import_id_generator | nil               | Block to determine the bulk_import_id generated during bulk consumption. If no block is specified the provided/default block from the consumers configuration will be used.                                                                        |
+| save_associations_first  |false|Whether to save associated records of primary class prior to upserting primary records. Foreign key of associated records are assigned to the record class prior to saving the record class
 
 ### Defining Consumers
 

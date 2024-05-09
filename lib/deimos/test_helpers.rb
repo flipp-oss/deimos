@@ -17,17 +17,15 @@ module Deimos
       base.include Karafka::Testing::RSpec::Helpers
     end
 
-    # @param client [Karafka::Testing::RSpec::Proxy]
     # @return [Array<Hash>]
-    def sent_messages(client=nil)
-      self.class.sent_messages(client)
+    def sent_messages
+      self.class.sent_messages
     end
 
     class << self
-      # @param client [Karafka::Testing::RSpec::Proxy]
       # @return [Array<Hash>]
-      def sent_messages(client=nil)
-        (client || karafka).produced_messages.map do |m|
+      def sent_messages
+        Karafka.producer.client.messages.map do |m|
           produced_message = m.except(:label).deep_dup
           Deimos.decode_message(produced_message)
           produced_message[:payload] = Deimos::TestHelpers.normalize_message(produced_message[:payload])
@@ -39,6 +37,7 @@ module Deimos
       # Set the config to the right settings for a unit test
       # @return [void]
       def unit_test!
+        Deimos.config.schema.backend = :avro_validation
         warn "unit_test! is deprecated and no longer necessary. All test behavior is provided by Karafka."
       end
     end
@@ -74,8 +73,8 @@ module Deimos
     end
 
     # @!visibility private
-    def _frk_failure_message(client, topic, message, key=nil, partition_key=nil, was_negated=false)
-      messages = Deimos::TestHelpers.sent_messages(client).select { |m| m[:topic] == topic }
+    def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
+      messages = Deimos::TestHelpers.sent_messages.select { |m| m[:topic] == topic }
       message_string = ''
       diff = nil
       min_hash_diff = nil
@@ -98,7 +97,7 @@ module Deimos
       match do |topic|
         message_key = Deimos::TestHelpers.normalize_message(key)
         hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
-        Deimos::TestHelpers.sent_messages(karafka).any? do |m|
+        Deimos::TestHelpers.sent_messages.any? do |m|
           hash_matcher.send(:match, message, m[:payload]) &&
             topic == m[:topic] &&
             (key.present? ? message_key == m[:key] : true) &&
@@ -114,10 +113,10 @@ module Deimos
       end
 
       failure_message do |topic|
-        _frk_failure_message(karafka, topic, message, key, partition_key)
+        _frk_failure_message(topic, message, key, partition_key)
       end
       failure_message_when_negated do |topic|
-        _frk_failure_message(karafka, topic, message, key, partition_key, true)
+        _frk_failure_message(topic, message, key, partition_key, true)
       end
     end
 

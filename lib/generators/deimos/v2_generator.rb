@@ -109,13 +109,13 @@ module Deimos
         def consumer_configs
           deimos_config.consumer_objects.map do |consumer|
             kafka_configs = {}
-            kafka_configs["group.id"] = consumer.group_id
             kafka_configs["auto.offset.reset"] = consumer.start_from_beginning ? 'earliest' : 'latest'
             kafka_configs["session.timeout.ms"] = consumer.session_timeout * 1000 unless consumer.default_value?(:session_timeout)
             kafka_configs["auto.commit.interval.ms"] = consumer.offset_commit_interval * 1000 unless consumer.default_value?(:offset_commit_interval)
             kafka_configs["heartbeat.interval.ms"] = consumer.heartbeat_interval * 1000 unless consumer.default_value?(:heartbeat_interval)
             configs = {
               kafka: kafka_configs.compact,
+              group_id: consumer.group_id,
               topic: consumer.topic,
               consumer: ProcString.new(consumer.class_name),
               schema: consumer.schema,
@@ -163,6 +163,7 @@ module Deimos
         def fix_specs
           Dir["*/**/*_spec.rb"].each do |file|
             gsub_file(file, /,\s*call_original: true/, "")
+            gsub_file(file, 'Deimos::Backends::Test.sent_messages', "Deimos::TestHelpers.sent_messages")
           end
         end
 

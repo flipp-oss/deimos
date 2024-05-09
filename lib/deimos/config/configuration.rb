@@ -99,6 +99,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       setting :report_lag, removed: "Use Karafka's built in lag reporting"
       setting(:fatal_error, removed: "Use topic.fatal_error in Karafka settings")
       setting(:bulk_import_id_generator, removed: "Use topic.bulk_import_id_generator in Karafka settings")
+      setting :save_associations_first, removed: "Use topic.save_associations_first"
       setting :replace_associations, removed: "Use topic.replace_associations in Karafka settings"
     end
 
