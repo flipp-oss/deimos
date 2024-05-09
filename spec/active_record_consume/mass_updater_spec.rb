@@ -114,5 +114,142 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
 
       end
 
+      context 'with save_associations_first' do
+        before(:all) do
+          ActiveRecord::Base.connection.create_table(:fidgets, force: true) do |t|
+            t.string(:test_id)
+            t.integer(:some_int)
+            t.string(:bulk_import_id)
+            t.timestamps
+          end
+
+          ActiveRecord::Base.connection.create_table(:fidget_details, force: true) do |t|
+            t.string(:title)
+            t.string(:bulk_import_id)
+            t.belongs_to(:fidget)
+
+            t.index(%i(title), unique: true)
+          end
+
+          ActiveRecord::Base.connection.create_table(:widget_fidgets, force: true, id: false) do |t|
+            t.belongs_to(:fidget)
+            t.belongs_to(:widget)
+            t.string(:bulk_import_id)
+            t.string(:note)
+            t.index(%i(widget_id fidget_id), unique: true)
+          end
+        end
+
+        after(:all) do
+          ActiveRecord::Base.connection.drop_table(:fidgets)
+          ActiveRecord::Base.connection.drop_table(:fidget_details)
+          ActiveRecord::Base.connection.drop_table(:widget_fidgets)
+        end
+
+        let(:fidget_detail_class) do
+          Class.new(ActiveRecord::Base) do
+            self.table_name = 'fidget_details'
+            belongs_to :fidget
+          end
+        end
+
+        let(:fidget_class) do
+          Class.new(ActiveRecord::Base) do
+            self.table_name = 'fidgets'
+            has_one :fidget_detail
+          end
+        end
+
+        let(:widget_fidget_class) do
+          Class.new(ActiveRecord::Base) do
+            self.table_name = 'widget_fidgets'
+            belongs_to :fidget
+            belongs_to :widget
+          end
+        end
+
+        let(:bulk_id_generator) { proc { SecureRandom.uuid } }
+
+        let(:key_proc) do
+          lambda do |klass|
+            case klass.to_s
+            when 'Widget', 'Fidget'
+              %w(id)
+            when 'WidgetFidget'
+              %w(widget_id fidget_id)
+            when 'FidgetDetail', 'Detail'
+              %w(title)
+            else
+              raise "Key Columns for #{klass} not defined"
+            end
+
+          end
+        end
+
+        before(:each) do
+          stub_const('Fidget', fidget_class)
+          stub_const('FidgetDetail', fidget_detail_class)
+          stub_const('WidgetFidget', widget_fidget_class)
+          Widget.reset_column_information
+          Fidget.reset_column_information
+          WidgetFidget.reset_column_information
+        end
+
+        # rubocop:disable RSpec/MultipleExpectations, RSpec/ExampleLength
+        it 'should backfill the associations when upserting primary records' do
+          batch = Deimos::ActiveRecordConsume::BatchRecordList.new(
+            [
+              Deimos::ActiveRecordConsume::BatchRecord.new(
+                klass: WidgetFidget,
+                attributes: {
+                  widget: { test_id: 'id1', some_int: 10, detail: { title: 'Widget Title 1' } },
+                  fidget: { test_id: 'id1', some_int: 10, fidget_detail: { title: 'Fidget Title 1' } },
+                  note: 'Stuff 1'
+                },
+                bulk_import_column: 'bulk_import_id',
+                bulk_import_id_generator: bulk_id_generator
+              ),
+              Deimos::ActiveRecordConsume::BatchRecord.new(
+                klass: WidgetFidget,
+                attributes: {
+                  widget: { test_id: 'id2', some_int: 20, detail: { title: 'Widget Title 2' } },
+                  fidget: { test_id: 'id2', some_int: 20, fidget_detail: { title: 'Fidget Title 2' } },
+                  note: 'Stuff 2'
+                },
+                bulk_import_column: 'bulk_import_id',
+                bulk_import_id_generator: bulk_id_generator
+              )
+            ]
+          )
+
+          results = described_class.new(WidgetFidget,
+                                        bulk_import_id_generator: bulk_id_generator,
+                                        bulk_import_id_column: 'bulk_import_id',
+                                        key_col_proc: key_proc,
+                                        save_associations_first: true).mass_update(batch)
+          expect(results.count).to eq(2)
+          expect(Widget.count).to eq(2)
+          expect(Detail.count).to eq(2)
+          expect(Fidget.count).to eq(2)
+          expect(FidgetDetail.count).to eq(2)
+
+          WidgetFidget.all.each_with_index do |widget_fidget, ind|
+            widget = Widget.find_by(id: widget_fidget.widget_id)
+            expect(widget.test_id).to eq("id#{ind + 1}")
+            expect(widget.some_int).to eq((ind + 1) * 10)
+            detail = Detail.find_by(widget_id: widget_fidget.widget_id)
+            expect(detail.title).to eq("Widget Title #{ind + 1}")
+            fidget = Fidget.find_by(id: widget_fidget.fidget_id)
+            expect(fidget.test_id).to eq("id#{ind + 1}")
+            expect(fidget.some_int).to eq((ind + 1) * 10)
+            fidget_detail = FidgetDetail.find_by(fidget_id: widget_fidget.fidget_id)
+            expect(fidget_detail.title).to eq("Fidget Title #{ind + 1}")
+            expect(widget_fidget.note).to eq("Stuff #{ind + 1}")
+          end
+        end
+        # rubocop:enable RSpec/MultipleExpectations, RSpec/ExampleLength
+
+      end
+
     end
 end

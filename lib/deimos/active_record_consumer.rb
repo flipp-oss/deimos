@@ -45,6 +45,11 @@ module Deimos
         config[:replace_associations]
       end
 
+      # @return [Boolean]
+      def save_associations_first
+        config[:save_associations_first]
+      end
+
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
       # @return [void]
