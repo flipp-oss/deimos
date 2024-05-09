@@ -61,6 +61,8 @@ module Deimos
       def _encode_key(key, config)
         if config.key_encoder
           config.key_encoder.encode_key(key)
+        elsif key
+          config.encoder.encode_payload(key)
         else
           key
         end

@@ -14,7 +14,7 @@ module Deimos
 
       # @override
       def encode_payload(payload, schema: nil, topic: nil)
-        payload.with_indifferent_access.to_json
+        payload.to_h.with_indifferent_access.to_json
       end
     end
   end

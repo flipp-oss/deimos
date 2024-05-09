@@ -1,9 +1,9 @@
 module Deimos
   class ProducerRoute < Karafka::Routing::Features::Base
     module Topic
-      def producer(klass=nil)
+      def producer_class(klass=nil)
         active(false)
-        @producer ||= klass
+        @producer_class ||= klass
       end
     end
   end

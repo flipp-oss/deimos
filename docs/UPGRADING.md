@@ -14,6 +14,7 @@
 - Remove deprecated stub_producers_and_consumers!, stub_producer, stub_consumer, stub_batch_consumer
 - You can publish messages without a Producer - Producer can be used for DB backends, method for partition key, disabling
 - test_consume_message with a handler with no topic no longer supported
+- `sent_messages` will always contain hashes, never schema classes
 
 TODO: 
 

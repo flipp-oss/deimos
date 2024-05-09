@@ -91,6 +91,15 @@ module Deimos
       self.schema_backend(schema: schema, namespace: namespace).decode(payload)
     end
 
+    # @param message [Hash] a Karafka message with keys :payload, :key and :topic
+    def decode_message(message)
+      config = Deimos::ProducerMiddleware.producer_configs[message[:topic]]
+      message[:payload] = config.encoder.decode_message_hash(message[:payload])
+      if message[:key] && config.key_encoder
+        message[:key] = config.key_encoder.decode_message_hash(message[:key])
+      end
+    end
+
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     # @return [void]

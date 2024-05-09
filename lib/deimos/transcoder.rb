@@ -1,7 +1,7 @@
 module Deimos
   class Transcoder
 
-    attr_accessor :key_field
+    attr_accessor :key_field, :backend
 
     # @param schema [String]
     # @param namespace [String]
@@ -17,8 +17,7 @@ module Deimos
     end
 
     def backend
-      @backend ||= Deimos.schema_backend(schema: @schema,
-                                         namespace: @namespace)
+      @backend ||= Deimos.schema_backend(schema: @schema, namespace: @namespace)
     end
 
     # for use in test helpers
@@ -58,5 +57,10 @@ module Deimos
     def call(message)
       self.key_field ? decode_key(message.metadata.raw_key) : decode_message(message.raw_payload)
     end
+
+    def decode_message_hash(payload)
+      self.key_field ? decode_key(payload) : decode_message(payload)
+    end
+
   end
 end

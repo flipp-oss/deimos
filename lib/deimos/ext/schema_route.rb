@@ -1,5 +1,6 @@
 require "deimos/transcoder"
 require "deimos/ext/producer_middleware"
+require "deimos/schema_backends/plain"
 
 module Deimos
   class SchemaRoute < Karafka::Routing::Features::Base
@@ -20,7 +21,15 @@ module Deimos
           )
         }
 
-        if !key_config[:plain] && !key_config[:none]
+        if key_config[:plain]
+          transcoders[:key] = Transcoder.new(
+            schema: schema,
+            namespace: namespace,
+            use_schema_classes: use_schema_classes,
+            topic: self.name
+          )
+          transcoders[:key].backend = Deimos::SchemaBackends::Plain
+        elsif !key_config[:none]
           if key_config[:field]
             transcoders[:key] = Transcoder.new(
               schema: schema,

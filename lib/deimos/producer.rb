@@ -135,7 +135,7 @@ module Deimos
 
       def configured_topic
         Karafka::App.routes.flat_map(&:topics).flat_map(&:to_a).each do |topic|
-          return topic.name if topic.producer == self
+          return topic.name if topic.producer_class == self
         end
         nil
       end

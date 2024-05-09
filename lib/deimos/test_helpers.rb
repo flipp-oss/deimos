@@ -85,12 +85,12 @@ module Deimos
     RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil|
       message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
+        message_hash = Deimos::TestHelpers.normalize_message(message)
+        hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message_hash)
         karafka.produced_messages.any? do |m|
-          message_hash = Deimos::TestHelpers.normalize_message(message[:payload])
-          hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message_hash)
-          hash_matcher.send(:match,
-                            message_hash,
-                            m[:payload]&.to_h&.with_indifferent_access) &&
+          Deimos.decode_message(m)
+          payload = Deimos::TestHelpers.normalize_message(m[:payload]&.to_h)
+          hash_matcher.send(:match, message_hash, payload) &&
             topic == m[:topic] &&
             (key.present? ? key == m[:key] : true) &&
             (partition_key.present? ? partition_key == m[:partition_key] : true) &&
