@@ -9,12 +9,12 @@ module Deimos
     class AvroValidation < AvroBase
       # @override
       def decode_payload(payload, schema: nil)
-        payload.with_indifferent_access
+        JSON.parse(payload)
       end
 
       # @override
       def encode_payload(payload, schema: nil, topic: nil)
-        payload.with_indifferent_access
+        payload.with_indifferent_access.to_json
       end
     end
   end

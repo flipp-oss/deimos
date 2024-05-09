@@ -19,13 +19,12 @@ RSpec.describe 'Karafka configs' do
 
   it 'should be able to test a producer' do
     stub_const('MyProducer', producer_class)
-    Deimos.configure do
-      producer do
-        class_name 'MyProducer'
-        topic 'MyTopic'
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config({field: :test_id})
+    KarafkaApp.routes.draw do
+      topic 'MyTopic' do
+        producer MyProducer
+        schema(schema: 'MySchema',
+               namespace: 'com.my-namespace',
+               key_config: {field: :test_id})
       end
     end
     producer_class.publish({test_id: "id1", some_int: 5})

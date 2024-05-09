@@ -79,7 +79,7 @@ module Deimos
       # Indicate a class which should act as a mocked version of this backend.
       # This class should perform all validations but not actually do any
       # encoding.
-      # Note that the "mock" version (e.g. avro_validation) should return
+      # Note that the "mock" version should return
       # its own symbol when this is called, since it may be called multiple
       # times depending on the order of RSpec helpers.
       # @return [Symbol]

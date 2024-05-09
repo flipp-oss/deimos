@@ -203,14 +203,14 @@ RSpec.configure do |config|
   config.before(:each) do
     Deimos.config.reset!
     Deimos.configure do |deimos_config|
-      deimos_config.producers.backend = :test
+      deimos_config.producers.backend = :kafka
       deimos_config.schema.nest_child_schemas = true
       deimos_config.schema.path = File.join(File.expand_path(__dir__), 'schemas')
       deimos_config.consumers.reraise_errors = true
       deimos_config.schema.registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
       deimos_config.logger = Logger.new('/dev/null')
       deimos_config.logger.level = Logger::INFO
-      deimos_config.schema.backend = :avro_local
+      deimos_config.schema.backend = :avro_validation
       deimos_config.schema.generated_class_path = 'spec/schemas'
     end
   end

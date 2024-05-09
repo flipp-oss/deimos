@@ -113,8 +113,6 @@ module Deimos
         return if Deimos.config.producers.disabled ||
                   Deimos.producers_disabled?(self)
 
-        raise 'Topic not specified. Please specify the topic.' if topic.blank?
-
         backend_class = determine_backend_class(sync, force_send)
         Deimos.instrument(
           'encode_messages',
@@ -122,12 +120,24 @@ module Deimos
           topic: topic,
           payloads: payloads
         ) do
-          messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, headers: headers) }
-          messages.each { |m| _process_message(m, topic) }
+          messages = Array(payloads).map do |p|
+            {
+              payload: p.to_h,
+              headers: headers,
+              topic: configured_topic
+            }
+          end
           messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
             self.produce_batch(backend_class, batch)
           end
         end
+      end
+
+      def configured_topic
+        Karafka::App.routes.flat_map(&:topics).flat_map(&:to_a).each do |topic|
+          return topic.name if topic.producer == self
+        end
+        nil
       end
 
       # @param sync [Boolean]
@@ -155,73 +165,6 @@ module Deimos
         backend.publish(producer_class: self, messages: batch)
       end
 
-      # @return [Deimos::SchemaBackends::Base]
-      def encoder
-        @encoder ||= Deimos.schema_backend(schema: config[:schema],
-                                           namespace: config[:namespace])
-      end
-
-      # @return [Deimos::SchemaBackends::Base]
-      def key_encoder
-        @key_encoder ||= Deimos.schema_backend(schema: config[:key_schema],
-                                               namespace: config[:namespace])
-      end
-
-    private
-
-      # @param message [Message]
-      # @param topic [String]
-      def _process_message(message, topic)
-        # this violates the Law of Demeter but it has to happen in a very
-        # specific order and requires a bunch of methods on the producer
-        # to work correctly.
-        message.add_fields(encoder.schema_fields.map(&:name))
-        message.partition_key = self.partition_key(message.payload)
-        message.key = _retrieve_key(message.payload)
-        # need to do this before _coerce_fields because that might result
-        # in an empty payload which is an *error* whereas this is intended.
-        message.payload = nil if message.payload.blank?
-        message.coerce_fields(encoder)
-        message.encoded_key = _encode_key(message.key)
-        message.topic = topic
-        message.encoded_payload = if message.payload.nil?
-                                    nil
-                                  else
-                                    encoder.encode(message.payload,
-                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-value")
-                                  end
-      end
-
-      # @param key [Object]
-      # @return [String|Object]
-      def _encode_key(key)
-        if key.nil?
-          return nil if config[:no_keys] # no key is fine, otherwise it's a problem
-
-          raise 'No key given but a key is required! Use `key_config none: true` to avoid using keys.'
-        end
-        if config[:encode_key] && config[:key_field].nil? &&
-           config[:key_schema].nil?
-          raise 'No key config given - if you are not encoding keys, please use `key_config plain: true`'
-        end
-
-        if config[:key_field]
-          encoder.encode_key(config[:key_field], key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
-        elsif config[:key_schema]
-          key_encoder.encode(key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
-        else
-          key
-        end
-      end
-
-      # @param payload [Hash]
-      # @return [String]
-      def _retrieve_key(payload)
-        key = payload.delete(:payload_key)
-        return key if key
-
-        config[:key_field] ? payload[config[:key_field]] : nil
-      end
     end
   end
 end

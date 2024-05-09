@@ -4,20 +4,27 @@
 
 2.x is a major rewrite from 1.0.
 
+- no more backend=:test
+- payload_key no longer needed
+- phobos.yml no longer supported
 - remove test_consume_invalid_message and test_consume_batch_invalid_message
 - Deprecate call_original and skip_expectation from test functions
 - `batch` config instead of `delivery_method`
 - Can/should we use avro_validation?
 - Remove deprecated stub_producers_and_consumers!, stub_producer, stub_consumer, stub_batch_consumer
 - You can publish messages without a Producer - Producer can be used for DB backends, method for partition key, disabling
+- test_consume_message with a handler with no topic no longer supported
 
 TODO: 
 
-- topic_for_consumer - remove
+- Deimos defaults in Karafka routes instead of top-level
+- Convert Phobos config values to Karafka
+- Deimos configs to generate Karafka routes w/deprecation notice
 - producer spec
 - See if we can stop storing schema/namespace on consumers - `topic.deserializers[:payload].backend`
 - 
 - Logging and metrics via notifications
+-   backends/base needs to work on Karafka messages
 - Error messages: 
 ```
         if key.nil?
@@ -35,6 +42,9 @@ Need to add `Karafka.producer.middleware.append(Deimos::ProducerMiddleware)` som
 
 Testing:
 - legacy mode
+- Avro errors
+- config errors
+- with/without schema classes
 - all key config combinations for both producer and consumer
 - Override defaults (e.g. producers.namespace)
 

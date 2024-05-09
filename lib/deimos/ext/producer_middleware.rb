@@ -27,7 +27,7 @@ module Deimos
         _process_message(m, message, config)
         message[:payload] = m.encoded_payload
         message[:key] = m.encoded_key
-        message[:topic] = "#{Deimos.config.producers.topic_prefix}#{config.topic.name}"
+        message[:topic] ||= "#{Deimos.config.producers.topic_prefix}#{config.topic.name}"
         message
       end
 

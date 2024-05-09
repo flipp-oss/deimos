@@ -25,13 +25,13 @@ module Deimos
         def log_message(messages)
           log_message = {
             message: 'Publishing messages',
-            topic: messages.first&.topic
+            #            topic: messages.first&.topic
           }
 
           case Deimos.config.payload_log
           when :keys
             log_message.merge!(
-              payload_keys: messages.map(&:key)
+              payload_keys: messages.map { |m| m[:key]}
             )
           when :count
             log_message.merge!(
@@ -39,14 +39,14 @@ module Deimos
             )
           when :headers
             log_message.merge!(
-              payload_headers: messages.map(&:headers)
+              payload_headers: messages.map { |m| m[:headers] }
             )
           else
             log_message.merge!(
               payloads: messages.map do |message|
                 {
-                  payload: message.payload,
-                  key: message.key
+                  payload: message[:payload],
+                  key: message[:key]
                 }
               end
             )

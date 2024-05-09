@@ -23,6 +23,7 @@ require 'deimos/schema_class/record'
 
 require 'deimos/ext/active_record_route'
 require 'deimos/ext/schema_route'
+require 'deimos/ext/producer_route'
 require 'deimos/ext/producer_middleware'
 
 require 'deimos/railtie' if defined?(Rails)

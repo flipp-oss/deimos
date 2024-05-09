@@ -16,7 +16,7 @@ module Deimos
       # for backwards compatibility
       # @return [Array<Hash>]
       def sent_messages
-        produced_messages
+        karafka.produced_messages
       end
 
       # Set the config to the right settings for a unit test
@@ -64,7 +64,7 @@ module Deimos
 
     # @!visibility private
     def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
-      messages = produced_messages.select { |m| m.metadata.topic == topic }
+      messages = karafka.produced_messages.select { |m| m.metadata.topic == topic }
       message_string = ''
       diff = nil
       min_hash_diff = nil
@@ -85,19 +85,19 @@ module Deimos
     RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil|
       message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
-        running_example.produced_messages.any? do |m|
-          message_hash = Deimos::TestHelpers.normalize_message(message&.payload)
+        karafka.produced_messages.any? do |m|
+          message_hash = Deimos::TestHelpers.normalize_message(message[:payload])
           hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message_hash)
           hash_matcher.send(:match,
                             message_hash,
-                            m.payload&.to_h&.with_indifferent_access) &&
-            topic == m.metadata.topic &&
-            (key.present? ? key == m.metadata.key : true) &&
-            (partition_key.present? ? partition_key == m.partition_key : true) &&
+                            m[:payload]&.to_h&.with_indifferent_access) &&
+            topic == m[:topic] &&
+            (key.present? ? key == m[:key] : true) &&
+            (partition_key.present? ? partition_key == m[:partition_key] : true) &&
             if headers.present?
               hash_matcher.send(:match,
                                 headers.with_indifferent_access,
-                                m.metadata.headers&.with_indifferent_access)
+                                m[:headers]&.with_indifferent_access)
             else
               true
             end
@@ -116,7 +116,7 @@ module Deimos
     # particular messages were sent or not sent after a point in time.
     # @return [void]
     def clear_kafka_messages!
-      produced_messages.clear
+      karafka.produced_messages.clear
     end
 
     # Test that a given handler will consume a given payload correctly, i.e.
@@ -160,36 +160,18 @@ module Deimos
       if call_original != :not_given
         puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
-      topic_name = nil
       consumer = nil
-      handler_class = nil
       if handler_class_or_topic.is_a?(String)
         topic_name = handler_class_or_topic
         consumer = karafka.consumer_for(topic_name)
-        handler_class = consumer.coordinator.topic.consumer
       else
-        handler_class = handler_class_or_topic
         topic_name = Deimos.topic_for_consumer(handler_class_or_topic)
-
-        unless topic_name
-          topic_name = SecureRandom.hex
-          KarafkaApp.routes.clear
-          KarafkaApp.routes.draw do
-            topic topic_name.to_sym do
-              consumer handler_class_or_topic
-            end
-          end
-        end
-
-       consumer = karafka.consumer_for(topic_name)
+        consumer = karafka.consumer_for(topic_name)
       end
       karafka.set_consumer(consumer)
 
        payloads.each_with_index do |payload, i|
-         # encoded_payload = consumer.topic.deserializers[:payload].backend.encode(payload)
-         # key_encoder = consumer.topic.deserializers[:key]
-         # encoded_key = key_encoder.encode_key(keys[i]) if key_encoder
-         karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i]}, topic: consumer.topic.name)
+         karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})
        end
        consumer.consume
       end
