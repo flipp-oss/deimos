@@ -28,7 +28,7 @@ module Deimos
             use_schema_classes: use_schema_classes,
             topic: self.name
           )
-          transcoders[:key].backend = Deimos::SchemaBackends::Plain
+          transcoders[:key].backend = Deimos::SchemaBackends::Plain.new(schema: nil, namespace: nil)
         elsif !key_config[:none]
           if key_config[:field]
             transcoders[:key] = Transcoder.new(

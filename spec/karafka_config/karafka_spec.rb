@@ -17,18 +17,63 @@ RSpec.describe 'Karafka configs' do
     end
   end
 
-  it 'should be able to test a producer' do
-    stub_const('MyProducer', producer_class)
-    KarafkaApp.routes.draw do
-      topic 'MyTopic' do
-        producer_class MyProducer
-        schema(schema: 'MySchema',
-               namespace: 'com.my-namespace',
-               key_config: {field: :test_id})
-      end
+  describe 'producers' do
+    before(:each) do
+      stub_const('MyProducer', producer_class)
     end
-    producer_class.publish({test_id: "id1", some_int: 5})
-    expect('MyTopic').to have_sent({test_id: "id1", some_int: 5}, 'id1')
+
+    it 'should work with key none' do
+      KarafkaApp.routes.draw do
+        topic 'MyTopic' do
+          producer_class MyProducer
+          schema(schema: 'MySchema',
+                 namespace: 'com.my-namespace',
+                 key_config: {none: :true})
+        end
+      end
+      producer_class.publish({test_id: "id1", some_int: 5})
+      expect('MyTopic').to have_sent({test_id: "id1", some_int: 5})
+    end
+
+    it 'should work with key plain' do
+      KarafkaApp.routes.draw do
+        topic 'MyTopic' do
+          producer_class MyProducer
+          schema(schema: 'MySchema',
+                 namespace: 'com.my-namespace',
+                 key_config: {plain: :true})
+        end
+      end
+      producer_class.publish({test_id: "id1", some_int: 5, payload_key: 'key'})
+      expect('MyTopic').to have_sent({test_id: "id1", some_int: 5}, 'key')
+    end
+
+    it 'should work with key field' do
+      KarafkaApp.routes.draw do
+        topic 'MyTopic' do
+          producer_class MyProducer
+          schema(schema: 'MySchema',
+                 namespace: 'com.my-namespace',
+                 key_config: {field: :test_id})
+        end
+      end
+      producer_class.publish({test_id: "id1", some_int: 5})
+      expect('MyTopic').to have_sent({test_id: "id1", some_int: 5}, 'id1')
+    end
+
+    it 'should work with key schema' do
+      KarafkaApp.routes.draw do
+        topic 'MyTopic' do
+          producer_class MyProducer
+          schema(schema: 'MySchema',
+                 namespace: 'com.my-namespace',
+                 key_config: {schema: 'MySchema_key'})
+        end
+      end
+      producer_class.publish({test_id: "id1", some_int: 5, payload_key: {test_id: 'id3'}})
+      expect('MyTopic').to have_sent({test_id: "id1", some_int: 5}, { test_id: 'id3'})
+    end
+
   end
 
   it 'should be able to pick up a consumer' do

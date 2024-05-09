@@ -37,8 +37,8 @@ module Deimos
     # @param hash2 [Hash, nil]
     # @!visibility private
     def _hash_diff(hash1, hash2)
-      h1 = normalize_message(hash1)
-      h2 = normalize_message(hash2)
+      h1 = Deimos::TestHelpers.normalize_message(hash1)
+      h2 = Deimos::TestHelpers.normalize_message(hash2)
       if h1.nil? || !h1.is_a?(Hash)
         h2
       elsif h2.nil? || !h2.is_a?(Hash)
@@ -64,15 +64,15 @@ module Deimos
 
     # @!visibility private
     def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
-      messages = karafka.produced_messages.select { |m| m.metadata.topic == topic }
+      messages = karafka.produced_messages.select { |m| m[:topic] == topic }
       message_string = ''
       diff = nil
       min_hash_diff = nil
       message = Deimos::TestHelpers.normalize_message(message)
       if messages.any?
-        message_string = messages.map { |m| Deimos::TestHelpers.normalize_message(m.payload).inspect}.join("\n")
+        message_string = messages.map { |m| Deimos::TestHelpers.normalize_message(m[:payload]).inspect}.join("\n")
         min_hash_diff = messages.min_by { |m| _hash_diff(m, message)&.keys&.size }
-        diff = RSpec::Expectations.differ.diff_as_object(message, min_hash_diff.payload)
+        diff = RSpec::Expectations.differ.diff_as_object(message, min_hash_diff[:payload])
       end
       str = "Expected #{topic} #{'not ' if was_negated}to have sent #{message&.to_h}"
       str += " with key #{key}" if key
@@ -86,13 +86,15 @@ module Deimos
       message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
         message_hash = Deimos::TestHelpers.normalize_message(message)
+        message_key = Deimos::TestHelpers.normalize_message(key)
         hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message_hash)
         karafka.produced_messages.any? do |m|
           Deimos.decode_message(m)
-          payload = Deimos::TestHelpers.normalize_message(m[:payload]&.to_h)
+          payload = Deimos::TestHelpers.normalize_message(m[:payload])
+          m_key = Deimos::TestHelpers.normalize_message(m[:key])
           hash_matcher.send(:match, message_hash, payload) &&
             topic == m[:topic] &&
-            (key.present? ? key == m[:key] : true) &&
+            (key.present? ? message_key == m_key : true) &&
             (partition_key.present? ? partition_key == m[:partition_key] : true) &&
             if headers.present?
               hash_matcher.send(:match,

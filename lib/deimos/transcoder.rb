@@ -22,7 +22,11 @@ module Deimos
 
     # for use in test helpers
     def encode_key(key)
-      self.backend.encode_key(self.key_field, key, topic: @topic)
+      if self.key_field
+        self.backend.encode_key(self.key_field, key, topic: @topic)
+      else
+        self.backend.encode(key, topic: @topic)
+      end
     end
 
     def decode_key(key)
@@ -50,7 +54,7 @@ module Deimos
     def encode(payload)
       return nil if payload.nil?
 
-      self.backend.encode(payload.to_h)
+      self.backend.encode(payload)
     end
 
     # @param message [Karafka::Messages::Message]
