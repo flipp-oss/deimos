@@ -27,6 +27,23 @@ DeimosApp.initializer("setup_root_dir", before: "karafka.require_karafka_boot_fi
 end
 DeimosApp.initialize!
 
+module Helpers
+  def register_consumer(klass, schema, namespace='com.my-namespace', key_config:{none: true}, active_record: {})
+    Karafka::App.routes.clear #TODO this clears out defaults too. PR to only clear out routes?
+    Karafka::App.routes.draw do
+      topic 'my-topic' do
+        consumer klass
+        schema(schema: schema,
+              namespace: namespace,
+              key_config: key_config)
+        active_record.each do |k, v|
+          public_send(k, v)
+        end
+      end
+    end
+  end
+end
+
 # Helpers for Executor/DbProducer
 module TestRunners
   # Execute a block until it stops failing. This is helpful for testing threads
@@ -168,6 +185,7 @@ RSpec.configure do |config|
   config.include Karafka::Testing::RSpec::Helpers
 
   config.include TestRunners
+  config.include Helpers
   config.full_backtrace = true
 
   config.snapshot_dir = "spec/snapshots"

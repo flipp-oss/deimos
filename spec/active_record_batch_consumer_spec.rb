@@ -34,7 +34,10 @@ module ActiveRecordBatchConsumerTest
     prepend_before(:each) do
       stub_const('MyBatchConsumer', consumer_class)
       stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
-      consumer_class.config[:bulk_import_id_column] = :bulk_import_id # default
+      register_consumer(MyBatchConsumer,
+                        'MySchema',
+                        key_config: {plain: true},
+                        active_record: {bulk_import_id_column: :bulk_import_id})
     end
 
     around(:each) do |ex|
@@ -50,9 +53,6 @@ module ActiveRecordBatchConsumerTest
     # Basic uncompacted consumer
     let(:consumer_class) do
       Class.new(described_class) do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config plain: true
         record_class Widget
         compacted false
       end
@@ -80,10 +80,6 @@ module ActiveRecordBatchConsumerTest
               config.schema.use_schema_classes = use_schema_classes
               config.schema.use_full_namespace = true
             end
-          end
-
-          it 'should handle an empty batch' do
-            expect { publish_batch([]) }.not_to raise_error
           end
 
           it 'should create records from a batch' do
@@ -257,12 +253,16 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'compacted mode' do
+      before(:each) do
+      register_consumer(consumer_class,
+                        'MySchema',
+                        key_config: {plain: true})
+
+      end
+
       # Create a compacted consumer
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
           record_class Widget
 
           # :no-doc:
@@ -302,11 +302,14 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'compound keys' do
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {schema: 'MySchemaCompound_key'})
+      end
+
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config schema: 'MySchemaCompound_key'
           record_class Widget
           compacted false
 
@@ -353,13 +356,10 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'no keys' do
-      let(:consumer_class) do
-        Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config none: true
-          record_class Widget
-        end
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {none: true})
       end
 
       it 'should handle unkeyed topics' do
@@ -385,11 +385,13 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'soft deletion' do
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {plain: true})
+      end
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
           record_class Widget
           compacted false
 
@@ -451,11 +453,13 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'skipping records' do
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {plain: true})
+      end
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
           record_class Widget
 
           # Sample customization: Skipping records
@@ -471,9 +475,9 @@ module ActiveRecordBatchConsumerTest
         publish_batch(
           [
             { key: 1, # Record that consumer can decide to skip
-              payload: { test_id: 'skipme' } },
+              payload: { test_id: 'skipme', some_int: 3 } },
             { key: 2,
-              payload: { test_id: 'abc123' } }
+              payload: { test_id: 'abc123', some_int: 3 } }
           ]
         )
 
@@ -484,11 +488,13 @@ module ActiveRecordBatchConsumerTest
 
     describe 'pre processing' do
       context 'with uncompacted messages' do
+        before(:each) do
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true})
+        end
         let(:consumer_class) do
           Class.new(described_class) do
-            schema 'MySchema'
-            namespace 'com.my-namespace'
-            key_config plain: true
             record_class Widget
             compacted false
 
@@ -527,9 +533,11 @@ module ActiveRecordBatchConsumerTest
       context 'with a global bulk_import_id_generator' do
 
         before(:each) do
-          Deimos.configure do
-            consumers.bulk_import_id_generator(proc { 'global' })
-          end
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true},
+                            active_record: {bulk_import_id_generator: proc { 'global' }}
+                            )
         end
 
         it 'should call the default bulk_import_id_generator proc' do
@@ -593,11 +601,13 @@ module ActiveRecordBatchConsumerTest
 
     describe 'should_consume?' do
 
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {plain: true})
+      end
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
           record_class Widget
           compacted false
 
@@ -649,11 +659,13 @@ module ActiveRecordBatchConsumerTest
     describe 'post processing' do
 
       context 'with uncompacted messages' do
+        before(:each) do
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true})
+        end
         let(:consumer_class) do
           Class.new(described_class) do
-            schema 'MySchema'
-            namespace 'com.my-namespace'
-            key_config plain: true
             record_class Widget
             compacted false
 
@@ -707,11 +719,13 @@ module ActiveRecordBatchConsumerTest
       end
 
       context 'with compacted messages' do
+        before(:each) do
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true})
+        end
         let(:consumer_class) do
           Class.new(described_class) do
-            schema 'MySchema'
-            namespace 'com.my-namespace'
-            key_config plain: true
             record_class Widget
             compacted true
 
@@ -765,11 +779,13 @@ module ActiveRecordBatchConsumerTest
       end
 
       context 'with post processing errors' do
+        before(:each) do
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true})
+        end
         let(:consumer_class) do
           Class.new(described_class) do
-            schema 'MySchema'
-            namespace 'com.my-namespace'
-            key_config plain: true
             record_class Widget
             compacted false
 

@@ -36,7 +36,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     # @param handler_class [Class]
     # @return [String,nil]
     def topic_for_consumer(handler_class)
-      Karafka::App.routes.flat_map(&:topics).flat_map(&:to_a).each do |topic|
+      Deimos.karafka_configs.each do |topic|
         if topic.consumer == handler_class
           return topic.name
         end

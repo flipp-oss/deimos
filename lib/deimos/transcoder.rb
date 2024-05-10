@@ -69,7 +69,13 @@ module Deimos
     # @param message [Karafka::Messages::Message]
     # @return [Object]
     def call(message)
-      self.key_field ? decode_key(message.metadata.raw_key) : decode_message(message.raw_payload)
+      if self.key_field
+        decode_key(message.raw_key)
+      elsif message.respond_to?(:raw_payload)
+        decode_message(message.raw_payload)
+      else
+        decode_message(message.raw_key)
+      end
     end
 
     # @param payload [String]

@@ -23,8 +23,10 @@ require 'deimos/schema_class/record'
 
 require 'deimos/ext/active_record_route'
 require 'deimos/ext/schema_route'
+require 'deimos/ext/consumer_route'
 require 'deimos/ext/producer_route'
 require 'deimos/ext/producer_middleware'
+require 'deimos/logger_listener'
 
 require 'deimos/railtie' if defined?(Rails)
 require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
@@ -122,6 +124,28 @@ module Deimos
                                       logger: self.config.logger)
       signal_handler = Sigurd::SignalHandler.new(executor)
       signal_handler.run!
+    end
+
+    def setup_karafka
+      Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
+      Karafka::App.routes.draw do
+        defaults do
+          bulk_import_id_column :bulk_import_id
+          bulk_import_id_generator(proc { SecureRandom.uuid })
+        end
+      end
+      Karafka.monitor.subscribe(Deimos::LoggerListener)
+    end
+
+    # @return [Array<Karafka::Routing::Topic]
+    def karafka_configs
+      Karafka::App.routes.flat_map(&:topics).flat_map(&:to_a)
+    end
+
+    # @param topic [String]
+    # @return [Karafka::Routing::Topic,nil]
+    def karafka_config_for(topic)
+      karafka_configs.find { |t| t.name == topic}
     end
 
   end

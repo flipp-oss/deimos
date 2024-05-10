@@ -25,13 +25,13 @@ module Deimos
       # they are split
       # @return [void]
       def consume_batch
-        deimos_messages = messages.map { |p, k| Deimos::Message.new(p.payload, nil, key: p.key) }
+        deimos_messages = messages.map { |p, k| Deimos::Message.new(p.payload, key: p.key) }
 
         tag = messages.metadata.topic
         Deimos.config.tracer.active_span.set_tag('topic', tag)
 
         Deimos.instrument('ar_consumer.consume_batch', tag) do
-          if @compacted || self.class.config[:no_keys]
+          if @compacted && deimos_messages.map(&:key).compact.any?
             update_database(compact_messages(deimos_messages))
           else
             uncompacted_update(deimos_messages)
@@ -67,7 +67,7 @@ module Deimos
         if key.nil?
           {}
         elsif key.is_a?(Hash)
-          @key_converter.convert(key)
+          self.key_converter.convert(key)
         elsif self.class.config[:key_field].nil?
           { @klass.primary_key => key }
         else
@@ -166,8 +166,8 @@ module Deimos
         updater = MassUpdater.new(@klass,
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
-                                  replace_associations: self.class.replace_associations,
-                                  bulk_import_id_generator: self.class.bulk_import_id_generator)
+                                  replace_associations: self.replace_associations,
+                                  bulk_import_id_generator: self.bulk_import_id_generator)
         ActiveSupport::Notifications.instrument('batch_consumption.valid_records', {
                                                   records: updater.mass_update(record_list),
                                                   consumer: self.class
@@ -202,14 +202,14 @@ module Deimos
           attrs = attrs.merge(record_key(m.key))
           next unless attrs
 
-          col = if @klass.column_names.include?(self.class.bulk_import_id_column.to_s)
+          col = if @klass.column_names.include?(self.bulk_import_id_column.to_s)
                   self.class.bulk_import_id_column
                 end
 
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
                           bulk_import_column: col,
-                          bulk_import_id_generator: self.class.bulk_import_id_generator)
+                          bulk_import_id_generator: self.bulk_import_id_generator)
         end
         BatchRecordList.new(records.compact)
       end

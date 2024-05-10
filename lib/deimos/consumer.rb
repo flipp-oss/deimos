@@ -16,23 +16,9 @@ module Deimos
     include Consume::BatchConsumption
     include SharedConfig
 
-    class << self
-
-      def encoder
-        Deimos.schema_backend(schema: config[:schema], namespace: config[:namespace])
-      end
-
-      def key_encoder
-        return nil unless config[:key_field]
-
-        Deimos.schema_backend(schema: "#{config[:schema]}_key", namespace: config[:namespace])
-      end
-
-    end
-
     def consume
       _with_span do
-        if self.class.config[:batch]
+        if self.topic.batch
           consume_batch
         else
           messages.each do |message|

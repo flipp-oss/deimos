@@ -118,6 +118,7 @@ module Deimos
     # particular messages were sent or not sent after a point in time.
     # @return [void]
     def clear_kafka_messages!
+      puts "[Deprecated] clear_kafka_messages! can be replaced with `karafka.produced_messages.clear`"
       karafka.produced_messages.clear
     end
 
@@ -140,7 +141,7 @@ module Deimos
       if call_original != :not_given
         puts "test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
-      test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key])
+      test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key], single: true)
     end
 
     # Test that a given handler will consume a given batch payload correctly,
@@ -153,16 +154,19 @@ module Deimos
     # @param call_original [Symbol] legacy parameter.
     # @param keys [Array<Object>]
     # @param partition_keys [Array<Object>]
+    # @param single [Boolean] used internally.
     # @return [void]
     def test_consume_batch(handler_class_or_topic,
                            payloads,
                            keys: [],
                            call_original: :not_given,
+                           single: false,
                            partition_keys: [])
       if call_original != :not_given
         puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
       consumer = nil
+      topic_name = nil
       if handler_class_or_topic.is_a?(String)
         topic_name = handler_class_or_topic
         consumer = karafka.consumer_for(topic_name)
@@ -171,6 +175,8 @@ module Deimos
         consumer = karafka.consumer_for(topic_name)
       end
       karafka.set_consumer(consumer)
+
+      Deimos.karafka_config_for(topic_name).batch(!single)
 
        payloads.each_with_index do |payload, i|
          karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})
