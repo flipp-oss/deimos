@@ -16,11 +16,14 @@ module Deimos
       @topic = topic
     end
 
+    # @return [Class < Deimos::SchemaBackends::Base]
     def backend
       @backend ||= Deimos.schema_backend(schema: @schema, namespace: @namespace)
     end
 
     # for use in test helpers
+    # @param key [Object]
+    # @return [String]
     def encode_key(key)
       if self.key_field
         self.backend.encode_key(self.key_field, key, topic: @topic)
@@ -29,6 +32,8 @@ module Deimos
       end
     end
 
+    # @param key [String]
+    # @return [Object]
     def decode_key(key)
       return nil if key.nil? || self.key_field.nil?
 
@@ -40,6 +45,8 @@ module Deimos
                                   @namespace)
     end
 
+    # @param payload [String]
+    # @return [Object]
     def decode_message(payload)
       return nil if payload.nil?
 
@@ -51,6 +58,8 @@ module Deimos
                                   @namespace)
     end
 
+    # @param payload [Object]
+    # @return [String]
     def encode(payload)
       return nil if payload.nil?
 
@@ -58,10 +67,13 @@ module Deimos
     end
 
     # @param message [Karafka::Messages::Message]
+    # @return [Object]
     def call(message)
       self.key_field ? decode_key(message.metadata.raw_key) : decode_message(message.raw_payload)
     end
 
+    # @param payload [String]
+    # @return [Object]
     def decode_message_hash(payload)
       self.key_field ? decode_key(payload) : decode_message(payload)
     end

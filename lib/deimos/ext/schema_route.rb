@@ -52,7 +52,6 @@ module Deimos
           transcoders
         )
         deserializers(**transcoders)
-
       end
     end
   end

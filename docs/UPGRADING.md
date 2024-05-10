@@ -18,12 +18,10 @@
 
 TODO: 
 
+- schema class generator - use Karafka routes instead of configs
 - Deimos defaults in Karafka routes instead of top-level
-- Convert Phobos config values to Karafka
-- Deimos configs to generate Karafka routes w/deprecation notice
-- producer spec
-- See if we can stop storing schema/namespace on consumers - `topic.deserializers[:payload].backend`
-- 
+- Convert Phobos config values to Karafka (?)
+- Deimos configs to generate Karafka routes w/deprecation notice (?)
 - Logging and metrics via notifications
 -   backends/base needs to work on Karafka messages
 - Error messages: 
