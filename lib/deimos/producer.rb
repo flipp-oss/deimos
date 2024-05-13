@@ -65,7 +65,8 @@ module Deimos
       def config
         @config ||= {
           encode_key: true,
-          namespace: Deimos.config.producers.schema_namespace
+          namespace: Deimos.config.producers.schema_namespace,
+          max_batch_size: Deimos.config.producers.max_batch_size
         }
       end
 
@@ -87,6 +88,12 @@ module Deimos
       # @return [String]
       def partition_key(_payload)
         nil
+      end
+
+      # @param size [Integer] Override the default batch size for publishing.
+      # @return [void]
+      def max_batch_size(size)
+        config[:max_batch_size] = size
       end
 
       # Publish the payload to the topic.
