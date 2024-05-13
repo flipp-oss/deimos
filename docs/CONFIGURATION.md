@@ -46,6 +46,7 @@ schema|nil|Name of the schema to use to encode data before producing.
 namespace|nil|Namespace of the schema to use when finding it locally.
 key_config|nil|Configuration hash for message keys. See [Kafka Message Keys](../README.md#installation)
 use_schema_classes|nil|Set to true or false to enable or disable using the producers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes)
+max_batch_size|500|Maximum publishing batch size. Defaults to top-level configuration of 500.
 
 ## Defining Consumers
 
@@ -198,6 +199,7 @@ producers.schema_namespace|nil|Default namespace for all producers. Can remain n
 producers.topic_prefix|nil|Add a prefix to all topic names. This can be useful if you're using the same Kafka broker for different environments that are producing the same topics.
 producers.disabled|false|Disable all actual message producing. Generally more useful to use the `disable_producers` method instead.
 producers.backend|`:kafka_async`|Currently can be set to `:db`, `:kafka`, or `:kafka_async`. If using Kafka directly, a good pattern is to set to async in your user-facing app, and sync in your consumers or delayed workers.
+producers.max_batch_size|500|Maximum batch size for publishing. Individual producers can override.
 
 ## Schema Configuration
 

@@ -344,6 +344,10 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # sync in your consumers or delayed workers.
       # @return [Symbol]
       setting :backend, :kafka_async
+
+      # Maximum publishing batch size. Individual producers can override.
+      # @return [Integer]
+      setting :max_batch_size, 500
     end
 
     setting :schema do
@@ -436,6 +440,9 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # instead of appending to them.
       # @return [Boolean]
       setting :replace_associations
+      # Maximum publishing batch size for this producer.
+      # @return [Integer]
+      setting :max_batch_size
     end
 
     setting_object :consumer do

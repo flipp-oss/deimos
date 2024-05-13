@@ -59,16 +59,14 @@ module Deimos
   class Producer
     include SharedConfig
 
-    # @return [Integer]
-    MAX_BATCH_SIZE = 500
-
     class << self
 
       # @return [Hash]
       def config
         @config ||= {
           encode_key: true,
-          namespace: Deimos.config.producers.schema_namespace
+          namespace: Deimos.config.producers.schema_namespace,
+          max_batch_size: Deimos.config.producers.max_batch_size
         }
       end
 
@@ -90,6 +88,12 @@ module Deimos
       # @return [String]
       def partition_key(_payload)
         nil
+      end
+
+      # @param size [Integer] Override the default batch size for publishing.
+      # @return [void]
+      def max_batch_size(size)
+        config[:max_batch_size] = size
       end
 
       # Publish the payload to the topic.
@@ -126,7 +130,7 @@ module Deimos
         ) do
           messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, self, headers: headers) }
           messages.each { |m| _process_message(m, topic) }
-          messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
+          messages.in_groups_of(self.config[:max_batch_size], false) do |batch|
             self.produce_batch(backend_class, batch)
           end
         end

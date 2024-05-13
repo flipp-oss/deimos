@@ -72,6 +72,14 @@ module ProducerTest
       end
       stub_const('MyNoTopicProducer', producer_class)
 
+      producer_class = Class.new(Deimos::Producer) do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        topic 'my-topic'
+        key_config field: 'test_id'
+        max_batch_size 1
+      end
+      stub_const('MySmallBatchProducer', producer_class)
     end
 
     it 'should fail on invalid message with error handler' do
@@ -604,6 +612,31 @@ module ProducerTest
           to eq(Deimos::Backends::KafkaAsync)
         expect(described_class.determine_backend_class(nil, true)).
           to eq(Deimos::Backends::Kafka)
+      end
+    end
+
+    describe "max_batch_size" do
+      it 'should use top-level default value if max_batch_size is not defined by the producer' do
+        expect(MyProducer.config[:max_batch_size]).to eq(500)
+      end
+
+      it 'should call produce_batch multiple times when max_batch_size < records size' do
+        Deimos::Message.new({ 'test_id' => 'foo', 'some_int' => 123 },
+                            MySmallBatchProducer,
+                            topic: 'my-topic',
+                            partition_key: 'foo',
+                            key: 'foo')
+        Deimos::Message.new({ 'test_id' => 'bar', 'some_int' => 124 },
+                            MySmallBatchProducer,
+                            topic: 'my-topic',
+                            partition_key: 'bar',
+                            key: 'bar')
+        expect(described_class).to receive(:produce_batch).twice
+
+        MySmallBatchProducer.publish_list(
+          [{ 'test_id' => 'foo', 'some_int' => 123 },
+           { 'test_id' => 'bar', 'some_int' => 124 }]
+        )
       end
     end
 
