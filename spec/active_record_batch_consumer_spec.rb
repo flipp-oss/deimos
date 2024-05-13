@@ -37,7 +37,8 @@ module ActiveRecordBatchConsumerTest
       register_consumer(MyBatchConsumer,
                         'MySchema',
                         key_config: {plain: true},
-                        active_record: {bulk_import_id_column: :bulk_import_id})
+                        configs: {bulk_import_id_column: :bulk_import_id})
+      Widget.delete_all
     end
 
     around(:each) do |ex|
@@ -536,7 +537,7 @@ module ActiveRecordBatchConsumerTest
           register_consumer(consumer_class,
                             'MySchema',
                             key_config: {plain: true},
-                            active_record: {bulk_import_id_generator: proc { 'global' }}
+                            configs: {bulk_import_id_generator: proc { 'global' }}
                             )
         end
 

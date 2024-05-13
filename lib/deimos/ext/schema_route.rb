@@ -11,13 +11,24 @@ module Deimos
     end
 
     module Topic
-      def schema(schema:, namespace: nil, key_config: {}, use_schema_classes: false)
+      %w(schema namespace key_config use_schema_classes).each do |field|
+        define_method(field) do |val=nil|
+          @_deimos_config ||= {}
+          @_deimos_config[:schema] ||= {
+            'key_config' => {none: true}
+          }
+          return @_deimos_config[:schema][field] if val.nil?
+          @_deimos_config[:schema][field] = val
+          _deimos_setup_transcoders if schema && namespace
+        end
+      end
+      def _deimos_setup_transcoders
         transcoders = {
           payload: Transcoder.new(
             schema: schema,
             namespace: namespace,
             use_schema_classes: use_schema_classes,
-            topic: self.name
+            topic: name
           )
         }
 
@@ -26,7 +37,7 @@ module Deimos
             schema: schema,
             namespace: namespace,
             use_schema_classes: use_schema_classes,
-            topic: self.name
+            topic: name
           )
           transcoders[:key].backend = Deimos::SchemaBackends::Plain.new(schema: nil, namespace: nil)
         elsif !key_config[:none]
@@ -36,7 +47,7 @@ module Deimos
               namespace: namespace,
               use_schema_classes: use_schema_classes,
               key_field: key_config[:field].to_s,
-              topic: self.name
+              topic: name
             )
           else
             transcoders[:key] = Transcoder.new(
@@ -47,7 +58,7 @@ module Deimos
             )
           end
         end
-        Deimos::ProducerMiddleware.producer_configs[self.name] = Deimos::ProducerConfig.new(
+        Deimos::ProducerMiddleware.producer_configs[name] = Deimos::ProducerConfig.new(
           self,
           transcoders
         )
