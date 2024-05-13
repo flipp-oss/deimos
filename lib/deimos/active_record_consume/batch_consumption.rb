@@ -167,9 +167,9 @@ module Deimos
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
                                   replace_associations: self.replace_associations,
-                                  bulk_import_id_generator: self.class.bulk_import_id_generator,
+                                  bulk_import_id_generator: self.bulk_import_id_generator,
                                   save_associations_first: self.class.save_associations_first,
-                                  bulk_import_id_column: self.class.bulk_import_id_column)
+                                  bulk_import_id_column: self.bulk_import_id_column)
         ActiveSupport::Notifications.instrument('batch_consumption.valid_records', {
                                                   records: updater.mass_update(record_list),
                                                   consumer: self.class
