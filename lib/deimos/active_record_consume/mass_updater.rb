@@ -20,10 +20,13 @@ module Deimos
       # @param col_proc [Proc<Class < ActiveRecord::Base>]
       # @param replace_associations [Boolean]
       def initialize(klass, key_col_proc: nil, col_proc: nil,
-                     replace_associations: true, bulk_import_id_generator: nil)
+                     replace_associations: true, bulk_import_id_generator: nil, save_associations_first: false,
+                     bulk_import_id_column: nil)
         @klass = klass
         @replace_associations = replace_associations
         @bulk_import_id_generator = bulk_import_id_generator
+        @save_associations_first = save_associations_first
+        @bulk_import_id_column = bulk_import_id_column&.to_s
 
         @key_cols = {}
         @key_col_proc = key_col_proc
@@ -84,15 +87,67 @@ module Deimos
         end
       end
 
+      # Assign associated records to corresponding primary records
+      # @param record_list [BatchRecordList] RecordList of primary records for this consumer
+      # @return [Hash]
+      def assign_associations(record_list)
+        associations_info = {}
+        record_list.associations.each do |assoc|
+          col = @bulk_import_id_column if assoc.klass.column_names.include?(@bulk_import_id_column)
+          associations_info[[assoc, col]] = []
+        end
+        record_list.batch_records.each do |primary_batch_record|
+          associations_info.each_key do |assoc, col|
+            batch_record = BatchRecord.new(klass: assoc.klass,
+                                           attributes: primary_batch_record.associations[assoc.name],
+                                           bulk_import_column: col,
+                                           bulk_import_id_generator: @bulk_import_id_generator)
+            # Associate this associated batch record's record with the primary record to
+            # retrieve foreign_key after associated records have been saved and primary
+            # keys have been filled
+            primary_batch_record.record.assign_attributes({ assoc.name => batch_record.record })
+            associations_info[[assoc, col]] << batch_record
+          end
+        end
+        associations_info
+      end
+
+      # Save associated records and fill foreign keys on RecordList records
+      # @param record_list [BatchRecordList] RecordList of primary records for this consumer
+      # @param associations_info [Hash] Contains association info
+      def save_associations_first(record_list, associations_info)
+        associations_info.each_value do |records|
+          assoc_record_list = BatchRecordList.new(records)
+          Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
+            save_records_to_database(assoc_record_list)
+          end
+          import_associations(assoc_record_list)
+        end
+        record_list.records.each do |record|
+          associations_info.each_key do |assoc, _|
+            record.assign_attributes({ assoc.foreign_key => record.send(assoc.name).id })
+          end
+        end
+      end
+
       # @param record_list [BatchRecordList]
       # @return [Array<ActiveRecord::Base>]
       def mass_update(record_list)
         # The entire batch should be treated as one transaction so that if
         # any message fails, the whole thing is rolled back or retried
         # if there is deadlock
-        Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
-          save_records_to_database(record_list)
-          import_associations(record_list) if record_list.associations.any?
+
+        if @save_associations_first
+          associations_info = assign_associations(record_list)
+          save_associations_first(record_list, associations_info)
+          Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
+            save_records_to_database(record_list)
+          end
+        else
+          Deimos::Utils::DeadlockRetry.wrap(Deimos.config.tracer.active_span.get_tag('topic')) do
+            save_records_to_database(record_list)
+            import_associations(record_list) if record_list.associations.any?
+          end
         end
         record_list.records
       end

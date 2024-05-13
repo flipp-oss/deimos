@@ -6,7 +6,11 @@ module Deimos
     self.table_name = 'kafka_topic_info'
 
     class << self
-      
+
+      def quote_time(time)
+        time.respond_to?(:to_fs) ? time.to_fs(:db) : time.to_s(:db)
+      end
+
       # Lock a topic for the given ID. Returns whether the lock was successful.
       # @param topic [String]
       # @param lock_id [String]
@@ -23,9 +27,9 @@ module Deimos
         qtopic = self.connection.quote(topic)
         qlock_id = self.connection.quote(lock_id)
         qtable = self.connection.quote_table_name('kafka_topic_info')
-        qnow = self.connection.quote(Time.zone.now.to_s(:db))
+        qnow = self.connection.quote(quote_time(Time.zone.now))
         qfalse = self.connection.quoted_false
-        qtime = self.connection.quote(1.minute.ago.to_s(:db))
+        qtime = self.connection.quote(quote_time(1.minute.ago))
 
         # If a record is marked as error and less than 1 minute old,
         # we don't want to pick it up even if not currently locked because
