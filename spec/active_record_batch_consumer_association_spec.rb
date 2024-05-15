@@ -82,7 +82,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       Karafka::App.routes.redraw do
         topic 'my-topic' do
           consumer klass
-          schema 'MySchema'
+          schema 'MySchemaWithTitle'
           namespace 'com.my-namespace'
           key_config plain: true
           bulk_import_id_column col
