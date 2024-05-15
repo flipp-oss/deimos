@@ -6,6 +6,7 @@
 
 - removed deprecated configs
 - no more backend=:test
+- can no longer put schema/namespace on consumer/producer class
 - payload_key no longer needed
 - phobos.yml no longer supported
 - remove test_consume_invalid_message and test_consume_batch_invalid_message

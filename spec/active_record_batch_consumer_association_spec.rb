@@ -74,9 +74,21 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     end
 
     prepend_before(:each) do
-      consumer_class.config[:bulk_import_id_column] = :bulk_import_id
       stub_const('MyBatchConsumer', consumer_class)
       stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
+      klass = consumer_class
+      col = bulk_import_id_column
+      rep = replace_associations
+      Karafka::App.routes.redraw do
+        topic 'my-topic' do
+          consumer klass
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          bulk_import_id_column col
+          replace_associations rep
+        end
+      end
     end
 
     # Helper to publish a list of messages and call the consumer
@@ -87,13 +99,13 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       test_consume_batch(MyBatchConsumer, payloads, keys: keys)
     end
 
+    let(:bulk_import_id_column) { :bulk_import_id }
+    let(:replace_associations) { true }
+
     let(:consumer_class) do
       klass = Class.new(described_class) do
         cattr_accessor :record_attributes_proc
         cattr_accessor :should_consume_proc
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config plain: true
         record_class Widget
 
         def should_consume?(record, associations)
@@ -154,7 +166,6 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'when association configured in consumer without model changes' do
       before(:each) do
-        consumer_class.config[:bulk_import_id_column] = :bulk_import_id
         ActiveRecord::Base.connection.remove_column(:widgets, :bulk_import_id)
         Widget.reset_column_information
       end
@@ -173,10 +184,8 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     end
 
     context 'with one-to-one relation in association and custom bulk_import_id' do
-      before(:each) do
-        consumer_class.config[:bulk_import_id_column] = :custom_id
-        consumer_class.config[:replace_associations] = false
-      end
+      let(:bulk_import_id_column) { :custom_id }
+      let(:replace_associations) { false }
 
       before(:all) do
         ActiveRecord::Base.connection.add_column(:widgets, :custom_id, :string, if_not_exists: true)
@@ -193,8 +202,8 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     end
 
     context 'with one-to-many relationship in association and default bulk_import_id' do
+      let(:replace_associations) { false }
       before(:each) do
-        consumer_class.config[:replace_associations] = false
         consumer_class.record_attributes_proc = proc do |payload|
           {
             test_id: payload['test_id'],
@@ -214,7 +223,6 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       end
 
       it 'should save item to widget and associated details' do
-        consumer_class.config[:replace_associations] = false
         publish_batch([{ key: 2,
                          payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
         expect(Widget.count).to eq(2)
@@ -233,8 +241,8 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     end
 
     context 'with replace_associations on' do
+      let(:replace_associations) { true }
       before(:each) do
-        consumer_class.config[:replace_associations] = true
         consumer_class.record_attributes_proc = proc do |payload|
           {
             test_id: payload['test_id'],
