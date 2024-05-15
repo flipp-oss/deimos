@@ -4,6 +4,7 @@
 
 2.x is a major rewrite from 1.0.
 
+- removed deprecated configs
 - no more backend=:test
 - payload_key no longer needed
 - phobos.yml no longer supported
@@ -56,6 +57,11 @@ For producers:
 For middleware:
 * topic prefix
 * encoding, adding fields etc.
+
+
+Configs:
+* logger: No longer supported
+* 
 
 
 ## Upgrading from < 1.5.0 to >= 1.5.0

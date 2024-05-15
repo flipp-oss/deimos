@@ -568,10 +568,17 @@ module ActiveRecordBatchConsumerTest
       context 'with a class defined bulk_import_id_generator' do
 
         before(:each) do
-          Deimos.configure do
-            consumers.bulk_import_id_generator(proc { 'global' })
+          Karafka::App.routes.clear
+          Karafka::App.routes.draw do
+            defaults do
+              bulk_import_id_generator(proc { 'global'})
+            end
           end
-          consumer_class.config[:bulk_import_id_generator] = proc { 'custom' }
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true},
+                            configs: {bulk_import_id_generator: proc { 'custom' }}
+                            )
         end
 
         it 'should call the default bulk_import_id_generator proc' do

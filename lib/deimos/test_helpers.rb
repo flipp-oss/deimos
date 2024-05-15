@@ -136,9 +136,9 @@ module Deimos
     def test_consume_message(handler_class_or_topic,
                              payload,
                              key: nil,
-                             call_original: :not_given,
+                             call_original: Karafka::Routing::Features::Undefined,
                              partition_key: nil)
-      if call_original != :not_given
+      if call_original != Karafka::Routing::Features::Undefined
         puts "test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
       test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key], single: true)
@@ -159,10 +159,10 @@ module Deimos
     def test_consume_batch(handler_class_or_topic,
                            payloads,
                            keys: [],
-                           call_original: :not_given,
+                           call_original: Karafka::Routing::Features::Undefined,
                            single: false,
                            partition_keys: [])
-      if call_original != :not_given
+      if call_original != Karafka::Routing::Features::Undefined
         puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
       consumer = nil

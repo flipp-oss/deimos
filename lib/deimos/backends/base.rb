@@ -13,22 +13,12 @@ module Deimos
           execute(producer_class: producer_class, messages: messages)
         end
 
-        # @param producer_class [Class<Deimos::Producer>]
-        # @param messages [Array<Deimos::Message>]
-        # @return [void]
-        def execute(producer_class:, messages:)
-          raise MissingImplementationError
-        end
-
-      private
-
         def log_message(messages)
           log_message = {
             message: 'Publishing messages',
-            #            topic: messages.first&.topic
           }
 
-          case Deimos.config.payload_log
+          case topic.producer_config.payload_log
           when :keys
             log_message.merge!(
               payload_keys: messages.map { |m| m[:key]}
@@ -54,6 +44,16 @@ module Deimos
 
           log_message
         end
+
+        # @param producer_class [Class<Deimos::Producer>]
+        # @param messages [Array<Deimos::Message>]
+        # @return [void]
+        def execute(producer_class:, messages:)
+          raise MissingImplementationError
+        end
+
+      private
+
       end
     end
   end

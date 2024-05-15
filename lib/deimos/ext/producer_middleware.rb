@@ -5,10 +5,10 @@ module Deimos
 
     # @param topic [Karafka::Routing::Topic]
     # @param transcoders [Hash<Symbol, Deimos::Transcoder>]
-    def initialize(topic, transcoders)
+    def initialize(topic, payload, key)
       self.topic = topic
-      self.encoder = transcoders[:payload]
-      self.key_encoder = transcoders[:key]
+      self.encoder = payload
+      self.key_encoder = key
       self.key_field = key_encoder&.key_field
     end
   end

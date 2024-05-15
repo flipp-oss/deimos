@@ -110,7 +110,7 @@ module Deimos
       # @param headers [Hash] if specifying headers
       # @return [void]
       def publish_list(payloads, sync: nil, force_send: false, topic: self.topic, headers: nil)
-        return if Deimos.config.producers.disabled ||
+        return if self.topic.producer_config.disabled ||
                   Deimos.producers_disabled?(self)
 
         backend_class = determine_backend_class(sync, force_send)
@@ -135,7 +135,7 @@ module Deimos
 
       def configured_topic
         Deimos.karafka_configs.each do |topic|
-          return topic.name if topic.producer_class == self
+          return topic.name if topic.producer_config.producer_class == self
         end
         nil
       end

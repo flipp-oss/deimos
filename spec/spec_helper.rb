@@ -31,8 +31,7 @@ DeimosApp.initialize!
 
 module Helpers
   def register_consumer(klass, schema, namespace='com.my-namespace', key_config:{none: true}, configs: {})
-    Karafka::App.routes.clear #TODO this clears out defaults too. PR to only clear out routes?
-    Karafka::App.routes.draw do
+    Karafka::App.routes.redraw do
       topic 'my-topic' do
         consumer klass
         schema schema

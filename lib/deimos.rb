@@ -4,7 +4,7 @@ require 'active_support'
 require 'karafka'
 
 require 'deimos/version'
-require 'deimos/configuration'
+require 'deimos/config/configuration'
 require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
@@ -21,7 +21,6 @@ require 'deimos/utils/schema_class'
 require 'deimos/schema_class/enum'
 require 'deimos/schema_class/record'
 
-require 'deimos/ext/active_record_route'
 require 'deimos/ext/schema_route'
 require 'deimos/ext/consumer_route'
 require 'deimos/ext/producer_route'
@@ -128,12 +127,6 @@ module Deimos
 
     def setup_karafka
       Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
-      Karafka::App.routes.draw do
-        defaults do
-          bulk_import_id_column :bulk_import_id
-          bulk_import_id_generator(proc { SecureRandom.uuid })
-        end
-      end
       Karafka.monitor.subscribe(Deimos::LoggerListener)
     end
 
@@ -146,6 +139,17 @@ module Deimos
     # @return [Karafka::Routing::Topic,nil]
     def karafka_config_for(topic)
       karafka_configs.find { |t| t.name == topic}
+    end
+
+    # @param handler_class [Class]
+    # @return [String,nil]
+    def topic_for_consumer(handler_class)
+      Deimos.karafka_configs.each do |topic|
+        if topic.consumer == handler_class
+          return topic.name
+        end
+      end
+      nil
     end
 
   end
