@@ -1,20 +1,19 @@
 module Deimos
   class ProducerRoute < Karafka::Routing::Features::Base
-    Config = Struct.new(
-      :producer_class,
-      :payload_log,
-      :disabled,
-      keyword_init: true
-    )
+    FIELDS = %i(producer_class payload_log)
+
+    Config = Struct.new(*FIELDS, keyword_init: true)
     module Topic
-      def producer_config(klass: Undefined, payload_log: Undefined)
-        active(false)
-        @producer_config ||= Config.new(payload_log: :full)
-
-        return @producer_config if [klass, payload_log].uniq == [Undefined]
-
-        @producer_config.producer_class = klass unless klass == Undefined
-        @producer_config.payload_log = payload_log unless payload_log == Undefined
+      FIELDS.each do |field|
+        define_method(field) do |val=Karafka::Routing::Features::Undefined|
+          active(false)
+          @deimos_producer_config ||= Config.new
+          unless val == Karafka::Routing::Features::Undefined
+            @deimos_producer_config.public_send("#{field}=", val)
+          end
+          Deimos::ProducerMiddleware.producer_configs[self.name] = @deimos_producer_config
+          @deimos_producer_config[field]
+        end
       end
     end
   end

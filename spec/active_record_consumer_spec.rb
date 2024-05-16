@@ -33,25 +33,16 @@ module ActiveRecordConsumerTest
     prepend_before(:each) do
 
       consumer_class = Class.new(Deimos::ActiveRecordConsumer) do
-        schema 'MySchemaWithDateTimes'
-        namespace 'com.my-namespace'
-        key_config plain: true
         record_class Widget
       end
       stub_const('MyConsumer', consumer_class)
 
       consumer_class = Class.new(Deimos::ActiveRecordConsumer) do
-        schema 'MySchemaWithDateTimes'
-        namespace 'com.my-namespace'
-        key_config schema: 'MySchemaId_key'
         record_class Widget
       end
       stub_const('MyConsumerWithKey', consumer_class)
 
       consumer_class = Class.new(Deimos::ActiveRecordConsumer) do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config none: true
         record_class Widget
 
         # :nodoc:
@@ -135,14 +126,39 @@ module ActiveRecordConsumerTest
         end
       end
       stub_const('Schemas::MySchemaWithDateTimes', schema_datetime_class)
+
+      Karafka::App.routes.redraw do
+        topic "my-topic" do
+          consumer MyConsumer
+          schema 'MySchemaWithDateTimes'
+          namespace 'com.my-namespace'
+          key_config plain: true
+        end
+        topic "my-topic2" do
+          consumer MyConsumerWithKey
+          schema 'MySchemaWithDateTimes'
+          namespace 'com.my-namespace'
+          key_config schema: 'MySchemaId_key'
+        end
+        topic "my-topic3" do
+          consumer MyCustomFetchConsumer
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config none: true
+        end
+      end
     end
 
     describe 'consume' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
         context "with Schema Class consumption #{setting}" do
           before(:each) do
+            Karafka::App.routes.draw do
+              defaults do
+                use_schema_classes use_schema_classes
+              end
+            end
             Deimos.configure do |config|
-              config.schema.use_schema_classes = use_schema_classes
               config.schema.use_full_namespace = true
             end
           end

@@ -63,26 +63,6 @@ module Deimos
 
     class << self
 
-      # @return [Hash]
-      def config
-        @config ||= {
-          encode_key: true,
-          namespace: Deimos.config.producers.schema_namespace
-        }
-      end
-
-      # Set the topic.
-      # @param topic [String]
-      # @return [String] the current topic if no argument given.
-      def topic(topic=nil)
-        if topic
-          config[:topic] = topic
-          return
-        end
-        # accessor
-        "#{Deimos.config.producers.topic_prefix}#{config[:topic]}"
-      end
-
       # Override the default partition key (which is the payload key).
       # @param _payload [Hash] the payload being passed into the produce method.
       # Will include `payload_key` if it is part of the original payload.
@@ -110,8 +90,7 @@ module Deimos
       # @param headers [Hash] if specifying headers
       # @return [void]
       def publish_list(payloads, sync: nil, force_send: false, topic: self.topic, headers: nil)
-        return if self.topic.producer_config.disabled ||
-                  Deimos.producers_disabled?(self)
+        return if Deimos.producers_disabled?(self)
 
         backend_class = determine_backend_class(sync, force_send)
         Deimos.instrument(
@@ -124,7 +103,7 @@ module Deimos
             {
               payload: p.to_h,
               headers: headers,
-              topic: configured_topic
+              topic: topic
             }
           end
           messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
@@ -133,11 +112,12 @@ module Deimos
         end
       end
 
-      def configured_topic
-        Deimos.karafka_configs.each do |topic|
-          return topic.name if topic.producer_config.producer_class == self
-        end
-        nil
+      def karafka_config
+        Deimos.karafka_configs.find { |topic| topic.producer_class == self }
+      end
+
+      def topic
+        karafka_config.name
       end
 
       # @param sync [Boolean]

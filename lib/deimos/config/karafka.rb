@@ -1,5 +1,5 @@
 module Deimos
-  module Config
+  module KarafkaConfig
     class << self
       def configure_karafka(config)
         return unless config.legacy_mode
@@ -11,14 +11,14 @@ module Deimos
       end
 
       def configure_setup(config)
-        Karafka::App.setup do
-          logger(config.logger) if config.logger
-          client_id(config.kafka.client_id) if config.kafka.client_id
+        Karafka::App.setup do |cfg|
+          cfg.logger = config.logger if config.logger
+          cfg.client_id = config.kafka.client_id if config.kafka.client_id
           if config.consumer_objects.any? { |c| c.max_concurrency.present? }
-            concurrency(config.consumer_objects.map(&:max_concurrency).compact.max)
+            cfg.concurrency = config.consumer_objects.map(&:max_concurrency).compact.max
           end
           if config.consumer_objects.any? { |c| c.max_wait_time.present? }
-            max_wait_time(config.consumer_objects.map(&:max_wait_time).compact.max)
+            cfg.max_wait_time = config.consumer_objects.map(&:max_wait_time).compact.max
           end
         end
       end
@@ -51,7 +51,7 @@ module Deimos
         configs["compression.codec"] = config.producers.compression_codec
         Karafka::App.routes.draw do
           defaults do
-            producer_config(payload_log: config.producers.payload_log)
+            payload_log(config.producers.payload_log)
             reraise_errors(config.consumers.reraise_errors) unless config.consumers.reraise_errors.nil?
             fatal_error(config.consumers.fatal_error) if config.consumers.fatal_error
             bulk_import_id_generator(config.consumers.bulk_import_id_generator) if config.consumers.bulk_import_id_generator
@@ -67,7 +67,7 @@ module Deimos
         config.producer_objects.each do |producer|
           Karafka::App.routes.draw do
             topic producer.topic do
-              producer_config(klass: producer.class_name.constantize)
+              producer_class(producer.class_name.constantize)
               schema(producer.schema)
               namespace(producer.namespace)
               key_config(producer.key_config)

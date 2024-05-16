@@ -38,7 +38,7 @@ module Deimos
       return nil if key.nil? || self.key_field.nil?
 
       decoded_key = self.backend.decode_key(key, self.key_field)
-      return decoded_key unless Utils::SchemaClass.use?(@use_schema_classes)
+      return decoded_key unless @use_schema_classes
 
       Utils::SchemaClass.instance(decoded_key,
                                   "#{@schema}_key",
@@ -51,7 +51,7 @@ module Deimos
       return nil if payload.nil?
 
       decoded_payload = self.backend.decode(payload)
-      return decoded_payload unless Utils::SchemaClass.use?(@use_schema_classes)
+      return decoded_payload unless @use_schema_classes
 
       Utils::SchemaClass.instance(decoded_payload,
                                   @schema,

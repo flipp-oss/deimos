@@ -12,7 +12,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
   # :nodoc:
   after_configure do
-    Deimos::Config.configure_karafka(self.config)
+    Deimos::KarafkaConfig.configure_karafka(self.config)
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
@@ -23,12 +23,12 @@ module Deimos # rubocop:disable Metrics/ModuleLength
   class << self
 
     def generate_key_schemas
-      objects = Deimos::Producer.descendants + Deimos::Consumer.descendants
-      objects.each do |obj|
-        next unless obj.config[:key_field]
+      Deimos.karafka_configs.each do |config|
+        transcoder = config.deserializers[:key]
 
-        Deimos.schema_backend(schema: obj.config[:schema], namespace: obj.config[:namespace]).
-          generate_key_schema(obj.config[:key_field])
+        if transcoder.respond_to?(:key_field) && transcoder.key_field
+          transcoder.backend.generate_key_schema(transcoder.key_field)
+        end
       end
     end
 
@@ -69,7 +69,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     setting :logger, removed: 'Use "logger" in Karafka setup block.'
 
     # @return [Symbol]
-    setting :payload_log, removed: 'Use producer_config.payload_log in Karafka settings'
+    setting :payload_log, removed: 'Use topic.payload_log in Karafka settings'
 
     # @return [Logger]
     setting :phobos_logger, removed: 'Separate logger for Phobos is no longer supported'
@@ -351,7 +351,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     setting_object :producer do
       # Producer class.
       # @return [String]
-      setting :class_name, removed: "Use topic.producer_config.producer_class in Karafka settings."
+      setting :class_name, removed: "Use topic.producer_class in Karafka settings."
       # Topic to produce to.
       # @return [String]
       setting :topic, removed: "Use Karafka settings."

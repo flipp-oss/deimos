@@ -9,16 +9,16 @@ module Deimos
         # @param messages [Array<Deimos::Message>]
         # @return [void]
         def publish(producer_class:, messages:)
-          Deimos.config.logger.info(log_message(messages))
+          Deimos.config.logger.info(log_message(producer_class, messages))
           execute(producer_class: producer_class, messages: messages)
         end
 
-        def log_message(messages)
+        def log_message(producer_class, messages)
           log_message = {
             message: 'Publishing messages',
           }
 
-          case topic.producer_config.payload_log
+          case producer_class.karafka_config.payload_log
           when :keys
             log_message.merge!(
               payload_keys: messages.map { |m| m[:key]}

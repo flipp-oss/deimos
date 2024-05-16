@@ -5,28 +5,13 @@ describe Deimos::ActiveRecordProducer do
   include_context 'with widgets'
 
   prepend_before(:each) do
-
-    producer_class = Class.new(Deimos::ActiveRecordProducer) do
-      schema 'MySchema'
-      namespace 'com.my-namespace'
-      topic 'my-topic'
-      key_config none: true
-    end
+    producer_class = Class.new(Deimos::ActiveRecordProducer)
     stub_const('MyProducer', producer_class)
 
-    producer_class = Class.new(Deimos::ActiveRecordProducer) do
-      schema 'MySchemaWithBooleans'
-      namespace 'com.my-namespace'
-      topic 'my-topic-with-boolean'
-      key_config none: true
-    end
+    producer_class = Class.new(Deimos::ActiveRecordProducer)
     stub_const('MyBooleanProducer', producer_class)
 
     producer_class = Class.new(Deimos::ActiveRecordProducer) do
-      schema 'MySchemaWithId'
-      namespace 'com.my-namespace'
-      topic 'my-topic-with-id'
-      key_config none: true
       record_class Widget
 
       # :nodoc:
@@ -38,19 +23,11 @@ describe Deimos::ActiveRecordProducer do
     stub_const('MyProducerWithID', producer_class)
 
     producer_class = Class.new(Deimos::ActiveRecordProducer) do
-      schema 'MySchemaWithUniqueId'
-      namespace 'com.my-namespace'
-      topic 'my-topic-with-unique-id'
-      key_config field: :id
       record_class Widget
     end
     stub_const('MyProducerWithUniqueID', producer_class)
 
     producer_class = Class.new(Deimos::ActiveRecordProducer) do
-      schema 'MySchemaWithUniqueId'
-      namespace 'com.my-namespace'
-      topic 'my-topic-with-unique-id'
-      key_config field: :id
       record_class Widget
 
       # :nodoc:
@@ -63,6 +40,39 @@ describe Deimos::ActiveRecordProducer do
     end
 
     stub_const('MyProducerWithPostProcess', producer_class)
+    Karafka::App.routes.redraw do
+      topic 'my-topic' do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config none: true
+        producer_class MyProducer
+      end
+      topic 'my-topic-with-boolean' do
+        producer_class MyBooleanProducer
+        schema 'MySchemaWithBooleans'
+        namespace 'com.my-namespace'
+        key_config none: true
+      end
+      topic 'my-topic-with-id' do
+        schema 'MySchemaWithId'
+        namespace 'com.my-namespace'
+        key_config none: true
+        producer_class MyProducerWithID
+      end
+      topic 'my-topic-with-unique-id' do
+        schema 'MySchemaWithUniqueId'
+        namespace 'com.my-namespace'
+        key_config field: :id
+        producer_class MyProducerWithUniqueID
+      end
+      topic 'my-topic-with-post-process' do
+        schema 'MySchemaWithUniqueId'
+        namespace 'com.my-namespace'
+        key_config field: :id
+        producer_class MyProducerWithPostProcess
+      end
+    end
+
   end
 
   describe 'produce' do
