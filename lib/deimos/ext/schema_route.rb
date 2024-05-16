@@ -5,11 +5,6 @@ require "deimos/schema_backends/plain"
 module Deimos
   class SchemaRoute < Karafka::Routing::Features::Base
 
-    def self.activate
-      Deimos::ProducerMiddleware.producer_configs ||= {}
-      super
-    end
-
     module Topic
       {
         schema: nil,
@@ -63,11 +58,6 @@ module Deimos
             )
           end
         end
-        Deimos::ProducerMiddleware.producer_configs[name] = Deimos::ProducerConfig.new(
-          self,
-          payload,
-          key
-        )
         deserializers.payload = payload
         deserializers.key = key if key
       end

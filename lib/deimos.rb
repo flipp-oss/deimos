@@ -94,10 +94,10 @@ module Deimos
 
     # @param message [Hash] a Karafka message with keys :payload, :key and :topic
     def decode_message(message)
-      config = Deimos::ProducerMiddleware.producer_configs[message[:topic]]
-      message[:payload] = config.encoder.decode_message_hash(message[:payload])
-      if message[:key] && config.key_encoder
-        message[:key] = config.key_encoder.decode_message_hash(message[:key])
+      config = karafka_config_for(topic: message[:topic])
+      message[:payload] = config.deserializers[:payload].decode_message_hash(message[:payload])
+      if message[:key] && config.deserializers[:key].respond_to?(:decode_message_hash)
+        message[:key] = config.deserializers[:key].decode_message_hash(message[:key])
       end
     end
 
@@ -137,8 +137,12 @@ module Deimos
 
     # @param topic [String]
     # @return [Karafka::Routing::Topic,nil]
-    def karafka_config_for(topic)
-      karafka_configs.find { |t| t.name == topic}
+    def karafka_config_for(topic: nil, producer: nil)
+      if topic
+        karafka_configs.find { |t| t.name == topic}
+      elsif producer
+        karafka_configs.find { |t| t.producer_class == producer}
+      end
     end
 
     # @param handler_class [Class]

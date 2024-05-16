@@ -1,33 +1,17 @@
 module Deimos
 
-  class ProducerConfig
-    attr_accessor :topic, :encoder, :key_encoder, :key_field
-
-    # @param topic [Karafka::Routing::Topic]
-    # @param transcoders [Hash<Symbol, Deimos::Transcoder>]
-    def initialize(topic, payload, key)
-      self.topic = topic
-      self.encoder = payload
-      self.key_encoder = key
-      self.key_field = key_encoder&.key_field
-    end
-  end
-
   module ProducerMiddleware
     class << self
 
-      # @return [Hash<String, ProducerConfig>]
-      attr_accessor :producer_configs
-
       def call(message)
-        config = producer_configs[message[:topic]]
+        config = Deimos.karafka_config_for(topic: message[:topic])
         return message if config.nil?
 
         m = Deimos::Message.new(message[:payload].to_h, headers: message[:headers])
         _process_message(m, message, config)
         message[:payload] = m.encoded_payload
         message[:key] = m.encoded_key
-        message[:topic] ||= "#{Deimos.config.producers.topic_prefix}#{config.topic.name}"
+        message[:topic] ||= "#{Deimos.config.producers.topic_prefix}#{config.name}"
         message
       end
 
@@ -35,23 +19,24 @@ module Deimos
       # @param karafka_message [Hash]
       # @param config [Deimos::ProducerConfig]
       def _process_message(message, karafka_message, config)
-        encoder = config.encoder.backend
+        encoder = config.deserializers[:payload].backend
+        key_transcoder = config.deserializers[:key]
         # this violates the Law of Demeter but it has to happen in a very
         # specific order and requires a bunch of methods on the producer
         # to work correctly.
         message.add_fields(encoder.schema_fields.map(&:name))
-        message.key = _retrieve_key(message.payload, config) || karafka_message[:key]
+        message.key = _retrieve_key(message.payload, key_transcoder) || karafka_message[:key]
         # need to do this before _coerce_fields because that might result
         # in an empty payload which is an *error* whereas this is intended.
         message.payload = nil if message.payload.blank?
         message.coerce_fields(encoder)
         message.encoded_key = _encode_key(message.key, config)
-        message.topic = config.topic.name
+        message.topic = config.name
         message.encoded_payload = if message.payload.nil?
                                     nil
                                   else
                                     encoder.encode(message.payload,
-                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config.topic.name}-value")
+                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config.name}-value")
                                   end
       end
 
@@ -59,23 +44,23 @@ module Deimos
       # @param config [ProducerConfig]
       # @return [String|Object]
       def _encode_key(key, config)
-        if config.key_encoder
-          config.key_encoder.encode_key(key)
+        if config.deserializers[:key].respond_to?(:encode_key)
+          config.deserializers[:key].encode_key(key)
         elsif key
-          config.encoder.encode(key)
+          config.deserializers[:payload].encode(key)
         else
           key
         end
       end
 
       # @param payload [Hash]
-      # @param config [ProducerConfig]
+      # @param key_transcoder [Deimos::Transcoder]
       # @return [String]
-      def _retrieve_key(payload, config)
+      def _retrieve_key(payload, key_transcoder)
         key = payload.delete(:payload_key)
-        return key if key
+        return key if key || !key_transcoder.respond_to?(:key_field)
 
-        config.key_field ? payload[config.key_field] : nil
+        key_transcoder.key_field ? payload[key_transcoder.key_field] : nil
       end
     end
   end

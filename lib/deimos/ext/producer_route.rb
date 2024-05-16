@@ -11,7 +11,6 @@ module Deimos
           unless val == Karafka::Routing::Features::Undefined
             @deimos_producer_config.public_send("#{field}=", val)
           end
-          Deimos::ProducerMiddleware.producer_configs[self.name] = @deimos_producer_config
           @deimos_producer_config[field]
         end
       end
