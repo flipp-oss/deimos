@@ -13,6 +13,8 @@ module Deimos
       DELETE_BATCH_SIZE = 10
       # @return [Integer]
       MAX_DELETE_ATTEMPTS = 3
+      # @return [Array<Symbol>]
+      FATAL_CODES = %i(invalid_msg_size msg_size_too_large)
 
       # @param logger [Logger]
       def initialize(logger=Logger.new(STDOUT))
@@ -94,15 +96,11 @@ module Deimos
         log_messages(compacted_messages)
         Deimos.instrument('db_producer.produce', topic: @current_topic, messages: compacted_messages) do
           begin
-            produce_messages(compacted_messages.map(&:phobos_message))
-          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge => e
-            delete_messages(messages)
-            @logger.error('Message batch too large, deleting...')
-            begin
-              @logger.error(Deimos::KafkaMessage.decoded(messages))
-            rescue StandardError => logging_exception # rubocop:disable Naming/RescuedExceptionsVariableName
-              @logger.error("Large message details logging failure: #{logging_exception.message}")
-            ensure
+            produce_messages(compacted_messages.map(&:karafka_message))
+          rescue WaterDrop::Errors::ProduceManyError => e
+            if FATAL_CODES.include?(e.cause.try(:code))
+              @logger.error('Message batch too large, deleting...')
+              delete_messages(messages)
               raise e
             end
           end
@@ -205,7 +203,7 @@ module Deimos
         begin
           batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
             @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
-            producer.publish_list(group)
+            Karafka.producer.produce_many_sync(group)
             Deimos.config.metrics&.increment(
               'publish',
               tags: %W(status:success topic:#{@current_topic}),
@@ -214,19 +212,6 @@ module Deimos
             current_index += group.size
             @logger.info("Sent #{group.size} messages to #{@current_topic}")
           end
-        rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge,
-               Kafka::RecordListTooLarge => e
-          if batch_size == 1
-            raise
-          end
-
-          @logger.error("Got error #{e.class.name} when publishing #{batch.size} in groups of #{batch_size}, retrying...")
-          batch_size = if batch_size < 10
-                         1
-                       else
-                         (batch_size / 10).to_i
-                       end
-          retry
         end
       end
 

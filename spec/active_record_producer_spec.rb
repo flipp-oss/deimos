@@ -68,7 +68,7 @@ describe Deimos::ActiveRecordProducer do
       topic 'my-topic-with-post-process' do
         schema 'MySchemaWithUniqueId'
         namespace 'com.my-namespace'
-        key_config field: :id
+        key_config none: true
         producer_class MyProducerWithPostProcess
       end
     end

@@ -11,7 +11,7 @@ module ConsumerTest
       consumer_class = Class.new(described_class) do
 
         # :nodoc:
-        def fatal_error?(_exception, payload, _metadata)
+        def fatal_error?(_exception, payload)
           payload.to_s == 'fatal'
         end
 
@@ -23,17 +23,20 @@ module ConsumerTest
       route_usc = use_schema_classes
       route_rre = reraise_errors
       Karafka::App.routes.redraw do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config field: 'test_id'
-        consumer consumer_class
-        use_schema_classes route_usc
-        reraise_errors route_rre
+        topic 'my-topic' do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config field: 'test_id'
+          consumer consumer_class
+          use_schema_classes route_usc
+          reraise_errors route_rre
+        end
       end
     end
 
     describe 'consume' do
       SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
+        let(:use_schema_classes) { use_schema_classes }
         context "with Schema Class consumption #{setting}" do
 
           before(:each) do

@@ -17,18 +17,10 @@ module KafkaSourceSpec
 
       # Dummy producer which mimicks the behavior of a real producer
       class WidgetProducer < Deimos::ActiveRecordProducer
-        topic 'my-topic'
-        namespace 'com.my-namespace'
-        schema 'Widget'
-        key_config field: :id
       end
 
       # Dummy producer which mimicks the behavior of a real producer
       class WidgetProducerTheSecond < Deimos::ActiveRecordProducer
-        topic 'my-topic-the-second'
-        namespace 'com.my-namespace'
-        schema 'WidgetTheSecond'
-        key_config field: :id
       end
 
       # Dummy class we can include the mixin in. Has a backing table created
@@ -51,6 +43,22 @@ module KafkaSourceSpec
 
     before(:each) do
       Widget.delete_all
+      Karafka::App.routes.redraw do
+        topic 'my-topic' do
+          namespace 'com.my-namespace'
+          schema 'Widget'
+          key_config field: :id
+          producer_class WidgetProducer
+        end
+
+        topic 'my-topic-the-second' do
+          namespace 'com.my-namespace'
+          schema 'WidgetTheSecond'
+          key_config field: :id
+          producer_class WidgetProducerTheSecond
+        end
+
+      end
     end
 
     it 'should send events on creation, update, and deletion' do
@@ -209,7 +217,6 @@ module KafkaSourceSpec
           config.producers.backend = :db
         end
         setup_db(DB_OPTIONS.last) # sqlite
-        allow(Deimos::Producer).to receive(:produce_batch).and_call_original
       end
 
       it 'should save to the DB' do
@@ -374,7 +381,7 @@ module KafkaSourceSpec
       it 'raises a MissingImplementationError exception' do
         expect {
           WidgetBuggy.create(widget_id: 1, name: 'Widget 1')
-        }.to raise_error(MissingImplementationError)
+        }.to raise_error(Deimos::MissingImplementationError)
       end
     end
   end

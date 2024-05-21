@@ -27,6 +27,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
         transcoder = config.deserializers[:key]
 
         if transcoder.respond_to?(:key_field) && transcoder.key_field
+          transcoder.backend = Deimos.schema_backend(schema: config.schema, namespace: config.namespace)
           transcoder.backend.generate_key_schema(transcoder.key_field)
         end
       end
@@ -51,9 +52,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
         require 'activerecord-import'
       rescue LoadError
         raise 'Cannot set producers.backend to :db without activerecord-import! Please add it to your Gemfile.'
-      end
-      if Deimos.config.producers.required_acks != :all
-        raise 'Cannot set producers.backend to :db unless producers.required_acks is set to ":all"!'
       end
     end
   end

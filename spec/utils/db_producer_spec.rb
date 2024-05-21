@@ -4,16 +4,10 @@ each_db_config(Deimos::Utils::DbProducer) do
   let(:producer) do
     producer = described_class.new(logger)
     allow(producer).to receive(:sleep)
-    allow(producer).to receive(:producer).and_return(phobos_producer)
     producer
   end
 
-  let(:logger) { nil }
-  let(:phobos_producer) do
-    pp = instance_double(Phobos::Producer::PublicAPI)
-    allow(pp).to receive(:publish_list)
-    pp
-  end
+  let(:logger) { instance_double(Logger, error: nil, info: nil, debug: nil )}
 
   before(:each) do
     stub_const('Deimos::Utils::DbProducer::BATCH_SIZE', 2)
@@ -58,71 +52,11 @@ each_db_config(Deimos::Utils::DbProducer) do
 
     it 'should produce normally' do
       batch = ['A'] * 1000
-      expect(phobos_producer).to receive(:publish_list).with(batch).once
+      expect(Karafka.producer).to receive(:produce_many_sync).with(batch).once
       expect(Deimos.config.metrics).to receive(:increment).with('publish',
                                                                 tags: %w(status:success topic:),
                                                                 by: 1000).once
       producer.produce_messages(batch)
-    end
-
-    it 'should split the batch size on buffer overflow' do
-      class_producer = double(Phobos::Producer::ClassMethods::PublicAPI, # rubocop:disable RSpec/VerifiedDoubles
-                              sync_producer_shutdown: nil)
-      allow(producer.class).to receive(:producer).and_return(class_producer)
-      expect(class_producer).to receive(:sync_producer_shutdown).twice
-      count = 0
-      allow(phobos_producer).to receive(:publish_list) do
-        count += 1
-        raise Kafka::BufferOverflow if count < 3
-      end
-      allow(Deimos.config.metrics).to receive(:increment)
-      batch = ['A'] * 1000
-      producer.produce_messages(batch)
-      expect(phobos_producer).to have_received(:publish_list).with(batch)
-      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 100)
-      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 10).exactly(100).times
-      expect(Deimos.config.metrics).to have_received(:increment).with('publish',
-                                                                      tags: %w(status:success topic:),
-                                                                      by: 10).exactly(100).times
-    end
-
-    it "should raise an error if it can't split any more" do
-      allow(phobos_producer).to receive(:publish_list) do
-        raise Kafka::BufferOverflow
-      end
-      expect(Deimos.config.metrics).not_to receive(:increment)
-      batch = ['A'] * 1000
-      expect { producer.produce_messages(batch) }.to raise_error(Kafka::BufferOverflow)
-      expect(phobos_producer).to have_received(:publish_list).with(batch)
-      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 100).once
-      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 10).once
-      expect(phobos_producer).to have_received(:publish_list).with(['A']).once
-    end
-
-    it 'should not resend batches of sent messages' do
-      allow(phobos_producer).to receive(:publish_list) do |group|
-        raise Kafka::BufferOverflow if group.any?('A') && group.size >= 1000
-        raise Kafka::BufferOverflow if group.any?('BIG') && group.size >= 10
-      end
-      allow(Deimos.config.metrics).to receive(:increment)
-      batch = ['A'] * 450 + ['BIG'] * 550
-      producer.produce_messages(batch)
-
-      expect(phobos_producer).to have_received(:publish_list).with(batch)
-      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 100).exactly(4).times
-      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 50 + ['BIG'] * 50)
-      expect(phobos_producer).to have_received(:publish_list).with(['A'] * 10).exactly(5).times
-      expect(phobos_producer).to have_received(:publish_list).with(['BIG'] * 1).exactly(550).times
-
-      expect(Deimos.config.metrics).to have_received(:increment).with('publish',
-                                                                      tags: %w(status:success topic:),
-                                                                      by: 100).exactly(4).times
-      expect(Deimos.config.metrics).to have_received(:increment).with('publish',
-                                                                      tags: %w(status:success topic:),
-                                                                      by: 10).exactly(5).times
-      expect(Deimos.config.metrics).to have_received(:increment).with('publish',
-                                                                      tags: %w(status:success topic:),
-                                                                      by: 1).exactly(550).times
     end
 
     describe '#compact_messages' do
@@ -263,13 +197,11 @@ each_db_config(Deimos::Utils::DbProducer) do
     end
 
     it 'should register an error if it gets an error' do
-      allow(producer).to receive(:shutdown_producer)
       expect(producer).to receive(:retrieve_messages).and_raise('OH NOES')
       expect(Deimos::KafkaTopicInfo).to receive(:register_error).
         with('my-topic', 'abc')
       expect(producer).not_to receive(:produce_messages)
       producer.process_topic('my-topic')
-      expect(producer).to have_received(:shutdown_producer)
     end
 
     it 'should move on if it gets a partial batch' do
@@ -340,7 +272,7 @@ each_db_config(Deimos::Utils::DbProducer) do
         with('my-topic', 'abc').and_return(true)
       expect(producer).to receive(:retrieve_messages).ordered.and_return(messages)
       expect(producer).to receive(:retrieve_messages).ordered.and_return([])
-      expect(phobos_producer).to receive(:publish_list).once.with(messages.map(&:phobos_message))
+      expect(Karafka.producer).to receive(:produce_many_sync).once.with(messages.map(&:karafka_message))
 
       expect(Deimos::KafkaMessage.count).to eq(8)
       producer.process_topic('my-topic')
@@ -360,102 +292,6 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect { producer.delete_messages(messages) }.to raise_exception('OH NOES')
     end
 
-    context 'with buffer overflow exception' do
-      let(:messages) do
-        (1..4).map do |i|
-          Deimos::KafkaMessage.create!(
-            id: i,
-            key: i,
-            topic: 'my-topic',
-            message: { message: "mess#{i}" },
-            partition_key: "key#{i}"
-          )
-        end
-      end
-      let(:logger) do
-        logger = instance_double(Logger)
-        allow(logger).to receive(:error)
-        logger
-      end
-      let(:message_producer) do
-        Deimos.config.schema.backend = :mock
-        Deimos::ActiveRecordProducer.topic('my-topic')
-        Deimos::ActiveRecordProducer.key_config
-        Deimos::ActiveRecordProducer
-      end
-
-      around(:each) do |example|
-        config = Deimos::ActiveRecordProducer.config.clone
-        backend = Deimos.config.schema.backend
-
-        example.run
-      ensure
-        Deimos::ActiveRecordProducer.instance_variable_set(:@config, config)
-        Deimos.config.schema.backend = backend
-      end
-
-      before(:each) do
-        message_producer
-        (5..8).each do |i|
-          Deimos::KafkaMessage.create!(
-            id: i,
-            topic: 'my-topic2',
-            message: "mess#{i}",
-            partition_key: "key#{i}"
-          )
-        end
-        allow(Deimos::KafkaTopicInfo).to receive(:lock).
-          with('my-topic', 'abc').and_return(true)
-        allow(producer).to receive(:produce_messages).and_raise(Kafka::BufferOverflow)
-        allow(producer).to receive(:retrieve_messages).and_return(messages)
-        allow(Deimos::KafkaTopicInfo).to receive(:register_error)
-      end
-
-      it 'should delete messages on buffer overflow' do
-        expect(Deimos::KafkaMessage.count).to eq(8)
-        producer.process_topic('my-topic')
-        expect(Deimos::KafkaMessage.count).to eq(4)
-      end
-
-      it 'should notify on buffer overflow' do
-        subscriber = Deimos.subscribe('db_producer.produce') do |event|
-          expect(event.payload[:exception_object].message).to eq('Kafka::BufferOverflow')
-          expect(event.payload[:messages]).to eq(messages)
-        end
-        producer.process_topic('my-topic')
-        Deimos.unsubscribe(subscriber)
-        expect(logger).to have_received(:error).with('Message batch too large, deleting...')
-        expect(logger).to have_received(:error).with(
-          [
-            { key: '1', payload: 'payload-decoded' },
-            { key: '2', payload: 'payload-decoded' },
-            { key: '3', payload: 'payload-decoded' },
-            { key: '4', payload: 'payload-decoded' }
-          ]
-        )
-      end
-
-      context 'with exception on error logging attempt' do
-        let(:message_producer) do
-          Deimos::ActiveRecordProducer.topic('my-topic')
-          Deimos::ActiveRecordProducer
-        end
-
-        it 'should notify on buffer overflow disregarding decoding exception' do
-          subscriber = Deimos.subscribe('db_producer.produce') do |event|
-            expect(event.payload[:exception_object].message).to eq('Kafka::BufferOverflow')
-            expect(event.payload[:messages]).to eq(messages)
-          end
-          producer.process_topic('my-topic')
-          Deimos.unsubscribe(subscriber)
-          expect(logger).to have_received(:error).with('Message batch too large, deleting...')
-          expect(logger).to have_received(:error).with(
-            'Large message details logging failure: '\
-            'No key config given - if you are not decoding keys, please use `key_config plain: true`'
-          )
-        end
-      end
-    end
   end
 
   describe '#send_pending_metrics' do

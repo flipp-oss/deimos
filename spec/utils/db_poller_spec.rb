@@ -524,8 +524,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
       expect(Deimos::Utils::DbPoller::MultiProducerPoller).to receive(:poll_query).at_least(:once)
       poller.process_updates
 
-      expect(ProducerOne).to have_received(:send_events).with(widgets)
-      expect(ProducerTwo).to have_received(:send_events).with(widgets)
+      expect(ProducerOne).to have_received(:send_events).twice.with(widgets)
       expect(widgets.map(&:reload).map(&:publish_status)).to eq(%w(PUBLISHED PUBLISHED PUBLISHED))
     end
 

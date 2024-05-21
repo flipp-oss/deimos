@@ -18,7 +18,9 @@ module Deimos
       # a record object, refetch the record to pass into the `generate_payload`
       # method.
       # @return [void]
-      def record_class(klass, refetch: true)
+      def record_class(klass=nil, refetch: true)
+        return @record_class if klass.nil?
+
         @record_class = klass
         @refetch_record = refetch
       end
