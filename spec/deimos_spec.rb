@@ -57,15 +57,6 @@ describe Deimos do
     expect(Deimos::VERSION).not_to be_nil
   end
 
-  it 'should error if required_acks is not all' do
-    expect {
-      described_class.configure do |config|
-        config.producers.backend = :db
-        config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.bad_db.yml')
-      end
-    }.to raise_error('Cannot set producers.backend to :db unless producers.required_acks is set to ":all"!')
-  end
-
   describe '#start_db_backend!' do
     it 'should start if backend is db and thread_count is > 0' do
       signal_handler = instance_double(Sigurd::SignalHandler)

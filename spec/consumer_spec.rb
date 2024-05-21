@@ -3,9 +3,9 @@
 # :nodoc:
 # rubocop:disable Metrics/ModuleLength
 module ConsumerTest
-  let(:use_schema_classes) { false }
-  let(:reraise_errors) { false }
   describe Deimos::Consumer, 'Message Consumer' do
+    let(:use_schema_classes) { false }
+    let(:reraise_errors) { false }
     prepend_before(:each) do
       # :nodoc:
       consumer_class = Class.new(described_class) do

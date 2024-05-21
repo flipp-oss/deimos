@@ -20,21 +20,27 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
   describe '#start!' do
 
     before(:each) do
-      producer_class = Class.new(Deimos::Producer) do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        topic 'my-topic'
-        key_config field: 'test_id'
-      end
+      producer_class = Class.new(Deimos::Producer)
       stub_const('MyProducer', producer_class)
 
-      producer_class = Class.new(Deimos::Producer) do
-        schema 'MySchemaWithId'
-        namespace 'com.my-namespace'
-        topic 'my-topic'
-        key_config plain: true
-      end
+      producer_class = Class.new(Deimos::Producer)
       stub_const('MyProducerWithID', producer_class)
+
+      Karafka::App.routes.redraw do
+        topic 'my-topic' do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config field: 'test_id'
+          producer_class MyProducer
+        end
+        topic 'my-topic-with-id' do
+          schema 'MySchemaWithId'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          producer_class MyProducerWithID
+        end
+      end
+
     end
 
     it 'should raise an error if no pollers configured' do
@@ -76,12 +82,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     let(:config) { Deimos.config.db_poller_objects.first.dup }
 
     before(:each) do
-      Widget.delete_all
       producer_class = Class.new(Deimos::ActiveRecordProducer) do
-        schema 'MySchemaWithId'
-        namespace 'com.my-namespace'
-        topic 'my-topic-with-id'
-        key_config none: true
         record_class Widget
 
         # :nodoc:
@@ -90,6 +91,16 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         end
       end
       stub_const('MyProducer', producer_class)
+
+      Widget.delete_all
+      Karafka::App.routes.redraw do
+        topic 'my-topic-with-id' do
+          schema 'MySchemaWithId'
+          namespace 'com.my-namespace'
+          key_config none: true
+          producer_class MyProducer
+        end
+      end
 
       Deimos.configure do
         db_poller do
@@ -195,7 +206,9 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         before(:each) { config.skip_too_large_messages = true }
 
         it 'should skip and move on' do
-          error = Kafka::MessageSizeTooLarge.new('OH NOES')
+          rdkafka_error = instance_double(Rdkafka::RdkafkaError, code: :msg_size_too_large)
+          error = WaterDrop::Errors::ProduceManyError.new(nil, nil)
+          allow(error).to receive(:cause).and_return(rdkafka_error)
           allow(poller).to receive(:sleep)
           allow(poller).to receive(:process_batch) do
             raise error
@@ -449,10 +462,6 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     before(:each) do
       Widget.delete_all
       producer_class = Class.new(Deimos::ActiveRecordProducer) do
-        schema 'MySchemaWithId'
-        namespace 'com.my-namespace'
-        topic 'my-topic-with-id'
-        key_config none: true
         record_class Widget
 
         # :nodoc:
@@ -461,20 +470,22 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         end
       end
       stub_const('ProducerOne', producer_class)
+      stub_const('ProducerTwo', producer_class)
 
-      producer_class = Class.new(Deimos::ActiveRecordProducer) do
-        schema 'MySchemaWithId'
-        namespace 'com.my-namespace'
-        topic 'my-topic-with-id'
-        key_config none: true
-        record_class Widget
-
-        # :nodoc:
-        def self.generate_payload(attrs, widget)
-          super.merge(message_id: widget.generated_id)
+      Karafka::App.routes.redraw do
+        topic 'my-topic-with-id' do
+          schema 'MySchemaWithId'
+          namespace 'com.my-namespace'
+          key_config none: true
+          producer_class ProducerOne
+        end
+        topic 'my-topic-with-id2' do
+          schema 'MySchemaWithId'
+          namespace 'com.my-namespace'
+          key_config none: true
+          producer_class ProducerTwo
         end
       end
-      stub_const('ProducerTwo', producer_class)
 
       poller_class = Class.new(Deimos::Utils::DbPoller::StateBased) do
         def self.producers

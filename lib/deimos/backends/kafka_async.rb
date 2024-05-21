@@ -9,13 +9,13 @@ module Deimos
         Deimos.instrument(
           'produce',
           producer: producer_class,
-          topic: messages.first.topic,
-          payloads: messages.map(&:payload)
+          topic: messages.first[:topic],
+          payloads: messages.map { |m| m[:payload]}
         ) do
-          Karafka.producer.produce_many_async(messages.map(&:encoded_hash))
+          Karafka.producer.produce_many_async(messages)
           Deimos.config.metrics&.increment(
             'publish',
-            tags: %W(status:success topic:#{messages.first.topic}),
+            tags: %W(status:success topic:#{messages.first[:topic]}),
             by: messages.size
           )
         end

@@ -32,7 +32,7 @@ module Deimos
 
       # @override
       def decode_key(payload, key_id)
-        @key_schema ||= _generate_key_schema(key_id)
+        @key_schema ||= generate_key_schema(key_id)
         field_name = _field_name_from_schema(@key_schema)
         decode(payload, schema: @key_schema['name'])[field_name]
       end
