@@ -12,10 +12,10 @@ module Deimos
         key_config: {none: true},
         use_schema_classes: nil
       }.each do |field, default|
-        define_method(field) do |val=Karafka::Routing::Features::Undefined|
+        define_method(field) do |val=Karafka::Routing::Default.new(nil)|
           @_deimos_config ||= {}
           @_deimos_config[:schema] ||= {}
-          unless val == Karafka::Routing::Features::Undefined
+          unless val.is_a?(Karafka::Routing::Default)
             @_deimos_config[:schema][field] = val
             _deimos_setup_transcoders if schema && namespace
           end

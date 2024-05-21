@@ -5,10 +5,10 @@ module Deimos
     Config = Struct.new(*FIELDS, keyword_init: true)
     module Topic
       FIELDS.each do |field|
-        define_method(field) do |val=Karafka::Routing::Features::Undefined|
+        define_method(field) do |val=Karafka::Routing::Default.new(nil)|
           active(false)
           @deimos_producer_config ||= Config.new
-          unless val == Karafka::Routing::Features::Undefined
+          unless val.is_a?(Karafka::Routing::Default)
             @deimos_producer_config.public_send("#{field}=", val)
           end
           @deimos_producer_config[field]

@@ -810,6 +810,7 @@ module ActiveRecordBatchConsumerTest
         end
 
         it 'should save records if an exception occurs in post processing' do
+          set_karafka_config(:reraise_errors, true)
           Widget.create!(id: 1, test_id: 'abc', some_int: 1)
           Widget.create!(id: 2, test_id: 'def', some_int: 2)
 

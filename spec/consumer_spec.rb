@@ -3,13 +3,12 @@
 # :nodoc:
 # rubocop:disable Metrics/ModuleLength
 module ConsumerTest
+  let(:use_schema_classes) { false }
+  let(:reraise_errors) { false }
   describe Deimos::Consumer, 'Message Consumer' do
     prepend_before(:each) do
       # :nodoc:
       consumer_class = Class.new(described_class) do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config field: 'test_id'
 
         # :nodoc:
         def fatal_error?(_exception, payload, _metadata)
@@ -17,11 +16,20 @@ module ConsumerTest
         end
 
         # :nodoc:
-        def consume(_payload, _metadata)
-          raise 'This should not be called unless call_original is set'
+        def consume_message(_payload, _metadata)
         end
       end
       stub_const('ConsumerTest::MyConsumer', consumer_class)
+      route_usc = use_schema_classes
+      route_rre = reraise_errors
+      Karafka::App.routes.redraw do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config field: 'test_id'
+        consumer consumer_class
+        use_schema_classes route_usc
+        reraise_errors route_rre
+      end
     end
 
     describe 'consume' do
@@ -30,7 +38,6 @@ module ConsumerTest
 
           before(:each) do
             Deimos.configure do |config|
-              config.schema.use_schema_classes = use_schema_classes
               config.schema.use_full_namespace = true
             end
           end
@@ -77,20 +84,16 @@ module ConsumerTest
           end
 
           it 'should fail on invalid message' do
-            test_consume_invalid_message(MyConsumer, { 'invalid' => 'key' })
+            expect { test_consume_message(MyConsumer, { 'invalid' => 'key' }) }.to raise_error('')
           end
 
           it 'should fail if reraise is false but fatal_error is true' do
-            Deimos.configure { |config| config.consumers.reraise_errors = false }
-            test_consume_invalid_message(MyConsumer, 'fatal')
+            expect { test_consume_message(MyConsumer, 'fatal') }.to raise_error('')
           end
 
           it 'should fail if fatal_error is true globally' do
-            Deimos.configure do |config|
-              config.consumers.fatal_error = proc { true }
-              config.consumers.reraise_errors = false
-            end
-            test_consume_invalid_message(MyConsumer, { 'invalid' => 'key' })
+            set_karafka_config(:fatal_error, proc { true })
+            test_consume_message(MyConsumer, { 'invalid' => 'key' })
           end
 
           it 'should fail on message with extra fields' do
@@ -101,7 +104,7 @@ module ConsumerTest
           end
 
           it 'should not fail when before_consume fails without reraising errors' do
-            Deimos.configure { |config| config.consumers.reraise_errors = false }
+            set_karafka_config(:reraise_errors, false)
             expect {
               test_consume_message(
                 MyConsumer,
@@ -113,7 +116,7 @@ module ConsumerTest
           end
 
           it 'should not fail when consume fails without reraising errors' do
-            Deimos.configure { |config| config.consumers.reraise_errors = false }
+            set_karafka_config(:reraise_errors, false)
             expect {
               test_consume_message(
                 MyConsumer,
@@ -136,24 +139,25 @@ module ConsumerTest
       context 'with overriden schema classes' do
 
         before(:each) do
+          set_karafka_config(:use_schema_classes, true)
           Deimos.configure do |config|
-            config.schema.use_schema_classes = true
             config.schema.use_full_namespace = true
           end
         end
 
         prepend_before(:each) do
           consumer_class = Class.new(described_class) do
-            schema 'MyUpdatedSchema'
-            namespace 'com.my-namespace'
-            key_config field: 'test_id'
-
             # :nodoc:
             def consume(_payload, _metadata)
-              raise 'This should not be called unless call_original is set'
             end
           end
           stub_const('ConsumerTest::MyConsumer', consumer_class)
+          Karafka::App.routes.redraw do
+            schema 'MyUpdatedSchema'
+            namespace 'com.my-namespace'
+            key_config field: 'test_id'
+            consumer consumer_class
+          end
         end
 
         it 'should consume messages' do

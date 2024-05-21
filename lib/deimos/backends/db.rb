@@ -12,11 +12,11 @@ module Deimos
         def execute(producer_class:, messages:)
           records = messages.map do |m|
             message = Deimos::KafkaMessage.new(
-              message: m.encoded_payload ? m.encoded_payload.to_s.b : nil,
-              topic: m.topic,
+              message: m[:raw_payload] ? m[:raw_payload].to_s.b : nil,
+              topic: m[:topic],
               partition_key: partition_key_for(m)
             )
-            message.key = m.encoded_key.to_s.b unless producer_class.config[:no_keys]
+            message.key = m[:raw_key].to_s.b if message[:key]
             message
           end
           Deimos::KafkaMessage.import(records)
@@ -30,10 +30,10 @@ module Deimos
         # @param message [Deimos::Message]
         # @return [String] the partition key to use for this message
         def partition_key_for(message)
-          return message.partition_key if message.partition_key.present?
-          return message.key unless message.key.is_a?(Hash)
+          return message[:partition_key] if message[:partition_key].present?
+          return message[:key] unless message[:key].is_a?(Hash)
 
-          message.key.to_yaml
+          message[:key].to_yaml
         end
       end
     end

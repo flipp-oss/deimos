@@ -137,9 +137,9 @@ module Deimos
     def test_consume_message(handler_class_or_topic,
                              payload,
                              key: nil,
-                             call_original: Karafka::Routing::Features::Undefined,
+                             call_original: Karafka::Routing::Default.new(nil),
                              partition_key: nil)
-      if call_original != Karafka::Routing::Features::Undefined
+      unless call_original.is_a?(Karafka::Routing::Default)
         puts "test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
       test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key], single: true)
@@ -160,10 +160,10 @@ module Deimos
     def test_consume_batch(handler_class_or_topic,
                            payloads,
                            keys: [],
-                           call_original: Karafka::Routing::Features::Undefined,
+                           call_original: Karafka::Routing::Default.new(nil),
                            single: false,
                            partition_keys: [])
-      if call_original != Karafka::Routing::Features::Undefined
+      unless call_original.is_a?(Karafka::Routing::Default)
         puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
       consumer = nil
@@ -175,12 +175,16 @@ module Deimos
         topic_name = Deimos.topic_for_consumer(handler_class_or_topic)
         consumer = karafka.consumer_for(topic_name)
       end
-      karafka.set_consumer(consumer)
 
       Deimos.karafka_config_for(topic: topic_name).batch(!single)
 
        payloads.each_with_index do |payload, i|
          karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})
+       end
+       if block_given?
+         allow_any_instance_of(consumer_class).to receive(:consume_batch) do
+           yield
+         end
        end
        consumer.consume
       end

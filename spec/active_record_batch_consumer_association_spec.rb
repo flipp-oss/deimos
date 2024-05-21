@@ -175,6 +175,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
       end
 
       it 'should raise error when bulk_import_id is not found' do
+        set_karafka_config(:reraise_errors, true)
         expect {
           publish_batch([{ key: 2,
                            payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])

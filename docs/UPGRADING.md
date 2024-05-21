@@ -4,6 +4,9 @@
 
 2.x is a major rewrite from 1.0.
 
+- reraise_errors now defaults to true
+- fatal_error? receives Karafka message array instead of payload
+- removed BatchConsumer class
 - removed deprecated configs
 - no more backend=:test
 - can no longer put schema/namespace on consumer/producer class
@@ -12,18 +15,13 @@
 - remove test_consume_invalid_message and test_consume_batch_invalid_message
 - Deprecate call_original and skip_expectation from test functions
 - `batch` config instead of `delivery_method`
-- Can/should we use avro_validation?
 - Remove deprecated stub_producers_and_consumers!, stub_producer, stub_consumer, stub_batch_consumer
 - You can publish messages without a Producer - Producer can be used for DB backends, method for partition key, disabling
 - test_consume_message with a handler with no topic no longer supported
-- `sent_messages` will always contain hashes, never schema classes
 
 TODO: 
 
-- schema class generator - use Karafka routes instead of configs
-- Deimos defaults in Karafka routes instead of top-level
-- Convert Phobos config values to Karafka (?)
-- Deimos configs to generate Karafka routes w/deprecation notice (?)
+- Document legacy mode for both configs and consumers
 - Logging and metrics via notifications
 -   backends/base needs to work on Karafka messages
 - Error messages: 

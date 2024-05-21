@@ -30,6 +30,11 @@ end
 DeimosApp.initialize!
 
 module Helpers
+
+  def set_karafka_config(method, val)
+    Deimos.karafka_configs.each { |c| c.send(method.to_sym, val) }
+  end
+
   def register_consumer(klass, schema, namespace='com.my-namespace', key_config:{none: true}, configs: {})
     Karafka::App.routes.redraw do
       topic 'my-topic' do
@@ -93,11 +98,7 @@ module DbConfigs
   # @param topic [String]
   # @param key [String]
   def build_message(payload, topic, key)
-    message = Deimos::Message.new(payload, Deimos::Producer,
-                                  topic: topic, key: key)
-    message.encoded_payload = message.payload
-    message.encoded_key = message.key
-    message
+    { payload: payload, topic: topic, key: key}
   end
 
   DB_OPTIONS = [
@@ -105,7 +106,7 @@ module DbConfigs
       adapter: 'postgresql',
       port: 5432,
       username: 'postgres',
-      password: 'root',
+      password: 'password',
       database: 'postgres',
       host: ENV['PG_HOST'] || 'localhost'
     },
@@ -283,21 +284,27 @@ end
 
 RSpec.shared_context('with publish_backend') do
   before(:each) do
-    producer_class = Class.new(Deimos::Producer) do
-      schema 'MySchema'
-      namespace 'com.my-namespace'
-      topic 'my-topic'
-      key_config field: 'test_id'
-    end
+    producer_class = Class.new(Deimos::Producer)
     stub_const('MyProducer', producer_class)
 
-    producer_class = Class.new(Deimos::Producer) do
-      schema 'MySchema'
-      namespace 'com.my-namespace'
-      topic 'my-topic'
-      key_config none: true
-    end
+    producer_class_no_key = Class.new(Deimos::Producer)
     stub_const('MyNoKeyProducer', producer_class)
+
+    Karafka::App.routes.redraw do
+      topic 'my-topic-no-key' do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config none: true
+        producer_class producer_class_no_key
+      end
+      topic 'my-topic' do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config field: 'test_id'
+        producer_class producer_class
+      end
+    end
+
   end
 
   let(:messages) do

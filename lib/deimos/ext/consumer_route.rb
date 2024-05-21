@@ -14,14 +14,14 @@ module Deimos
       Config = Struct.new(*FIELDS, keyword_init: true)
 
       FIELDS.each do |field|
-        define_method(field) do |val=Karafka::Routing::Features::Undefined|
+        define_method(field) do |val=Karafka::Routing::Default.new(nil)|
           @deimos_config ||= Config.new(
             bulk_import_id_column: :bulk_import_id,
             replace_associations: true,
             bulk_import_id_generator: proc { SecureRandom.uuid },
             fatal_error: proc { false }
           )
-          unless val == Karafka::Routing::Features::Undefined
+          unless val.is_a?(Karafka::Routing::Default)
             @deimos_config.public_send("#{field}=", val)
           end
           @deimos_config[field]

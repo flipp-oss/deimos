@@ -26,9 +26,9 @@ RSpec.describe 'Karafka configs' do
       KarafkaApp.routes.draw do
         topic 'MyTopic' do
           producer_class MyProducer
-          schema(schema: 'MySchema',
-                 namespace: 'com.my-namespace',
-                 key_config: {none: :true})
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config(none: true)
         end
       end
       producer_class.publish({test_id: "id1", some_int: 5})
@@ -39,9 +39,9 @@ RSpec.describe 'Karafka configs' do
       KarafkaApp.routes.draw do
         topic 'MyTopic' do
           producer_class MyProducer
-          schema(schema: 'MySchema',
-                 namespace: 'com.my-namespace',
-                 key_config: {plain: :true})
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config({plain: true})
         end
       end
       producer_class.publish({test_id: "id1", some_int: 5, payload_key: 'key'})
@@ -52,9 +52,9 @@ RSpec.describe 'Karafka configs' do
       KarafkaApp.routes.draw do
         topic 'MyTopic' do
           producer_class MyProducer
-          schema(schema: 'MySchema',
-                 namespace: 'com.my-namespace',
-                 key_config: {field: :test_id})
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config({field: :test_id})
         end
       end
       producer_class.publish({test_id: "id1", some_int: 5})
@@ -65,9 +65,9 @@ RSpec.describe 'Karafka configs' do
       KarafkaApp.routes.draw do
         topic 'MyTopic' do
           producer_class MyProducer
-          schema(schema: 'MySchema',
-                 namespace: 'com.my-namespace',
-                 key_config: {schema: 'MySchema_key'})
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config({schema: 'MySchema_key'})
         end
       end
       producer_class.publish({test_id: "id1", some_int: 5, payload_key: {test_id: 'id3'}})
@@ -81,9 +81,9 @@ RSpec.describe 'Karafka configs' do
     KarafkaApp.routes.draw do
       topic 'MyTopic' do
         consumer MyConsumer
-        schema(schema: 'MySchema',
-               namespace: 'com.my-namespace',
-               key_config: {field: :test_id})
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config({field: :test_id})
       end
     end
 

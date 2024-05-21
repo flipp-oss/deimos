@@ -19,11 +19,19 @@ module Deimos
     def consume
       _with_span do
         if self.topic.batch
-          consume_batch
+          begin
+            consume_batch
+          rescue StandardError => e
+            _error(e, messages)
+          end
         else
           messages.each do |message|
-            consume_message(message)
-            mark_as_consumed(message)
+            begin
+              consume_message(message)
+              mark_as_consumed(message)
+            rescue StandardError => e
+              _error(e, messages)
+            end
           end
         end
       end
@@ -61,22 +69,20 @@ module Deimos
     # Overrideable method to determine if a given error should be considered
     # "fatal" and always be reraised.
     # @param _error [Exception]
-    # @param _payload [Hash]
-    # @param _metadata [Hash]
+    # @param _messages [Array<Karafka::Message>]
     # @return [Boolean]
-    def fatal_error?(_error, _payload, _metadata)
+    def fatal_error?(_error, _messages)
       false
     end
 
     # @param exception [Exception]
-    # @param payload [Hash]
-    # @param metadata [Hash]
-    def _error(exception, payload, metadata)
+    # @param messages [Array<Karafka::Message>]
+    def _error(exception, messages)
       Deimos.config.tracer&.set_error(@span, exception)
 
-      raise if Deimos.config.consumers.reraise_errors ||
-               Deimos.config.consumers.fatal_error&.call(exception, payload, metadata) ||
-               fatal_error?(exception, payload, metadata)
+      raise if self.topic.reraise_errors ||
+               Deimos.config.consumers.fatal_error&.call(exception, messages) ||
+               fatal_error?(exception, messages)
     end
 
     # Enable legacy mode - i.e. `consume` method takes parameters
