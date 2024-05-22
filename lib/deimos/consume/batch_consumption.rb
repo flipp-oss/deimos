@@ -41,15 +41,15 @@ module Deimos
     protected
 
       # @!visibility private
-      def _received_batch(payloads, metadata)
+      def _received_batch(messages, metadata)
         Deimos.config.logger.info(
           message: 'Got Kafka batch event',
-          message_ids: _payload_identifiers(payloads, metadata),
+          message_ids: _payload_identifiers(messages),
           metadata: metadata.except(:keys)
         )
         Deimos.config.logger.debug(
           message: 'Kafka batch event payloads',
-          payloads: payloads
+          payloads: messages
         )
         Deimos.config.metrics&.increment(
           'handler',
@@ -64,9 +64,6 @@ module Deimos
             status:received
             topic:#{metadata[:topic]}
           ))
-        if payloads.present?
-          payloads.each { |payload| _report_time_delayed(payload, metadata) }
-        end
       end
 
       # @!visibility private
@@ -128,17 +125,17 @@ module Deimos
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]
       # @return [Array<Array>] the identifiers.
-      def _payload_identifiers(payloads, metadata)
-        message_ids = payloads&.map do |payload|
-          if payload.is_a?(Hash) && payload.key?('message_id')
-            payload['message_id']
+      def _payload_identifiers(messages)
+        message_ids = messages&.map do |message|
+          if message.payload.is_a?(Hash) && message.payload.key?('message_id')
+            message.payload['message_id']
           end
         end
 
         # Payloads may be nil if preprocessing failed
-        messages = payloads || metadata[:keys] || []
+        messages = messages || messages.map(&:key) || []
 
-        messages.zip(metadata[:keys] || [], message_ids || []).map do |_, k, m_id|
+        messages.zip(messages.map(&:key) || [], message_ids || []).map do |_, k, m_id|
           ids = {}
 
           ids[:key] = k if k.present?

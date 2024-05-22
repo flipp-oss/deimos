@@ -21,6 +21,7 @@ module Deimos
         if self.topic.batch
           begin
             consume_batch
+            _received_batch(messages, {})
           rescue StandardError => e
             _error(e, messages)
           end

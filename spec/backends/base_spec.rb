@@ -12,7 +12,7 @@ RSpec.describe Deimos::Backends::Base do
     it 'should return whole payload (default behavior)' do
       log_message = described_class.send(:log_message, MyProducer, messages)
       expect(log_message[:payloads].count).to eq(3)
-      expect(log_message[:payloads].first[:payload]).to eq({ foo: 1 })
+      expect(log_message[:payloads].first[:payload]).to eq({ some_int: 1, test_id: 'foo1' })
       expect(log_message[:payloads].first[:key]).to eq('foo1')
     end
 

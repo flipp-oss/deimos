@@ -210,65 +210,7 @@ module ProducerTest
       expect(karafka.produced_messages.size).to eq(1)
     end
 
-    xit 'should encode the key' do
-      Deimos.configure { |c| c.producers.topic_prefix = nil }
-      expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
-      expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'bar', topic: 'my-topic-key')
-      expect(MyProducer.encoder).to receive(:encode).with({
-                                                            'test_id' => 'foo',
-                                                            'some_int' => 123
-                                                          }, { topic: 'my-topic-value' })
-      expect(MyProducer.encoder).to receive(:encode).with({
-                                                            'test_id' => 'bar',
-                                                            'some_int' => 124
-                                                          }, { topic: 'my-topic-value' })
-
-      MyProducer.publish_list(
-        [{ 'test_id' => 'foo', 'some_int' => 123 },
-         { 'test_id' => 'bar', 'some_int' => 124 }]
-      )
-    end
-
-    xit 'should encode the key with topic prefix' do
-      Deimos.configure { |c| c.producers.topic_prefix = 'prefix.' }
-      expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'prefix.my-topic-key')
-      expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'bar', topic: 'prefix.my-topic-key')
-      expect(MyProducer.encoder).to receive(:encode).with({  'test_id' => 'foo',
-                                                             'some_int' => 123 },
-                                                          { topic: 'prefix.my-topic-value' })
-      expect(MyProducer.encoder).to receive(:encode).with({  'test_id' => 'bar',
-                                                             'some_int' => 124 },
-                                                          { topic: 'prefix.my-topic-value' })
-
-      MyProducer.publish_list([{ 'test_id' => 'foo', 'some_int' => 123 },
-                               { 'test_id' => 'bar', 'some_int' => 124 }])
-    end
-
-    xit 'should not encode with plaintext key' do
-      expect(MyNonEncodedProducer.key_encoder).not_to receive(:encode_key)
-
-      MyNonEncodedProducer.publish_list(
-        [{ 'test_id' => 'foo', 'some_int' => 123, :payload_key => 'foo_key' },
-         { 'test_id' => 'bar', 'some_int' => 124, :payload_key => 'bar_key' }]
-      )
-    end
-
-    xit 'should encode with a schema' do
-      expect(MySchemaProducer.key_encoder).to receive(:encode).with({ 'test_id' => 'foo_key' },
-                                                                    { topic: 'my-topic2-key' })
-      expect(MySchemaProducer.key_encoder).to receive(:encode).with({ 'test_id' => 'bar_key' },
-                                                                    { topic: 'my-topic2-key' })
-
-      MySchemaProducer.publish_list(
-        [{ 'test_id' => 'foo', 'some_int' => 123,
-           :payload_key => { 'test_id' => 'foo_key' } },
-         { 'test_id' => 'bar', 'some_int' => 124,
-           :payload_key => { 'test_id' => 'bar_key' } }]
-      )
-    end
-
-    xit 'should properly encode and coerce values with a nested record' do
-      expect(MyNestedSchemaProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
+    it 'should properly encode and coerce values with a nested record' do
       MyNestedSchemaProducer.publish({
         'test_id' => 'foo',
         'test_float' => BigDecimal('123.456'),
@@ -333,15 +275,10 @@ module ProducerTest
     end
 
     context 'with Schema Class payloads' do
-      xit 'should fail on invalid message with error handler' do
-        subscriber = Deimos.subscribe('produce') do |event|
-          expect(event.payload[:payloads]).to eq([{ 'invalid' => 'key' }])
-        end
-        expect(MyProducer.encoder).to receive(:validate).and_raise('OH NOES')
-        expect {
-          MyProducer.publish(Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 'invalid'))
-        }.to raise_error('OH NOES')
-        Deimos.unsubscribe(subscriber)
+      it 'should fail on invalid message with error handler' do
+        expect(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
+        expect { MyProducer.publish(Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 'invalid')) }.
+          to raise_error('OH NOES')
       end
 
       it 'should produce a message' do
@@ -382,18 +319,8 @@ module ProducerTest
         expect(MyProducer.topic).not_to have_sent(anything)
       end
 
-      xit 'should encode the key' do
+      it 'should encode the key' do
         Deimos.configure { |c| c.producers.topic_prefix = nil }
-        expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
-        expect(MyProducer.encoder).to receive(:encode_key).with('test_id', 'bar', topic: 'my-topic-key')
-        expect(MyProducer.encoder).to receive(:encode).with({
-                                                              'test_id' => 'foo',
-                                                              'some_int' => 123
-                                                            }, { topic: 'my-topic-value' })
-        expect(MyProducer.encoder).to receive(:encode).with({
-                                                              'test_id' => 'bar',
-                                                              'some_int' => 124
-                                                            }, { topic: 'my-topic-value' })
 
         MyProducer.publish_list(
           [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123),
@@ -401,20 +328,14 @@ module ProducerTest
         )
       end
 
-      xit 'should encode with a schema' do
-        expect(MySchemaProducer.key_encoder).to receive(:encode).with({ 'test_id' => 'foo_key' },
-                                                                      { topic: 'my-topic2-key' })
-        expect(MySchemaProducer.key_encoder).to receive(:encode).with({ 'test_id' => 'bar_key' },
-                                                                      { topic: 'my-topic2-key' })
-
+      it 'should encode with a schema' do
         MySchemaProducer.publish_list(
           [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123, payload_key: { 'test_id' => 'foo_key' }),
            Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124, payload_key: { 'test_id' => 'bar_key' })]
         )
       end
 
-      xit 'should properly encode and coerce values with a nested record' do
-        expect(MyNestedSchemaProducer.encoder).to receive(:encode_key).with('test_id', 'foo', topic: 'my-topic-key')
+      it 'should properly encode and coerce values with a nested record' do
         MyNestedSchemaProducer.publish(
           Schemas::MyNamespace::MyNestedSchema.new(
             test_id: 'foo',

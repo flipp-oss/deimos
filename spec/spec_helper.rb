@@ -323,7 +323,7 @@ RSpec.shared_context('with publish_backend') do
 
   let(:messages) do
     (1..3).map do |i|
-      build_message({ foo: i }, 'my-topic', "foo#{i}")
+      build_message({ test_id: "foo#{i}", some_int: i }, 'my-topic', "foo#{i}")
     end
   end
 end
