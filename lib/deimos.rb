@@ -94,7 +94,11 @@ module Deimos
 
     # @param message [Hash] a Karafka message with keys :payload, :key and :topic
     def decode_message(message)
-      config = karafka_config_for(topic: message[:topic])
+      topic = message[:topic]
+      if Deimos.config.producers.topic_prefix
+        topic = topic.sub(Deimos.config.producers.topic_prefix, '')
+      end
+      config = karafka_config_for(topic: topic)
       message[:payload] = config.deserializers[:payload].decode_message_hash(message[:payload])
       if message[:key] && config.deserializers[:key].respond_to?(:decode_message_hash)
         message[:key] = config.deserializers[:key].decode_message_hash(message[:key])

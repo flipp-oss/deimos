@@ -56,7 +56,7 @@ module ConsumerTest
           end
 
           it 'should consume a nil message' do
-            test_consume_message(MyConsumer, nil) do
+            test_consume_message(MyConsumer, nil, key: 'foo') do
               expect(messages).to be_empty
             end
           end

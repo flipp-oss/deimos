@@ -74,7 +74,7 @@ module Deimos
         min_hash_diff = messages.min_by { |m| _hash_diff(m, message)&.keys&.size }
         diff = RSpec::Expectations.differ.diff_as_object(message, min_hash_diff[:payload])
       end
-      str = "Expected #{topic} #{'not ' if was_negated}to have sent #{message&.to_h}"
+      str = "Expected #{topic} #{'not ' if was_negated}to have sent #{message.try(:to_h) || message}"
       str += " with key #{key}" if key
       str += " with partition key #{partition_key}" if partition_key
       str += "\nClosest message received: #{min_hash_diff}" if min_hash_diff

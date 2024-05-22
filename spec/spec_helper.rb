@@ -48,6 +48,20 @@ module Helpers
       end
     end
   end
+
+  def register_producer(klass, schema, namespace='com.my-namespace', key_config:{none: true}, configs: {})
+    Karafka::App.routes.redraw do
+      topic 'my-topic' do
+        producer_class klass
+        schema schema
+        namespace namespace
+        key_config key_config
+        configs.each do |k, v|
+          public_send(k, v)
+        end
+      end
+    end
+  end
 end
 
 # Helpers for Executor/DbProducer

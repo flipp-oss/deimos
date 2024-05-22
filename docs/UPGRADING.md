@@ -26,18 +26,6 @@ TODO:
 - Document legacy mode for both configs and consumers
 - Logging and metrics via notifications
 -   backends/base needs to work on Karafka messages
-- Error messages: 
-```
-        if key.nil?
-          return nil if config[:no_keys] # no key is fine, otherwise it's a problem
-
-          raise 'No key given but a key is required! Use `key_config none: true` to avoid using keys.'
-        end
-        if config[:encode_key] && config[:key_field].nil? &&
-           config[:key_schema].nil?
-          raise 'No key config given - if you are not encoding keys, please use `key_config plain: true`'
-        end
-```
 Need to add `Karafka.producer.middleware.append(Deimos::ProducerMiddleware)` somewhere
 
 

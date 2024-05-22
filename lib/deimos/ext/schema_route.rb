@@ -49,13 +49,15 @@ module Deimos
               key_field: key_config[:field].to_s,
               topic: name
             )
-          else
+          elsif key_config[:schema]
             key = Transcoder.new(
               schema: key_config[:schema] || schema,
               namespace: namespace,
               use_schema_classes: use_schema_classes,
               topic: self.name
             )
+          else
+            raise 'No key config given - if you are not encoding keys, please use `key_config plain: true`'
           end
         end
         deserializers.payload = payload

@@ -271,7 +271,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # Disable all actual message producing. Generally more useful to use
       # the `disable_producers` method instead.
       # @return [Boolean]
-      setting :disabled, removed: "No longer supported"
+      setting :disabled
 
       # Currently can be set to :db, :kafka, or :kafka_async. If using Kafka
       # directly, a good pattern is to set to async in your user-facing app, and

@@ -7,12 +7,30 @@ module Deimos
         config = Deimos.karafka_config_for(topic: message[:topic])
         return message if config.nil?
 
-        m = Deimos::Message.new(message[:payload].to_h, headers: message[:headers])
+        m = Deimos::Message.new(message[:payload].to_h,
+                                headers: message[:headers],
+                                partition_key: message[:partition_key])
         _process_message(m, message, config)
         message[:payload] = m.encoded_payload
         message[:key] = m.encoded_key
-        message[:topic] ||= "#{Deimos.config.producers.topic_prefix}#{config.name}"
+        message[:partition_key] = if m.partition_key
+                                    m.partition_key.to_s
+                                  elsif m.key
+                                    m.key.to_s
+                                  else
+                                    nil
+                                  end
+        message[:topic] = "#{Deimos.config.producers.topic_prefix}#{config.name}"
+
+        validate_key_config(config, message)
+
         message
+      end
+
+      def validate_key_config(config, message)
+        if message[:key].nil? && config.deserializers[:key].is_a?(Deimos::Transcoder)
+           raise 'No key given but a key is required! Use `key_config none: true` to avoid using keys.'
+        end
       end
 
       # @param message [Deimos::Message]
