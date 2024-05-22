@@ -4,8 +4,6 @@ module Deimos
     class << self
 
       def call(message)
-        return message if message[:payload].nil?
-
         config = Deimos.karafka_config_for(topic: message[:topic])
         return message if config.nil?
 
@@ -46,6 +44,8 @@ module Deimos
       # @param config [ProducerConfig]
       # @return [String|Object]
       def _encode_key(key, config)
+        return nil if key.nil?
+
         if config.deserializers[:key].respond_to?(:encode_key)
           config.deserializers[:key].encode_key(key)
         elsif key

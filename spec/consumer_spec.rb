@@ -145,6 +145,9 @@ module ConsumerTest
             end
           end
         end
+        after(:each) do
+          Karafka::App.routes.clear
+        end
 
         it 'should consume messages' do
           test_consume_message('my_consume_topic',
