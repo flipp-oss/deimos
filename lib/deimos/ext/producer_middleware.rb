@@ -4,6 +4,8 @@ module Deimos
     class << self
 
       def call(message)
+        return message if message[:payload].nil?
+
         config = Deimos.karafka_config_for(topic: message[:topic])
         return message if config.nil?
 

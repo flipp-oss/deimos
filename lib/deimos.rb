@@ -58,7 +58,7 @@ module Deimos
     # @param namespace [String]
     # @return [Deimos::SchemaBackends::Base]
     def schema_backend(schema:, namespace:)
-      if self.karafka_configs.all?(&:use_schema_classes)
+      if config.schema.use_schema_classes
         # Initialize an instance of the provided schema
         # in the event the schema class is an override, the inherited
         # schema and namespace will be applied

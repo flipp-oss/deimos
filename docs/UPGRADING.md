@@ -4,6 +4,7 @@
 
 2.x is a major rewrite from 1.0.
 
+- key_config defaults to {none: true} instead of erroring out
 - reraise_errors now defaults to true
 - fatal_error? receives Karafka message array instead of payload
 - removed BatchConsumer class
@@ -21,6 +22,7 @@
 
 TODO: 
 
+- Check message too large flows
 - Document legacy mode for both configs and consumers
 - Logging and metrics via notifications
 -   backends/base needs to work on Karafka messages

@@ -28,6 +28,7 @@ module Deimos
           messages.each do |message|
             begin
               consume_message(message)
+              _received_message(message)
               mark_as_consumed(message)
             rescue StandardError => e
               _error(e, messages)
@@ -49,20 +50,20 @@ module Deimos
       Deimos.config.tracer&.finish(@span)
     end
 
-    def _report_time_delayed(payload, metadata)
-      return if payload.nil? || payload['timestamp'].blank?
+    def _report_time_delayed(message)
+      return if message.payload.nil? || message.payload['timestamp'].blank?
 
       begin
-        time_delayed = Time.now.in_time_zone - payload['timestamp'].to_datetime
+        time_delayed = Time.now.in_time_zone - message.payload['timestamp'].to_datetime
       rescue ArgumentError
         Deimos.config.logger.info(
-          message: "Error parsing timestamp! #{payload['timestamp']}"
+          message: "Error parsing timestamp! #{message.payload['timestamp']}"
         )
         return
       end
       Deimos.config.metrics&.histogram('handler', time_delayed, tags: %W(
                                          time:time_delayed
-                                         topic:#{metadata[:topic]}
+                                         topic:#{topic.name}
                                        ))
     end
 

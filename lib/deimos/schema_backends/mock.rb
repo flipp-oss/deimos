@@ -16,7 +16,7 @@ module Deimos
 
       # @override
       def encode_payload(payload, schema:, topic: nil)
-        payload.is_a?(String) ? 'payload-encoded' : payload.map { |k, v| [k, "encoded-#{v}"] }
+        payload.is_a?(String) ? 'payload-encoded' : payload.map { |k, v| [k, "encoded-#{v}"] }.to_json
       end
 
       # @override

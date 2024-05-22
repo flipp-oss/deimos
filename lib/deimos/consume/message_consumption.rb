@@ -17,7 +17,6 @@ module Deimos
           _with_span do
             new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
             decoded_payload = decode_message(payload)
-            _received_message(decoded_payload, new_metadata)
             yield(decoded_payload, new_metadata)
           end
         end
@@ -35,17 +34,17 @@ module Deimos
 
     private
 
-      def _received_message(payload, metadata)
+      def _received_message(message)
         Deimos.config.logger.info(
           message: 'Got Kafka event',
-          payload: payload,
-          metadata: metadata
+          payload: message.payload,
+          metadata: message.metadata
         )
         Deimos.config.metrics&.increment('handler', tags: %W(
                                            status:received
-                                           topic:#{metadata[:topic]}
+                                           topic:#{topic.name}
                                          ))
-        _report_time_delayed(payload, metadata)
+        _report_time_delayed(message)
       end
 
       # @param exception [Throwable]

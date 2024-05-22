@@ -10,7 +10,7 @@ module Deimos
         schema: nil,
         namespace: nil,
         key_config: {none: true},
-        use_schema_classes: nil
+        use_schema_classes: Deimos.config.schema.use_schema_classes
       }.each do |field, default|
         define_method(field) do |val=Karafka::Routing::Default.new(nil)|
           @_deimos_config ||= {}

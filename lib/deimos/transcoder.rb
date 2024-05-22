@@ -18,7 +18,7 @@ module Deimos
 
     # @return [Class < Deimos::SchemaBackends::Base]
     def backend
-      @backend ||= Deimos.schema_backend(schema: @schema, namespace: @namespace)
+      @backend ||= Deimos.schema_backend(schema: @schema, namespace: @namespace, use_schema_classes: @use_schema_classes)
     end
 
     # for use in test helpers

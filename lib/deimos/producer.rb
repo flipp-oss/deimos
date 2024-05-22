@@ -101,7 +101,7 @@ module Deimos
         ) do
           messages = Array(payloads).map do |p|
             {
-              payload: p.to_h,
+              payload: p&.to_h,
               headers: headers,
               topic: topic
             }

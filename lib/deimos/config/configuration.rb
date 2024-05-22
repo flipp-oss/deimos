@@ -27,7 +27,8 @@ module Deimos # rubocop:disable Metrics/ModuleLength
         transcoder = config.deserializers[:key]
 
         if transcoder.respond_to?(:key_field) && transcoder.key_field
-          transcoder.backend = Deimos.schema_backend(schema: config.schema, namespace: config.namespace)
+          transcoder.backend = Deimos.schema_backend(schema: config.schema,
+                                                     namespace: config.namespace)
           transcoder.backend.generate_key_schema(transcoder.key_field)
         end
       end
@@ -304,9 +305,9 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # @return [String]
       setting :generated_class_path, 'app/lib/schema_classes'
 
-      # Set to true to use the generated schema classes in your application
+      # Set to true to use the generated schema classes in your application.
       # @return [Boolean]
-      setting :use_schema_classes, removed: 'Use topic.use_schema_classes in Karafka settings'
+      setting :use_schema_classes
 
       # Set to false to generate child schemas as their own files.
       # @return [Boolean]
