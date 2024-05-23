@@ -9,7 +9,9 @@ module Deimos
         # @param messages [Array<Deimos::Message>]
         # @return [void]
         def publish(producer_class:, messages:)
-          Deimos.config.logger.info(log_message(producer_class, messages))
+          Karafka.logger.tagged('Deimos') do |logger|
+            logger.info(log_message(producer_class, messages))
+          end
           execute(producer_class: producer_class, messages: messages)
         end
 

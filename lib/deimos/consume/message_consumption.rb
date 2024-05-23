@@ -35,7 +35,7 @@ module Deimos
     private
 
       def _received_message(message)
-        Deimos.config.logger.info(
+        Deimos.log_info(
           message: 'Got Kafka event',
           payload: message.payload,
           metadata: message.metadata
@@ -58,7 +58,7 @@ module Deimos
             topic:#{metadata[:topic]}
           )
         )
-        Deimos.config.logger.warn(
+        Deimos.log_warn(
           message: 'Error consuming message',
           handler: self.class.name,
           metadata: metadata,
@@ -82,7 +82,7 @@ module Deimos
                                            status:success
                                            topic:#{metadata[:topic]}
                                          ))
-        Deimos.config.logger.info(
+        Deimos.log_info(
           message: 'Finished processing Kafka event',
           payload: payload,
           time_elapsed: time_taken,

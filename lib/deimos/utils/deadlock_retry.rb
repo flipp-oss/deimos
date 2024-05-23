@@ -45,7 +45,7 @@ module Deimos
             # Reraise if all retries exhausted
             raise if count <= 0
 
-            Deimos.config.logger.warn(
+            Deimos.log_warn(
               message: 'Deadlock encountered when trying to execute query. '\
                 "Retrying. #{count} attempt(s) remaining",
               tags: tags

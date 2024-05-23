@@ -4,6 +4,7 @@
 
 2.x is a major rewrite from 1.0.
 
+- No longer support `kafka_producer` for KafkaSource (need kafka_producers)
 - key_config defaults to {none: true} instead of erroring out
 - reraise_errors now defaults to true
 - fatal_error? receives Karafka message array instead of payload
@@ -31,10 +32,7 @@ Need to add `Karafka.producer.middleware.append(Deimos::ProducerMiddleware)` som
 
 Testing:
 - legacy mode
-- Avro errors
 - config errors
-- with/without schema classes
-- all key config combinations for both producer and consumer
 - Override defaults (e.g. producers.namespace)
 
 For producers:
@@ -43,14 +41,6 @@ For producers:
 * partition_key via method
 
 
-For middleware:
-* topic prefix
-* encoding, adding fields etc.
-
-
-Configs:
-* logger: No longer supported
-* 
 
 
 ## Upgrading from < 1.5.0 to >= 1.5.0

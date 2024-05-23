@@ -160,5 +160,28 @@ module Deimos
       nil
     end
 
+    def log_add(method, *args)
+      Karafka.logger.tagged('Deimos') do |logger|
+        logger.send(method, *args)
+      end
+
+    end
+
+    def log_info(*args)
+      log_add(:info, *args)
+    end
+
+    def log_debug(*args)
+      log_add(:debug, *args)
+    end
+
+    def log_error(*args)
+      log_add(:error, *args)
+    end
+
+    def log_warn(*args)
+      log_add(:warn, *args)
+    end
+
   end
 end

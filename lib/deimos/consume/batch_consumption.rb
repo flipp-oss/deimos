@@ -42,12 +42,12 @@ module Deimos
 
       # @!visibility private
       def _received_batch(messages, metadata)
-        Deimos.config.logger.info(
+        Deimos.log_info(
           message: 'Got Kafka batch event',
           message_ids: _payload_identifiers(messages),
           metadata: metadata.except(:keys)
         )
-        Deimos.config.logger.debug(
+        Deimos.log_debug(
           message: 'Kafka batch event payloads',
           payloads: messages
         )
@@ -77,7 +77,7 @@ module Deimos
             status:batch_error
             topic:#{metadata[:topic]}
           ))
-        Deimos.config.logger.warn(
+        Deimos.log_warn(
           message: 'Error consuming message batch',
           handler: self.class.name,
           metadata: metadata.except(:keys),
@@ -112,7 +112,7 @@ module Deimos
             status:success
             topic:#{metadata[:topic]}
           ))
-        Deimos.config.logger.info(
+        Deimos.log_info(
           message: 'Finished processing Kafka batch event',
           message_ids: _payload_identifiers(payloads, metadata),
           time_elapsed: time_taken,

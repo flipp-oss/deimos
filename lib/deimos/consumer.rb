@@ -57,9 +57,7 @@ module Deimos
       begin
         time_delayed = Time.now.in_time_zone - message.payload['timestamp'].to_datetime
       rescue ArgumentError
-        Deimos.config.logger.info(
-          message: "Error parsing timestamp! #{message.payload['timestamp']}"
-        )
+        Deimos.log_info(message: "Error parsing timestamp! #{message.payload['timestamp']}")
         return
       end
       Deimos.config.metrics&.histogram('handler', time_delayed, tags: %W(

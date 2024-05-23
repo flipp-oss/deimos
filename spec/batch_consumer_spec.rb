@@ -207,10 +207,10 @@ module ConsumerTest
             'timestamp' => 2.minutes.ago.to_s, 'message_id' => 'two' }
         ]
 
-        allow(Deimos.config.logger).to receive(:info)
+        allow(Deimos).to receive(:log_info)
 
-        expect(Deimos.config.logger).
-          to receive(:info).
+        expect(Deimos).
+          to receive(:log_info).
           with(hash_including(
                  message_ids: [
                    { key: "1", message_id: 'one' },

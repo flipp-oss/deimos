@@ -32,11 +32,11 @@ module Deimos
       # @param message [Karafka::Messages::Message]
       def consume_message(message)
         unless self.process_message?(message)
-          Deimos.config.logger.debug(
-            message: 'Skipping processing of message',
-            payload: message.payload.to_h,
-            metadata: message.metadata.to_h
-          )
+          Deimos.log_debug(
+              message: 'Skipping processing of message',
+              payload: message.payload.to_h,
+              metadata: message.metadata.to_h
+            )
           return
         end
 
