@@ -2,12 +2,6 @@ module Deimos
   module KarafkaConfig
     class << self
       def configure_karafka(config)
-        return unless config.legacy_mode
-
-        configure_setup(config)
-        configure_defaults(config)
-        configure_consumers(config)
-        configure_producers(config)
       end
 
       def configure_setup(config)
@@ -81,7 +75,6 @@ module Deimos
       def configure_consumers(config)
         config.consumer_objects.each do |consumer|
           klass = consumer.class_name.constantize
-          klass.legacy_mode!
           configs = {}
           configs["group.id"] = consumer.group_id
           configs["auto.offset.reset"] = consumer.start_from_beginning ? 'earliest' : 'latest'

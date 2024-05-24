@@ -27,7 +27,6 @@ module Deimos
           deimos_config.consumers.reraise_errors = true
           deimos_config.schema.backend = :avro_local
           deimos_config.producers.backend = :test
-          deimos_config.tracer = Deimos::Tracing::Mock.new
         end
       end
     end

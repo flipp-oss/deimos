@@ -110,6 +110,7 @@ module Deimos
               partition_key: self.partition_key(p)
             }
           end
+          messages.each { |m| m[:label] = m }
           messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
             self.produce_batch(backend_class, batch)
           end

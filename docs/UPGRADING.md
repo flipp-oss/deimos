@@ -4,6 +4,11 @@
 
 2.x is a major rewrite from 1.0.
 
+- If a message fails to produce, the message itself can't be printed - still get metrics
+- Some ActiveSupport notifications removed - use Karafka's
+- Datadog metrics removed - use Karafka's (tracing is still the same)
+- configs are moved to karafka.rb
+- `payload_log` setting now works for batch consumer as well as producer
 - No longer support `kafka_producer` for KafkaSource (need kafka_producers)
 - Remove support for `record_attributes` that takes one argument
 - key_config defaults to {none: true} instead of erroring out
@@ -28,23 +33,15 @@ FRK:
 
 TODO: 
 
+- 
 - Check message too large flows
-- Document legacy mode for both configs and consumers
 - Logging and metrics via notifications
--   backends/base needs to work on Karafka messages
-Need to add `Karafka.producer.middleware.append(Deimos::ProducerMiddleware)` somewhere
+
 
 
 Testing:
-- legacy mode
 - config errors
 - Override defaults (e.g. producers.namespace)
-
-For producers:
-* disabling producers
-* DB backend
-* partition_key via method
-
 
 
 

@@ -4,6 +4,7 @@ require 'active_support'
 require 'karafka'
 
 require 'deimos/version'
+require 'deimos/logging'
 require 'deimos/config/configuration'
 require 'deimos/producer'
 require 'deimos/active_record_producer'
@@ -25,7 +26,6 @@ require 'deimos/ext/schema_route'
 require 'deimos/ext/consumer_route'
 require 'deimos/ext/producer_route'
 require 'deimos/ext/producer_middleware'
-require 'deimos/logger_listener'
 
 require 'deimos/railtie' if defined?(Rails)
 require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
@@ -131,7 +131,14 @@ module Deimos
 
     def setup_karafka
       Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
-      Karafka.monitor.subscribe(Deimos::LoggerListener)
+      Karafka.producer.monitor.subscribe('error.occurred') do |event|
+        if event.payload.key?(:messages)
+          topic = event[:messages].first[:topic]
+          config = Deimos.karafka_config_for(topic: topic)
+          message = Deimos::Logging.messages_log_text(config.payload_log, event[:messages])
+          Karafka.logger.error("Error producing messages: #{event[:error].message} #{message.to_json}")
+        end
+      end
     end
 
     # @return [Array<Karafka::Routing::Topic]
@@ -158,29 +165,6 @@ module Deimos
         end
       end
       nil
-    end
-
-    def log_add(method, *args)
-      Karafka.logger.tagged('Deimos') do |logger|
-        logger.send(method, *args)
-      end
-
-    end
-
-    def log_info(*args)
-      log_add(:info, *args)
-    end
-
-    def log_debug(*args)
-      log_add(:debug, *args)
-    end
-
-    def log_error(*args)
-      log_add(:error, *args)
-    end
-
-    def log_warn(*args)
-      log_add(:warn, *args)
     end
 
   end

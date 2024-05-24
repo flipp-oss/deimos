@@ -59,14 +59,14 @@ module Deimos
           if Deimos.config.producers.backend == :kafka_async
             Deimos.config.producers.backend = :kafka
           end
-          Deimos.log_info('Starting...')
+          Deimos::Logging.log_info('Starting...')
           @signal_to_stop = false
           ActiveRecord::Base.connection.reconnect! unless ActiveRecord::Base.connection.open_transactions.positive?
 
           retrieve_poll_info
           loop do
             if @signal_to_stop
-              Deimos.log_info('Shutting down')
+              Deimos::Logging.log_info('Shutting down')
               break
             end
             process_updates if should_run?
@@ -96,7 +96,7 @@ module Deimos
         # Stop the poll.
         # @return [void]
         def stop
-          Deimos.log_info('Received signal to stop')
+          Deimos::Logging.log_info('Received signal to stop')
           @signal_to_stop = true
         end
 
@@ -112,9 +112,9 @@ module Deimos
         # @param span [Object]
         # @return [Boolean]
         def handle_message_too_large(exception, batch, status, span)
-          Deimos.log_error("Error publishing through DB Poller: #{exception.message}")
+          Deimos::Logging.log_error("Error publishing through DB Poller: #{exception.message}")
           if @config.skip_too_large_messages
-            Deimos.log_error("Skipping messages #{batch.map(&:id).join(', ')} since they are too large")
+            Deimos::Logging.log_error("Skipping messages #{batch.map(&:id).join(', ')} since they are too large")
             Deimos.config.tracer&.set_error(span, exception)
             status.batches_errored += 1
             true
@@ -142,18 +142,18 @@ module Deimos
             if FATAL_CODES.include?(e.cause.try(:code))
               retry unless handle_message_too_large(e, batch, status, span)
             else
-              Deimos.log_error("Error publishing through DB Poller: #{e.message}")
+              Deimos::Logging.log_error("Error publishing through DB Poller: #{e.message}")
               sleep(0.5)
               retry
             end
           rescue StandardError => e
-            Deimos.log_error("Error publishing through DB poller: #{e.message}}")
+            Deimos::Logging.log_error("Error publishing through DB poller: #{e.message}}")
             if @config.retries.nil? || retries < @config.retries
               retries += 1
               sleep(0.5)
               retry
             else
-              Deimos.log_error('Retries exceeded, moving on to next batch')
+              Deimos::Logging.log_error('Retries exceeded, moving on to next batch')
               Deimos.config.tracer&.set_error(span, e)
               status.batches_errored += 1
               return false
