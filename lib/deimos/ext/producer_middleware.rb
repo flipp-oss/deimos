@@ -5,7 +5,7 @@ module Deimos
 
       def call(message)
         config = Deimos.karafka_config_for(topic: message[:topic])
-        return message if config.nil?
+        return message if config.nil? || (message[:payload] && !message[:payload].is_a?(Hash))
 
         m = Deimos::Message.new(message[:payload].to_h,
                                 headers: message[:headers],

@@ -5,6 +5,7 @@
 2.x is a major rewrite from 1.0.
 
 - No longer support `kafka_producer` for KafkaSource (need kafka_producers)
+- Remove support for `record_attributes` that takes one argument
 - key_config defaults to {none: true} instead of erroring out
 - reraise_errors now defaults to true
 - fatal_error? receives Karafka message array instead of payload
@@ -20,6 +21,10 @@
 - Remove deprecated stub_producers_and_consumers!, stub_producer, stub_consumer, stub_batch_consumer
 - You can publish messages without a Producer - Producer can be used for DB backends, method for partition key, disabling
 - test_consume_message with a handler with no topic no longer supported
+
+FRK:
+- Remove aliasing
+- Remove kafkateria_url
 
 TODO: 
 

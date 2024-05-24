@@ -10,6 +10,7 @@ module Deimos
           @deimos_producer_config ||= Config.new
           unless val.is_a?(Karafka::Routing::Default)
             @deimos_producer_config.public_send("#{field}=", val)
+            _deimos_setup_transcoders if schema && namespace
           end
           @deimos_producer_config[field]
         end
