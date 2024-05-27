@@ -4,6 +4,7 @@
 
 2.x is a major rewrite from 1.0.
 
+- Datadog metrics can now take `:karafka_namespace, :karafka_distribution_mode, :rd_kafka_metrics` tags to pass to MetricsListener
 - Renamed :db backend to :outbox and :db_producer config to :outbox
 - Renamed db_producer metrics to outbox
 - Renamed db_producer task to outbox
@@ -36,7 +37,6 @@ FRK:
 - Remove kafkateria_url
 
 TODO: 
-- rename DB backend to outbox
 - generator
 - documentation
 - FRK updates
