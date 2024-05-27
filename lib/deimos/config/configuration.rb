@@ -5,6 +5,7 @@ require_relative 'karafka'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
 require 'active_support/core_ext/object'
+require_relative '../../generators/deimos/v2_generator'
 
 # :nodoc:
 module Deimos # rubocop:disable Metrics/ModuleLength
@@ -12,7 +13,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
   # :nodoc:
   after_configure do
-    Deimos::KarafkaConfig.configure_karafka(self.config)
+    Deimos::Generators::V2Generator.original_config = self.config.deep_dup
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
@@ -188,7 +189,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     # @return [Tracing::Provider]
     setting :tracer, default_proc: proc { Tracing::Mock.new }
 
-    setting :db_producer do
+    setting :outbox do
 
       # @return [Logger]
       setting :logger, default_proc: proc { Deimos.config.logger }

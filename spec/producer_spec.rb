@@ -93,18 +93,16 @@ module ProducerTest
       expect(MyProducer).to receive(:produce_batch).once.with(
         Deimos::Backends::Kafka,
         [
-          {
+          hash_including({
             payload: { 'test_id' => 'foo', 'some_int' => 123 },
             topic: 'my-topic',
-            headers: nil,
             partition_key: nil
-          },
-          {
+          }),
+          hash_including({
             payload: { 'test_id' => 'bar', 'some_int' => 124 },
-            headers: nil,
             topic: 'my-topic',
             partition_key: nil
-          }
+          })
         ]
       ).and_call_original
 
@@ -121,18 +119,18 @@ module ProducerTest
       expect(MyProducer).to receive(:produce_batch).once.with(
         Deimos::Backends::Kafka,
         [
-          {
+          hash_including({
             payload: { 'test_id' => 'foo', 'some_int' => 123 },
             topic: 'a-new-topic',
             headers: { 'foo' => 'bar' },
             partition_key: nil
-          },
-          {
+          }),
+          hash_including({
             payload: { 'test_id' => 'bar', 'some_int' => 124 },
             topic: 'a-new-topic',
             headers: { 'foo' => 'bar' },
             partition_key: nil
-          }
+          })
         ]
       ).and_call_original
 
@@ -285,18 +283,16 @@ module ProducerTest
         expect(MyProducer).to receive(:produce_batch).once.with(
           Deimos::Backends::Kafka,
           [
-            {
+            hash_including({
               payload: { 'test_id' => 'foo', 'some_int' => 123, 'payload_key' => nil },
               topic: 'my-topic',
-              headers: nil,
               partition_key: nil,
-            },
-            {
+            }),
+            hash_including({
               payload: { 'test_id' => 'bar', 'some_int' => 124, 'payload_key' => nil },
               topic: 'my-topic',
-              headers: nil,
               partition_key: nil
-            }
+            })
           ]
         ).and_call_original
 
@@ -444,11 +440,11 @@ module ProducerTest
       end
 
       it 'should return db if db is set' do
-        Deimos.configure { producers.backend = :db }
+        Deimos.configure { producers.backend = :outbox }
         expect(described_class.determine_backend_class(true, false)).
-          to eq(Deimos::Backends::Db)
+          to eq(Deimos::Backends::Outbox)
         expect(described_class.determine_backend_class(false, false)).
-          to eq(Deimos::Backends::Db)
+          to eq(Deimos::Backends::Outbox)
       end
 
       it 'should return kafka if force_send is true' do

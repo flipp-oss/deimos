@@ -64,7 +64,7 @@ module Helpers
   end
 end
 
-# Helpers for Executor/DbProducer
+# Helpers for Executor/OutboxProducer
 module TestRunners
   # Execute a block until it stops failing. This is helpful for testing threads
   # where we need to wait for them to continue but don't want to rely on

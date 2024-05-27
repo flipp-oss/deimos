@@ -4,8 +4,12 @@
 
 2.x is a major rewrite from 1.0.
 
+- Renamed :db backend to :outbox and :db_producer config to :outbox
+- Renamed db_producer metrics to outbox
+- Renamed db_producer task to outbox
 - If a message fails to produce, the message itself can't be printed - still get metrics
 - Some ActiveSupport notifications removed - use Karafka's
+- Others are now prefixed by deimos.x
 - Datadog metrics removed - use Karafka's (tracing is still the same)
 - configs are moved to karafka.rb
 - `payload_log` setting now works for batch consumer as well as producer
@@ -32,10 +36,11 @@ FRK:
 - Remove kafkateria_url
 
 TODO: 
-
-- 
+- rename DB backend to outbox
+- generator
+- documentation
+- FRK updates
 - Check message too large flows
-- Logging and metrics via notifications
 
 
 

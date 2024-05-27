@@ -96,8 +96,8 @@ module Deimos
         return if Deimos.producers_disabled?(self)
 
         backend_class = determine_backend_class(sync, force_send)
-        Deimos.instrument(
-          'encode_messages',
+        Karafka.monitor.instrument(
+          'deimos.encode_messages',
           producer: self,
           topic: topic,
           payloads: payloads

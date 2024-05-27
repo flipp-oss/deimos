@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-each_db_config(Deimos::Utils::DbProducer) do
+each_db_config(Deimos::Utils::OutboxProducer) do
   let(:producer) do
     producer = described_class.new(logger)
     allow(producer).to receive(:sleep)
@@ -10,8 +10,8 @@ each_db_config(Deimos::Utils::DbProducer) do
   let(:logger) { instance_double(Logger, error: nil, info: nil, debug: nil )}
 
   before(:each) do
-    stub_const('Deimos::Utils::DbProducer::BATCH_SIZE', 2)
-    stub_const('Deimos::Utils::DbProducer::DELETE_BATCH_SIZE', 1)
+    stub_const('Deimos::Utils::OutboxProducer::BATCH_SIZE', 2)
+    stub_const('Deimos::Utils::OutboxProducer::DELETE_BATCH_SIZE', 1)
   end
 
   specify '#process_next_messages' do
@@ -41,7 +41,7 @@ each_db_config(Deimos::Utils::DbProducer) do
                                    message: 'blah',
                                    key: "key#{i}")
     end
-    stub_const('Deimos::Utils::DbProducer::BATCH_SIZE', 5)
+    stub_const('Deimos::Utils::OutboxProducer::BATCH_SIZE', 5)
     producer.current_topic = 'topic1'
     messages = producer.retrieve_messages
     expect(messages.size).to eq(3)
@@ -83,17 +83,17 @@ each_db_config(Deimos::Utils::DbProducer) do
       let(:deduped_batch) { batch[1..2] }
 
       it 'should dedupe messages when :all is set' do
-        Deimos.configure { |c| c.db_producer.compact_topics = :all }
+        Deimos.configure { |c| c.outbox.compact_topics = :all }
         expect(producer.compact_messages(batch)).to eq(deduped_batch)
       end
 
       it 'should dedupe messages when topic is included' do
-        Deimos.configure { |c| c.db_producer.compact_topics = %w(my-topic my-topic2) }
+        Deimos.configure { |c| c.outbox.compact_topics = %w(my-topic my-topic2) }
         expect(producer.compact_messages(batch)).to eq(deduped_batch)
       end
 
       it 'should not dedupe messages when topic is not included' do
-        Deimos.configure { |c| c.db_producer.compact_topics = %w(my-topic3 my-topic2) }
+        Deimos.configure { |c| c.outbox.compact_topics = %w(my-topic3 my-topic2) }
         expect(producer.compact_messages(batch)).to eq(batch)
       end
 
@@ -110,13 +110,13 @@ each_db_config(Deimos::Utils::DbProducer) do
             message: 'BBB'
           }
         ].map { |h| Deimos::KafkaMessage.create!(h) }
-        Deimos.configure { |c| c.db_producer.compact_topics = :all }
+        Deimos.configure { |c| c.outbox.compact_topics = :all }
         expect(producer.compact_messages(unkeyed_batch)).to eq(unkeyed_batch)
-        Deimos.configure { |c| c.db_producer.compact_topics = [] }
+        Deimos.configure { |c| c.outbox.compact_topics = [] }
       end
 
       it 'should compact messages when all messages are unique' do
-        Deimos.configure { |c| c.db_producer.compact_topics = %w(my-topic my-topic2) }
+        Deimos.configure { |c| c.outbox.compact_topics = %w(my-topic my-topic2) }
         expect(producer.compact_messages(deduped_batch)).to eq(deduped_batch)
       end
     end
@@ -162,7 +162,7 @@ each_db_config(Deimos::Utils::DbProducer) do
                                                                     }
                                                                   ])
       expect(Deimos.config.metrics).to receive(:increment).ordered.with(
-        'db_producer.process',
+        'outbox.process',
         tags: %w(topic:my-topic),
         by: 2
       )
@@ -183,7 +183,7 @@ each_db_config(Deimos::Utils::DbProducer) do
                                                                     }
                                                                   ])
       expect(Deimos.config.metrics).to receive(:increment).ordered.with(
-        'db_producer.process',
+        'outbox.process',
         tags: %w(topic:my-topic),
         by: 2
       )
@@ -231,14 +231,14 @@ each_db_config(Deimos::Utils::DbProducer) do
       expect(Deimos::KafkaTopicInfo).to receive(:register_error)
 
       expect(Deimos::KafkaMessage.count).to eq(4)
-      subscriber = Deimos.subscribe('db_producer.produce') do |event|
+      Karafka.monitor.subscribe('deimos.outbox.produce') do |event|
         expect(event.payload[:exception_object].message).to eq('OH NOES')
         expect(event.payload[:messages]).to eq(messages)
       end
       producer.process_topic('my-topic')
       # don't delete for regular errors
       expect(Deimos::KafkaMessage.count).to eq(4)
-      Deimos.unsubscribe(subscriber)
+      Karafka.monitor.notifications_bus.clear('deimos.outbox.produce')
     end
 
     it 'should retry deletes and not re-publish' do

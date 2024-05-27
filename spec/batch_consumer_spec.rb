@@ -197,6 +197,7 @@ module ConsumerTest
       let(:key_config) { { plain: true } }
       before(:each) do
         allow(Deimos.config.metrics).to receive(:histogram)
+        set_karafka_config(:payload_log, :keys)
       end
 
       it 'should log message identifiers' do
@@ -207,16 +208,11 @@ module ConsumerTest
             'timestamp' => 2.minutes.ago.to_s, 'message_id' => 'two' }
         ]
 
-        allow(Deimos).to receive(:log_info)
+        allow(Deimos::Logging).to receive(:log_info)
 
-        expect(Deimos).
+        expect(Deimos::Logging).
           to receive(:log_info).
-          with(hash_including(
-                 message_ids: [
-                   { key: "1", message_id: 'one' },
-                   { key: "2", message_id: 'two' }
-                 ]
-               ))
+          with(hash_including(payload_keys: ["1", "2"]))
 
         test_consume_batch('my-topic', batch_with_message_id, keys: [1, 2])
       end

@@ -1,0 +1,123 @@
+# frozen_string_literal: true
+
+require 'deimos'
+
+Deimos.configure do
+  #  schema.backend 'avro_schema_registry'
+end
+
+FlippRubyKafka.configure_datadog unless %w(test development).include?(Rails.env)
+
+class KarafkaApp < Karafka::App
+  setup do |config|
+    config.kafka = {
+      'bootstrap.servers': '127.0.0.1:9092'
+    }
+    config.client_id = 'vendors'
+    # Recreate consumers with each batch. This will allow Rails code reload to work in the
+    # development mode. Otherwise Karafka process would not be aware of code changes
+    config.consumer_persistence = !Rails.env.development?
+  end
+
+  # Comment out this part if you are not using instrumentation and/or you are not
+  # interested in logging events for certain environments. Since instrumentation
+  # notifications add extra boilerplate, if you want to achieve max performance,
+  # listen to only what you really need for given environment.
+  Karafka.monitor.subscribe(Karafka::Instrumentation::LoggerListener.new)
+  # Karafka.monitor.subscribe(Karafka::Instrumentation::ProctitleListener.new)
+
+  # This logger prints the producer development info using the Karafka logger.
+  # It is similar to the consumer logger listener but producer oriented.
+  Karafka.producer.monitor.subscribe(
+    WaterDrop::Instrumentation::LoggerListener.new(
+      # Log producer operations using the Karafka logger
+      Karafka.logger,
+      # If you set this to true, logs will contain each message details
+      # Please note, that this can be extensive
+      log_messages: false
+    )
+  )
+
+  # You can subscribe to all consumer related errors and record/track then that way
+  #
+  # Karafka.monitor.subscribe 'error.occurred' do |event|
+  #   type = event[:type]
+  #   error = event[:error]
+  #   details = (error.backtrace || []).join("\n")
+  #   ErrorTracker.send_error(error, type, details)
+  # end
+
+  # You can subscribe to all producer related errors and record/track then that way
+  # Please note, that producer and consumer have their own notifications pipeline so you need to
+  # setup error tracking independently for each of them
+  #
+  # Karafka.producer.monitor.subscribe('error.occurred') do |event|
+  #   type = event[:type]
+  #   error = event[:error]
+  #   details = (error.backtrace || []).join("\n")
+  #   ErrorTracker.send_error(error, type, details)
+  # end
+
+  routes.draw do
+    defaults do
+      namespace 'com.flipp.vendors'
+    end
+    topic 'Merchants.Merchant' do
+      consumer Kafka::Handlers::MerchantHandler
+      schema 'Merchant'
+      key_config field: :id
+      namespace 'com.flipp.fadmin'
+    end
+
+    topic 'FlyerProcessing.TaskDefinition' do
+      consumer Kafka::Handlers::TaskDefinitionHandler
+      namespace 'com.flipp.workflow_executor'
+      schema 'TaskDefinition'
+      key_config field: :id
+    end
+
+    topic 'Vendors.Vendor' do
+      producer_class Kafka::Producers::VendorProducer
+      schema 'Vendor'
+      key_config field: :id
+    end
+
+    topic 'Vendors.MerchantDefaults' do
+      producer_class Kafka::Producers::VendorMerchantAssignmentProducer
+      schema 'VendorMerchantAssignment'
+      key_config field: :id
+    end
+
+    topic 'Vendors.Capabilities' do
+      producer_class Kafka::Producers::CapabilitiesProducer
+      schema 'VendorCapabilities'
+      key_config field: :vendor_id
+    end
+
+    # Uncomment this if you use Karafka with ActiveJob
+    # You need to define the topic per each queue name you use
+    # active_job_topic :default
+    #    topic :example do
+      # Uncomment this if you want Karafka to manage your topics configuration
+      # Managing topics configuration via routing will allow you to ensure config consistency
+      # across multiple environments
+      #
+      # config(partitions: 2, 'cleanup.policy': 'compact')
+    # consumer ExampleConsumer
+    # end
+  end
+end
+
+# Karafka now features a Web UI!
+# Visit the setup documentation to get started and enhance your experience.
+#
+# https://karafka.io/docs/Web-UI-Getting-Started
+Deimos.setup_karafka
+
+Karafka::Web.setup do |config|
+  # You may want to set it per ENV. This value was randomly generated.
+  config.ui.sessions.secret = '5b6fb81074f5ec96d7af7c7bd97297dc98a0074ddfe8037a9acd70b6e96c52a4'
+end
+
+Karafka::Web.enable!
+

@@ -8,3 +8,4 @@ gemspec
 gem 'fig_tree', path: '../fig_tree'
 gem 'karafka', path: '../karafka'
 gem 'karafka-testing', path: '../karafka-testing'
+gem 'karafka-core', path: '../karafka-core'

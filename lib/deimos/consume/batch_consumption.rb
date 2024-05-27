@@ -45,11 +45,11 @@ module Deimos
       # @param time_taken [Float]
       def _handle_batch_success(time_taken)
         Deimos::Logging.log_info(
-          message: 'Finished processing Kafka batch event',
-          message_ids: Deimos::Logging.messages_log_text(self.topic.payload_log, messages),
-          time_elapsed: time_taken,
-          metadata: Deimos::Logging.metadata_log_text(messages.metadata)
-        )
+          {
+            message: 'Finished processing Kafka batch event',
+            time_elapsed: time_taken,
+            metadata: Deimos::Logging.metadata_log_text(messages.metadata)
+          }.merge(Deimos::Logging.messages_log_text(self.topic.payload_log, messages)))
       end
 
     end

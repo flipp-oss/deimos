@@ -88,7 +88,7 @@ module Deimos
         message_key = Deimos::TestHelpers.normalize_message(key)
         hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message_hash)
         karafka.produced_messages.any? do |m|
-          produced_message = m.deep_dup
+          produced_message = m.except(:label).deep_dup
           Deimos.decode_message(produced_message)
           payload = Deimos::TestHelpers.normalize_message(produced_message[:payload])
           m_key = Deimos::TestHelpers.normalize_message(produced_message[:key])

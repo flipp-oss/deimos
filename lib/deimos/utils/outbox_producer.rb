@@ -4,7 +4,7 @@ module Deimos
   module Utils
     # Class which continually polls the kafka_messages table
     # in the database and sends Kafka messages.
-    class DbProducer
+    class OutboxProducer
       attr_accessor :id, :current_topic
 
       # @return [Integer]
@@ -20,12 +20,12 @@ module Deimos
       def initialize(logger=Logger.new(STDOUT))
         @id = SecureRandom.uuid
         @logger = logger
-        @logger.push_tags("DbProducer #{@id}") if @logger.respond_to?(:push_tags)
+        @logger.push_tags("OutboxProducer #{@id}") if @logger.respond_to?(:push_tags)
       end
 
       # @return [FigTree]
       def config
-        Deimos.config.db_producer
+        Deimos.config.outbox
       end
 
       # Start the poll.
@@ -94,7 +94,7 @@ module Deimos
         batch_size = messages.size
         compacted_messages = compact_messages(messages)
         log_messages(compacted_messages)
-        Deimos.instrument('db_producer.produce', topic: @current_topic, messages: compacted_messages) do
+        Karafka.monitor.instrument('deimos.outbox.produce', topic: @current_topic, messages: compacted_messages) do
           begin
             produce_messages(compacted_messages.map(&:karafka_message))
           rescue WaterDrop::Errors::ProduceManyError => e
@@ -107,7 +107,7 @@ module Deimos
         end
         delete_messages(messages)
         Deimos.config.metrics&.increment(
-          'db_producer.process',
+          'outbox.process',
           tags: %W(topic:#{@current_topic}),
           by: messages.size
         )

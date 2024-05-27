@@ -30,7 +30,7 @@ module Deimos
         tag = messages.metadata.topic
         Deimos.config.tracer.active_span.set_tag('topic', tag)
 
-        Deimos.instrument('ar_consumer.consume_batch', tag) do
+        Karafka.monitor.instrument('deimos.ar_consumer.consume_batch', tag) do
           if @compacted && deimos_messages.map(&:key).compact.any?
             update_database(compact_messages(deimos_messages))
           else

@@ -6,7 +6,7 @@ module Deimos
     module Topic
       FIELDS.each do |field|
         define_method(field) do |val=Karafka::Routing::Default.new(nil)|
-          active(false)
+          active(false) if field == :producer_class
           @deimos_producer_config ||= Config.new
           unless val.is_a?(Karafka::Routing::Default)
             @deimos_producer_config.public_send("#{field}=", val)

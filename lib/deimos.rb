@@ -10,7 +10,6 @@ require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
 require 'deimos/consumer'
-require 'deimos/instrumentation'
 
 require 'deimos/backends/base'
 require 'deimos/backends/kafka'
@@ -33,9 +32,9 @@ require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
 if defined?(ActiveRecord)
   require 'deimos/kafka_source'
   require 'deimos/kafka_topic_info'
-  require 'deimos/backends/db'
+  require 'deimos/backends/outbox'
   require 'sigurd'
-  require 'deimos/utils/db_producer'
+  require 'deimos/utils/outbox_producer'
   require 'deimos/utils/db_poller'
 end
 
@@ -119,8 +118,8 @@ module Deimos
       end
 
       producers = (1..thread_count).map do
-        Deimos::Utils::DbProducer.
-          new(self.config.db_producer.logger || self.config.logger)
+        Deimos::Utils::OutboxProducer.
+          new(self.config.outbox.logger || self.config.logger)
       end
       executor = Sigurd::Executor.new(producers,
                                       sleep_seconds: 5,
@@ -131,6 +130,10 @@ module Deimos
 
     def setup_karafka
       Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
+      Karafka.monitor.notifications_bus.register_event('deimos.ar_consumer.consume_batch')
+      Karafka.monitor.notifications_bus.register_event('deimos.encode_messages')
+      Karafka.monitor.notifications_bus.register_event('deimos.outbox.produce')
+
       Karafka.producer.monitor.subscribe('error.occurred') do |event|
         if event.payload.key?(:messages)
           topic = event[:messages].first[:topic]

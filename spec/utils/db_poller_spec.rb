@@ -344,7 +344,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
       end
 
       it 'should send events across multiple batches' do
-        allow(Deimos).to receive(:log_info)
+        allow(Deimos::Logging).to receive(:log_info)
         allow(MyProducer).to receive(:poll_query).and_call_original
         expect(poller).to receive(:process_and_touch_info).ordered.
           with([widgets[0], widgets[1], widgets[2]], anything).and_call_original
@@ -389,7 +389,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
                time_to: time_value(secs: 120), # yes this is weird but it's because of travel_to
                column_name: :updated_at,
                min_id: last_widget.id)
-        expect(Deimos).to have_received(:log_info).
+        expect(Deimos::Logging).to have_received(:log_info).
           with('Poll MyProducer: ["my-topic-with-id"] complete at 2015-05-05 00:59:58 -0400 (3 batches, 0 errored batches, 7 processed messages)')
       end
 
@@ -411,7 +411,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
       describe 'errors' do
         before(:each) do
           poller.config.retries = 0
-          allow(Deimos).to receive(:log_info)
+          allow(Deimos::Logging).to receive(:log_info)
         end
 
         after(:each) do
@@ -441,7 +441,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
           info = Deimos::PollInfo.last
           expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
           expect(info.last_sent_id).to eq(widgets[6].id)
-          expect(Deimos).to have_received(:log_info).
+          expect(Deimos::Logging).to have_received(:log_info).
             with('Poll MyProducer: ["my-topic-with-id"] complete at 2015-05-05 00:59:58 -0400 (2 batches, 1 errored batches, 7 processed messages)')
         end
       end

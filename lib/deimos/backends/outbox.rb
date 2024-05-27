@@ -6,7 +6,7 @@ module Deimos
   module Backends
     # Backend which saves messages to the database instead of immediately
     # sending them.
-    class Db < Base
+    class Outbox < Base
       class << self
         # :nodoc:
         def execute(producer_class:, messages:)
@@ -22,7 +22,7 @@ module Deimos
           end
           Deimos::KafkaMessage.import(records)
           Deimos.config.metrics&.increment(
-            'db_producer.insert',
+            'outbox_producer.insert',
             tags: %W(topic:#{producer_class.topic}),
             by: records.size
           )

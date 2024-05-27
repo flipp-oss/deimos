@@ -29,15 +29,20 @@ module Deimos
         metadata.to_h.slice(:timestamp, :offset, :first_offset, :last_offset, :partition, :topic, :size)
       end
 
+      def _payloads(messages)
+
+      end
+
       def messages_log_text(payload_log, messages)
         log_message = {}
 
         case payload_log
         when :keys
+          keys = messages.map do |m|
+            m.respond_to?(:payload) ? m.key || m.payload['message_id'] : m[:key] || m[:payload]['message_id']
+          end
           log_message.merge!(
-            payload_keys: messages.map do |m|
-              m[:key] || (m[:payload].is_a?(Hash) ? m[:payload]['message_id'] : nil)
-            end
+            payload_keys: keys
           )
         when :count
           log_message.merge!(
@@ -45,14 +50,14 @@ module Deimos
           )
         when :headers
           log_message.merge!(
-            payload_headers: messages.map { |m| m[:headers] }
+            payload_headers: messages.map { |m| m.respond_to?(:headers) ? m.headers : m[:headers] }
           )
         else
           log_message.merge!(
-            payloads: messages.map do |message|
+            payloads: messages.map do |m|
               {
-                payload: message[:payload],
-                key: message[:key]
+                payload: m.respond_to?(:payload) ? m.payload : m[:payload],
+                key: m.respond_to?(:payload) ? m.key : m[:key]
               }
             end
           )

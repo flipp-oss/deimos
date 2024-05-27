@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-each_db_config(Deimos::Backends::Db) do
+each_db_config(Deimos::Backends::Outbox) do
   include_context 'with publish_backend'
 
   it 'should save to the database' do
     # expect(Deimos.config.metrics).to receive(:increment).with(
-    #   'db_producer.insert',
+    #   'outbox.insert',
     #   tags: %w(topic:my-topic),
     #   by: 3
     # )

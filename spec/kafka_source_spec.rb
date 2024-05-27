@@ -214,7 +214,7 @@ module KafkaSourceSpec
     context 'with DB backend' do
       before(:each) do
         Deimos.configure do |config|
-          config.producers.backend = :db
+          config.producers.backend = :outbox
         end
         setup_db(DB_OPTIONS.last) # sqlite
       end
