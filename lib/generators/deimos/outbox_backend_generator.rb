@@ -13,7 +13,7 @@ module Deimos
       else
         include ActiveRecord::Generators::Migration
       end
-      source_root File.expand_path('db_backend/templates', __dir__)
+      source_root File.expand_path('outbox_backend/templates', __dir__)
       desc 'Add migrations for the database backend'
 
       # @return [String]
@@ -38,10 +38,10 @@ module Deimos
       def generate
         if Rails.version < '4'
           migration_template('rails3_migration',
-                             "#{db_migrate_path}/create_db_backend.rb")
+                             "#{db_migrate_path}/create_outbox_backend.rb")
         else
           migration_template('migration',
-                             "#{db_migrate_path}/create_db_backend.rb")
+                             "#{db_migrate_path}/create_outbox_backend.rb")
         end
       end
     end

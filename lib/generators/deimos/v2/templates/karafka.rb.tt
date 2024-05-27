@@ -1,19 +1,40 @@
 # frozen_string_literal: true
 
 require 'deimos'
+require 'karafka'
 
 Deimos.configure do
-  #  schema.backend 'avro_schema_registry'
+<%- deimos_configs.each do |group, settings| -%>
+  <%- group_setting = orig_config.send(group) -%>
+  <%- next if settings.all? { |s| orig_config.send(group).default_value?(s)} -%>
+  <%= group -%> do
+  <%- settings.each do |field| -%>
+  <%- unless group_setting.default_value?(field.to_sym) -%>
+    <%= field.to_s %> <%= group_setting.send(field).inspect %>
+  <%- end -%>
+  <%- end -%>
+  end
+  <%- end -%>
+  <%- orig_config.db_poller_objects.each do |poller| -%>
+  db_poller do
+    <%- poller.non_default_settings! -%>
+    <%- poller.to_h.each do |k, v| -%>
+    <%= k.to_s %> <%= v.inspect %>
+    <%- end -%>
+  <%- end -%>
+  end
 end
-
-FlippRubyKafka.configure_datadog unless %w(test development).include?(Rails.env)
 
 class KarafkaApp < Karafka::App
   setup do |config|
+    <%- setup_configs.each do |k, v| -%>
+    config.<%= k %> = <%= v.inspect %>
+    <%- end -%>
     config.kafka = {
-      'bootstrap.servers': '127.0.0.1:9092'
+      <%- default_kafka_configs.compact.each do |k, v| -%>
+      "<%= k.to_s %>": <%= v.inspect %>,
+      <%- end -%>
     }
-    config.client_id = 'vendors'
     # Recreate consumers with each batch. This will allow Rails code reload to work in the
     # development mode. Otherwise Karafka process would not be aware of code changes
     config.consumer_persistence = !Rails.env.development?
@@ -60,39 +81,34 @@ class KarafkaApp < Karafka::App
 
   routes.draw do
     defaults do
-      namespace 'com.flipp.vendors'
-    end
-    topic 'Merchants.Merchant' do
-      consumer Kafka::Handlers::MerchantHandler
-      schema 'Merchant'
-      key_config field: :id
-      namespace 'com.flipp.fadmin'
+    <%- default_configs.each do |k, v| -%>
+      <%= k.to_s %> <%= v.inspect %>
+    <%- end -%>
     end
 
-    topic 'FlyerProcessing.TaskDefinition' do
-      consumer Kafka::Handlers::TaskDefinitionHandler
-      namespace 'com.flipp.workflow_executor'
-      schema 'TaskDefinition'
-      key_config field: :id
+    <%- producer_configs.each do |producer| -%>
+    topic "<%= producer[:topic] %>" do
+      <%- producer.except(:topic).each do |k, v| -%>
+      <%= k.to_s %> <%= v.inspect %>
+      <%- end -%>
     end
+    <%- end -%>
 
-    topic 'Vendors.Vendor' do
-      producer_class Kafka::Producers::VendorProducer
-      schema 'Vendor'
-      key_config field: :id
-    end
+    <%- consumer_configs.each do |consumer| -%>
+    topic "<%= consumer[:topic] -%>" do
+      <%- if consumer[:kafka].present? -%>
+      kafka(
+        <%- consumer[:kafka].each do |k, v| -%>
+        "<%= k.to_s %>": <%= v.inspect %>,
+        <%- end -%>
 
-    topic 'Vendors.MerchantDefaults' do
-      producer_class Kafka::Producers::VendorMerchantAssignmentProducer
-      schema 'VendorMerchantAssignment'
-      key_config field: :id
+      )
+      <%- end -%>
+      <%- consumer.except(:topic, :kafka).each do |k, v| -%>
+      <%= k.to_s %> <%= v.inspect %>
+      <%- end -%>
     end
-
-    topic 'Vendors.Capabilities' do
-      producer_class Kafka::Producers::CapabilitiesProducer
-      schema 'VendorCapabilities'
-      key_config field: :vendor_id
-    end
+    <%- end -%>
 
     # Uncomment this if you use Karafka with ActiveJob
     # You need to define the topic per each queue name you use
@@ -108,16 +124,17 @@ class KarafkaApp < Karafka::App
   end
 end
 
+Deimos.setup_karafka
+
 # Karafka now features a Web UI!
 # Visit the setup documentation to get started and enhance your experience.
 #
 # https://karafka.io/docs/Web-UI-Getting-Started
-Deimos.setup_karafka
 
-Karafka::Web.setup do |config|
-  # You may want to set it per ENV. This value was randomly generated.
-  config.ui.sessions.secret = '5b6fb81074f5ec96d7af7c7bd97297dc98a0074ddfe8037a9acd70b6e96c52a4'
-end
+# Karafka::Web.setup do |config|
+#   # You may want to set it per ENV. This value was randomly generated.
+#   config.ui.sessions.secret = '<%= SecureRandom.hex %>'
+# end
 
-Karafka::Web.enable!
+# Karafka::Web.enable!
 

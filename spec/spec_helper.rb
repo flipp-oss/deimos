@@ -158,14 +158,14 @@ module DbConfigs
   end
 
   # :nodoc:
-  def run_db_backend_migration
-    migration_class_name = 'DbBackendMigration'
+  def run_outbox_backend_migration
+    migration_class_name = 'OutboxBackendMigration'
     migration_version = '[5.2]'
     migration = ERB.new(
-      File.read('lib/generators/deimos/db_backend/templates/migration')
+      File.read('lib/generators/deimos/outbox_backend/templates/migration')
     ).result(binding)
     eval(migration) # rubocop:disable Security/Eval
-    ActiveRecord::Migration.new.run(DbBackendMigration, direction: :up)
+    ActiveRecord::Migration.new.run(OutboxBackendMigration, direction: :up)
   end
 
   # :nodoc:
@@ -182,7 +182,7 @@ module DbConfigs
   # Set up the given database.
   def setup_db(options)
     ActiveRecord::Base.establish_connection(options)
-    run_db_backend_migration
+    run_outbox_backend_migration
     run_db_poller_migration
 
     ActiveRecord::Base.descendants.each do |klass|

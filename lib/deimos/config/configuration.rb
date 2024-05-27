@@ -18,7 +18,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       load_generated_schema_classes
     end
     generate_key_schemas
-    validate_db_backend if self.config.producers.backend == :db
+    validate_outbox_backend if self.config.producers.backend == :outbox
   end
 
   class << self
@@ -49,11 +49,11 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
     # Ensure everything is set up correctly for the DB backend.
     # @!visibility private
-    def validate_db_backend
+    def validate_outbox_backend
       begin
         require 'activerecord-import'
       rescue LoadError
-        raise 'Cannot set producers.backend to :db without activerecord-import! Please add it to your Gemfile.'
+        raise 'Cannot set producers.backend to :outbox without activerecord-import! Please add it to your Gemfile.'
       end
     end
   end
@@ -192,7 +192,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     setting :outbox do
 
       # @return [Logger]
-      setting :logger, default_proc: proc { Deimos.config.logger }
+      setting :logger, default_proc: proc { Karafka.logger }
 
       # @return [Symbol|Array<String>] A list of topics to log all messages, or
       # :all to log all topics.
@@ -202,6 +202,12 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # before sending, or :all to compact all keyed messages.
       setting :compact_topics, []
 
+    end
+
+    setting :db_producer do
+      setting :logger, removed: "Use outbox.logger"
+      setting :log_topics, removed: "Use outbox.log_topics"
+      setting :compact_topics, removed: "Use outbox.compact_topics"
     end
 
     setting_object :producer do

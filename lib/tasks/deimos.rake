@@ -23,7 +23,7 @@ namespace :deimos do
     STDOUT.sync = true
     Rails.logger.info('Running deimos:outbox rake task.')
     thread_count = ENV['THREAD_COUNT'].to_i.zero? ? 1 : ENV['THREAD_COUNT'].to_i
-    Deimos.start_db_backend!(thread_count: thread_count)
+    Deimos.start_outbox_backend!(thread_count: thread_count)
   end
 
   task db_poller: :environment do
