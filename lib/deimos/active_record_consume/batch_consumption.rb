@@ -27,10 +27,10 @@ module Deimos
       def consume_batch
         deimos_messages = messages.map { |p, k| Deimos::Message.new(p.payload, key: p.key) }
 
-        tag = messages.metadata.topic
+        tag = topic.name
         Deimos.config.tracer.active_span.set_tag('topic', tag)
 
-        Karafka.monitor.instrument('deimos.ar_consumer.consume_batch', tag) do
+        Karafka.monitor.instrument('deimos.ar_consumer.consume_batch', {topic: tag}) do
           if @compacted && deimos_messages.map(&:key).compact.any?
             update_database(compact_messages(deimos_messages))
           else
