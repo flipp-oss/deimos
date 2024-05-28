@@ -28,13 +28,13 @@ describe Deimos do
         config.producers.backend = :kafka
       end
       expect { described_class.start_outbox_backend!(thread_count: 2) }.
-        to raise_error('Publish backend is not set to :db, exiting')
+        to raise_error('Publish backend is not set to :outbox, exiting')
     end
 
     it 'should not start if thread_count is nil' do
       expect(Sigurd::SignalHandler).not_to receive(:new)
       described_class.configure do |config|
-        config.producers.backend = :db
+        config.producers.backend = :outbox
       end
       expect { described_class.start_outbox_backend!(thread_count: nil) }.
         to raise_error('Thread count is not given or set to zero, exiting')
@@ -43,7 +43,7 @@ describe Deimos do
     it 'should not start if thread_count is 0' do
       expect(Sigurd::SignalHandler).not_to receive(:new)
       described_class.configure do |config|
-        config.producers.backend = :db
+        config.producers.backend = :outbox
       end
       expect { described_class.start_outbox_backend!(thread_count: 0) }.
         to raise_error('Thread count is not given or set to zero, exiting')
