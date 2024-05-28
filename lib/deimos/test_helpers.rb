@@ -12,8 +12,13 @@ module Deimos
   module TestHelpers
     extend ActiveSupport::Concern
 
+    # @param client [Karafka::Testing::RSpec::Proxy]
+    # @return [Array<Hash>]
+    def sent_messages(client=nil)
+      self.class.sent_messages(client)
+    end
+
     class << self
-      # for backwards compatibility
       # @param client [Karafka::Testing::RSpec::Proxy]
       # @return [Array<Hash>]
       def sent_messages(client=nil)
@@ -69,8 +74,8 @@ module Deimos
     end
 
     # @!visibility private
-    def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
-      messages = sent_messages(karafka).select { |m| m[:topic] == topic }
+    def _frk_failure_message(client, topic, message, key=nil, partition_key=nil, was_negated=false)
+      messages = Deimos::TestHelpers.sent_messages(client).select { |m| m[:topic] == topic }
       message_string = ''
       diff = nil
       min_hash_diff = nil
@@ -89,8 +94,8 @@ module Deimos
     end
 
     RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil|
+      message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
-        message = Deimos::TestHelpers.normalize_message(msg)
         message_key = Deimos::TestHelpers.normalize_message(key)
         hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
         Deimos::TestHelpers.sent_messages(karafka).any? do |m|
@@ -109,10 +114,10 @@ module Deimos
       end
 
       failure_message do |topic|
-        _frk_failure_message(topic, message, key, partition_key)
+        _frk_failure_message(karafka, topic, message, key, partition_key)
       end
       failure_message_when_negated do |topic|
-        _frk_failure_message(topic, message, key, partition_key, true)
+        _frk_failure_message(karafka, topic, message, key, partition_key, true)
       end
     end
 
