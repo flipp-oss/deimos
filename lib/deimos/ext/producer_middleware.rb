@@ -4,27 +4,33 @@ module Deimos
     class << self
 
       def call(message)
-        config = Deimos.karafka_config_for(topic: message[:topic])
-        return message if config.nil? || (message[:payload] && !message[:payload].is_a?(Hash))
+        Karafka.monitor.instrument(
+          'deimos.encode_message',
+          producer: self,
+          message: message
+        ) do
+          config = Deimos.karafka_config_for(topic: message[:topic])
+          return message if config.nil? || (message[:payload] && !message[:payload].is_a?(Hash))
 
-        m = Deimos::Message.new(message[:payload].to_h,
-                                headers: message[:headers],
-                                partition_key: message[:partition_key])
-        _process_message(m, message, config)
-        message[:payload] = m.encoded_payload
-        message[:key] = m.encoded_key
-        message[:partition_key] = if m.partition_key
-                                    m.partition_key.to_s
-                                  elsif m.key
-                                    m.key.to_s
-                                  else
-                                    nil
-                                  end
-        message[:topic] = "#{Deimos.config.producers.topic_prefix}#{config.name}"
+          m = Deimos::Message.new(message[:payload].to_h,
+                                  headers: message[:headers],
+                                  partition_key: message[:partition_key])
+          _process_message(m, message, config)
+          message[:payload] = m.encoded_payload
+          message[:key] = m.encoded_key
+          message[:partition_key] = if m.partition_key
+                                      m.partition_key.to_s
+                                    elsif m.key
+                                      m.key.to_s
+                                    else
+                                      nil
+                                    end
+          message[:topic] = "#{Deimos.config.producers.topic_prefix}#{config.name}"
 
-        validate_key_config(config, message)
+          validate_key_config(config, message)
 
-        message
+          message
+        end
       end
 
       def validate_key_config(config, message)

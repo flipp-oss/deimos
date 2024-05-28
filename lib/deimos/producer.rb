@@ -96,24 +96,17 @@ module Deimos
         return if Deimos.producers_disabled?(self)
 
         backend_class = determine_backend_class(sync, force_send)
-        Karafka.monitor.instrument(
-          'deimos.encode_messages',
-          producer: self,
-          topic: topic,
-          payloads: payloads
-        ) do
-          messages = Array(payloads).map do |p|
-            {
-              payload: p&.to_h,
-              headers: headers,
-              topic: topic,
-              partition_key: self.partition_key(p)
-            }
-          end
-          messages.each { |m| m[:label] = m }
-          messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
-            self.produce_batch(backend_class, batch)
-          end
+        messages = Array(payloads).map do |p|
+          {
+            payload: p&.to_h,
+            headers: headers,
+            topic: topic,
+            partition_key: self.partition_key(p)
+          }
+        end
+        messages.each { |m| m[:label] = m }
+        messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
+          self.produce_batch(backend_class, batch)
         end
       end
 

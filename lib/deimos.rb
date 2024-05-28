@@ -109,8 +109,8 @@ module Deimos
     # @return [void]
     def start_outbox_backend!(thread_count: 1)
       Sigurd.exit_on_signal = true
-      if self.config.producers.backend != :db
-        raise('Publish backend is not set to :db, exiting')
+      if self.config.producers.backend != :outbox
+        raise('Publish backend is not set to :outbox, exiting')
       end
 
       if thread_count.nil? || thread_count.zero?
@@ -131,7 +131,7 @@ module Deimos
     def setup_karafka
       Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
       Karafka.monitor.notifications_bus.register_event('deimos.ar_consumer.consume_batch')
-      Karafka.monitor.notifications_bus.register_event('deimos.encode_messages')
+      Karafka.monitor.notifications_bus.register_event('deimos.encode_message')
       Karafka.monitor.notifications_bus.register_event('deimos.outbox.produce')
 
       Karafka.producer.monitor.subscribe('error.occurred') do |event|

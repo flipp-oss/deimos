@@ -14,9 +14,16 @@ module Deimos
 
     class << self
       # for backwards compatibility
+      # @param client [Karafka::Testing::RSpec::Proxy]
       # @return [Array<Hash>]
-      def sent_messages
-        karafka.produced_messages
+      def sent_messages(client=nil)
+        (client || karafka).produced_messages.map do |m|
+          produced_message = m.except(:label).deep_dup
+          Deimos.decode_message(produced_message)
+          produced_message[:payload] = Deimos::TestHelpers.normalize_message(produced_message[:payload])
+          produced_message[:key] = Deimos::TestHelpers.normalize_message(produced_message[:key])
+          produced_message
+        end
       end
 
       # Set the config to the right settings for a unit test
@@ -63,13 +70,13 @@ module Deimos
 
     # @!visibility private
     def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
-      messages = karafka.produced_messages.select { |m| m[:topic] == topic }
+      messages = sent_messages(karafka).select { |m| m[:topic] == topic }
       message_string = ''
       diff = nil
       min_hash_diff = nil
       message = Deimos::TestHelpers.normalize_message(message)
       if messages.any?
-        message_string = messages.map { |m| Deimos::TestHelpers.normalize_message(m[:payload]).inspect}.join("\n")
+        message_string = messages.map { |m| m[:payload].inspect}.join("\n")
         min_hash_diff = messages.min_by { |m| _hash_diff(m, message)&.keys&.size }
         diff = RSpec::Expectations.differ.diff_as_object(message, min_hash_diff[:payload])
       end
@@ -82,24 +89,19 @@ module Deimos
     end
 
     RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil|
-      message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
-        message_hash = Deimos::TestHelpers.normalize_message(message)
+        message = Deimos::TestHelpers.normalize_message(msg)
         message_key = Deimos::TestHelpers.normalize_message(key)
-        hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message_hash)
-        karafka.produced_messages.any? do |m|
-          produced_message = m.except(:label).deep_dup
-          Deimos.decode_message(produced_message)
-          payload = Deimos::TestHelpers.normalize_message(produced_message[:payload])
-          m_key = Deimos::TestHelpers.normalize_message(produced_message[:key])
-          hash_matcher.send(:match, message_hash, payload) &&
-            topic == produced_message[:topic] &&
-            (key.present? ? message_key == m_key : true) &&
-            (partition_key.present? ? partition_key == produced_message[:partition_key] : true) &&
+        hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
+        Deimos::TestHelpers.sent_messages(karafka).any? do |m|
+          hash_matcher.send(:match, message, m[:payload]) &&
+            topic == m[:topic] &&
+            (key.present? ? message_key == m[:key] : true) &&
+            (partition_key.present? ? partition_key == m[:partition_key] : true) &&
             if headers.present?
               hash_matcher.send(:match,
                                 headers.with_indifferent_access,
-                                produced_message[:headers]&.with_indifferent_access)
+                                m[:headers]&.with_indifferent_access)
             else
               true
             end

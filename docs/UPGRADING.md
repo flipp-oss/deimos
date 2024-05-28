@@ -4,6 +4,7 @@
 
 2.x is a major rewrite from 1.0.
 
+- Changed deimos.encode_messsages to deimos.encode_message in Karafka monitor
 - Note: generator needs to be run as KARAFKA_BOOT_FILE=false rails g deimos:v2
 - Datadog metrics can now take `:karafka_namespace, :karafka_distribution_mode, :rd_kafka_metrics` tags to pass to MetricsListener
 - Renamed :db backend to :outbox and :db_producer config to :outbox
@@ -39,7 +40,6 @@ FRK:
 - FlippRubyKafka.configure_datadog unless %w(test development).include?(Rails.env) in generated file
 
 TODO: 
-- generator
 - documentation
 - FRK updates
 - Check message too large flows

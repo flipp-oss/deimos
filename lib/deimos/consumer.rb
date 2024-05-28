@@ -7,10 +7,8 @@ require 'deimos/consume/message_consumption'
 # Note: According to the docs, instances of your handler will be created
 # for every incoming message/batch. This class should be lightweight.
 module Deimos
-  # Basic consumer class. Inherit from this class and override either consume
-  # or consume_batch, depending on the delivery mode of your listener.
-  # `consume` -> use `delivery :message` or `delivery :batch`
-  # `consume_batch` -> use `delivery :inline_batch`
+  # Basic consumer class. Inherit from this class and override either consume_message
+  # or consume_batch, depending on the `:batch` config setting.
   class Consumer < Karafka::BaseConsumer
     include Consume::MessageConsumption
     include Consume::BatchConsumption
