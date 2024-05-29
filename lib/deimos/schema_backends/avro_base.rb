@@ -26,7 +26,7 @@ module Deimos
           @key_schema = generate_key_schema(key_id)
         end
         field_name = _field_name_from_schema(@key_schema)
-        payload = { field_name => key }
+        payload = key.is_a?(Hash) ? key : { field_name => key }
         encode(payload, schema: @key_schema['name'], topic: topic)
       end
 

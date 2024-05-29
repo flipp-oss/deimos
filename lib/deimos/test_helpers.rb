@@ -4,6 +4,7 @@ require 'active_support/concern'
 require 'active_support/core_ext'
 require 'deimos/tracing/mock'
 require 'deimos/metrics/mock'
+require 'karafka/testing/rspec/helpers'
 
 module Deimos
   # Include this module in your RSpec spec_helper
@@ -11,6 +12,10 @@ module Deimos
   # and add methods to use to test encoding/decoding.
   module TestHelpers
     extend ActiveSupport::Concern
+    def self.included(base)
+      super
+      base.include Karafka::Testing::RSpec::Helpers
+    end
 
     # @param client [Karafka::Testing::RSpec::Proxy]
     # @return [Array<Hash>]

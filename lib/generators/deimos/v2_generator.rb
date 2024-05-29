@@ -14,6 +14,12 @@ module Deimos
     # Generator for ActiveRecord model and migration.
     class V2Generator < Rails::Generators::Base
 
+    class ProcString < String
+      def inspect
+        self.to_s
+      end
+    end
+
       source_root File.expand_path('v2/templates', __dir__)
 
       no_commands do
@@ -111,7 +117,7 @@ module Deimos
             configs = {
               kafka: kafka_configs.compact,
               topic: consumer.topic,
-              consumer: consumer.class_name,
+              consumer: ProcString.new(consumer.class_name),
               schema: consumer.schema,
               namespace: consumer.namespace,
               key_config: consumer.key_config,
@@ -130,7 +136,7 @@ module Deimos
           deimos_config.producer_objects.map do |producer|
             {
               topic: producer.topic,
-              producer_class: producer.class_name,
+              producer_class: ProcString.new(producer.class_name),
               schema: producer.schema,
               namespace: producer.namespace || deimos_config.producers.schema_namespace,
               key_config: producer.key_config,
@@ -154,13 +160,24 @@ module Deimos
           end
         end
 
+        def fix_specs
+          Dir["*/**/*_spec.rb"].each do |file|
+            gsub_file(file, /,\s*call_original: true/, "")
+          end
+        end
+
+        def process_all_files
+          template('karafka.rb.tt', "karafka.rb", force: true)
+          rename_consumer_methods
+          fix_specs
+        end
+
       end
 
       desc 'Generate and update app files for version 2.0'
       # @return [void]
       def generate
-        template('karafka.rb.tt', "karafka.rb", force: true)
-        rename_consumer_methods
+        process_all_files
         say "Generation complete! You are safe to remove the existing initializer that configures Deimos.", :green
         say "Note: The following settings cannot be determined by the generator:", :yellow
         say "*  logger / phobos_logger (dynamic object, cannot be printed out)", :yellow

@@ -85,7 +85,11 @@ class KarafkaApp < Karafka::App
     <%- producer_configs.each do |producer| -%>
     topic "<%= producer[:topic] %>" do
       <%- producer.except(:topic).each do |k, v| -%>
+      <%- if k.to_sym == :key_config -%>
+      <%= k.to_s %>(<%= v.inspect %>)
+      <%- else -%>
       <%= k.to_s %> <%= v.inspect %>
+      <%- end -%>
       <%- end -%>
     end
     <%- end -%>
@@ -101,7 +105,11 @@ class KarafkaApp < Karafka::App
       )
       <%- end -%>
       <%- consumer.except(:topic, :kafka).each do |k, v| -%>
+      <%- if k.to_sym == :key_config -%>
+      <%= k.to_s %>(<%= v.inspect %>)
+      <%- else -%>
       <%= k.to_s %> <%= v.inspect %>
+      <%- end -%>
       <%- end -%>
     end
     <%- end -%>
