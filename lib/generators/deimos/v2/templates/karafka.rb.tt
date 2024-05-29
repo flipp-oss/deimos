@@ -5,17 +5,13 @@ require 'karafka'
 
 Deimos.configure do
 <%- deimos_configs.each do |group, settings| -%>
-  <%- group_setting = orig_config.send(group) -%>
-  <%- next if settings.all? { |s| orig_config.send(group).default_value?(s)} -%>
   <%= group -%> do
-  <%- settings.each do |field| -%>
-  <%- unless group_setting.default_value?(field.to_sym) -%>
-    <%= field.to_s %> <%= group_setting.send(field).inspect %>
-  <%- end -%>
+  <%- settings.each do |k, v| -%>
+    <%= k.to_s %> <%= v.inspect %>
   <%- end -%>
   end
   <%- end -%>
-  <%- orig_config.db_poller_objects.each do |poller| -%>
+  <%- deimos_config.db_poller_objects.each do |poller| -%>
   db_poller do
     <%- poller.non_default_settings! -%>
     <%- poller.to_h.each do |k, v| -%>

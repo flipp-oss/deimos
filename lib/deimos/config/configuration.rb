@@ -13,7 +13,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
   # :nodoc:
   after_configure do
-    Deimos::Generators::V2Generator.original_config = self.config.deep_dup
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
