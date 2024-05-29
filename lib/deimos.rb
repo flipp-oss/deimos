@@ -138,7 +138,7 @@ module Deimos
         if event.payload.key?(:messages)
           topic = event[:messages].first[:topic]
           config = Deimos.karafka_config_for(topic: topic)
-          message = Deimos::Logging.messages_log_text(config.payload_log, event[:messages])
+          message = Deimos::Logging.messages_log_text(config&.payload_log, event[:messages])
           Karafka.logger.error("Error producing messages: #{event[:error].message} #{message.to_json}")
         end
       end
