@@ -42,7 +42,6 @@ FRK:
 
 TODO: 
 - documentation
-- FRK updates
 - Check message too large flows
 
 

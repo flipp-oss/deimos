@@ -102,6 +102,9 @@ module Deimos
               @logger.error('Message batch too large, deleting...')
               delete_messages(messages)
               raise e
+            else
+              Deimos.log_error("Got error #{e.cause.class.name} when publishing #{batch_size} messages, retrying...")
+              retry
             end
           end
         end

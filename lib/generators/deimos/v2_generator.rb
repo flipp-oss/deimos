@@ -68,7 +68,7 @@ module Deimos
 
         def default_kafka_configs
           configs = {}
-          configs["metadata.broker.list"] = deimos_config.kafka.seed_brokers
+          configs["bootstrap.servers"] = deimos_config.kafka.seed_brokers.join(',')
           configs["socket.connection.setup.timeout.ms"] = deimos_config.kafka.connect_timeout * 1000
           configs["socket.timeout.ms"] = deimos_config.kafka.socket_timeout * 1000
           configs["security.protocol"] = if deimos_config.kafka.ssl.enabled

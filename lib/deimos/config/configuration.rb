@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'fig_tree'
-require_relative 'karafka'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
 require 'active_support/core_ext/object'
@@ -66,7 +65,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
     setting :kafka do
       setting :logger, removed: "Karafka uses Rails logger by default"
-      setting :seed_brokers, ['localhost:9092'], removed: 'Use kafka(metadata.broker.list) in Karafka settings'
+      setting :seed_brokers, ['localhost:9092'], removed: 'Use kafka(bootstrap.servers) in Karafka settings'
       setting :client_id, 'phobos', removed: 'Use client_id in Karafka setup block.'
       setting :connect_timeout, 15, removed: 'Use kafka(socket.connection.setup.timeout.ms) in Karafka settings'
       setting :socket_timeout, 15, removed: 'Use kafka(socket.timeout.ms) in Karafka settings'

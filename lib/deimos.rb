@@ -119,11 +119,11 @@ module Deimos
 
       producers = (1..thread_count).map do
         Deimos::Utils::OutboxProducer.
-          new(self.config.outbox.logger || self.config.logger)
+          new(self.config.outbox.logger || Karafka.logger)
       end
       executor = Sigurd::Executor.new(producers,
                                       sleep_seconds: 5,
-                                      logger: self.config.logger)
+                                      logger: Karafka.logger)
       signal_handler = Sigurd::SignalHandler.new(executor)
       signal_handler.run!
     end

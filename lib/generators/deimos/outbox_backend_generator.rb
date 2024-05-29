@@ -6,7 +6,7 @@ require 'rails/generators/active_record/migration'
 module Deimos
   module Generators
     # Generate the database backend migration.
-    class DbBackendGenerator < Rails::Generators::Base
+    class OutboxBackendGenerator < Rails::Generators::Base
       include Rails::Generators::Migration
       if Rails.version < '4'
         extend(ActiveRecord::Generators::Migration)
