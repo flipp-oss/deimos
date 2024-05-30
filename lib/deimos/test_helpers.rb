@@ -182,7 +182,7 @@ module Deimos
         consumer = karafka.consumer_for(topic_name)
       end
 
-      Deimos.karafka_config_for(topic: topic_name).batch(!single)
+      Deimos.karafka_config_for(topic: topic_name).each_message(single)
 
        payloads.each_with_index do |payload, i|
          karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})

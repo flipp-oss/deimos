@@ -27,7 +27,6 @@ require 'deimos/ext/producer_route'
 require 'deimos/ext/producer_middleware'
 
 require 'deimos/railtie' if defined?(Rails)
-require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
 
 if defined?(ActiveRecord)
   require 'deimos/kafka_source'

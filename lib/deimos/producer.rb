@@ -80,19 +80,22 @@ module Deimos
       # @param headers [Hash] if specifying headers
       # @return [void]
       def publish(payload, topic: self.topic, headers: nil)
-        publish_list([payload], topic: topic, headers: headers)
+        produce([{payload: payload, topic: topic, headers: headers}])
       end
 
       # Produce a list of messages in WaterDrop message hash format.
       # @param messages [Array<Hash>]
-      def produce(messages)
+      # @param backend [Class < Deimos::Backend]
+      def produce(messages, backend: determine_backend_class)
         return if Deimos.producers_disabled?(self)
 
         messages.each do |m|
           m[:label] = m
           m[:partition_key] ||= self.partition_key(m[:payload])
         end
-        self.produce_batch(Deimos.config.producers.backend, messages)
+        messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
+          self.produce_batch(backend, batch)
+        end
       end
 
       # Publish a list of messages.
@@ -105,9 +108,8 @@ module Deimos
       # @param headers [Hash] if specifying headers
       # @return [void]
       def publish_list(payloads, sync: nil, force_send: false, topic: self.topic, headers: nil)
-        return if Deimos.producers_disabled?(self)
+        backend = determine_backend_class(sync, force_send)
 
-        backend_class = determine_backend_class(sync, force_send)
         messages = Array(payloads).map do |p|
           {
             payload: p&.to_h,
@@ -116,10 +118,7 @@ module Deimos
             partition_key: self.partition_key(p)
           }
         end
-        messages.each { |m| m[:label] = m }
-        messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
-          self.produce_batch(backend_class, batch)
-        end
+        self.produce(messages, backend: backend)
       end
 
       def karafka_config
@@ -133,7 +132,7 @@ module Deimos
       # @param sync [Boolean]
       # @param force_send [Boolean]
       # @return [Class<Deimos::Backends::Base>]
-      def determine_backend_class(sync, force_send)
+      def determine_backend_class(sync=false, force_send=false)
         backend = if force_send
                     :kafka
                   else

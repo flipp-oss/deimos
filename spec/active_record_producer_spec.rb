@@ -127,7 +127,7 @@ describe Deimos::ActiveRecordProducer do
   end
 
   specify '#watched_attributes' do
-    expect(MyProducer.watched_attributes).to eq(%w(test_id some_int))
+    expect(MyProducer.watched_attributes(nil)).to eq(%w(test_id some_int))
   end
 
 end

@@ -127,10 +127,12 @@ end
 * Since Karafka only supports Ruby >= 3.0, that means Deimos also only supports those versions.
 * Deimos no longer supports a separate logger from Karafka. When you configure a Karafka logger, Deimos will use that logger for all its logging. (Deimos logs will be prefixed with a `[Deimos]` tag.)
 * The `:db` backend has been renamed to `:outbox`. All associated classes (like `DbProducer`) have likewise been renamed. The Rake task has also been renamed to `rake deimos:outbox`.
-* The `:test` backend has been removed and the `Deimos::TestHelpers` module is now largely powered by [karafka-testing](https://github.com/karafka/karafka-testing/).
+* The `SchemaControllerMixin` has been removed as there was no serious usage for it.
+* `InlineConsumer` has been removed - Karafka Pro has an [Iterator API](https://karafka.io/docs/Pro-Iterator-API/) that does the same thing. There also has been no evidence that it was used (and was probably pretty buggy).
+* The `:test` backend has been removed and the `Deimos::TestHelpers` module is now largely powered by [karafka-testing](https://github.com/karafka/karafka-testing/). This means that you can no longer use `Deimos::Backends::Test.sent_messages` - you need to use `Deimos::TestHelpers.sent_messages`.
 * Individual consumer and producer settings now live within Karafka route configuration. This means you can no longer call e.g. `consumer.schema` to retrieve this information, as settings are no longer stored directly on the consumer and producer objects (it is still available, but via different methods).
 * Consumers should no longer define a `consume` method, as the semantics have changed with Karafka. Instead, you can define a `consume_message` or `consume_batch` method. Both of these methods now take Karafka `Message` objects instead of hashes. The V2 generator can handle translating this for you, but if you create new consumers, you should take advantage of the Karafka functionality and use it first-class.
-* Phobos `delivery_method` is no longer relevant. Instead, specify a `batch` setting for your consumer. If set to true, you should define a `consume_batch` method. Otherwise, you should define a `consume_message` method.
+* Phobos `delivery_method` is no longer relevant. Instead, specify an `each_message` setting for your consumer. If set to true, you should define a `consume_message` method. Otherwise, you should define a `consume_batch` method. (Note that this is the reverse from the previous default, which assumed `delivery_method: message`.)
 
 ```ruby
 # before:
@@ -147,15 +149,15 @@ end
 
 # now:
 class MyConsumer < Deimos::Consumer
+  def consume_batch
+    payloads = messages.payloads # messages is an instance method and `payloads` will return the decoded hashes
+  end
+
+  # OR with batch(false)
   def consume_message(message)
     # message is a Karafka Message object
     payload = message.payload
     key = message.key # etc.
-  end
-
-  # OR with batch(true)
-  def consume_batch
-    payloads = messages.payloads # messages is an instance method and `payloads` will return the decoded hashes
   end
 end
 ```
@@ -212,6 +214,8 @@ The following events have been **renamed**:
 * `key_config` now defaults to `{none: true}` instead of erroring out if not set.
 * `reraise_errors` now defaults to `true`.
 * `fatal_error?` now receives a Karafka `messages` object instead of a payload hash or array of hashes.
+* `watched_attributes` has been moved from the corresponding ActiveRecord class to the ActiveRecordProducer class. The object being watched is passed into the method.
+* Removed `TestHelpers.full_integration_test!` and `kafka_test!` as Karafka does not currently support these use cases. If we need them back, we will need to put in changes to the testing library to support them.
 
 ### New functionality
 
@@ -223,7 +227,7 @@ The following events have been **renamed**:
     - Instance method to determine partition key (rather than passing it in)
     - Using `Deimos.disable_producers`
 - If you need these features, you must continue using a `Deimos::Producer`.
-- You can now call `.produce(messages)` directly on a `Deimos::Producer` which allows for use of these features while still passing a Karafka message hash. This removes the need to add a `payload_key` key into your payload.
+- You can now call `.produce(messages)` directly on a `Deimos::Producer` which allows for use of these features while still passing a Karafka message hash. This removes the need to add a `payload_key` key into your payload. This is now the recommended method to use in a Deimos Producer.
 
 ### New deprecations
 * For testing, you no longer have to call `unit_test!` to get the right settings. It is handled automatically by Karafka.

@@ -31,7 +31,7 @@ module Deimos
       return unless self.class.kafka_config[:update]
 
       producers = self.class.kafka_producers
-      fields = producers.flat_map(&:watched_attributes).uniq
+      fields = producers.flat_map { |p| p.watched_attributes(self) }.uniq
       fields -= ['updated_at']
       # Only send an event if a field we care about was changed.
       any_changes = fields.any? do |field|

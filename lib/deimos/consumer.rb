@@ -15,10 +15,10 @@ module Deimos
     include SharedConfig
 
     def consume
-      if self.topic.batch
-        _consume_batch
-      else
+      if self.topic.each_message
         _consume_messages
+      else
+        _consume_batch
       end
     end
 

@@ -127,7 +127,7 @@ module Deimos
             configs[:bulk_import_id_column] = consumer.bulk_import_id_column unless consumer.default_value?(:bulk_import_id_column)
             configs[:replace_associations] = consumer.replace_associations unless consumer.default_value?(:replace_associations)
             configs[:active] = false if consumer.disabled
-            configs[:batch] = true if consumer.delivery.to_s == 'inline_batch'
+            configs[:each_message] = true unless consumer.delivery.to_s == 'inline_batch'
             configs
           end
         end

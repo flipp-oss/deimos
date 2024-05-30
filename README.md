@@ -8,7 +8,10 @@
 
 A Ruby framework for marrying Kafka, a schema definition like Avro, and/or ActiveRecord and provide
 a useful toolbox of goodies for Ruby-based Kafka development.
-Built on Karafka.
+Built on [Karafka](https://karafka.io/).
+
+[!IMPORTANT]  
+Deimos 2.x is a major rewrite from 1.x. Please see the [Upgrading Guide](./docs/UPGRADING.md) for information on the changes and how to upgrade.
 
 <!--ts-->
    * [Additional Documentation](#additional-documentation)
@@ -23,15 +26,15 @@ Built on Karafka.
         * [Kafka Message Keys](#kafka-message-keys)
    * [Consumers](#consumers)
    * [Rails Integration](#rails-integration)
-        * [Controller Mixin](#controller-mixin)
-   * [Database Backend](#database-backend)
+        * [Producing](#rails-producing)
+        * [Consuming](#rails-consuming)
+        * [Generating Tables and Models](#generating-tables-and-models)
+   * [Outbox Backend](#outbox-backend)
    * [Database Poller](#database-poller)
    * [Running Consumers](#running-consumers)
    * [Generated Schema Classes](#generated-schema-classes)
    * [Metrics](#metrics)
    * [Testing](#testing)
-        * [Test Helpers](#test-helpers)
-        * [Integration Test Helpers](#integration-test-helpers)
    * [Utilities](#utilities)
    * [Contributing](#contributing) 
 <!--te-->
@@ -70,7 +73,7 @@ are for bugfixes or new functionality which does not affect existing code. You
 should be locking your Gemfile to the minor version:
 
 ```ruby
-gem 'deimos-ruby', '~> 1.1'
+gem 'deimos-ruby', '~> 1.1.0'
 ```
 
 # Configuration
@@ -100,7 +103,15 @@ To create a new schema backend, please see the existing examples [here](lib/deim
 
 # Producers
 
-Producers will look like this:
+With the correct [configuration](./docs/CONFIGURATION.md), you do not need to use a Deimos producer class in order to send schema-encoded messages to Kafka. You can simply use `Karafka.producer.produce()` (see [here](https://karafka.io/docs/Producing-messages/)). There are a few features that Deimos producers provide:
+
+* Using an instance method to determine partition key based on the provided payload
+* Allowing global disabling of producers (or a particular producer class)
+* Usage of the [Outbox](#outbox) producer backend.
+
+Producer classes in general are a handy way to coerce some object into a hash or [schema class](#generated-schema-classes) that represents the payload.
+
+A Deimos producer could look like this:
 
 ```ruby
 class MyProducer < Deimos::Producer
@@ -113,27 +124,22 @@ class MyProducer < Deimos::Producer
       payload[:my_id]
     end
    
-    # You can call publish / publish_list directly, or create new methods
-    # wrapping them.
+    # You can call produce directly, or create new methods wrapping it.
     
     def send_some_message(an_object)
       payload = {
         'some-key' => an_object.foo,
         'some-key2' => an_object.bar
       }
-      # You can also publish an array with self.publish_list(payloads)
-      # You may specify the topic here with self.publish(payload, topic: 'my-topic')
-      # You may also specify the headers here with self.publish(payload, headers: { 'foo' => 'bar' })
-      self.publish(payload)
+      self.produce([{payload: payload}])
+      # additional keys can be added - see https://karafka.io/docs/WaterDrop-Usage/
+      self.produce([{payload: payload, topic: "other-topic", key: "some-key", partition_key: "some-key2"}])
     end
-    
   end
-  
-  
 end
 ```
 
-### Auto-added Fields
+## Auto-added Fields
 
 If your schema has a field called `message_id`, and the payload you give
 your producer doesn't have this set, Deimos will auto-generate
@@ -143,7 +149,7 @@ so that you can track each sent message via logging.
 You can also provide a field in your schema called `timestamp` which will be 
 auto-filled with the current timestamp if not provided.
 
-### Coerced Values
+## Coerced Values
 
 Deimos will do some simple coercions if you pass values that don't
 exactly match the schema.
@@ -155,60 +161,28 @@ representing a number, will be parsed to Float.
 * If the schema is :string, if the value implements its own `to_s` method,
 this will be called on it. This includes hashes, symbols, numbers, dates, etc.
 
-### Instrumentation
+## Disabling Producers
 
-Deimos will send ActiveSupport Notifications. 
-You can listen to these notifications e.g. as follows:
-
+You can disable producers globally or inside a block. Globally:
 ```ruby
-  Deimos.subscribe('produce') do |event|
-    # event is an ActiveSupport::Notifications::Event
-    # you can access time, duration, and transaction_id
-    # payload contains :producer, :topic, and :payloads
-    data = event.payload
-  end
-``` 
+Deimos.config.producers.disabled = true
+```
 
-The following events are produced (in addition to the ones already
-produced by Phobos and RubyKafka):
-
-* `produce_error` - sent when an error occurs when producing a message.
-  * producer - the class that produced the message
-  * topic
-  * exception_object
-  * payloads - the unencoded payloads
-* `encode_messages` - sent when messages are being schema-encoded.
-  * producer - the class that produced the message
-  * topic
-  * payloads - the unencoded payloads
-* `db_producer.produce` - sent when the DB producer sends messages for the
-   DB backend. Messages that are too large will be caught with this
-   notification - they will be deleted from the table and this notification
-   will be fired with an exception object.
-   * topic
-   * exception_object
-   * messages - the batch of messages (in the form of `Deimos::KafkaMessage`s)
-     that failed - this should have only a single message in the batch.
-* `batch_consumption.valid_records` - sent when the consumer has successfully upserted records. Limited by `max_db_batch_size`.
-  * consumer: class of the consumer that upserted these records
-  * records: Records upserted into the DB (of type `ActiveRecord::Base`)
-* `batch_consumption.invalid_records` - sent when the consumer has rejected records returned from `filtered_records`. Limited by `max_db_batch_size`.
-  * consumer: class of the consumer that rejected these records
-  * records: Rejected records (of type `Deimos::ActiveRecordConsume::BatchRecord`)
-  
-Similarly: 
+For the duration of a block:
 ```ruby
-  Deimos.subscribe('produce_error') do |event|	
-    data = event.payloads 	
-    Mail.send("Got an error #{event.exception_object.message} on topic #{data[:topic]} with payloads #{data[:payloads]}")	
-  end	
-      
-  Deimos.subscribe('encode_messages') do |event|	
-    # ... 
-  end	
-``` 
+Deimos.disable_producers do
+  # code goes here
+end
+```
 
-### Kafka Message Keys
+For specific producers only:
+```ruby
+Deimos.disable_producers(Producer1, Producer2) do
+  # code goes here
+end
+```
+
+## Kafka Message Keys
 
 Topics representing events rather than domain data don't need keys. However,
 best practice for domain messages is to schema-encode message keys 
@@ -291,6 +265,40 @@ it will be encoded first against the schema). So your payload would look like
 Remember that if you're using `schema`, the `payload_key` must be a *hash*,
 not a plain value.
 
+## Instrumentation
+
+Deimos will send events through the [Karafka instrumentation monitor](https://karafka.io/docs/Monitoring-and-Logging/#subscribing-to-the-instrumentation-events). 
+You can listen to these notifications e.g. as follows:
+
+```ruby
+  Karafka.monitor.subscribe('deimos.encode_message') do |event|
+    # event is a Karafka Event. You can use [] to access keys in the payload.
+    messages = event[:messages]
+  end
+``` 
+
+The following events are produced (in addition to the ones already
+produced by Phobos and RubyKafka):
+
+* `deimos.encode_message` - sent when messages are being schema-encoded.
+  * producer - the class that produced the message
+  * topic
+  * payloads - the unencoded payloads
+* `outbox.produce` - sent when the outbox producer sends messages for the
+   outbox backend. Messages that are too large will be caught with this
+   notification - they will be deleted from the table and this notification
+   will be fired with an exception object.
+   * topic
+   * exception_object
+   * messages - the batch of messages (in the form of `Deimos::KafkaMessage`s)
+     that failed - this should have only a single message in the batch.
+* `deimos.batch_consumption.valid_records` - sent when the consumer has successfully upserted records. Limited by `max_db_batch_size`.
+  * consumer: class of the consumer that upserted these records
+  * records: Records upserted into the DB (of type `ActiveRecord::Base`)
+* `deimos.batch_consumption.invalid_records` - sent when the consumer has rejected records returned from `filtered_records`. Limited by `max_db_batch_size`.
+  * consumer: class of the consumer that rejected these records
+  * records: Rejected records (of type `Deimos::ActiveRecordConsume::BatchRecord`)
+  
 # Consumers
 
 Here is a sample consumer:
@@ -305,18 +313,16 @@ class MyConsumer < Deimos::Consumer
     exception.is_a?(MyBadError)
   end
 
-  def consume(payload, metadata)
-    # Same method as Phobos consumers.
-    # payload is an schema-decoded hash.
-    # metadata is a hash that contains information like :key and :topic.
-    # In general, your key should be included in the payload itself. However,
-    # if you need to access it separately from the payload, you can use
-    # metadata[:key]
+  def consume_batch
+    # messages is a Karafka Messages - see https://github.com/karafka/karafka/blob/master/lib/karafka/messages/messages.rb
+    messages.payloads.each do |payload|
+      puts payload
+    end
   end
 end
 ```
 
-### Fatal Errors
+## Fatal Errors
 
 The recommended configuration is for consumers *not* to raise errors
 they encounter while consuming messages. Errors can be come from 
@@ -330,95 +336,31 @@ can use instrumentation to handle errors you receive. You can also
 specify "fatal errors" either via global configuration (`config.fatal_error`)
 or via overriding a method on an individual consumer (`def fatal_error`).
 
-### Batch Consumption
+## Per-Message Consumption
 
-Instead of consuming messages one at a time, consumers can receive a batch of
-messages as an array and then process them together. This can improve
-consumer throughput, depending on the use case. Batch consumers behave like
-other consumers in regards to key and payload decoding, etc.
+Instead of consuming messages in a batch, consumers can process one message at a time. This is
+helpful if the logic involved in each message is independent and you don't want to treat the whole
+batch as a single unit.
 
-To enable batch consumption, ensure that the `delivery` property of your
-consumer is set to `inline_batch`.
+To enable message consumption, ensure that the `each_message` property of your
+consumer is set to `true`.
 
-Batch consumers will invoke the `consume_batch` method instead of `consume`
+Per-message consumers will invoke the `consume_message` method instead of `consume_batch`
 as in this example:
 
 ```ruby
-class MyBatchConsumer < Deimos::Consumer
+class MyMessageConsumer < Deimos::Consumer
 
-  def consume_batch(payloads, metadata)
-    # payloads is an array of schema-decoded hashes.
-    # metadata is a hash that contains information like :keys, :topic, 
-    # and :first_offset.
-    # Keys are automatically decoded and available as an array with
-    # the same cardinality as the payloads. If you need to iterate
-    # over payloads and keys together, you can use something like this:
- 
-    payloads.zip(metadata[:keys]) do |_payload, _key|
-      # Do something 
-    end
-  end
-end
-```
-#### Saving data to Multiple Database tables
-
-> This feature is implemented and tested with MySQL database ONLY.
-
-Sometimes, the Kafka message needs to be saved to multiple database tables. For example, if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables: `User` and `Image`.
-
-- Return associations as keys in `record_attributes` to enable this feature.
-- The `bulk_import_id_column` config allows you to specify column_name on `record_class` which can be used to retrieve IDs after save. Defaults to `bulk_import_id`. This config is *required* if you have associations but optional if you do not.
-
-You must override the `record_attributes` (and optionally `column` and `key_columns`) methods on your consumer class for this feature to work.
-- `record_attributes` - This method is required to map Kafka messages to ActiveRecord model objects.
-- `columns(klass)` - Should return an array of column names that should be used by ActiveRecord klass during SQL insert operation.
-- `key_columns(messages, klass)` -  Should return an array of column name(s) that makes a row unique.
-```ruby
-class User < ApplicationRecord
-  has_many :images
-end
-
-class MyBatchConsumer < Deimos::ActiveRecordConsumer
-
-  record_class User
-
-  def record_attributes(payload, _key)
-    {
-      first_name: payload.first_name,
-      images: [
-                {
-                  attr1: payload.image_url
-                },
-                {
-                  attr2: payload.other_image_url
-                }
-              ]
-    }
-  end
-  
-  def key_columns(klass)
-    case klass
-    when User
-      nil # use default
-    when Image
-      ["image_url", "image_name"]
-    end
-  end
-
-  def columns(klass)
-    case klass
-    when User
-      nil # use default
-    when Image
-      klass.columns.map(&:name) - [:created_at, :updated_at, :id]
-    end
+  def consume_message(message)
+    # message is a Karafka Message object
+    puts message.payload
   end
 end
 ```
 
 # Rails Integration
 
-### Producing
+## <a name="rails-producing">Producing</a>
 
 Deimos comes with an ActiveRecordProducer. This takes a single or
 list of ActiveRecord objects or hashes and maps it to the given schema.
@@ -439,7 +381,7 @@ class MyProducer < Deimos::ActiveRecordProducer
 
   # Optionally override this if you want the message to be 
   # sent even if fields that aren't in the schema are changed.
-  def watched_attributes
+  def watched_attributes(_record)
     super + ['a_non_schema_attribute']
   end
 
@@ -458,28 +400,7 @@ MyProducer.send_events([Widget.new(foo: 1), Widget.new(foo: 2)])
 MyProducer.send_events([{foo: 1}, {foo: 2}])
 ```
 
-#### Disabling Producers
-
-You can disable producers globally or inside a block. Globally:
-```ruby
-Deimos.config.producers.disabled = true
-```
-
-For the duration of a block:
-```ruby
-Deimos.disable_producers do
-  # code goes here
-end
-```
-
-For specific producers only:
-```ruby
-Deimos.disable_producers(Producer1, Producer2) do
-  # code goes here
-end
-```
-
-#### KafkaSource
+### KafkaSource
 
 There is a special mixin which can be added to any ActiveRecord class. This
 will create callbacks which will automatically send messages to Kafka whenever
@@ -491,7 +412,7 @@ will not fire if using pure SQL or Arel.
 Note that these messages are sent *during the transaction*, i.e. using
 `after_create`, `after_update` and `after_destroy`. If there are
 questions of consistency between the database and Kafka, it is recommended
-to switch to using the DB backend (see next section) to avoid these issues.
+to switch to using the outbox backend (see next section) to avoid these issues.
 
 When the object is destroyed, an empty payload with a payload key consisting of
 the record's primary key is sent to the producer. If your topic's key is
@@ -525,120 +446,7 @@ class Widget < ActiveRecord::Base
 end
 ```
 
-### Controller Mixin
-
-Deimos comes with a mixin for `ActionController` which automatically encodes and decodes schema
-payloads. There are some advantages to encoding your data in e.g. Avro rather than straight JSON,
-particularly if your service is talking to another backend service rather than the front-end
-browser:
-
-* It enforces a contract between services. Solutions like [OpenAPI](https://swagger.io/specification/) 
-  do this as well, but in order for the client to know the contract, usually some kind of code 
-  generation has to happen. Using schemas ensures both sides know the contract without having to change code.
-  In addition, OpenAPI is now a huge and confusing format, and using simpler schema formats
-  can be beneficial.
-* Using Avro or Protobuf ensures both forwards and backwards compatibility,
-  which reduces the need for versioning since both sides can simply ignore fields they aren't aware
-  of.
-* Encoding and decoding using Avro or Protobuf is generally faster than straight JSON, and
-  results in smaller payloads and therefore less network traffic.
-
-To use the mixin, add the following to your `WhateverController`:
-
-```ruby
-class WhateverController < ApplicationController
-  include Deimos::Utils::SchemaControllerMixin
-
-  request_namespace 'my.namespace.requests'
-  response_namespace 'my.namespace.responses'
-  
-  # Add a "schemas" line for all routes that should encode/decode schemas.
-  # Default is to match the schema name to the route name.
-  schemas :index
-  # will look for: my.namespace.requests.Index.avsc
-  #                my.namespace.responses.Index.avsc 
-  
-  # Can use mapping to change the schema but keep the namespaces,
-  # i.e. use the same schema name across the two namespaces
-  schemas create: 'CreateTopic'
-  # will look for: my.namespace.requests.CreateTopic.avsc
-  #                my.namespace.responses.CreateTopic.avsc 
-
-  # If all routes use the default, you can add them all at once
-  schemas :index, :show, :update
-
-  # Different schemas can be specified as well
-  schemas :index, :show, request: 'IndexRequest', response: 'IndexResponse'
-
-  # To access the encoded data, use the `payload` helper method, and to render it back,
-  # use the `render_schema` method.
-  
-  def index
-    response = { 'response_id' => payload['request_id'] + 'hi mom' }
-    render_schema(response)
-  end
-end
-```
-
-To make use of this feature, your requests and responses need to have the correct content type.
-For Avro content, this is the `avro/binary` content type.
-
-# Database Backend
-
-Deimos provides a way to allow Kafka messages to be created inside a
-database transaction, and send them asynchronously. This ensures that your
-database transactions and Kafka messages related to those transactions 
-are always in sync. Essentially, it separates the message logic so that a 
-message is first validated, encoded, and saved in the database, and then sent
-on a separate thread. This means if you have to roll back your transaction,
-it also rolls back your Kafka messages.
-
-This is also known as the [Transactional Outbox pattern](https://microservices.io/patterns/data/transactional-outbox.html).
-
-To enable this, first generate the migration to create the relevant tables:
-
-    rails g deimos:db_backend
-    
-You can now set the following configuration:
-
-    config.producers.backend = :db
-
-This will save all your Kafka messages to the `kafka_messages` table instead
-of immediately sending to Kafka. Now, you just need to call
-
-    Deimos.start_db_backend!
-    
-You can do this inside a thread or fork block.
-If using Rails, you can use a Rake task to do this:
-
-    rails deimos:db_producer
-    
-This creates one or more threads dedicated to scanning and publishing these 
-messages by using the `kafka_topics` table in a manner similar to 
-[Delayed Job](https://github.com/collectiveidea/delayed_job).
-You can pass in a number of threads to the method:
-
-    Deimos.start_db_backend!(thread_count: 2) # OR
-    THREAD_COUNT=5 rails deimos:db_producer
-
-If you want to force a message to send immediately, just call the `publish_list`
-method with `force_send: true`. You can also pass `force_send` into any of the
-other methods that publish events, like `send_event` in `ActiveRecordProducer`.
-
-A couple of gotchas when using this feature:
-* This may result in high throughput depending on your scale. If you're
-  using Rails < 5.1, you should add a migration to change the `id` column
-  to `BIGINT`. Rails >= 5.1 sets it to BIGINT by default.
-* This table is high throughput but should generally be empty. Make sure
-  you optimize/vacuum this table regularly to reclaim the disk space.
-* Currently, threads allow you to scale the *number* of topics but not
-  a single large topic with lots of messages. There is an [issue](https://github.com/flipp-oss/deimos/issues/23)
-  opened that would help with this case.
-
-For more information on how the database backend works and why it was 
-implemented, please see [Database Backends](docs/DATABASE_BACKEND.md).
-
-### Consuming
+## <a name="rails-consuming">Consuming</a>
 
 Deimos provides an ActiveRecordConsumer which will take a payload
 and automatically save it to a provided model. It will take the intersection
@@ -702,7 +510,115 @@ class MyConsumer < Deimos::ActiveRecordConsumer
 end
 ```
 
-#### Generating Tables and Models
+### Batch Consuming
+
+Deimos also provides a batch consumption mode for `ActiveRecordConsumer` which
+processes groups of messages at once using the ActiveRecord backend. 
+
+Batch ActiveRecord consumers make use of
+[activerecord-import](https://github.com/zdennis/activerecord-import) to insert
+or update multiple records in bulk SQL statements. This reduces processing
+time at the cost of skipping ActiveRecord callbacks for individual records.
+Deleted records (tombstones) are grouped into `delete_all` calls and thus also
+skip `destroy` callbacks.
+
+Batch consumption is used when the `each_message` setting for your consumer is set to `false` (the default).
+
+**Note**: Currently, batch consumption only supports only primary keys as identifiers out of the box. See
+[the specs](spec/active_record_batch_consumer_spec.rb) for an example of how to use compound keys.
+
+By default, batches will be compacted before processing, i.e. only the last
+message for each unique key in a batch will actually be processed. To change
+this behaviour, call `compacted false` inside of your consumer definition.
+
+A sample batch consumer would look as follows:
+
+```ruby
+class MyConsumer < Deimos::ActiveRecordConsumer
+  record_class Widget
+
+  # Controls whether the batch is compacted before consuming.
+  # If true, only the last message for each unique key in a batch will be
+  # processed.
+  # If false, messages will be grouped into "slices" of independent keys
+  # and each slice will be imported separately.
+  #
+  compacted false
+
+
+  # Optional override of the default behavior, which is to call `delete_all`
+  # on the associated records - e.g. you can replace this with setting a deleted
+  # flag on the record. 
+  def remove_records(records)
+    super
+  end
+ 
+  # Optional override to change the attributes of the record before they
+  # are saved.
+  def record_attributes(payload, key)
+    super.merge(:some_field => 'some_value')
+  end
+end
+```
+
+### Saving data to Multiple Database tables
+
+> This feature is implemented and tested with MySQL ONLY.
+
+Sometimes, a Kafka message needs to be saved to multiple database tables. For example, if a `User` topic provides you metadata and profile image for users, we might want to save it to multiple tables: `User` and `Image`.
+
+- Return associations as keys in `record_attributes` to enable this feature.
+- The `bulk_import_id_column` config allows you to specify column_name on `record_class` which can be used to retrieve IDs after save. Defaults to `bulk_import_id`. This config is *required* if you have associations but optional if you do not.
+
+You must override the `record_attributes` (and optionally `column` and `key_columns`) methods on your consumer class for this feature to work.
+- `record_attributes` - This method is required to map Kafka messages to ActiveRecord model objects.
+- `columns(klass)` - Should return an array of column names that should be used by ActiveRecord klass during SQL insert operation.
+- `key_columns(messages, klass)` -  Should return an array of column name(s) that makes a row unique.
+
+```ruby
+class User < ApplicationRecord
+  has_many :images
+end
+
+class MyConsumer < Deimos::ActiveRecordConsumer
+
+  record_class User
+
+  def record_attributes(payload, _key)
+    {
+      first_name: payload.first_name,
+      images: [
+                {
+                  attr1: payload.image_url
+                },
+                {
+                  attr2: payload.other_image_url
+                }
+              ]
+    }
+  end
+  
+  def key_columns(klass)
+    case klass
+    when User
+      nil # use default
+    when Image
+      ["image_url", "image_name"]
+    end
+  end
+
+  def columns(klass)
+    case klass
+    when User
+      nil # use default
+    when Image
+      klass.columns.map(&:name) - [:created_at, :updated_at, :id]
+    end
+  end
+end
+```
+
+## Generating Tables and Models
 
 Deimos provides a generator that takes an existing schema and generates a 
 database table based on its fields. By default, any complex sub-types (such as 
@@ -725,60 +641,61 @@ Example:
     db/migrate/1234_create_my_table.rb
     app/models/my_table.rb
 
-#### Batch Consumers
+# Outbox Backend
 
-Deimos also provides a batch consumption mode for `ActiveRecordConsumer` which
-processes groups of messages at once using the ActiveRecord backend. 
+Deimos provides a way to allow Kafka messages to be created inside a
+database transaction, and send them asynchronously. This ensures that your
+database transactions and Kafka messages related to those transactions 
+are always in sync. Essentially, it separates the message logic so that a 
+message is first validated, encoded, and saved in the database, and then sent
+on a separate thread. This means if you have to roll back your transaction,
+it also rolls back your Kafka messages.
 
-Batch ActiveRecord consumers make use of the
-[activerecord-import](https://github.com/zdennis/activerecord-import) to insert
-or update multiple records in bulk SQL statements. This reduces processing
-time at the cost of skipping ActiveRecord callbacks for individual records.
-Deleted records (tombstones) are grouped into `delete_all` calls and thus also
-skip `destroy` callbacks.
+This is also known as the [Transactional Outbox pattern](https://microservices.io/patterns/data/transactional-outbox.html).
 
-Batch consumption is used when the `delivery` setting for your consumer is set to `inline_batch`.
+To enable this, first generate the migration to create the relevant tables:
 
-**Note**: Currently, batch consumption only supports only primary keys as identifiers out of the box. See
-[the specs](spec/active_record_batch_consumer_spec.rb) for an example of how to use compound keys.
+    rails g deimos:outbox
+    
+You can now set the following configuration:
 
-By default, batches will be compacted before processing, i.e. only the last
-message for each unique key in a batch will actually be processed. To change
-this behaviour, call `compacted false` inside of your consumer definition.
+    config.producers.backend = :outbox
 
-A sample batch consumer would look as follows:
+This will save all your Kafka messages to the `kafka_messages` table instead
+of immediately sending to Kafka. Now, you just need to call
 
-```ruby
-class MyConsumer < Deimos::ActiveRecordConsumer
-  schema 'MySchema'
-  key_config field: 'my_field'
-  record_class Widget
+    Deimos.start_outbox_backend!
+    
+You can do this inside a thread or fork block.
+If using Rails, you can use a Rake task to do this:
 
-  # Controls whether the batch is compacted before consuming.
-  # If true, only the last message for each unique key in a batch will be
-  # processed.
-  # If false, messages will be grouped into "slices" of independent keys
-  # and each slice will be imported separately.
-  #
-  # compacted false
+    rails deimos:outbox
+    
+This creates one or more threads dedicated to scanning and publishing these 
+messages by using the `kafka_topics` table in a manner similar to 
+[Delayed Job](https://github.com/collectiveidea/delayed_job).
+You can pass in a number of threads to the method:
 
+    Deimos.start_outbox_backend!(thread_count: 2) # OR
+    THREAD_COUNT=5 rails deimos:outbox
 
-  # Optional override of the default behavior, which is to call `delete_all`
-  # on the associated records - e.g. you can replace this with setting a deleted
-  # flag on the record. 
-  def remove_records(records)
-    super
-  end
- 
-  # Optional override to change the attributes of the record before they
-  # are saved.
-  def record_attributes(payload, key)
-    super.merge(:some_field => 'some_value')
-  end
-end
-```
+If you want to force a message to send immediately, just call the `produce`
+method with `backend: kafka`.
 
-## Database Poller
+A couple of gotchas when using this feature:
+* This may result in high throughput depending on your scale. If you're
+  using Rails < 5.1, you should add a migration to change the `id` column
+  to `BIGINT`. Rails >= 5.1 sets it to BIGINT by default.
+* This table is high throughput but should generally be empty. Make sure
+  you optimize/vacuum this table regularly to reclaim the disk space.
+* Currently, threads allow you to scale the *number* of topics but not
+  a single large topic with lots of messages. There is an [issue](https://github.com/flipp-oss/deimos/issues/23)
+  opened that would help with this case.
+
+For more information on how the database backend works and why it was 
+implemented, please see [Database Backends](docs/DATABASE_BACKEND.md).
+
+# Database Poller
 
 Another method of fetching updates from the database to Kafka is by polling
 the database (a process popularized by [Kafka Connect](https://docs.confluent.io/current/connect/index.html)).
@@ -825,7 +742,7 @@ define one additional method on the producer:
 
 ```ruby
 class MyProducer < Deimos::ActiveRecordProducer
-  ...
+  # ...
   def poll_query(time_from:, time_to:, column_name:, min_id:)
     # Default is to use the timestamp `column_name` to find all records
     # between time_from and time_to, or records where `updated_at` is equal to
@@ -833,6 +750,12 @@ class MyProducer < Deimos::ActiveRecordProducer
     # successively as the DB is polled to ensure even if a batch ends in the
     # middle of a timestamp, we won't miss any records.
     # You can override or change this behavior if necessary.
+  end
+
+  # You can define this method if you need to do some extra actions with
+  # the collection of elements you just sent to Kafka
+  def post_process(batch)
+    # write some code here
   end
 end
 ```
@@ -847,25 +770,10 @@ have one process running at a time. If a particular poll takes longer than
 the poll interval (i.e. interval is set at 1 minute but it takes 75 seconds)
 the next poll will begin immediately following the first one completing.
 
-To Post-Process records that are sent to Kafka:
-
-You need to define one additional method in your producer class to post-process the messages sent to Kafka.
-
-```ruby
-class MyProducer < Deimos::ActiveRecordProducer
-  ...
-  def post_process(batch)
-    # If you need to do some extra actions with
-    # the collection of elements you just sent to Kafka
-    # write some code here
-  end
-end
-```
-
 Note that the poller will retry infinitely if it encounters a Kafka-related error such
 as a communication failure. For all other errors, it will retry once by default.
 
-### State-based pollers
+## State-based pollers
 
 By default, pollers use timestamps and IDs to determine the records to publish. However, you can
 set a different mode whereby it will include all records that match your query, and when done,
@@ -884,7 +792,7 @@ db_poller do
 end
 ```
 
-## Running consumers
+# Running consumers
 
 Deimos includes a rake task. Once it's in your gemfile, just run
 
@@ -895,7 +803,7 @@ which can be useful if you want to figure out if you're inside the task
 as opposed to running your Rails server or console. E.g. you could start your 
 DB backend only when your rake task is running.
 
-## Generated Schema Classes
+# Generated Schema Classes
 
 Deimos offers a way to generate classes from Avro schemas. These classes are documented
 with YARD to aid in IDE auto-complete, and will help to move errors closer to the code.
@@ -925,7 +833,7 @@ One additional configuration option indicates whether nested records should be g
 
 You can generate a tombstone message (with only a key and no value) by calling the `YourSchemaClass.tombstone(key)` method. If you're using a `:field` key config, you can pass in just the key scalar value. If using a key schema, you can pass it in as a hash or as another schema class.
 
-### Consumer
+## Consumer
 
 The consumer interface uses the `decode_message` method to turn JSON hash into the Schemas
 generated Class and provides it to the `consume`/`consume_batch` methods for their use.
@@ -933,13 +841,13 @@ generated Class and provides it to the `consume`/`consume_batch` methods for the
 Examples of consumers would look like this:
 ```ruby
 class MyConsumer < Deimos::Consumer
-  def consume(payload, metadata)
-    # Same method as Phobos consumers but payload is now an instance of Deimos::SchemaClass::Record
-    # rather than a hash. metadata is still a hash that contains information like :key and :topic.
+  def consume_message(message)
+    # Same method as before but message.payload is now an instance of Deimos::SchemaClass::Record
+    # rather than a hash. 
     # You can interact with the schema class instance in the following way: 
-    do_something(payload.test_id, payload.some_int)
+    do_something(message.payload.test_id, message.payload.some_int)
     # The original behaviour was as follows:
-    do_something(payload[:test_id], payload[:some_int])
+    do_something(message.payload[:test_id], message.payload[:some_int])
   end
 end
 ```
@@ -958,9 +866,10 @@ class MyActiveRecordConsumer < Deimos::ActiveRecordConsumer
 end
 ```
 
-### Producer
+## Producer
+
 Similarly to the consumer interface, the producer interface for using Schema Classes in your app
-relies on the `publish`/`publish_list` methods to convert a _provided_ instance of a Schema Class
+relies on the `produce` method to convert a _provided_ instance of a Schema Class
 into a hash that can be used freely by the Kafka client.
 
 Examples of producers would look like this:
@@ -976,8 +885,7 @@ class MyProducer < Deimos::Producer
         test_id: test_id,
         some_int: some_int
       )
-      self.publish(message)
-      self.publish_list([message])
+      self.produce({payload: message})
     end
   end
 end
@@ -986,8 +894,9 @@ end
 ```ruby
 class MyActiveRecordProducer < Deimos::ActiveRecordProducer
   record_class Widget
-  # @param payload [Deimos::SchemaClass::Record]
+  # @param attributes [Hash]
   # @param _record [Widget]
+  # @return [Deimos::SchemaClass::Record]
   def self.generate_payload(attributes, _record)
     # This method converts your ActiveRecord into a Deimos::SchemaClass::Record. You will be able to use super
     # as an instance of Schemas::MySchema and set values that are not on your ActiveRecord schema.
@@ -1000,51 +909,26 @@ end
 
 # Metrics
 
-Deimos includes some metrics reporting out the box. It ships with DataDog support, but you can add custom metric providers as well.
+Deimos includes some metrics reporting out of the box. It adds to the existing [Karafka DataDog support](https://karafka.io/docs/Monitoring-and-Logging/#datadog-and-statsd-integration). It ships with DataDog support, but you can add custom metric providers as well.
 
 The following metrics are reported:
-* `consumer_lag` - for each partition, the number of messages
-  it's behind the tail of the partition (a gauge). This is only sent if
-  `config.consumers.report_lag` is set to true.
-* `handler` - a count of the number of messages received. Tagged
-  with the following:
-    * `topic:{topic_name}`
-    * `status:received`
-    * `status:success`
-    * `status:error`
-    * `time:consume` (histogram)
-        * Amount of time spent executing handler for each message
-    * Batch Consumers - report counts by number of batches
-        * `status:batch_received`
-        * `status:batch_success`
-        * `status:batch_error`
-        * `time:consume_batch` (histogram)
-            * Amount of time spent executing handler for entire batch
-    * `time:time_delayed` (histogram)
-        * Indicates the amount of time between the `timestamp` property of each
-        payload (if present) and the time that the consumer started processing 
-        the message.
-* `publish` - a count of the number of messages received. Tagged
-  with `topic:{topic_name}`
-* `publish_error` - a count of the number of messages which failed
-  to publish. Tagged with `topic:{topic_name}`
-* `pending_db_messages_max_wait` - the number of seconds which the
+* `deimos.pending_db_messages_max_wait` - the number of seconds which the
   oldest KafkaMessage in the database has been waiting for, for use
   with the database backend. Tagged with the topic that is waiting.
   Will send a value of 0 with no topics tagged if there are no messages
   waiting.
-* `db_producer.insert` - the number of messages inserted into the database
+* `deimos.outbox.publish` - the number of messages inserted into the database
   for publishing. Tagged with `topic:{topic_name}`
-* `db_producer.process` - the number of DB messages processed. Note that this
+* `deimos.outbox.process` - the number of DB messages processed. Note that this
   is *not* the same as the number of messages *published* if those messages
   are compacted. Tagged with `topic:{topic_name}`
 
-### Configuring Metrics Providers
+## Configuring Metrics Providers
 
 See the `metrics` field under [Configuration](#configuration).
 View all available Metrics Providers [here](lib/deimos/metrics)
 
-### Custom Metrics Providers
+## Custom Metrics Providers
 
 Using the above configuration, it is possible to pass in any generic Metrics 
 Provider class as long as it exposes the methods and definitions expected by 
@@ -1059,17 +943,18 @@ Also see [deimos.rb](lib/deimos.rb) under `Configure metrics` to see how the met
 # Tracing
 
 Deimos also includes some tracing for kafka consumers. It ships with 
-DataDog support, but you can add custom tracing providers as well.
+DataDog support, but you can add custom tracing providers as well. (It does not use the built-in Karafka
+tracers so that it can support per-message tracing, which Karafka does not provide for.)
 
 Trace spans are used for when incoming messages are schema-decoded, and a 
 separate span for message consume logic.
 
-### Configuring Tracing Providers
+## Configuring Tracing Providers
 
 See the `tracing` field under [Configuration](#configuration).
 View all available Tracing Providers [here](lib/deimos/tracing)
 
-### Custom Tracing Providers
+## Custom Tracing Providers
 
 Using the above configuration, it is possible to pass in any generic Tracing 
 Provider class as long as it exposes the methods and definitions expected by
@@ -1083,7 +968,9 @@ Also see [deimos.rb](lib/deimos.rb) under `Configure tracing` to see how the tra
 
 # Testing
 
-Deimos comes with a test helper class which provides useful methods for testing consumers.
+Deimos comes with a test helper class which provides useful methods for testing consumers. This is built on top of
+Karafka's [testing library](https://karafka.io/docs/Testing/) and is primarily helpful because it can decode
+the sent messages for comparison (Karafka only decodes the messages once they have been consumed).
 
 In `spec_helper.rb`:
 ```ruby
@@ -1097,31 +984,14 @@ end
 ```ruby
 # The following can be added to a rpsec file so that each unit 
 # test can have the same settings every time it is run
-around(:each) do |example|
-  Deimos::TestHelpers.unit_test!
-  example.run
+after(:each) do
   Deimos.config.reset!
-end
-
-# Similarly you can use the Kafka test helper
-around(:each) do |example|
-  Deimos::TestHelpers.kafka_test!
-  example.run
-  Deimos.config.reset!
-end
-
-# Kakfa test helper using schema registry
-around(:each) do |example|
-  Deimos::TestHelpers.full_integration_test!
-  example.run
-  Deimos.config.reset!
+  Deimos.config.schema.backend = :avro_validation
 end
 ```
 
-With the help of these helper methods, rspec examples can be written without having to tinker with Deimos settings.
-This also prevents Deimos setting changes from leaking in to other examples.
-
-This does not take away the ability to configure Deimos manually in individual examples. Deimos can still be configured like so:
+With the help of these helper methods, RSpec examples can be written without having to tinker with Deimos settings.
+This also prevents Deimos setting changes from leaking in to other examples. You can make these changes on an individual test level and ensure that it resets back to where it needs to go:
 ```ruby
     it 'should not fail this random test' do
       
@@ -1131,21 +1001,18 @@ This does not take away the ability to configure Deimos manually in individual e
       end
       ...
       expect(some_object).to be_truthy
-      ...
-      Deimos.config.reset!
     end
 ```
-If you are using one of the test helpers in an `around(:each)` block and want to override few settings for one example, 
-you can do it like in the example shown above. These settings would only apply to that specific example and the Deimos config should
-reset once the example has finished running.
 
 ## Test Usage
 
-In your tests, you now have the following methods available:
+You can use `karafka.produce()` and `consumer.consume` in your tests without having to go through
+Deimos TestHelpers. However, there are some useful abilities that Deimos gives you:
+
 ```ruby
-# Pass a consumer class (not instance) to validate a payload against it.
-# This will fail if the payload does not match the schema the consumer
-# is set up to consume.
+# Pass a consumer class (not instance) to validate a payload against it. This takes either a class
+# or a topic (Karafka only supports topics in its test helpers). This will validate the payload
+# and execute the consumer logic.
 test_consume_message(MyConsumer, 
                     { 'some-payload' => 'some-value' }) do |payload, metadata|
       # do some expectation handling here
@@ -1158,15 +1025,6 @@ test_consume_message('my-topic-name',
       # do some expectation handling here
 end
 
-# Alternatively, you can test the actual consume logic:
-test_consume_message(MyConsumer, 
-                    { 'some-payload' => 'some-value' }, 
-                    call_original: true)
-                    
-# Test that a given payload is invalid against the schema:
-test_consume_invalid_message(MyConsumer, 
-                            { 'some-invalid-payload' => 'some-value' })
-                            
 # For batch consumers, there are similar methods such as:
 test_consume_batch(MyBatchConsumer,
                    [{ 'some-payload' => 'some-value' },
@@ -1181,7 +1039,7 @@ end
 expect(topic_name).to have_sent(payload, key=nil, partition_key=nil, headers=nil)
 
 # Inspect sent messages
-message = Deimos::Backends::Test.sent_messages[0]
+message = Deimos::TestHelpers.sent_messages[0]
 expect(message).to eq({
   message: {'some-key' => 'some-value'},
   topic: 'my-topic',
@@ -1190,75 +1048,7 @@ expect(message).to eq({
 })
 ```
 
-### Test Utilities
-
-There is also a helper method that will let you test if an existing schema
-would be compatible with a new version of it. You can use this in your 
-Ruby console but it would likely not be part of your RSpec test:
-
-```ruby
-require 'deimos/test_helpers'
-# Can pass a file path, a string or a hash into this:
-Deimos::TestHelpers.schemas_compatible?(schema1, schema2)
-```
-
-You can use the `InlineConsumer` class to help with integration testing,
-with a full external Kafka running.
-
-If you have a consumer you want to test against messages in a Kafka topic,
-use the `consume` method:
-```ruby
-Deimos::Utils::InlineConsumer.consume(
-  topic: 'my-topic', 
-  frk_consumer: MyConsumerClass,
-  num_messages: 5
-  )
-```
-
-This is a _synchronous_ call which will run the consumer against the 
-last 5 messages in the topic. You can set `num_messages` to a number 
-like `1_000_000` to always consume all the messages. Once the last 
-message is retrieved, the process will wait 1 second to make sure 
-they're all done, then continue execution.
-
-If you just want to retrieve the contents of a topic, you can use
-the `get_messages_for` method:
-
-```ruby
-Deimos::Utils::InlineConsumer.get_messages_for(
-  topic: 'my-topic',
-  schema: 'my-schema',
-  namespace: 'my.namespace',
-  key_config: { field: 'id' },
-  num_messages: 5
-)
-```
-
-This will run the process and simply return the last 5 messages on the
-topic, as hashes, once it's done. The format of the messages will simply
-be
-```ruby
-{
-  payload: { key: value }, # payload hash here
-  key: "some_value" # key value or hash here
-}
-```
-
-Both payload and key will be schema-decoded as necessary according to the
-key config.
-
-You can also just pass an existing producer or consumer class into the method,
-and it will extract the necessary configuration from it:
-
-```ruby
-Deimos::Utils::InlineConsumer.get_messages_for(
-  topic: 'my-topic',
-  config_class: MyProducerClass,
-  num_messages: 5
-)
-```
-
-## Utilities
+# Utilities
 
 You can use your configured schema backend directly if you want to
 encode and decode payloads outside of the context of sending messages.
@@ -1272,14 +1062,14 @@ backend.validate(my_payload) # throws an error if not valid
 fields = backend.schema_fields # list of fields defined in the schema
 ```
 
-You can also do an even faster encode/decode:
+You can also do an even more concise encode/decode:
 
 ```ruby
 encoded = Deimos.encode(schema: 'MySchema', namespace: 'com.my-namespace', payload: my_payload)
 decoded = Deimos.decode(schema: 'MySchema', namespace: 'com.my-namespace', payload: my_encoded_payload)
 ```
 
-## Contributing
+# Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/flipp-oss/deimos .
 
@@ -1289,15 +1079,15 @@ You can/should re-generate RBS types when methods or classes change by running t
     rbs collection update
     bundle exec sord --hide-private --no-sord-comments sig/defs.rbs --tags 'override:Override'
 
-### Linting
+## Linting
 
 Deimos uses Rubocop to lint the code. Please run Rubocop on your code 
 before submitting a PR. The GitHub CI will also run rubocop on your pull request. 
 
 ---
-<p align="center">
+<p style="text-align: center">
   Sponsored by<br/>
   <a href="https://corp.flipp.com/">
-    <img src="support/flipp-logo.png" title="Flipp logo" style="border:none;"/>
+    <img src="support/flipp-logo.png" title="Flipp logo" style="border:none;" alt="Flipp logo"/>
   </a>
 </p>

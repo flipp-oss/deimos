@@ -6,7 +6,7 @@ module Deimos
                   bulk_import_id_column
                   replace_associations
                   bulk_import_id_generator
-                  batch
+                  each_message
                   reraise_errors
                   fatal_error
                   disabled
@@ -18,6 +18,7 @@ module Deimos
           @deimos_config ||= Config.new(
             bulk_import_id_column: :bulk_import_id,
             replace_associations: true,
+            each_message: false,
             bulk_import_id_generator: proc { SecureRandom.uuid },
             fatal_error: proc { false }
           )
