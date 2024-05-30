@@ -9,7 +9,6 @@ module Deimos
                   each_message
                   reraise_errors
                   fatal_error
-                  disabled
       )
       Config = Struct.new(*FIELDS, keyword_init: true)
 

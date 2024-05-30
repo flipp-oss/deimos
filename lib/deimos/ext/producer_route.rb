@@ -1,6 +1,6 @@
 module Deimos
   class ProducerRoute < Karafka::Routing::Features::Base
-    FIELDS = %i(producer_class payload_log)
+    FIELDS = %i(producer_class payload_log disabled)
 
     Config = Struct.new(*FIELDS, keyword_init: true)
     module Topic

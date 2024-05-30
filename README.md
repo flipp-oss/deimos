@@ -997,7 +997,6 @@ This also prevents Deimos setting changes from leaking in to other examples. You
       
       Deimos.configure do |config|
         config.consumers.fatal_error = proc { true }
-        config.consumers.reraise_errors = false
       end
       ...
       expect(some_object).to be_truthy

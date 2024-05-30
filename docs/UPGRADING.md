@@ -212,7 +212,6 @@ The following events have been **renamed**:
 
 ### Additional breaking changes
 * `key_config` now defaults to `{none: true}` instead of erroring out if not set.
-* `reraise_errors` now defaults to `true`.
 * `fatal_error?` now receives a Karafka `messages` object instead of a payload hash or array of hashes.
 * `watched_attributes` has been moved from the corresponding ActiveRecord class to the ActiveRecordProducer class. The object being watched is passed into the method.
 * Removed `TestHelpers.full_integration_test!` and `kafka_test!` as Karafka does not currently support these use cases. If we need them back, we will need to put in changes to the testing library to support them.
