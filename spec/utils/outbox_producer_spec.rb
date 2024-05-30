@@ -53,9 +53,6 @@ each_db_config(Deimos::Utils::OutboxProducer) do
     it 'should produce normally' do
       batch = ['A'] * 1000
       expect(Karafka.producer).to receive(:produce_many_sync).with(batch).once
-      expect(Deimos.config.metrics).to receive(:increment).with('publish',
-                                                                tags: %w(status:success topic:),
-                                                                by: 1000).once
       producer.produce_messages(batch)
     end
 

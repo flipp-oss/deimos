@@ -86,7 +86,7 @@ module Deimos
           configs["ssl.endpoint.identification.algorithm"] = "https" if deimos_config.kafka.ssl.verify_hostname
           configs["sasl.kerberos.principal"] = deimos_config.kafka.sasl.gssapi_principal
           configs["sasl.kerberos.keytab"] = deimos_config.kafka.sasl.gssapi_keytab
-          configs["sasl.username"] = deimos_config.kafka.sasl.plain_username || deimos_config.kafka.sasl.scram_password
+          configs["sasl.username"] = deimos_config.kafka.sasl.plain_username || deimos_config.kafka.sasl.scram_username
           configs["sasl.password"] = deimos_config.kafka.sasl.plain_password || deimos_config.kafka.sasl.scram_password
           configs["sasl.mechanisms"] = deimos_config.kafka.sasl.scram_mechanism
           configs["request.required.acks"] = deimos_config.producers.required_acks

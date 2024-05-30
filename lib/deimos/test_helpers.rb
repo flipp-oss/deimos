@@ -39,12 +39,7 @@ module Deimos
       # Set the config to the right settings for a unit test
       # @return [void]
       def unit_test!
-        Deimos.configure do |deimos_config|
-          deimos_config.logger = Logger.new(STDOUT)
-          deimos_config.consumers.reraise_errors = true
-          deimos_config.schema.backend = :avro_local
-          deimos_config.producers.backend = :test
-        end
+        warn "unit_test! is deprecated and no longer necessary. All test behavior is provided by Karafka."
       end
     end
 

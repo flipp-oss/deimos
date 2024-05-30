@@ -49,7 +49,7 @@ module Deimos
         # specific order and requires a bunch of methods on the producer
         # to work correctly.
         message.add_fields(encoder.schema_fields.map(&:name))
-        message.key = _retrieve_key(message.payload, key_transcoder) || karafka_message[:key]
+        message.key = karafka_message[:key] || _retrieve_key(message.payload, key_transcoder)
         # need to do this before _coerce_fields because that might result
         # in an empty payload which is an *error* whereas this is intended.
         message.payload = nil if message.payload.blank?

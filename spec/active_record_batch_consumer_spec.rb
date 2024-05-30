@@ -627,9 +627,8 @@ module ActiveRecordBatchConsumerTest
             nil
           end
 
-          ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
-            payload = ActiveSupport::Notifications::Event.new(*args).payload
-            payload[:consumer].process_invalid_records(payload[:records])
+          Karafka.monitor.subscribe('deimos.batch_consumption.invalid_records') do |event|
+            event[:consumer].process_invalid_records(event[:records])
           end
 
         end
@@ -693,13 +692,11 @@ module ActiveRecordBatchConsumerTest
               Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
+            Karafka.monitor.subscribe('deimos.batch_consumption.invalid_records') do |payload|
               payload[:consumer].process_invalid_records(payload[:records])
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
+            Karafka.monitor.subscribe('deimos.batch_consumption.valid_records') do |payload|
               payload[:consumer].process_valid_records(payload[:records])
             end
 
@@ -753,13 +750,11 @@ module ActiveRecordBatchConsumerTest
               Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
+            Karafka.monitor.subscribe('deimos.batch_consumption.invalid_records') do |payload|
               payload[:consumer].process_invalid_records(payload[:records])
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
+            Karafka.monitor.subscribe('deimos.batch_consumption.valid_records') do |payload|
               payload[:consumer].process_valid_records(payload[:records])
             end
 
@@ -801,9 +796,8 @@ module ActiveRecordBatchConsumerTest
               raise StandardError, 'Something went wrong'
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
-              payload[:consumer].process_valid_records(payload[:records])
+            Karafka.monitor.subscribe('deimos.batch_consumption.valid_records') do |event|
+              event[:consumer].process_valid_records(event[:records])
             end
 
           end

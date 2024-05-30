@@ -22,7 +22,7 @@ module Deimos
           end
           Deimos::KafkaMessage.import(records)
           Deimos.config.metrics&.increment(
-            'outbox_producer.insert',
+            'outbox.insert',
             tags: %W(topic:#{producer_class.topic}),
             by: records.size
           )

@@ -83,6 +83,18 @@ module Deimos
         publish_list([payload], topic: topic, headers: headers)
       end
 
+      # Produce a list of messages in WaterDrop message hash format.
+      # @param messages [Array<Hash>]
+      def produce(messages)
+        return if Deimos.producers_disabled?(self)
+
+        messages.each do |m|
+          m[:label] = m
+          m[:partition_key] ||= self.partition_key(m[:payload])
+        end
+        self.produce_batch(Deimos.config.producers.backend, messages)
+      end
+
       # Publish a list of messages.
       # @param payloads [Array<Hash, SchemaClass::Record>] with optional payload_key hash key.
       # @param sync [Boolean] if given, override the default setting of
@@ -137,7 +149,7 @@ module Deimos
 
       # Send a batch to the backend.
       # @param backend [Class<Deimos::Backends::Base>]
-      # @param batch [Array<Deimos::Message>]
+      # @param batch [Array<Hash>]
       # @return [void]
       def produce_batch(backend, batch)
         backend.publish(producer_class: self, messages: batch)

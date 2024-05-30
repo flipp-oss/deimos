@@ -207,11 +207,6 @@ module Deimos
           batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
             @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
             Karafka.producer.produce_many_sync(group)
-            Deimos.config.metrics&.increment(
-              'publish',
-              tags: %W(status:success topic:#{@current_topic}),
-              by: group.size
-            )
             current_index += group.size
             @logger.info("Sent #{group.size} messages to #{@current_topic}")
           end

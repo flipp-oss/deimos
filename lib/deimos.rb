@@ -43,7 +43,16 @@ require 'erb'
 
 # Parent module.
 module Deimos
+  EVENT_TYPES = %w(
+    deimos.ar_consumer.consume_batch
+    deimos.encode_message
+    deimos.batch_consumption.invalid_records
+    deimos.batch_consumption.valid_records
+    deimos.outbox.produce
+  )
+
   class << self
+
     # @return [Class<Deimos::SchemaBackends::Base>]
     def schema_backend_class
       backend = Deimos.config.schema.backend.to_s
@@ -130,9 +139,7 @@ module Deimos
 
     def setup_karafka
       Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
-      Karafka.monitor.notifications_bus.register_event('deimos.ar_consumer.consume_batch')
-      Karafka.monitor.notifications_bus.register_event('deimos.encode_message')
-      Karafka.monitor.notifications_bus.register_event('deimos.outbox.produce')
+      EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.register_event(type) }
 
       Karafka.producer.monitor.subscribe('error.occurred') do |event|
         if event.payload.key?(:messages)

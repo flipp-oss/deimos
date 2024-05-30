@@ -249,6 +249,10 @@ RSpec.configure do |config|
     end
   end
 
+  config.after(:each) do
+    Deimos::EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.clear(type) }
+  end
+
   config.around(:each) do |example|
     use_cleaner = !example.metadata[:integration]
 

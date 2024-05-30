@@ -153,10 +153,10 @@ module Deimos
         record_list = build_records(messages)
         invalid = filter_records(record_list)
         if invalid.any?
-          ActiveSupport::Notifications.instrument('batch_consumption.invalid_records', {
-                                                    records: invalid,
-                                                    consumer: self.class
-                                                  })
+          Karafka.monitor.instrument('deimos.batch_consumption.invalid_records', {
+            records: invalid,
+            consumer: self.class
+          })
         end
         return if record_list.empty?
 
@@ -170,10 +170,10 @@ module Deimos
                                   bulk_import_id_generator: self.bulk_import_id_generator,
                                   save_associations_first: self.class.save_associations_first,
                                   bulk_import_id_column: self.bulk_import_id_column)
-        ActiveSupport::Notifications.instrument('batch_consumption.valid_records', {
-                                                  records: updater.mass_update(record_list),
-                                                  consumer: self.class
-                                                })
+        Karafka.monitor.instrument('deimos.batch_consumption.valid_records', {
+          records: updater.mass_update(record_list),
+          consumer: self.class
+        })
       end
 
       # @param record_list [BatchRecordList]
