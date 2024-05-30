@@ -1088,6 +1088,6 @@ before submitting a PR. The GitHub CI will also run rubocop on your pull request
 <p style="text-align: center">
   Sponsored by<br/>
   <a href="https://corp.flipp.com/">
-    <img src="support/flipp-logo.png" title="Flipp logo" style="border:none;" alt="Flipp logo"/>
+    <img src="support/flipp-logo.png" title="Flipp logo" style="border:none;width:396px;display:block;margin-left:auto;margin-right:auto;" alt="Flipp logo"/>
   </a>
 </p>
