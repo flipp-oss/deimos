@@ -11,6 +11,7 @@ module Deimos
       # Base poller class for retrieving and publishing messages.
       class Base
 
+        FATAL_CODES = %i(invalid_msg_size msg_size_too_large)
         # @return [Integer]
         BATCH_SIZE = 1000
 
@@ -137,13 +138,14 @@ module Deimos
             process_batch(batch)
             Deimos.config.tracer&.finish(span)
             status.batches_processed += 1
-          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge,
-                 Kafka::RecordListTooLarge => e
-            retry unless handle_message_too_large(e, batch, status, span)
-          rescue Kafka::Error => e # keep trying till it fixes itself
-            Deimos.config.logger.error("Error publishing through DB Poller: #{e.message}")
-            sleep(0.5)
-            retry
+          rescue WaterDrop::Errors::ProduceManyError => e
+            if FATAL_CODES.include?(e.cause.try(:code))
+              retry unless handle_message_too_large(e, batch, status, span)
+            else
+              Deimos::Logging.log_error("Error publishing through DB Poller: #{e.message}")
+              sleep(0.5)
+              retry
+            end
           rescue StandardError => e
             Deimos::Logging.log_error("Error publishing through DB poller: #{e.message}}")
             if @config.retries.nil? || retries < @config.retries

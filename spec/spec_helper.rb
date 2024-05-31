@@ -14,6 +14,7 @@ require 'handlers/my_batch_consumer'
 require 'handlers/my_consumer'
 require 'rspec/rails'
 require 'rspec/snapshot'
+require 'karafka/testing/rspec/helpers'
 require "trilogy_adapter/connection"
 ActiveRecord::Base.public_send :extend, TrilogyAdapter::Connection
 Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
@@ -23,9 +24,33 @@ SCHEMA_CLASS_SETTINGS = { off: false, on: true }.freeze
 
 class DeimosApp < Rails::Application
 end
+DeimosApp.initializer("setup_root_dir", before: "karafka.require_karafka_boot_file") do
+  ENV['KARAFKA_ROOT_DIR'] = "#{Rails.root}/spec/karafka"
+end
 DeimosApp.initialize!
 
-# Helpers for Executor/DbProducer
+module Helpers
+
+  def set_karafka_config(method, val)
+    Deimos.karafka_configs.each { |c| c.send(method.to_sym, val) }
+  end
+
+  def register_consumer(klass, schema, namespace='com.my-namespace', key_config:{none: true}, configs: {})
+    Karafka::App.routes.redraw do
+      topic 'my-topic' do
+        consumer klass
+        schema schema
+        namespace namespace
+        key_config key_config
+        configs.each do |k, v|
+          public_send(k, v)
+        end
+      end
+    end
+  end
+end
+
+# Helpers for Executor/OutboxProducer
 module TestRunners
   # Execute a block until it stops failing. This is helpful for testing threads
   # where we need to wait for them to continue but don't want to rely on
@@ -73,11 +98,7 @@ module DbConfigs
   # @param topic [String]
   # @param key [String]
   def build_message(payload, topic, key)
-    message = Deimos::Message.new(payload, Deimos::Producer,
-                                  topic: topic, key: key)
-    message.encoded_payload = message.payload
-    message.encoded_key = message.key
-    message
+    { payload: payload, topic: topic, key: key}
   end
 
   DB_OPTIONS = [
@@ -85,7 +106,7 @@ module DbConfigs
       adapter: 'postgresql',
       port: 5432,
       username: 'postgres',
-      password: 'root',
+      password: 'password',
       database: 'postgres',
       host: ENV['PG_HOST'] || 'localhost'
     },
@@ -123,14 +144,14 @@ module DbConfigs
   end
 
   # :nodoc:
-  def run_db_backend_migration
-    migration_class_name = 'DbBackendMigration'
+  def run_outbox_backend_migration
+    migration_class_name = 'OutboxBackendMigration'
     migration_version = '[5.2]'
     migration = ERB.new(
-      File.read('lib/generators/deimos/db_backend/templates/migration')
+      File.read('lib/generators/deimos/outbox_backend/templates/migration')
     ).result(binding)
     eval(migration) # rubocop:disable Security/Eval
-    ActiveRecord::Migration.new.run(DbBackendMigration, direction: :up)
+    ActiveRecord::Migration.new.run(OutboxBackendMigration, direction: :up)
   end
 
   # :nodoc:
@@ -147,7 +168,7 @@ module DbConfigs
   # Set up the given database.
   def setup_db(options)
     ActiveRecord::Base.establish_connection(options)
-    run_db_backend_migration
+    run_outbox_backend_migration
     run_db_poller_migration
 
     ActiveRecord::Base.descendants.each do |klass|
@@ -163,7 +184,10 @@ end
 RSpec.configure do |config|
   config.extend(DbConfigs)
   include DbConfigs
+  config.include Karafka::Testing::RSpec::Helpers
+
   config.include TestRunners
+  config.include Helpers
   config.full_backtrace = true
 
   config.snapshot_dir = "spec/snapshots"
@@ -199,18 +223,20 @@ RSpec.configure do |config|
   config.before(:each) do
     Deimos.config.reset!
     Deimos.configure do |deimos_config|
-      deimos_config.producers.backend = :test
+      deimos_config.producers.backend = :kafka
       deimos_config.schema.nest_child_schemas = true
-      deimos_config.phobos_config_file = File.join(File.dirname(__FILE__), 'phobos.yml')
       deimos_config.schema.path = File.join(File.expand_path(__dir__), 'schemas')
       deimos_config.consumers.reraise_errors = true
       deimos_config.schema.registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
-      deimos_config.kafka.seed_brokers = ENV['KAFKA_SEED_BROKER'] || 'localhost:9092'
       deimos_config.logger = Logger.new('/dev/null')
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
       deimos_config.schema.generated_class_path = 'spec/schemas'
     end
+  end
+
+  config.after(:each) do
+    Deimos::EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.clear(type) }
   end
 
   config.around(:each) do |example|
@@ -262,26 +288,32 @@ end
 
 RSpec.shared_context('with publish_backend') do
   before(:each) do
-    producer_class = Class.new(Deimos::Producer) do
-      schema 'MySchema'
-      namespace 'com.my-namespace'
-      topic 'my-topic'
-      key_config field: 'test_id'
-    end
+    producer_class = Class.new(Deimos::Producer)
     stub_const('MyProducer', producer_class)
 
-    producer_class = Class.new(Deimos::Producer) do
-      schema 'MySchema'
-      namespace 'com.my-namespace'
-      topic 'my-topic'
-      key_config none: true
-    end
+    producer_class_no_key = Class.new(Deimos::Producer)
     stub_const('MyNoKeyProducer', producer_class)
+
+    Karafka::App.routes.redraw do
+      topic 'my-topic-no-key' do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config none: true
+        producer_class producer_class_no_key
+      end
+      topic 'my-topic' do
+        schema 'MySchema'
+        namespace 'com.my-namespace'
+        key_config field: 'test_id'
+        producer_class producer_class
+      end
+    end
+
   end
 
   let(:messages) do
     (1..3).map do |i|
-      build_message({ foo: i }, 'my-topic', "foo#{i}")
+      build_message({ test_id: "foo#{i}", some_int: i }, 'my-topic', "foo#{i}")
     end
   end
 end
