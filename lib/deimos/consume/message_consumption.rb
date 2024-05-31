@@ -6,7 +6,6 @@ module Deimos
     # are invoked for every individual message.
     module MessageConsumption
       extend ActiveSupport::Concern
-      include Phobos::Handler
 
       # @param payload [String]
       # @param metadata [Hash]

@@ -2,12 +2,12 @@
 
 require 'deimos/message'
 require 'deimos/shared_config'
-require 'phobos/producer'
 require 'active_support/notifications'
 
 # :nodoc:
 module Deimos
   class << self
+
     # Run a block without allowing any messages to be produced to Kafka.
     # Optionally add a list of producer classes to limit the disabling to those
     # classes.

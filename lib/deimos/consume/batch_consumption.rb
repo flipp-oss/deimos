@@ -7,7 +7,6 @@ module Deimos
     # of messages to be handled at once
     module BatchConsumption
       extend ActiveSupport::Concern
-      include Phobos::BatchHandler
 
       # @param batch [Array<String>]
       # @param metadata [Hash]

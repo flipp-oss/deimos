@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'phobos'
-require 'phobos/cli'
 require 'generators/deimos/schema_class_generator'
 require 'optparse'
 
@@ -15,7 +13,7 @@ namespace :deimos do
     ENV['DEIMOS_TASK_NAME'] = 'consumer'
     STDOUT.sync = true
     Rails.logger.info('Running deimos:start rake task.')
-    Phobos::CLI::Commands.start(%w(start --skip_config))
+    Karafka::Server.run
   end
 
   desc 'Starts the Deimos database producer'

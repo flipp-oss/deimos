@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'fig_tree'
-require_relative 'phobos_config'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
 require 'active_support/core_ext/numeric'
@@ -11,13 +10,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
   include FigTree
 
   # :nodoc:
-  class FigTree::ConfigStruct
-    include Deimos::PhobosConfig
-  end
-
-  # :nodoc:
   after_configure do
-    Phobos.configure(self.config.phobos_config)
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end

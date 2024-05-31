@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'active_support'
+require 'karafka'
 
-require 'phobos'
 require 'deimos/version'
 require 'deimos/config/configuration'
 require 'deimos/producer'
@@ -23,7 +23,6 @@ require 'deimos/utils/schema_class'
 require 'deimos/schema_class/enum'
 require 'deimos/schema_class/record'
 
-require 'deimos/monkey_patches/phobos_cli'
 
 require 'deimos/railtie' if defined?(Rails)
 require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
@@ -117,13 +116,5 @@ module Deimos
   end
 end
 
-at_exit do
-  begin
-    Deimos::Backends::KafkaAsync.shutdown_producer
-    Deimos::Backends::Kafka.shutdown_producer
-  rescue StandardError => e
-    Deimos.config.logger.error(
-      "Error closing producer on shutdown: #{e.message} #{e.backtrace.join("\n")}"
-    )
   end
 end
