@@ -11,9 +11,7 @@ end
 
 describe 'Rakefile' do
   it 'should start listeners' do
-    runner = instance_double(Phobos::CLI::Runner)
-    expect(Phobos::CLI::Runner).to receive(:new).and_return(runner)
-    expect(runner).to receive(:run!)
+    expect(Karafka::Server).to receive(:run)
     Rake::Task['deimos:start'].invoke
   end
 end

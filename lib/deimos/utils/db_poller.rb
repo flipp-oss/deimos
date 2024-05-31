@@ -16,7 +16,7 @@ module Deimos
         end
         executor = Sigurd::Executor.new(pollers,
                                         sleep_seconds: 5,
-                                        logger: Deimos.config.logger)
+                                        logger: Karafka.logger)
         signal_handler = Sigurd::SignalHandler.new(executor)
         signal_handler.run!
       end

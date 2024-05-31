@@ -49,8 +49,7 @@ module Deimos
       end
     end
 
-    # @return [Hash]
-    def phobos_message
+    def karafka_message
       {
         payload: self.message,
         partition_key: self.partition_key,
@@ -58,5 +57,6 @@ module Deimos
         topic: self.topic
       }
     end
+
   end
 end

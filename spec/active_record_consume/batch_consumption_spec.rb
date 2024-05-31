@@ -9,11 +9,11 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
     describe 'upsert_records' do
       let(:records) do
         [
-          Deimos::Message.new({ v: 1 }, nil, key: 1),
-          Deimos::Message.new({ v: 2 }, nil, key: 2),
-          Deimos::Message.new({ v: 3 }, nil, key: 3),
-          Deimos::Message.new({ v: 4 }, nil, key: 4),
-          Deimos::Message.new({ v: 5 }, nil, key: 5)
+          Deimos::Message.new({ v: 1 }, key: 1),
+          Deimos::Message.new({ v: 2 }, key: 2),
+          Deimos::Message.new({ v: 3 }, key: 3),
+          Deimos::Message.new({ v: 4 }, key: 4),
+          Deimos::Message.new({ v: 5 }, key: 5)
         ]
       end
 
@@ -56,11 +56,11 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
     describe 'remove_records' do
       let(:records) do
         [
-          Deimos::Message.new(nil, nil, key: 1),
-          Deimos::Message.new(nil, nil, key: 2),
-          Deimos::Message.new(nil, nil, key: 3),
-          Deimos::Message.new(nil, nil, key: 4),
-          Deimos::Message.new(nil, nil, key: 5)
+          Deimos::Message.new(nil, key: 1),
+          Deimos::Message.new(nil, key: 2),
+          Deimos::Message.new(nil, key: 3),
+          Deimos::Message.new(nil, key: 4),
+          Deimos::Message.new(nil, key: 5)
         ]
       end
 

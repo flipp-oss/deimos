@@ -146,7 +146,6 @@ Lint/UselessAssignment:
 Metrics/AbcSize:
   Exclude:
     - 'lib/deimos/active_record_consume/message_consumption.rb'
-    - 'lib/deimos/config/phobos_config.rb'
     - 'lib/deimos/instrumentation.rb'
     - 'lib/deimos/kafka_source.rb'
     - 'lib/deimos/kafka_topic_info.rb'
@@ -158,12 +157,6 @@ Metrics/AbcSize:
     - 'lib/deimos/utils/inline_consumer.rb'
     - 'lib/deimos/utils/schema_controller_mixin.rb'
     - 'lib/generators/deimos/schema_class_generator.rb'
-
-# Offense count: 1
-# Configuration parameters: CountComments, Max, CountAsOne, ExcludedMethods.
-Metrics/MethodLength:
-  Exclude:
-    - 'lib/deimos/config/phobos_config.rb'
 
 # Offense count: 5
 # Configuration parameters: CountComments, Max, CountAsOne.
@@ -179,7 +172,6 @@ Metrics/ModuleLength:
 # Configuration parameters: IgnoredMethods, Max.
 Metrics/PerceivedComplexity:
   Exclude:
-    - 'lib/deimos/config/phobos_config.rb'
     - 'lib/deimos/consume/batch_consumption.rb'
     - 'lib/deimos/kafka_source.rb'
     - 'lib/deimos/schema_backends/avro_schema_coercer.rb'
@@ -253,7 +245,6 @@ Style/FrozenStringLiteralComment:
 Style/GlobalStdStream:
   Exclude:
     - 'lib/deimos/config/configuration.rb'
-    - 'lib/deimos/config/phobos_config.rb'
     - 'lib/deimos/metrics/mock.rb'
     - 'lib/deimos/test_helpers.rb'
     - 'lib/deimos/tracing/mock.rb'
@@ -328,14 +319,6 @@ Style/StringLiterals:
     - 'regenerate_test_schema_classes.rb'
     - 'spec/schemas/my_namespace/my_schema_with_complex_type.rb'
     - 'spec/spec_helper.rb'
-
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, AllowSafeAssignment.
-# SupportedStyles: require_parentheses, require_no_parentheses, require_parentheses_when_complex
-Style/TernaryParentheses:
-  Exclude:
-    - 'lib/deimos/config/phobos_config.rb'
 
 # Offense count: 21
 # Cop supports --auto-correct.

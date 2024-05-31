@@ -9,14 +9,14 @@ module Deimos
       # @param options [Hash] Options for the span
       # @return [Object] The span object
       def start(span_name, options={})
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Finishes the trace on the span object.
       # @param span [Object] The span to finish trace on
       # @return [void]
       def finish(span)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Set an error on the span.
@@ -24,13 +24,13 @@ module Deimos
       # @param exception [Exception] The exception that occurred
       # @return [void]
       def set_error(span, exception)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Get the currently activated span.
       # @return [Object]
       def active_span
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Set a tag to a span. Use the currently active span if not given.
@@ -39,13 +39,13 @@ module Deimos
       # @param span [Object]
       # @return [void]
       def set_tag(tag, value, span=nil)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Get a tag from a span with the specified tag.
       # @param tag [String]
       def get_tag(tag)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
     end

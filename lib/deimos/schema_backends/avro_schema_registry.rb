@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'avro_base'
-require_relative 'avro_validation'
 require 'avro_turf/messaging'
 
 module Deimos
@@ -29,7 +28,7 @@ module Deimos
           user: Deimos.config.schema.user,
           password: Deimos.config.schema.password,
           namespace: @namespace,
-          logger: Deimos.config.logger
+          logger: Karafka.logger
         )
       end
     end

@@ -16,7 +16,7 @@ RSpec.describe Deimos::SchemaBackends::AvroValidation do
 
   it 'should encode and decode correctly' do
     results = backend.encode(payload)
-    expect(results).to eq(payload)
+    expect(results).to eq(payload.to_json)
     results = backend.decode(results)
     expect(results).to eq(payload)
   end

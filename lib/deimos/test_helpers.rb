@@ -4,6 +4,7 @@ require 'active_support/concern'
 require 'active_support/core_ext'
 require 'deimos/tracing/mock'
 require 'deimos/metrics/mock'
+require 'karafka/testing/rspec/helpers'
 
 module Deimos
   # Include this module in your RSpec spec_helper
@@ -11,122 +12,79 @@ module Deimos
   # and add methods to use to test encoding/decoding.
   module TestHelpers
     extend ActiveSupport::Concern
+    def self.included(base)
+      super
+      base.include Karafka::Testing::RSpec::Helpers
+    end
+
+    # @return [Array<Hash>]
+    def sent_messages
+      self.class.sent_messages
+    end
 
     class << self
-      # for backwards compatibility
       # @return [Array<Hash>]
       def sent_messages
-        Deimos::Backends::Test.sent_messages
+        Karafka.producer.client.messages.map do |m|
+          produced_message = m.except(:label).deep_dup
+          Deimos.decode_message(produced_message)
+          produced_message[:payload] = Deimos::TestHelpers.normalize_message(produced_message[:payload])
+          produced_message[:key] = Deimos::TestHelpers.normalize_message(produced_message[:key])
+          produced_message
+        end
       end
 
       # Set the config to the right settings for a unit test
       # @return [void]
       def unit_test!
-        Deimos.configure do |deimos_config|
-          deimos_config.logger = Logger.new(STDOUT)
-          deimos_config.consumers.reraise_errors = true
-          deimos_config.kafka.seed_brokers ||= ['test_broker']
-          deimos_config.schema.backend = Deimos.schema_backend_class.mock_backend
-          deimos_config.producers.backend = :test
-          deimos_config.tracer = Deimos::Tracing::Mock.new
-        end
+        Deimos.config.schema.backend = :avro_validation
+        warn "unit_test! is deprecated and can be replaced by setting Deimos's schema backend to `:avro_validation`. All other test behavior is provided by Karafka."
       end
-
-      # Kafka test config with avro schema registry
-      # @return [void]
-      def full_integration_test!
-        Deimos.configure do |deimos_config|
-          deimos_config.producers.backend = :kafka
-          deimos_config.schema.backend = :avro_schema_registry
-        end
-      end
-
-      # Set the config to the right settings for a kafka test
-      # @return [void]
-      def kafka_test!
-        Deimos.configure do |deimos_config|
-          deimos_config.producers.backend = :kafka
-          deimos_config.schema.backend = :avro_validation
-        end
-      end
-    end
-
-    included do
-
-      RSpec.configure do |config|
-        config.prepend_before(:each) do
-          client = double('client').as_null_object
-          allow(client).to receive(:time) do |*_args, &block|
-            block.call
-          end
-          Deimos::Backends::Test.sent_messages.clear
-        end
-      end
-
-    end
-
-    # @deprecated
-    # @!visibility private
-    def stub_producers_and_consumers!
-      warn('stub_producers_and_consumers! is no longer necessary and this method will be removed in 3.0')
-    end
-
-    # @deprecated
-    # @!visibility private
-    def stub_producer(_klass)
-      warn('Stubbing producers is no longer necessary and this method will be removed in 3.0')
-    end
-
-    # @deprecated
-    # @!visibility private
-    def stub_consumer(_klass)
-      warn('Stubbing consumers is no longer necessary and this method will be removed in 3.0')
-    end
-
-    # @deprecated
-    # @!visibility private
-    def stub_batch_consumer(_klass)
-      warn('Stubbing batch consumers is no longer necessary and this method will be removed in 3.0')
     end
 
     # get the difference of 2 hashes.
-    # @param hash1 [Hash]
-    # @param hash2 [Hash]
+    # @param hash1 [Hash, nil]
+    # @param hash2 [Hash, nil]
     # @!visibility private
     def _hash_diff(hash1, hash2)
-      if hash1.nil? || !hash1.is_a?(Hash)
-        hash2
-      elsif hash2.nil? || !hash2.is_a?(Hash)
-        hash1
+      h1 = Deimos::TestHelpers.normalize_message(hash1)
+      h2 = Deimos::TestHelpers.normalize_message(hash2)
+      if h1.nil? || !h1.is_a?(Hash)
+        h2
+      elsif h2.nil? || !h2.is_a?(Hash)
+        h1
       else
-        hash1.dup.
-          delete_if { |k, v| hash2[k] == v }.
-          merge!(hash2.dup.delete_if { |k, _v| hash1.key?(k) })
+        h1.dup.
+          delete_if { |k, v| h2[k] == v }.
+          merge!(h2.dup.delete_if { |k, _v| h1.key?(k) })
       end
+    end
+
+    def self.normalize_message(m)
+      return nil if m.nil?
+
+      if m.respond_to?(:to_h)
+        m = m.to_h
+      end
+      if m.respond_to?(:with_indifferent_access)
+        m = m.with_indifferent_access
+      end
+      m
     end
 
     # @!visibility private
     def _frk_failure_message(topic, message, key=nil, partition_key=nil, was_negated=false)
-      messages = Deimos::Backends::Test.sent_messages.
-        select { |m| m[:topic] == topic }.
-        map { |m| m.except(:topic) }
+      messages = Deimos::TestHelpers.sent_messages.select { |m| m[:topic] == topic }
       message_string = ''
       diff = nil
       min_hash_diff = nil
+      message = Deimos::TestHelpers.normalize_message(message)
       if messages.any?
-        message_string = messages.map(&:inspect).join("\n")
-        min_hash_diff = messages.min_by { |m| _hash_diff(m, message).keys.size }
-        diff = RSpec::Expectations.differ.
-          diff_as_object(message, min_hash_diff[:payload])
+        message_string = messages.map { |m| m[:payload].inspect}.join("\n")
+        min_hash_diff = messages.min_by { |m| _hash_diff(m, message)&.keys&.size }
+        diff = RSpec::Expectations.differ.diff_as_object(message, min_hash_diff[:payload])
       end
-      description = if message.respond_to?(:description)
-                      message.description
-                    elsif message.nil?
-                      'nil'
-                    else
-                      message
-                    end
-      str = "Expected #{topic} #{'not ' if was_negated}to have sent #{description}"
+      str = "Expected #{topic} #{'not ' if was_negated}to have sent #{message.try(:to_h) || message}"
       str += " with key #{key}" if key
       str += " with partition key #{partition_key}" if partition_key
       str += "\nClosest message received: #{min_hash_diff}" if min_hash_diff
@@ -135,23 +93,18 @@ module Deimos
     end
 
     RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil|
-      message = if msg.respond_to?(:with_indifferent_access)
-                  msg.with_indifferent_access
-                else
-                  msg
-                end
+      message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
-        Deimos::Backends::Test.sent_messages.any? do |m|
-          hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
-          hash_matcher.send(:match,
-                            message&.respond_to?(:to_h) ? message.to_h : message,
-                            m[:payload]&.with_indifferent_access) &&
+        message_key = Deimos::TestHelpers.normalize_message(key)
+        hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
+        Deimos::TestHelpers.sent_messages.any? do |m|
+          hash_matcher.send(:match, message, m[:payload]) &&
             topic == m[:topic] &&
-            (key.present? ? key == m[:key] : true) &&
+            (key.present? ? message_key == m[:key] : true) &&
             (partition_key.present? ? partition_key == m[:partition_key] : true) &&
             if headers.present?
               hash_matcher.send(:match,
-                                headers&.with_indifferent_access,
+                                headers.with_indifferent_access,
                                 m[:headers]&.with_indifferent_access)
             else
               true
@@ -159,20 +112,11 @@ module Deimos
         end
       end
 
-      if respond_to?(:failure_message)
-        failure_message do |topic|
-          _frk_failure_message(topic, message, key, partition_key)
-        end
-        failure_message_when_negated do |topic|
-          _frk_failure_message(topic, message, key, partition_key, true)
-        end
-      else
-        failure_message_for_should do |topic|
-          _frk_failure_message(topic, message, key, partition_key)
-        end
-        failure_message_for_should_not do |topic|
-          _frk_failure_message(topic, message, key, partition_key, true)
-        end
+      failure_message do |topic|
+        _frk_failure_message(topic, message, key, partition_key)
+      end
+      failure_message_when_negated do |topic|
+        _frk_failure_message(topic, message, key, partition_key, true)
       end
     end
 
@@ -180,7 +124,8 @@ module Deimos
     # particular messages were sent or not sent after a point in time.
     # @return [void]
     def clear_kafka_messages!
-      Deimos::Backends::Test.sent_messages.clear
+      puts "[Deprecated] clear_kafka_messages! can be replaced with `karafka.produced_messages.clear`"
+      karafka.produced_messages.clear
     end
 
     # Test that a given handler will consume a given payload correctly, i.e.
@@ -190,65 +135,19 @@ module Deimos
     # @param handler_class_or_topic [Class, String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payload [Hash] the payload to consume
-    # @param call_original [Boolean] if true, allow the consume handler
-    # to continue as normal. Not compatible with a block.
-    # @param skip_expectation [Boolean] Set to true to not place any
-    # expectations on the consumer. Primarily used internally to Deimos.
     # @param key [Object] the key to use.
+    # @param call_original [Symbol] legacy parameter.
     # @param partition_key [Object] the partition key to use.
     # @return [void]
     def test_consume_message(handler_class_or_topic,
                              payload,
-                             call_original: false,
                              key: nil,
-                             partition_key: nil,
-                             skip_expectation: false,
-                             &block)
-      raise 'Cannot have both call_original and be given a block!' if call_original && block_given?
-
-      payload.stringify_keys! if payload.respond_to?(:stringify_keys!)
-      handler_class = if handler_class_or_topic.is_a?(String)
-                        _get_handler_class_from_topic(handler_class_or_topic)
-                      else
-                        handler_class_or_topic
-                      end
-      handler = handler_class.new
-      allow(handler_class).to receive(:new).and_return(handler)
-      listener = double('listener',
-                        handler_class: handler_class,
-                        encoding: nil)
-      key ||= _key_from_consumer(handler_class)
-      message = double('message',
-                       'key' => key,
-                       'partition_key' => partition_key,
-                       'partition' => 1,
-                       'offset' => 1,
-                       'headers' => {},
-                       'value' => payload)
-
-      unless skip_expectation
-        _handler_expectation(:consume,
-                             payload,
-                             handler,
-                             call_original,
-                             &block)
+                             call_original: Karafka::Routing::Default.new(nil),
+                             partition_key: nil)
+      unless call_original.is_a?(Karafka::Routing::Default)
+        puts "test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
-      Phobos::Actions::ProcessMessage.new(
-        listener: listener,
-        message: message,
-        listener_metadata: { topic: 'my-topic' }
-      ).send(:process_message, payload)
-    end
-
-    # Check to see that a given message will fail due to validation errors.
-    # @param handler_class [Class]
-    # @param payload [Hash]
-    # @return [void]
-    def test_consume_invalid_message(handler_class, payload)
-      expect {
-        handler_class.decoder.validate(payload,
-                                       schema: handler_class.decoder.schema)
-      }.to raise_error(Avro::SchemaValidator::ValidationError)
+      test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key], single: true)
     end
 
     # Test that a given handler will consume a given batch payload correctly,
@@ -258,165 +157,41 @@ module Deimos
     # @param handler_class_or_topic [Class, String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payloads [Array<Hash>] the payload to consume
-    # @param keys [Array<Hash,String>]
-    # @param partition_keys [Array<Integer>]
-    # @param call_original [Boolean]
-    # @param skip_expectation [Boolean]
+    # @param call_original [Symbol] legacy parameter.
+    # @param keys [Array<Object>]
+    # @param partition_keys [Array<Object>]
+    # @param single [Boolean] used internally.
     # @return [void]
     def test_consume_batch(handler_class_or_topic,
                            payloads,
                            keys: [],
-                           partition_keys: [],
-                           call_original: false,
-                           skip_expectation: false,
-                           &block)
-      if call_original && block_given?
-        raise 'Cannot have both call_original and be given a block!'
+                           call_original: Karafka::Routing::Default.new(nil),
+                           single: false,
+                           partition_keys: [])
+      unless call_original.is_a?(Karafka::Routing::Default)
+        puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
-
-      topic_name = 'my-topic'
-      handler_class = if handler_class_or_topic.is_a?(String)
-                        _get_handler_class_from_topic(handler_class_or_topic)
-                      else
-                        handler_class_or_topic
-                      end
-      handler = handler_class.new
-      allow(handler_class).to receive(:new).and_return(handler)
-      listener = double('listener',
-                        handler_class: handler_class,
-                        encoding: nil)
-      batch_messages = payloads.zip(keys, partition_keys).map do |payload, key, partition_key|
-        key ||= _key_from_consumer(handler_class)
-
-        double('message',
-               'key' => key,
-               'partition_key' => partition_key,
-               'partition' => 1,
-               'offset' => 1,
-               'headers' => {},
-               'value' => payload)
-      end
-      batch = double('fetched_batch',
-                     'messages' => batch_messages,
-                     'topic' => topic_name,
-                     'partition' => 1,
-                     'offset_lag' => 0)
-      unless skip_expectation
-        _handler_expectation(:consume_batch,
-                             payloads,
-                             handler,
-                             call_original,
-                             &block)
-      end
-      action = Phobos::Actions::ProcessBatchInline.new(
-        listener: listener,
-        batch: batch,
-        metadata: { topic: topic_name }
-      )
-      allow(action).to receive(:backoff_interval).and_return(0)
-      allow(action).to receive(:handle_error) { |e| raise e }
-      action.send(:execute)
-    end
-
-    # Check to see that a given message will fail due to validation errors.
-    # @param handler_class [Class]
-    # @param payloads [Array<Hash>]
-    # @return [void]
-    def test_consume_batch_invalid_message(handler_class, payloads)
-      topic_name = 'my-topic'
-      handler = handler_class.new
-      allow(handler_class).to receive(:new).and_return(handler)
-      listener = double('listener',
-                        handler_class: handler_class,
-                        encoding: nil)
-      batch_messages = payloads.map do |payload|
-        key ||= _key_from_consumer(handler_class)
-
-        double('message',
-               'key' => key,
-               'partition' => 1,
-               'offset' => 1,
-               'value' => payload)
-      end
-      batch = double('fetched_batch',
-                     'messages' => batch_messages,
-                     'topic' => topic_name,
-                     'partition' => 1,
-                     'offset_lag' => 0)
-
-      action = Phobos::Actions::ProcessBatchInline.new(
-        listener: listener,
-        batch: batch,
-        metadata: { topic: topic_name }
-      )
-      allow(action).to receive(:backoff_interval).and_return(0)
-      allow(action).to receive(:handle_error) { |e| raise e }
-
-      expect { action.send(:execute) }.
-        to raise_error
-    end
-
-  private
-
-    def _key_from_consumer(consumer)
-      if consumer.config[:key_field]
-        { consumer.config[:key_field] => 1 }
-      elsif consumer.config[:key_schema]
-        backend = consumer.decoder
-        old_schema = backend.schema
-        backend.schema = consumer.config[:key_schema]
-        key = backend.schema_fields.map { |field| [field.name, 1] }.to_h
-        backend.schema = old_schema
-        key
-      elsif consumer.config[:no_keys]
-        nil
+      consumer = nil
+      topic_name = nil
+      if handler_class_or_topic.is_a?(String)
+        topic_name = handler_class_or_topic
+        consumer = karafka.consumer_for(topic_name)
       else
-        1
-      end
-    end
-
-    # @param topic [String]
-    # @return [Class]
-    def _get_handler_class_from_topic(topic)
-      listeners = Phobos.config['listeners']
-      handler = listeners.find { |l| l.topic == topic }
-      raise "No consumer found in Phobos configuration for topic #{topic}!" if handler.nil?
-
-      handler.handler.constantize
-    end
-
-    # Test that a given handler will execute a `method` on an `input` correctly,
-    # If a block is given, that block will be executed when `method` is called.
-    # Otherwise it will just confirm that `method` is called at all.
-    # @param method [Symbol]
-    # @param input [Object]
-    # @param handler [Deimos::Consumer]
-    # @param call_original [Boolean]
-    def _handler_expectation(method,
-                             input,
-                             handler,
-                             call_original,
-                             &block)
-      schema_class = handler.class.config[:schema]
-      namespace = handler.class.config[:namespace]
-      expected = input.dup
-
-      config = handler.class.config
-      use_schema_classes = config[:use_schema_classes]
-      use_schema_classes = use_schema_classes.present? ? use_schema_classes : Deimos.config.schema.use_schema_classes
-
-      if use_schema_classes && schema_class.present?
-        expected = if input.is_a?(Array)
-                     input.map do |payload|
-                       Utils::SchemaClass.instance(payload, schema_class, namespace)
-                     end
-                   else
-                     Utils::SchemaClass.instance(input, schema_class, namespace)
-                   end
+        topic_name = Deimos.topic_for_consumer(handler_class_or_topic)
+        consumer = karafka.consumer_for(topic_name)
       end
 
-      expectation = expect(handler).to receive(method).with(expected, anything, &block)
-      expectation.and_call_original if call_original
-    end
+      Deimos.karafka_config_for(topic: topic_name).each_message(single)
+
+       payloads.each_with_index do |payload, i|
+         karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})
+       end
+       if block_given?
+         allow_any_instance_of(consumer_class).to receive(:consume_batch) do
+           yield
+         end
+       end
+       consumer.consume
+      end
   end
 end

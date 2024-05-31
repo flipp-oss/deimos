@@ -11,6 +11,7 @@ module Deimos
       # Base poller class for retrieving and publishing messages.
       class Base
 
+        FATAL_CODES = %i(invalid_msg_size msg_size_too_large)
         # @return [Integer]
         BATCH_SIZE = 1000
 
@@ -58,14 +59,14 @@ module Deimos
           if Deimos.config.producers.backend == :kafka_async
             Deimos.config.producers.backend = :kafka
           end
-          Deimos.config.logger.info('Starting...')
+          Deimos::Logging.log_info('Starting...')
           @signal_to_stop = false
           ActiveRecord::Base.connection.reconnect! unless ActiveRecord::Base.connection.open_transactions.positive?
 
           retrieve_poll_info
           loop do
             if @signal_to_stop
-              Deimos.config.logger.info('Shutting down')
+              Deimos::Logging.log_info('Shutting down')
               break
             end
             process_updates if should_run?
@@ -95,7 +96,7 @@ module Deimos
         # Stop the poll.
         # @return [void]
         def stop
-          Deimos.config.logger.info('Received signal to stop')
+          Deimos::Logging.log_info('Received signal to stop')
           @signal_to_stop = true
         end
 
@@ -111,9 +112,9 @@ module Deimos
         # @param span [Object]
         # @return [Boolean]
         def handle_message_too_large(exception, batch, status, span)
-          Deimos.config.logger.error("Error publishing through DB Poller: #{exception.message}")
+          Deimos::Logging.log_error("Error publishing through DB Poller: #{exception.message}")
           if @config.skip_too_large_messages
-            Deimos.config.logger.error("Skipping messages #{batch.map(&:id).join(', ')} since they are too large")
+            Deimos::Logging.log_error("Skipping messages #{batch.map(&:id).join(', ')} since they are too large")
             Deimos.config.tracer&.set_error(span, exception)
             status.batches_errored += 1
             true
@@ -137,21 +138,22 @@ module Deimos
             process_batch(batch)
             Deimos.config.tracer&.finish(span)
             status.batches_processed += 1
-          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge,
-                 Kafka::RecordListTooLarge => e
-            retry unless handle_message_too_large(e, batch, status, span)
-          rescue Kafka::Error => e # keep trying till it fixes itself
-            Deimos.config.logger.error("Error publishing through DB Poller: #{e.message}")
-            sleep(0.5)
-            retry
+          rescue WaterDrop::Errors::ProduceManyError => e
+            if FATAL_CODES.include?(e.cause.try(:code))
+              retry unless handle_message_too_large(e, batch, status, span)
+            else
+              Deimos::Logging.log_error("Error publishing through DB Poller: #{e.message}")
+              sleep(0.5)
+              retry
+            end
           rescue StandardError => e
-            Deimos.config.logger.error("Error publishing through DB poller: #{e.message}}")
+            Deimos::Logging.log_error("Error publishing through DB poller: #{e.message}}")
             if @config.retries.nil? || retries < @config.retries
               retries += 1
               sleep(0.5)
               retry
             else
-              Deimos.config.logger.error('Retries exceeded, moving on to next batch')
+              Deimos::Logging.log_error('Retries exceeded, moving on to next batch')
               Deimos.config.tracer&.set_error(span, e)
               status.batches_errored += 1
               return false
