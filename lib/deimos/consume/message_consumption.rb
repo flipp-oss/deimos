@@ -37,7 +37,7 @@ module Deimos
     private
 
       def _received_message(payload, metadata)
-        Deimos.config.logger.info(
+        Deimos::Logging.log_info(
           message: 'Got Kafka event',
           payload: payload,
           metadata: metadata
@@ -84,7 +84,7 @@ module Deimos
                                            status:success
                                            topic:#{metadata[:topic]}
                                          ))
-        Deimos.config.logger.info(
+        Deimos::Logging.log_info(
           message: 'Finished processing Kafka event',
           payload: payload,
           time_elapsed: time_taken,

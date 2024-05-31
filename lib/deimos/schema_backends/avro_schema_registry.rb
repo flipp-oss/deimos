@@ -29,7 +29,7 @@ module Deimos
           user: Deimos.config.schema.user,
           password: Deimos.config.schema.password,
           namespace: @namespace,
-          logger: Deimos.config.logger
+          logger: Karafka.logger
         )
       end
     end

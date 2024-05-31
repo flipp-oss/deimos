@@ -4,6 +4,7 @@ require 'active_support'
 require 'karafka'
 
 require 'deimos/version'
+require 'deimos/logging'
 require 'deimos/config/configuration'
 require 'deimos/producer'
 require 'deimos/active_record_producer'

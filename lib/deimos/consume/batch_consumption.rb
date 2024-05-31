@@ -84,7 +84,7 @@ module Deimos
             status:batch_error
             topic:#{metadata[:topic]}
           ))
-        Deimos.config.logger.warn(
+        Deimos::Logging.log_warn(
           message: 'Error consuming message batch',
           handler: self.class.name,
           metadata: metadata.except(:keys),

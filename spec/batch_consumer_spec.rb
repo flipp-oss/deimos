@@ -251,18 +251,11 @@ module ConsumerTest
             'timestamp' => 2.minutes.ago.to_s, 'message_id' => 'two' }
         ]
 
-        allow(Deimos.config.logger).
-          to receive(:info)
+        allow(Deimos::Logging).to receive(:log_info)
 
-        expect(Deimos.config.logger).
-          to receive(:info).
-          with(hash_including(
-                 message_ids: [
-                   { key: 1, message_id: 'one' },
-                   { key: 2, message_id: 'two' }
-                 ]
-               )).
-          twice
+        expect(Deimos::Logging).
+          to receive(:log_info).
+          with(hash_including(payload_keys: ["1", "2"]))
 
         test_consume_batch('my_batch_consume_topic', batch_with_message_id, keys: [1, 2])
       end
