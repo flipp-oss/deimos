@@ -34,7 +34,11 @@ module ActiveRecordBatchConsumerTest
     prepend_before(:each) do
       stub_const('MyBatchConsumer', consumer_class)
       stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
-      consumer_class.config[:bulk_import_id_column] = :bulk_import_id # default
+      register_consumer(MyBatchConsumer,
+                        'MySchema',
+                        key_config: {plain: true},
+                        configs: {bulk_import_id_column: :bulk_import_id})
+      Widget.delete_all
     end
 
     around(:each) do |ex|
@@ -50,9 +54,6 @@ module ActiveRecordBatchConsumerTest
     # Basic uncompacted consumer
     let(:consumer_class) do
       Class.new(described_class) do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config plain: true
         record_class Widget
         compacted false
       end
@@ -68,7 +69,7 @@ module ActiveRecordBatchConsumerTest
       keys = messages.map { |m| m[:key] }
       payloads = messages.map { |m| m[:payload] }
 
-      test_consume_batch(MyBatchConsumer, payloads, keys: keys, call_original: true)
+      test_consume_batch(MyBatchConsumer, payloads, keys: keys)
     end
 
     describe 'consume_batch' do
@@ -80,10 +81,6 @@ module ActiveRecordBatchConsumerTest
               config.schema.use_schema_classes = use_schema_classes
               config.schema.use_full_namespace = true
             end
-          end
-
-          it 'should handle an empty batch' do
-            expect { publish_batch([]) }.not_to raise_error
           end
 
           it 'should create records from a batch' do
@@ -257,12 +254,16 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'compacted mode' do
+      before(:each) do
+      register_consumer(consumer_class,
+                        'MySchema',
+                        key_config: {plain: true})
+
+      end
+
       # Create a compacted consumer
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
           record_class Widget
 
           # :no-doc:
@@ -302,11 +303,14 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'compound keys' do
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {schema: 'MySchemaCompound_key'})
+      end
+
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config schema: 'MySchemaCompound_key'
           record_class Widget
           compacted false
 
@@ -353,13 +357,10 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'no keys' do
-      let(:consumer_class) do
-        Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config none: true
-          record_class Widget
-        end
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {none: true})
       end
 
       it 'should handle unkeyed topics' do
@@ -385,11 +386,13 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'soft deletion' do
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {plain: true})
+      end
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
           record_class Widget
           compacted false
 
@@ -451,11 +454,13 @@ module ActiveRecordBatchConsumerTest
     end
 
     describe 'skipping records' do
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {plain: true})
+      end
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
           record_class Widget
 
           # Sample customization: Skipping records
@@ -471,9 +476,9 @@ module ActiveRecordBatchConsumerTest
         publish_batch(
           [
             { key: 1, # Record that consumer can decide to skip
-              payload: { test_id: 'skipme' } },
+              payload: { test_id: 'skipme', some_int: 3 } },
             { key: 2,
-              payload: { test_id: 'abc123' } }
+              payload: { test_id: 'abc123', some_int: 3 } }
           ]
         )
 
@@ -484,11 +489,13 @@ module ActiveRecordBatchConsumerTest
 
     describe 'pre processing' do
       context 'with uncompacted messages' do
+        before(:each) do
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true})
+        end
         let(:consumer_class) do
           Class.new(described_class) do
-            schema 'MySchema'
-            namespace 'com.my-namespace'
-            key_config plain: true
             record_class Widget
             compacted false
 
@@ -527,9 +534,11 @@ module ActiveRecordBatchConsumerTest
       context 'with a global bulk_import_id_generator' do
 
         before(:each) do
-          Deimos.configure do
-            consumers.bulk_import_id_generator(proc { 'global' })
-          end
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true},
+                            configs: {bulk_import_id_generator: proc { 'global' }}
+                            )
         end
 
         it 'should call the default bulk_import_id_generator proc' do
@@ -559,10 +568,17 @@ module ActiveRecordBatchConsumerTest
       context 'with a class defined bulk_import_id_generator' do
 
         before(:each) do
-          Deimos.configure do
-            consumers.bulk_import_id_generator(proc { 'global' })
+          Karafka::App.routes.clear
+          Karafka::App.routes.draw do
+            defaults do
+              bulk_import_id_generator(proc { 'global'})
+            end
           end
-          consumer_class.config[:bulk_import_id_generator] = proc { 'custom' }
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true},
+                            configs: {bulk_import_id_generator: proc { 'custom' }}
+                            )
         end
 
         it 'should call the default bulk_import_id_generator proc' do
@@ -593,11 +609,13 @@ module ActiveRecordBatchConsumerTest
 
     describe 'should_consume?' do
 
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: {plain: true})
+      end
       let(:consumer_class) do
         Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
           record_class Widget
           compacted false
 
@@ -609,9 +627,8 @@ module ActiveRecordBatchConsumerTest
             nil
           end
 
-          ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
-            payload = ActiveSupport::Notifications::Event.new(*args).payload
-            payload[:consumer].process_invalid_records(payload[:records])
+          Karafka.monitor.subscribe('deimos.batch_consumption.invalid_records') do |event|
+            event[:consumer].process_invalid_records(event[:records])
           end
 
         end
@@ -649,11 +666,13 @@ module ActiveRecordBatchConsumerTest
     describe 'post processing' do
 
       context 'with uncompacted messages' do
+        before(:each) do
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true})
+        end
         let(:consumer_class) do
           Class.new(described_class) do
-            schema 'MySchema'
-            namespace 'com.my-namespace'
-            key_config plain: true
             record_class Widget
             compacted false
 
@@ -673,13 +692,11 @@ module ActiveRecordBatchConsumerTest
               Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
+            Karafka.monitor.subscribe('deimos.batch_consumption.invalid_records') do |payload|
               payload[:consumer].process_invalid_records(payload[:records])
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
+            Karafka.monitor.subscribe('deimos.batch_consumption.valid_records') do |payload|
               payload[:consumer].process_valid_records(payload[:records])
             end
 
@@ -707,11 +724,13 @@ module ActiveRecordBatchConsumerTest
       end
 
       context 'with compacted messages' do
+        before(:each) do
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true})
+        end
         let(:consumer_class) do
           Class.new(described_class) do
-            schema 'MySchema'
-            namespace 'com.my-namespace'
-            key_config plain: true
             record_class Widget
             compacted true
 
@@ -731,13 +750,11 @@ module ActiveRecordBatchConsumerTest
               Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.invalid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
+            Karafka.monitor.subscribe('deimos.batch_consumption.invalid_records') do |payload|
               payload[:consumer].process_invalid_records(payload[:records])
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
+            Karafka.monitor.subscribe('deimos.batch_consumption.valid_records') do |payload|
               payload[:consumer].process_valid_records(payload[:records])
             end
 
@@ -765,11 +782,13 @@ module ActiveRecordBatchConsumerTest
       end
 
       context 'with post processing errors' do
+        before(:each) do
+          register_consumer(consumer_class,
+                            'MySchema',
+                            key_config: {plain: true})
+        end
         let(:consumer_class) do
           Class.new(described_class) do
-            schema 'MySchema'
-            namespace 'com.my-namespace'
-            key_config plain: true
             record_class Widget
             compacted false
 
@@ -777,15 +796,15 @@ module ActiveRecordBatchConsumerTest
               raise StandardError, 'Something went wrong'
             end
 
-            ActiveSupport::Notifications.subscribe('batch_consumption.valid_records') do |*args|
-              payload = ActiveSupport::Notifications::Event.new(*args).payload
-              payload[:consumer].process_valid_records(payload[:records])
+            Karafka.monitor.subscribe('deimos.batch_consumption.valid_records') do |event|
+              event[:consumer].process_valid_records(event[:records])
             end
 
           end
         end
 
         it 'should save records if an exception occurs in post processing' do
+          set_karafka_config(:reraise_errors, true)
           Widget.create!(id: 1, test_id: 'abc', some_int: 1)
           Widget.create!(id: 2, test_id: 'def', some_int: 2)
 

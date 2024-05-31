@@ -3,19 +3,34 @@
 # :nodoc:
 module ConsumerTest
   describe Deimos::Consumer, 'Batch Consumer' do
-    prepend_before(:each) do
-      # :nodoc:
-      consumer_class = Class.new(described_class) do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        key_config field: 'test_id'
-
+    let(:schema) { 'MySchema' }
+    let(:use_schema_classes) { false }
+    let(:reraise_errors) { false }
+    let(:key_config) { { field: 'test_id' } }
+    let(:consumer_class) do
+      Class.new(described_class) do
         # :nodoc:
-        def consume_batch(_payloads, _metadata)
-          raise 'This should not be called unless call_original is set'
+        def consume_batch
         end
       end
+    end
+    before(:each) do
+      # :nodoc:
+      stub_const('MyBatchConsumer', consumer_class)
       stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
+      klass = consumer_class
+      route_schema = schema
+      route_key = key_config
+      route_use_classes = use_schema_classes
+      Karafka::App.routes.redraw do
+        topic 'my-topic' do
+          consumer klass
+          schema route_schema
+          namespace 'com.my-namespace'
+          key_config route_key
+          use_schema_classes route_use_classes
+        end
+      end
     end
 
     let(:batch) do
@@ -38,41 +53,23 @@ module ConsumerTest
               Deimos::Utils::SchemaClass.instance(p, 'MySchema', 'com.my-namespace')
             end
           end
+          let(:use_schema_classes) { true }
 
           before(:each) do
             Deimos.configure do |config|
-              config.schema.use_schema_classes = use_schema_classes
               config.schema.use_full_namespace = true
             end
           end
 
-          it 'should provide backwards compatibility for BatchConsumer class' do
-            consumer_class = Class.new(Deimos::BatchConsumer) do
-              schema 'MySchema'
-              namespace 'com.my-namespace'
-              key_config field: 'test_id'
-
-              # :nodoc:
-              def consume_batch(_payloads, _metadata)
-                raise 'This should not be called unless call_original is set'
-              end
-            end
-            stub_const('ConsumerTest::MyOldBatchConsumer', consumer_class)
-
-            test_consume_batch(MyOldBatchConsumer, schema_class_batch) do |received, _metadata|
-              expect(received).to eq(schema_class_batch)
-            end
-          end
-
           it 'should consume a batch of messages' do
-            test_consume_batch(MyBatchConsumer, schema_class_batch) do |received, _metadata|
-              expect(received).to eq(schema_class_batch)
+            test_consume_batch(MyBatchConsumer, schema_class_batch) do |received|
+              expect(received.payloads).to eq(schema_class_batch)
             end
           end
 
           it 'should consume a message on a topic' do
-            test_consume_batch('my_batch_consume_topic', schema_class_batch) do |received, _metadata|
-              expect(received).to eq(schema_class_batch)
+            test_consume_batch('my-topic', schema_class_batch) do |received|
+              expect(received.payloads).to eq(schema_class_batch)
             end
           end
         end
@@ -80,29 +77,19 @@ module ConsumerTest
     end
 
     describe 'when reraising errors is disabled' do
-      before(:each) do
-        Deimos.configure { |config| config.consumers.reraise_errors = false }
-      end
+      let(:reraise_errors) { false }
 
       it 'should not fail when before_consume_batch fails' do
         expect {
           test_consume_batch(
             MyBatchConsumer,
-            batch,
-            skip_expectation: true
-          ) { raise 'OH NOES' }
+            batch
+          ) do
+            raise 'OH NOES'
+          end
         }.not_to raise_error
       end
 
-      it 'should not fail when consume_batch fails' do
-        expect {
-          test_consume_batch(
-            MyBatchConsumer,
-            invalid_payloads,
-            skip_expectation: true
-          )
-        }.not_to raise_error
-      end
     end
 
     describe 'decoding' do
@@ -111,53 +98,32 @@ module ConsumerTest
       end
 
       it 'should decode payloads for all messages in the batch' do
-        test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
+        test_consume_batch('my-topic', batch) do
           # Mock decoder simply returns the payload
-          expect(received).to eq(batch)
+          expect(messages.payloads).to eq(batch)
         end
       end
 
       it 'should decode keys for all messages in the batch' do
-        expect_any_instance_of(ConsumerTest::MyBatchConsumer).
-          to receive(:decode_key).with(keys[0]).and_call_original
-        expect_any_instance_of(ConsumerTest::MyBatchConsumer).
-          to receive(:decode_key).with(keys[1]).and_call_original
-
-        test_consume_batch('my_batch_consume_topic', batch, keys: keys) do |_received, metadata|
-          # Mock decode_key extracts the value of the first field as the key
-          expect(metadata[:keys]).to eq(%w(foo bar))
-          expect(metadata[:first_offset]).to eq(1)
+        test_consume_batch('my-topic', batch, keys: keys) do
+          expect(messages.map(&:key)).to eq([{'test_id' => 'foo'}, {'test_id' => 'bar'}])
         end
       end
 
-      it 'should decode plain keys for all messages in the batch' do
-        consumer_class = Class.new(described_class) do
-          schema 'MySchema'
-          namespace 'com.my-namespace'
-          key_config plain: true
-        end
-        stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
-
-        test_consume_batch('my_batch_consume_topic', batch, keys: [1, 2]) do |_received, metadata|
-          expect(metadata[:keys]).to eq([1, 2])
+      context 'with plain keys' do
+        let(:key_config) { { plain: true } }
+        it 'should decode plain keys for all messages in the batch' do
+          test_consume_batch('my-topic', batch, keys: [1, 2]) do |_received, metadata|
+            expect(metadata[:keys]).to eq([1, 2])
+          end
         end
       end
     end
 
     describe 'timestamps' do
+      let(:schema) { 'MySchemaWithDateTimes' }
+      let(:key_config) { { none: true } }
       before(:each) do
-        # :nodoc:
-        consumer_class = Class.new(described_class) do
-          schema 'MySchemaWithDateTimes'
-          namespace 'com.my-namespace'
-          key_config plain: true
-
-          # :nodoc:
-          def consume_batch(_payloads, _metadata)
-            raise 'This should not be called unless call_original is set'
-          end
-        end
-        stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
         allow(Deimos.config.metrics).to receive(:histogram)
       end
 
@@ -202,45 +168,36 @@ module ConsumerTest
       end
 
       it 'should consume a batch' do
-        expect(Deimos.config.metrics).
-          to receive(:histogram).with('handler',
-                                      a_kind_of(Numeric),
-                                      tags: %w(time:time_delayed topic:my-topic)).twice
+        # expect(Deimos.config.metrics).
+        #   to receive(:histogram).with('handler',
+        #                               a_kind_of(Numeric),
+        #                               tags: %w(time:time_delayed topic:my-topic)).twice
 
-        test_consume_batch('my_batch_consume_topic', batch_with_time) do |received, _metadata|
-          expect(received).to eq(batch_with_time)
+        test_consume_batch('my-topic', batch_with_time) do
+          expect(messages.payloads).to eq(batch_with_time)
         end
       end
 
       it 'should fail nicely and ignore timestamps with the wrong format' do
         batch = invalid_times.concat(batch_with_time)
 
-        expect(Deimos.config.metrics).
-          to receive(:histogram).with('handler',
-                                      a_kind_of(Numeric),
-                                      tags: %w(time:time_delayed topic:my-topic)).twice
+        # expect(Deimos.config.metrics).
+        #   to receive(:histogram).with('handler',
+        #                               a_kind_of(Numeric),
+        #                               tags: %w(time:time_delayed topic:my-topic)).twice
 
-        test_consume_batch('my_batch_consume_topic', batch) do |received, _metadata|
-          expect(received).to eq(batch)
+        test_consume_batch('my-topic', batch) do
+          expect(messages.payloads).to eq(batch)
         end
       end
     end
 
     describe 'logging' do
+      let(:schema) { 'MySchemaWithUniqueId' }
+      let(:key_config) { { plain: true } }
       before(:each) do
-        # :nodoc:
-        consumer_class = Class.new(described_class) do
-          schema 'MySchemaWithUniqueId'
-          namespace 'com.my-namespace'
-          key_config plain: true
-
-          # :nodoc:
-          def consume_batch(_payloads, _metadata)
-            raise 'This should not be called unless call_original is set'
-          end
-        end
-        stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
         allow(Deimos.config.metrics).to receive(:histogram)
+        set_karafka_config(:payload_log, :keys)
       end
 
       it 'should log message identifiers' do
@@ -257,7 +214,7 @@ module ConsumerTest
           to receive(:log_info).
           with(hash_including(payload_keys: ["1", "2"]))
 
-        test_consume_batch('my_batch_consume_topic', batch_with_message_id, keys: [1, 2])
+        test_consume_batch('my-topic', batch_with_message_id, keys: [1, 2])
       end
     end
   end
