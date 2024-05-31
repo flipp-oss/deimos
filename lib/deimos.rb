@@ -10,9 +10,7 @@ require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
 require 'deimos/consumer'
-require 'deimos/batch_consumer'
 require 'deimos/instrumentation'
-require 'deimos/utils/lag_reporter'
 
 require 'deimos/backends/base'
 require 'deimos/backends/kafka'
@@ -26,7 +24,6 @@ require 'deimos/schema_class/record'
 
 
 require 'deimos/railtie' if defined?(Rails)
-require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
 
 if defined?(ActiveRecord)
   require 'deimos/kafka_source'
@@ -37,7 +34,6 @@ if defined?(ActiveRecord)
   require 'deimos/utils/db_poller'
 end
 
-require 'deimos/utils/inline_consumer'
 require 'yaml'
 require 'erb'
 
