@@ -14,7 +14,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
-    validate_consumers
     validate_db_backend if self.config.producers.backend == :db
     generate_key_schemas
   end
@@ -38,27 +37,11 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     end
   end
 
-  # Validate that consumers are configured correctly, including their
-  # delivery mode.
-  # @!visibility private
-  def self.validate_consumers
-    Phobos.config.listeners.each do |listener|
-      handler_class = listener.handler.constantize
-      delivery = listener.delivery
-
-      next unless handler_class < Deimos::Consumer
-
-      # Validate that each consumer implements the correct method for its type
-      if delivery == 'inline_batch'
-        if handler_class.instance_method(:consume_batch).owner == Deimos::Consume::BatchConsumption
-          raise "BatchConsumer #{listener.handler} does not implement `consume_batch`"
         if transcoder.respond_to?(:key_field) && transcoder.key_field
           transcoder.backend = Deimos.schema_backend(schema: config.schema,
                                                      namespace: config.namespace)
           transcoder.backend.generate_key_schema(transcoder.key_field)
         end
-      elsif handler_class.instance_method(:consume).owner == Deimos::Consume::MessageConsumption
-        raise "Non-batch Consumer #{listener.handler} does not implement `consume`"
       end
     end
 

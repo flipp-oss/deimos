@@ -7,67 +7,61 @@ module Deimos
     module MessageConsumption
       extend ActiveSupport::Concern
 
-      # @param payload [String]
-      # @param metadata [Hash]
-      # @return [void]
-      def around_consume(payload, metadata)
-        decoded_payload = payload.nil? ? nil : payload.dup
-        new_metadata = metadata.dup
-        benchmark = Benchmark.measure do
-          _with_span do
-            new_metadata[:key] = decode_key(metadata[:key]) if self.class.config[:key_configured]
-            decoded_payload = decode_message(payload)
-            _received_message(decoded_payload, new_metadata)
-            yield(decoded_payload, new_metadata)
-          end
-        end
-        _handle_success(benchmark.real, decoded_payload, new_metadata)
-      rescue StandardError => e
-        _handle_error(e, decoded_payload, new_metadata)
-      end
-
       # Consume incoming messages.
-      # @param _payload [String]
-      # @param _metadata [Hash]
+      # @param _message [Karafka::Messages::Message]
       # @return [void]
-      def consume(_payload, _metadata)
+      def consume_message(_message)
         raise MissingImplementationError
       end
 
     private
 
-      def _received_message(payload, metadata)
+      def _consume_messages
+        messages.each do |message|
+          begin
+            _with_span do
+              _received_message(message)
+              benchmark = Benchmark.measure do
+                consume_message(message)
+              end
+              _handle_success(message, benchmark.real)
+            rescue StandardError => e
+              _handle_message_error(e, message)
+            end
+          end
+        end
+      end
+
+      def _received_message(message)
         Deimos::Logging.log_info(
           message: 'Got Kafka event',
-          payload: payload,
+          payload: message.payload,
           metadata: Deimos::Logging.metadata_log_text(message.metadata)
         )
       end
 
       # @param exception [Throwable]
-      # @param payload [Hash]
-      # @param metadata [Hash]
-      def _handle_error(exception, payload, metadata)
+      # @param message [Karafka::Messages::Message]
+      def _handle_message_error(exception, message)
         Deimos::Logging.log_warn(
           message: 'Error consuming message',
           handler: self.class.name,
-          data: payload,
           metadata: Deimos::Logging.metadata_log_text(message.metadata),
+          key: message.key,
+          data: message.payload,
           error_message: exception.message,
           error: exception.backtrace
         )
 
-        _error(exception, payload, metadata)
+        _error(exception, Karafka::Messages::Messages.new([message], messages.metadata))
       end
 
-      # @param time_taken [Float]
-      # @param payload [Hash]
-      # @param metadata [Hash]
-      def _handle_success(time_taken, payload, metadata)
+      def _handle_success(message, benchmark)
+        mark_as_consumed(message)
         Deimos::Logging.log_info(
           message: 'Finished processing Kafka event',
-          payload: payload,
-          time_elapsed: time_taken,
+          payload: message.payload,
+          time_elapsed: benchmark,
           metadata: Deimos::Logging.metadata_log_text(message.metadata)
         )
       end

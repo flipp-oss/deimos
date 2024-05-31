@@ -23,22 +23,18 @@ module Deimos
       # If two messages in a batch have the same key, we cannot process them
       # in the same operation as they would interfere with each other. Thus
       # they are split
-      # @param payloads [Array<Hash,Deimos::SchemaClass::Record>] Decoded payloads
-      # @param metadata [Hash] Information about batch, including keys.
       # @return [void]
-      def consume_batch(payloads, metadata)
-        messages = payloads.
-          zip(metadata[:keys]).
-          map { |p, k| Deimos::Message.new(p, nil, key: k) }
+      def consume_batch
+        deimos_messages = messages.map { |p| Deimos::Message.new(p.payload, key: p.key) }
 
-        tag = metadata[:topic]
+        tag = topic.name
         Deimos.config.tracer.active_span.set_tag('topic', tag)
 
-          if @compacted || self.class.config[:no_keys]
-            update_database(compact_messages(messages))
         Karafka.monitor.instrument('deimos.ar_consumer.consume_batch', {topic: tag}) do
+          if @compacted && deimos_messages.map(&:key).compact.any?
+            update_database(compact_messages(deimos_messages))
           else
-            uncompacted_update(messages)
+            uncompacted_update(deimos_messages)
           end
         end
       end
@@ -170,10 +166,10 @@ module Deimos
         updater = MassUpdater.new(@klass,
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
-                                  replace_associations: self.class.replace_associations,
-                                  bulk_import_id_generator: self.class.bulk_import_id_generator,
-                                  save_associations_first: self.class.save_associations_first,
-                                  bulk_import_id_column: self.class.bulk_import_id_column)
+                                  replace_associations: self.replace_associations,
+                                  bulk_import_id_generator: self.bulk_import_id_generator,
+                                  save_associations_first: self.save_associations_first,
+                                  bulk_import_id_column: self.bulk_import_id_column)
         Karafka.monitor.instrument('deimos.batch_consumption.valid_records', {
           records: updater.mass_update(record_list),
           consumer: self.class

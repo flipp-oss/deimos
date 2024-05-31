@@ -29,38 +29,29 @@ module Deimos
         record[record.class.primary_key] = key
       end
 
-      # @param payload [Hash,Deimos::SchemaClass::Record] Decoded payloads
-      # @param metadata [Hash] Information about batch, including keys.
-      # @return [void]
-      def consume(payload, metadata)
-        unless self.process_message?(payload)
-          Deimos.config.logger.debug(
-            message: 'Skipping processing of message',
-            payload: payload,
-            metadata: metadata
-          )
+      # @param message [Karafka::Messages::Message]
+      def consume_message(message)
+        unless self.process_message?(message)
+          Deimos::Logging.log_debug(
+              message: 'Skipping processing of message',
+              payload: message.payload.to_h,
+              metadata: Deimos::Logging.metadata_log_text(message.metadata)
+            )
           return
         end
 
-        key = metadata.with_indifferent_access[:key]
         klass = self.class.config[:record_class]
-        record = fetch_record(klass, (payload || {}).with_indifferent_access, key)
-        if payload.nil?
+        record = fetch_record(klass, message.payload.to_h.with_indifferent_access, message.key)
+        if message.payload.nil?
           destroy_record(record)
           return
         end
         if record.blank?
           record = klass.new
-          assign_key(record, payload, key)
+          assign_key(record, message.payload, message.key)
         end
 
-        # for backwards compatibility
-        # TODO next major release we should deprecate this
-        attrs = if self.method(:record_attributes).parameters.size == 2
-                  record_attributes(payload.with_indifferent_access, key)
-                else
-                  record_attributes(payload.with_indifferent_access)
-                end
+        attrs = record_attributes((message.payload || {}).with_indifferent_access, message.key)
         # don't use attributes= - bypass Rails < 5 attr_protected
         attrs.each do |k, v|
           record.send("#{k}=", v)
