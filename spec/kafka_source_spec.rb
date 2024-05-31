@@ -17,18 +17,10 @@ module KafkaSourceSpec
 
       # Dummy producer which mimicks the behavior of a real producer
       class WidgetProducer < Deimos::ActiveRecordProducer
-        topic 'my-topic'
-        namespace 'com.my-namespace'
-        schema 'Widget'
-        key_config field: :id
       end
 
       # Dummy producer which mimicks the behavior of a real producer
       class WidgetProducerTheSecond < Deimos::ActiveRecordProducer
-        topic 'my-topic-the-second'
-        namespace 'com.my-namespace'
-        schema 'WidgetTheSecond'
-        key_config field: :id
       end
 
       # Dummy class we can include the mixin in. Has a backing table created
@@ -51,6 +43,22 @@ module KafkaSourceSpec
 
     before(:each) do
       Widget.delete_all
+      Karafka::App.routes.redraw do
+        topic 'my-topic' do
+          namespace 'com.my-namespace'
+          schema 'Widget'
+          key_config field: :id
+          producer_class WidgetProducer
+        end
+
+        topic 'my-topic-the-second' do
+          namespace 'com.my-namespace'
+          schema 'WidgetTheSecond'
+          key_config field: :id
+          producer_class WidgetProducerTheSecond
+        end
+
+      end
     end
 
     it 'should send events on creation, update, and deletion' do
@@ -206,10 +214,9 @@ module KafkaSourceSpec
     context 'with DB backend' do
       before(:each) do
         Deimos.configure do |config|
-          config.producers.backend = :db
+          config.producers.backend = :outbox
         end
         setup_db(DB_OPTIONS.last) # sqlite
-        allow(Deimos::Producer).to receive(:produce_batch).and_call_original
       end
 
       it 'should save to the DB' do
@@ -309,46 +316,6 @@ module KafkaSourceSpec
       end
     end
 
-    context 'with AR models that implement the kafka_producer interface' do
-      before(:each) do
-        # Dummy class we can include the mixin in. Has a backing table created
-        # earlier and has the import hook disabled
-        deprecated_class = Class.new(ActiveRecord::Base) do
-          include Deimos::KafkaSource
-          self.table_name = 'widgets'
-
-          # :nodoc:
-          def self.kafka_config
-            {
-              update: true,
-              delete: true,
-              import: false,
-              create: true
-            }
-          end
-
-          # :nodoc:
-          def self.kafka_producer
-            WidgetProducer
-          end
-        end
-        stub_const('WidgetDeprecated', deprecated_class)
-        WidgetDeprecated.reset_column_information
-      end
-
-      it 'logs a warning and sends the message as usual' do
-        expect(Deimos.config.logger).to receive(:warn).with({ message: WidgetDeprecated::DEPRECATION_WARNING })
-        widget = WidgetDeprecated.create(widget_id: 1, name: 'Widget 1')
-        expect('my-topic').to have_sent({
-                                          widget_id: 1,
-                                          name: 'Widget 1',
-                                          id: widget.id,
-                                          created_at: anything,
-                                          updated_at: anything
-                                        }, widget.id)
-      end
-    end
-
     context 'with AR models that do not implement any producer interface' do
       before(:each) do
         # Dummy class we can include the mixin in. Has a backing table created
@@ -371,10 +338,10 @@ module KafkaSourceSpec
         WidgetBuggy.reset_column_information
       end
 
-      it 'raises a NotImplementedError exception' do
+      it 'raises a MissingImplementationError exception' do
         expect {
           WidgetBuggy.create(widget_id: 1, name: 'Widget 1')
-        }.to raise_error(NotImplementedError)
+        }.to raise_error(Deimos::MissingImplementationError)
       end
     end
   end
