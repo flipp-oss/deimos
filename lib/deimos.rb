@@ -10,7 +10,6 @@ require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
 require 'deimos/consumer'
-require 'deimos/instrumentation'
 
 require 'deimos/backends/base'
 require 'deimos/backends/kafka'
@@ -42,7 +41,16 @@ require 'erb'
 
 # Parent module.
 module Deimos
+  EVENT_TYPES = %w(
+    deimos.ar_consumer.consume_batch
+    deimos.encode_message
+    deimos.batch_consumption.invalid_records
+    deimos.batch_consumption.valid_records
+    deimos.outbox.produce
+  )
+
   class << self
+
     # @return [Class<Deimos::SchemaBackends::Base>]
     def schema_backend_class
       backend = Deimos.config.schema.backend.to_s
@@ -115,6 +123,12 @@ module Deimos
     end
   end
 end
+
+    def setup_karafka
+      EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.register_event(type) }
+
+    end
+
     # @return [Array<Karafka::Routing::Topic]
     def karafka_configs
       Karafka::App.routes.flat_map(&:topics).flat_map(&:to_a)
