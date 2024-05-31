@@ -31,9 +31,9 @@ require 'deimos/railtie' if defined?(Rails)
 if defined?(ActiveRecord)
   require 'deimos/kafka_source'
   require 'deimos/kafka_topic_info'
-  require 'deimos/backends/db'
+  require 'deimos/backends/outbox'
   require 'sigurd'
-  require 'deimos/utils/db_producer'
+  require 'deimos/utils/outbox_producer'
   require 'deimos/utils/db_poller'
 end
 
@@ -115,10 +115,10 @@ module Deimos
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     # @return [void]
-    def start_db_backend!(thread_count: 1)
+    def start_outbox_backend!(thread_count: 1)
       Sigurd.exit_on_signal = true
-      if self.config.producers.backend != :db
-        raise('Publish backend is not set to :db, exiting')
+      if self.config.producers.backend != :outbox
+        raise('Publish backend is not set to :outbox, exiting')
       end
 
       if thread_count.nil? || thread_count.zero?
@@ -126,17 +126,15 @@ module Deimos
       end
 
       producers = (1..thread_count).map do
-        Deimos::Utils::DbProducer.
-          new(self.config.db_producer.logger || self.config.logger)
+        Deimos::Utils::OutboxProducer.
+          new(self.config.outbox.logger || Karafka.logger)
       end
       executor = Sigurd::Executor.new(producers,
                                       sleep_seconds: 5,
-                                      logger: self.config.logger)
+                                      logger: Karafka.logger)
       signal_handler = Sigurd::SignalHandler.new(executor)
       signal_handler.run!
     end
-  end
-end
 
     def setup_karafka
       Karafka.producer.middleware.append(Deimos::ProducerMiddleware)

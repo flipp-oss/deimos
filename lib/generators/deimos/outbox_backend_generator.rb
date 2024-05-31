@@ -6,14 +6,14 @@ require 'rails/generators/active_record/migration'
 module Deimos
   module Generators
     # Generate the database backend migration.
-    class DbBackendGenerator < Rails::Generators::Base
+    class OutboxBackendGenerator < Rails::Generators::Base
       include Rails::Generators::Migration
       if Rails.version < '4'
         extend(ActiveRecord::Generators::Migration)
       else
         include ActiveRecord::Generators::Migration
       end
-      source_root File.expand_path('db_backend/templates', __dir__)
+      source_root File.expand_path('outbox_backend/templates', __dir__)
       desc 'Add migrations for the database backend'
 
       # @return [String]
@@ -38,10 +38,10 @@ module Deimos
       def generate
         if Rails.version < '4'
           migration_template('rails3_migration',
-                             "#{db_migrate_path}/create_db_backend.rb")
+                             "#{db_migrate_path}/create_outbox_backend.rb")
         else
           migration_template('migration',
-                             "#{db_migrate_path}/create_db_backend.rb")
+                             "#{db_migrate_path}/create_outbox_backend.rb")
         end
       end
     end

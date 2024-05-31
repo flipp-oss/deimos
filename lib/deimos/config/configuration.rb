@@ -14,8 +14,8 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
-    validate_db_backend if self.config.producers.backend == :db
     generate_key_schemas
+    validate_outbox_backend if self.config.producers.backend == :outbox
   end
 
   class << self
@@ -23,19 +23,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     def generate_key_schemas
       Deimos.karafka_configs.each do |config|
         transcoder = config.deserializers[:key]
-
-  # Ensure everything is set up correctly for the DB backend.
-  # @!visibility private
-  def self.validate_db_backend
-    begin
-      require 'activerecord-import'
-    rescue LoadError
-      raise 'Cannot set producers.backend to :db without activerecord-import! Please add it to your Gemfile.'
-    end
-    if Deimos.config.producers.required_acks != :all
-      raise 'Cannot set producers.backend to :db unless producers.required_acks is set to ":all"!'
-    end
-  end
 
         if transcoder.respond_to?(:key_field) && transcoder.key_field
           transcoder.backend = Deimos.schema_backend(schema: config.schema,
@@ -57,6 +44,13 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       raise 'Cannot load schema classes. Please regenerate classes with rake deimos:generate_schema_models.'
     end
 
+    # Ensure everything is set up correctly for the DB backend.
+    # @!visibility private
+    def validate_outbox_backend
+      begin
+        require 'activerecord-import'
+      rescue LoadError
+        raise 'Cannot set producers.backend to :outbox without activerecord-import! Please add it to your Gemfile.'
       end
     end
   end
