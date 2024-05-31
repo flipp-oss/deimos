@@ -16,19 +16,14 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     end
     validate_consumers
     validate_db_backend if self.config.producers.backend == :db
+    generate_key_schemas
   end
 
-  # Loads generated classes
-  # @return [void]
-  def self.load_generated_schema_classes
-    if Deimos.config.schema.generated_class_path.nil?
-      raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
-    end
+  class << self
 
-    Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.each { |f| require f }
-  rescue LoadError
-    raise 'Cannot load schema classes. Please regenerate classes with rake deimos:generate_schema_models.'
-  end
+    def generate_key_schemas
+      Deimos.karafka_configs.each do |config|
+        transcoder = config.deserializers[:key]
 
   # Ensure everything is set up correctly for the DB backend.
   # @!visibility private
@@ -57,9 +52,28 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       if delivery == 'inline_batch'
         if handler_class.instance_method(:consume_batch).owner == Deimos::Consume::BatchConsumption
           raise "BatchConsumer #{listener.handler} does not implement `consume_batch`"
+        if transcoder.respond_to?(:key_field) && transcoder.key_field
+          transcoder.backend = Deimos.schema_backend(schema: config.schema,
+                                                     namespace: config.namespace)
+          transcoder.backend.generate_key_schema(transcoder.key_field)
         end
       elsif handler_class.instance_method(:consume).owner == Deimos::Consume::MessageConsumption
         raise "Non-batch Consumer #{listener.handler} does not implement `consume`"
+      end
+    end
+
+    # Loads generated classes
+    # @return [void]
+    def load_generated_schema_classes
+      if Deimos.config.schema.generated_class_path.nil?
+        raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
+      end
+
+      Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.each { |f| require f }
+    rescue LoadError
+      raise 'Cannot load schema classes. Please regenerate classes with rake deimos:generate_schema_models.'
+    end
+
       end
     end
   end

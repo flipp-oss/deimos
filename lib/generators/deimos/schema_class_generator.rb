@@ -3,7 +3,6 @@
 require 'rails/generators'
 require 'deimos'
 require 'deimos/schema_backends/avro_base'
-require 'deimos/config/configuration'
 
 # Generates new schema classes.
 module Deimos

@@ -64,7 +64,7 @@ module Deimos
     # @param namespace [String]
     # @return [Deimos::SchemaBackends::Base]
     def schema_backend(schema:, namespace:)
-      if Utils::SchemaClass.use?(config.to_h)
+      if config.schema.use_schema_classes
         # Initialize an instance of the provided schema
         # in the event the schema class is an override, the inherited
         # schema and namespace will be applied
@@ -96,6 +96,19 @@ module Deimos
     # @return [Hash,nil]
     def decode(schema:, namespace:, payload:)
       self.schema_backend(schema: schema, namespace: namespace).decode(payload)
+    end
+
+    # @param message [Hash] a Karafka message with keys :payload, :key and :topic
+    def decode_message(message)
+      topic = message[:topic]
+      if Deimos.config.producers.topic_prefix
+        topic = topic.sub(Deimos.config.producers.topic_prefix, '')
+      end
+      config = karafka_config_for(topic: topic)
+      message[:payload] = config.deserializers[:payload].decode_message_hash(message[:payload])
+      if message[:key] && config.deserializers[:key].respond_to?(:decode_message_hash)
+        message[:key] = config.deserializers[:key].decode_message_hash(message[:key])
+      end
     end
 
     # Start the DB producers to send Kafka messages.

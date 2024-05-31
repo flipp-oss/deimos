@@ -55,13 +55,6 @@ module Deimos
           constants.join('::').safe_constantize
         end
 
-        # @param config [Hash] Producer or Consumer config
-        # @return [Boolean]
-        def use?(config)
-          use_schema_classes = config[:use_schema_classes]
-          use_schema_classes.present? ? use_schema_classes : Deimos.config.schema.use_schema_classes
-        end
-
       end
     end
   end

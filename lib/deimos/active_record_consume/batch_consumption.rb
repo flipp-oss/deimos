@@ -4,6 +4,7 @@ require 'deimos/active_record_consume/batch_slicer'
 require 'deimos/active_record_consume/batch_record'
 require 'deimos/active_record_consume/batch_record_list'
 require 'deimos/active_record_consume/mass_updater'
+require 'deimos/consume/batch_consumption'
 
 require 'deimos/utils/deadlock_retry'
 require 'deimos/message'
@@ -14,6 +15,8 @@ module Deimos
     # Methods for consuming batches of messages and saving them to the database
     # in bulk ActiveRecord operations.
     module BatchConsumption
+      include Deimos::Consume::BatchConsumption
+
       # Handle a batch of Kafka messages. Batches are split into "slices",
       # which are groups of independent messages that can be processed together
       # in a single database operation.

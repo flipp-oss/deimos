@@ -79,7 +79,7 @@ module Deimos
       # Indicate a class which should act as a mocked version of this backend.
       # This class should perform all validations but not actually do any
       # encoding.
-      # Note that the "mock" version (e.g. avro_validation) should return
+      # Note that the "mock" version should return
       # its own symbol when this is called, since it may be called multiple
       # times depending on the order of RSpec helpers.
       # @return [Symbol]
@@ -150,6 +150,13 @@ module Deimos
       # @param field [SchemaField]
       # @return [Symbol]
       def sql_type(field)
+        raise MissingImplementationError
+      end
+
+      # Generate a key schema from the given value schema and key ID. This
+      # is used when encoding or decoding keys from an existing value schema.
+      # @param field_name [Symbol]
+      def generate_key_schema(field_name)
         raise MissingImplementationError
       end
 

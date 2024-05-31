@@ -63,27 +63,6 @@ module Deimos
 
     class << self
 
-      # @return [Hash]
-      def config
-        @config ||= {
-          encode_key: true,
-          namespace: Deimos.config.producers.schema_namespace,
-          max_batch_size: Deimos.config.producers.max_batch_size
-        }
-      end
-
-      # Set the topic.
-      # @param topic [String]
-      # @return [String] the current topic if no argument given.
-      def topic(topic=nil)
-        if topic
-          config[:topic] = topic
-          return
-        end
-        # accessor
-        "#{Deimos.config.producers.topic_prefix}#{config[:topic]}"
-      end
-
       # Override the default partition key (which is the payload key).
       # @param _payload [Hash] the payload being passed into the produce method.
       # Will include `payload_key` if it is part of the original payload.
@@ -195,28 +174,6 @@ module Deimos
                                     encoder.encode(message.payload,
                                                    topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-value")
                                   end
-      end
-
-      # @param key [Object]
-      # @return [String|Object]
-      def _encode_key(key)
-        if key.nil?
-          return nil if config[:no_keys] # no key is fine, otherwise it's a problem
-
-          raise 'No key given but a key is required! Use `key_config none: true` to avoid using keys.'
-        end
-        if config[:encode_key] && config[:key_field].nil? &&
-           config[:key_schema].nil?
-          raise 'No key config given - if you are not encoding keys, please use `key_config plain: true`'
-        end
-
-        if config[:key_field]
-          encoder.encode_key(config[:key_field], key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
-        elsif config[:key_schema]
-          key_encoder.encode(key, topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-key")
-        else
-          key
-        end
       end
 
       # @param payload [Hash]
