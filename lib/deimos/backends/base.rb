@@ -6,7 +6,7 @@ module Deimos
     class Base
       class << self
         # @param producer_class [Class<Deimos::Producer>]
-        # @param messages [Array<Deimos::Message>]
+        # @param messages [Array<Hash>]
         # @return [void]
         def publish(producer_class:, messages:)
           message = ::Deimos::Logging.messages_log_text(producer_class.karafka_config.payload_log, messages)

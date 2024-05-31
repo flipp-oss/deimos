@@ -61,6 +61,9 @@ module Deimos
   class Producer
     include SharedConfig
 
+    # @return [Integer]
+    MAX_BATCH_SIZE = 500
+
     class << self
 
       # Override the default partition key (which is the payload key).
@@ -77,7 +80,22 @@ module Deimos
       # @param headers [Hash] if specifying headers
       # @return [void]
       def publish(payload, topic: self.topic, headers: nil)
-        publish_list([payload], topic: topic, headers: headers)
+        produce([{payload: payload, topic: topic, headers: headers}])
+      end
+
+      # Produce a list of messages in WaterDrop message hash format.
+      # @param messages [Array<Hash>]
+      # @param backend [Class < Deimos::Backend]
+      def produce(messages, backend: determine_backend_class)
+        return if Deimos.producers_disabled?(self)
+
+        messages.each do |m|
+          m[:label] = m
+          m[:partition_key] ||= self.partition_key(m[:payload])
+        end
+        messages.in_groups_of(MAX_BATCH_SIZE, false) do |batch|
+          self.produce_batch(backend, batch)
+        end
       end
 
       # Publish a list of messages.
@@ -90,18 +108,17 @@ module Deimos
       # @param headers [Hash] if specifying headers
       # @return [void]
       def publish_list(payloads, sync: nil, force_send: false, topic: self.topic, headers: nil)
-        return if Deimos.config.kafka.seed_brokers.blank? ||
-                  Deimos.config.producers.disabled ||
-                  Deimos.producers_disabled?(self)
+        backend = determine_backend_class(sync, force_send)
 
-        raise 'Topic not specified. Please specify the topic.' if topic.blank?
-
-        backend_class = determine_backend_class(sync, force_send)
-          messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, self, headers: headers) }
-          messages.each { |m| _process_message(m, topic) }
-          messages.in_groups_of(self.config[:max_batch_size], false) do |batch|
-            self.produce_batch(backend_class, batch)
+        messages = Array(payloads).map do |p|
+          {
+            payload: p&.to_h,
+            headers: headers,
+            topic: topic,
+            partition_key: self.partition_key(p)
+          }
         end
+        self.produce(messages, backend: backend)
       end
 
       def karafka_config
@@ -115,7 +132,7 @@ module Deimos
       # @param sync [Boolean]
       # @param force_send [Boolean]
       # @return [Class<Deimos::Backends::Base>]
-      def determine_backend_class(sync, force_send)
+      def determine_backend_class(sync=false, force_send=false)
         backend = if force_send
                     :kafka
                   else
@@ -131,52 +148,12 @@ module Deimos
 
       # Send a batch to the backend.
       # @param backend [Class<Deimos::Backends::Base>]
-      # @param batch [Array<Deimos::Message>]
+      # @param batch [Array<Hash>]
       # @return [void]
       def produce_batch(backend, batch)
         backend.publish(producer_class: self, messages: batch)
       end
 
-      # Override this in active record producers to add
-      # non-schema fields to check for updates
-      # @return [Array<String>] fields to check for updates
-      def watched_attributes
-        self.encoder.schema_fields.map(&:name)
-      end
-
-    private
-
-      # @param message [Message]
-      # @param topic [String]
-      def _process_message(message, topic)
-        # this violates the Law of Demeter but it has to happen in a very
-        # specific order and requires a bunch of methods on the producer
-        # to work correctly.
-        message.add_fields(encoder.schema_fields.map(&:name))
-        message.partition_key = self.partition_key(message.payload)
-        message.key = _retrieve_key(message.payload)
-        # need to do this before _coerce_fields because that might result
-        # in an empty payload which is an *error* whereas this is intended.
-        message.payload = nil if message.payload.blank?
-        message.coerce_fields(encoder)
-        message.encoded_key = _encode_key(message.key)
-        message.topic = topic
-        message.encoded_payload = if message.payload.nil?
-                                    nil
-                                  else
-                                    encoder.encode(message.payload,
-                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config[:topic]}-value")
-                                  end
-      end
-
-      # @param payload [Hash]
-      # @return [String]
-      def _retrieve_key(payload)
-        key = payload.delete(:payload_key)
-        return key if key
-
-        config[:key_field] ? payload[config[:key_field]] : nil
-      end
     end
   end
 end

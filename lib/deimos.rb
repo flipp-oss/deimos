@@ -24,6 +24,7 @@ require 'deimos/schema_class/record'
 require 'deimos/ext/schema_route'
 require 'deimos/ext/consumer_route'
 require 'deimos/ext/producer_route'
+require 'deimos/ext/producer_middleware'
 
 require 'deimos/railtie' if defined?(Rails)
 
@@ -138,8 +139,17 @@ module Deimos
 end
 
     def setup_karafka
+      Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
       EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.register_event(type) }
 
+      Karafka.producer.monitor.subscribe('error.occurred') do |event|
+        if event.payload.key?(:messages)
+          topic = event[:messages].first[:topic]
+          config = Deimos.karafka_config_for(topic: topic)
+          message = Deimos::Logging.messages_log_text(config&.payload_log, event[:messages])
+          Karafka.logger.error("Error producing messages: #{event[:error].message} #{message.to_json}")
+        end
+      end
     end
 
     # @return [Array<Karafka::Routing::Topic]

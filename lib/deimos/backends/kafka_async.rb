@@ -6,7 +6,6 @@ module Deimos
     class KafkaAsync < Base
       # :nodoc:
       def self.execute(producer_class:, messages:)
-          producer.async_publish_list(messages.map(&:encoded_hash))
         Karafka.producer.produce_many_async(messages)
         Deimos.config.metrics&.increment(
           'publish',

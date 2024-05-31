@@ -6,7 +6,7 @@ module Deimos
     class Kafka < Base
       # :nodoc:
       def self.execute(producer_class:, messages:)
-          producer.publish_list(messages.map(&:encoded_hash))
+        Karafka.producer.produce_many_sync(messages)
         Deimos.config.metrics&.increment(
           'publish',
           tags: %W(status:success topic:#{messages.first[:topic]}),
