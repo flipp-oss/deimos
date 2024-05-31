@@ -31,23 +31,6 @@ module Deimos
       Deimos.config.tracer&.finish(@span)
     end
 
-    def _report_time_delayed(payload, metadata)
-      return if payload.nil? || payload['timestamp'].blank?
-
-      begin
-        time_delayed = Time.now.in_time_zone - payload['timestamp'].to_datetime
-      rescue ArgumentError
-        Deimos.config.logger.info(
-          message: "Error parsing timestamp! #{payload['timestamp']}"
-        )
-        return
-      end
-      Deimos.config.metrics&.histogram('handler', time_delayed, tags: %W(
-                                         time:time_delayed
-                                         topic:#{metadata[:topic]}
-                                       ))
-    end
-
     # Overrideable method to determine if a given error should be considered
     # "fatal" and always be reraised.
     # @param _error [Exception]

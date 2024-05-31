@@ -40,31 +40,19 @@ module Deimos
         Deimos::Logging.log_info(
           message: 'Got Kafka event',
           payload: payload,
-          metadata: metadata
+          metadata: Deimos::Logging.metadata_log_text(message.metadata)
         )
-        Deimos.config.metrics&.increment('handler', tags: %W(
-                                           status:received
-                                           topic:#{metadata[:topic]}
-                                         ))
-        _report_time_delayed(payload, metadata)
       end
 
       # @param exception [Throwable]
       # @param payload [Hash]
       # @param metadata [Hash]
       def _handle_error(exception, payload, metadata)
-        Deimos.config.metrics&.increment(
-          'handler',
-          tags: %W(
-            status:error
-            topic:#{metadata[:topic]}
-          )
-        )
-        Deimos.config.logger.warn(
+        Deimos::Logging.log_warn(
           message: 'Error consuming message',
           handler: self.class.name,
-          metadata: metadata,
           data: payload,
+          metadata: Deimos::Logging.metadata_log_text(message.metadata),
           error_message: exception.message,
           error: exception.backtrace
         )
@@ -76,19 +64,11 @@ module Deimos
       # @param payload [Hash]
       # @param metadata [Hash]
       def _handle_success(time_taken, payload, metadata)
-        Deimos.config.metrics&.histogram('handler', time_taken, tags: %W(
-                                           time:consume
-                                           topic:#{metadata[:topic]}
-                                         ))
-        Deimos.config.metrics&.increment('handler', tags: %W(
-                                           status:success
-                                           topic:#{metadata[:topic]}
-                                         ))
         Deimos::Logging.log_info(
           message: 'Finished processing Kafka event',
           payload: payload,
           time_elapsed: time_taken,
-          metadata: metadata
+          metadata: Deimos::Logging.metadata_log_text(message.metadata)
         )
       end
     end

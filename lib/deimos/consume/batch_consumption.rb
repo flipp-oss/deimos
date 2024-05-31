@@ -78,17 +78,11 @@ module Deimos
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]
       def _handle_batch_error(exception, payloads, metadata)
-        Deimos.config.metrics&.increment(
-          'handler',
-          tags: %W(
-            status:batch_error
-            topic:#{metadata[:topic]}
-          ))
         Deimos::Logging.log_warn(
           message: 'Error consuming message batch',
           handler: self.class.name,
-          metadata: metadata.except(:keys),
-          message_ids: _payload_identifiers(payloads, metadata),
+          metadata: Deimos::Logging.metadata_log_text(messages.metadata),
+          messages: Deimos::Logging.messages_log_text(self.topic.payload_log, messages),
           error_message: exception.message,
           error: exception.backtrace
         )
@@ -100,31 +94,12 @@ module Deimos
       # @param payloads [Array<Hash>]
       # @param metadata [Hash]
       def _handle_batch_success(time_taken, payloads, metadata)
-        Deimos.config.metrics&.histogram('handler',
-                                         time_taken,
-                                         tags: %W(
-                                           time:consume_batch
-                                           topic:#{metadata[:topic]}
-                                         ))
-        Deimos.config.metrics&.increment(
-          'handler',
-          tags: %W(
-            status:batch_success
-            topic:#{metadata[:topic]}
-          ))
-        Deimos.config.metrics&.increment(
-          'handler',
-          by: metadata[:batch_size],
-          tags: %W(
-            status:success
-            topic:#{metadata[:topic]}
-          ))
-        Deimos.config.logger.info(
-          message: 'Finished processing Kafka batch event',
-          message_ids: _payload_identifiers(payloads, metadata),
-          time_elapsed: time_taken,
-          metadata: metadata.except(:keys)
-        )
+        Deimos::Logging.log_info(
+          {
+            message: 'Finished processing Kafka batch event',
+            time_elapsed: time_taken,
+            metadata: Deimos::Logging.metadata_log_text(messages.metadata)
+          }.merge(Deimos::Logging.messages_log_text(self.topic.payload_log, messages)))
       end
 
       # @!visibility private

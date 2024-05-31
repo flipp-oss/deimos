@@ -97,17 +97,10 @@ module Deimos
         raise 'Topic not specified. Please specify the topic.' if topic.blank?
 
         backend_class = determine_backend_class(sync, force_send)
-        Deimos.instrument(
-          'encode_messages',
-          producer: self,
-          topic: topic,
-          payloads: payloads
-        ) do
           messages = Array(payloads).map { |p| Deimos::Message.new(p.to_h, self, headers: headers) }
           messages.each { |m| _process_message(m, topic) }
           messages.in_groups_of(self.config[:max_batch_size], false) do |batch|
             self.produce_batch(backend_class, batch)
-          end
         end
       end
 

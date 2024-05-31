@@ -7,11 +7,11 @@ module Deimos
       # :nodoc:
       def self.execute(producer_class:, messages:)
           producer.publish_list(messages.map(&:encoded_hash))
-          Deimos.config.metrics&.increment(
-            'publish',
-            tags: %W(status:success topic:#{producer_class.topic}),
-            by: messages.size
-          )
+        Deimos.config.metrics&.increment(
+          'publish',
+          tags: %W(status:success topic:#{messages.first[:topic]}),
+          by: messages.size
+        )
       end
     end
   end
