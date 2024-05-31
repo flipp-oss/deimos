@@ -3,7 +3,7 @@
 require 'fig_tree'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
-require 'active_support/core_ext/numeric'
+require 'active_support/core_ext/object'
 
 # :nodoc:
 module Deimos # rubocop:disable Metrics/ModuleLength
@@ -13,12 +13,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
   after_configure do
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
-    end
-    self.config.producer_objects.each do |producer|
-      configure_producer_or_consumer(producer)
-    end
-    self.config.consumer_objects.each do |consumer|
-      configure_producer_or_consumer(consumer)
     end
     validate_consumers
     validate_db_backend if self.config.producers.backend == :db
@@ -70,32 +64,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     end
   end
 
-  # @!visibility private
-  # @param kafka_config [FigTree::ConfigStruct]
-  # rubocop:disable  Metrics/PerceivedComplexity, Metrics/AbcSize
-  def self.configure_producer_or_consumer(kafka_config)
-    klass = kafka_config.class_name.constantize
-    klass.class_eval do
-      topic(kafka_config.topic) if kafka_config.topic.present? && klass.respond_to?(:topic)
-      schema(kafka_config.schema) if kafka_config.schema.present?
-      namespace(kafka_config.namespace) if kafka_config.namespace.present?
-      key_config(**kafka_config.key_config) if kafka_config.key_config.present?
-      schema_class_config(kafka_config.use_schema_classes) if kafka_config.use_schema_classes.present?
-      if kafka_config.respond_to?(:bulk_import_id_column) # consumer
-        klass.config.merge!(
-          bulk_import_id_column: kafka_config.bulk_import_id_column,
-          replace_associations: if kafka_config.replace_associations.nil?
-                                  Deimos.config.consumers.replace_associations
-                                else
-                                  kafka_config.replace_associations
-                                end,
-          bulk_import_id_generator: kafka_config.bulk_import_id_generator ||
-            Deimos.config.consumers.bulk_import_id_generator,
-          save_associations_first: kafka_config.save_associations_first
-        )
-      end
-    end
-  end
   # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize
 
   define_settings do

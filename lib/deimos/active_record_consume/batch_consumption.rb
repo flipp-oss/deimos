@@ -68,11 +68,11 @@ module Deimos
         if key.nil?
           {}
         elsif key.is_a?(Hash)
-          @key_converter.convert(key)
-        elsif self.class.config[:key_field].nil?
+          self.key_converter.convert(key)
+        elsif self.topic.key_config[:field].nil?
           { @klass.primary_key => key }
         else
-            { self.class.config[:key_field] => key }
+          { self.topic.key_config[:field].to_s => key }
         end
       end
 
@@ -205,14 +205,14 @@ module Deimos
           attrs = attrs.merge(record_key(m.key))
           next unless attrs
 
-          col = if @klass.column_names.include?(self.class.bulk_import_id_column.to_s)
-                  self.class.bulk_import_id_column
+          col = if @klass.column_names.include?(self.bulk_import_id_column.to_s)
+                  self.bulk_import_id_column
                 end
 
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
                           bulk_import_column: col,
-                          bulk_import_id_generator: self.class.bulk_import_id_generator)
+                          bulk_import_id_generator: self.bulk_import_id_generator)
         end
         BatchRecordList.new(records.compact)
       end

@@ -18,9 +18,11 @@ module Deimos
       # a record object, refetch the record to pass into the `generate_payload`
       # method.
       # @return [void]
-      def record_class(klass, refetch: true)
-        config[:record_class] = klass
-        config[:refetch_record] = refetch
+      def record_class(klass=nil, refetch: true)
+        return @record_class if klass.nil?
+
+        @record_class = klass
+        @refetch_record = refetch
       end
 
       # @param record [ActiveRecord::Base]
@@ -34,20 +36,29 @@ module Deimos
       # @param force_send [Boolean]
       # @return [void]
       def send_events(records, force_send: false)
-        primary_key = config[:record_class]&.primary_key
+        primary_key = @record_class&.primary_key
         messages = records.map do |record|
           if record.respond_to?(:attributes)
             attrs = record.attributes.with_indifferent_access
           else
             attrs = record.with_indifferent_access
-            if config[:refetch_record] && attrs[primary_key]
-              record = config[:record_class].find(attrs[primary_key])
+            if @refetch_record && attrs[primary_key]
+              record = @record_class.find(attrs[primary_key])
             end
           end
           generate_payload(attrs, record).with_indifferent_access
         end
         self.publish_list(messages, force_send: force_send)
         self.post_process(records)
+      end
+
+      def config
+        Deimos.karafka_configs.find { |t| t.producer_class == self }
+      end
+
+      def encoder
+        raise "No schema or namespace configured for #{self.name}" if config.nil?
+        config.deserializers[:payload].backend
       end
 
       # Generate the payload, given a list of attributes or a record..
@@ -76,7 +87,7 @@ module Deimos
       # than this value).
       # @return [ActiveRecord::Relation]
       def poll_query(time_from:, time_to:, column_name: :updated_at, min_id:)
-        klass = config[:record_class]
+        klass = @record_class
         table = ActiveRecord::Base.connection.quote_table_name(klass.table_name)
         column = ActiveRecord::Base.connection.quote_column_name(column_name)
         primary = ActiveRecord::Base.connection.quote_column_name(klass.primary_key)

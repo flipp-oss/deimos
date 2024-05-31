@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
+require 'deimos/consume/message_consumption'
+
 module Deimos
   module ActiveRecordConsume
     # Methods for consuming individual messages and saving them to the database
     # as ActiveRecord instances.
     module MessageConsumption
+      include Deimos::Consume::MessageConsumption
       # Find the record specified by the given payload and key.
       # Default is to use the primary key column and the value of the first
       # field in the key.

@@ -22,6 +22,9 @@ require 'deimos/utils/schema_class'
 require 'deimos/schema_class/enum'
 require 'deimos/schema_class/record'
 
+require 'deimos/ext/schema_route'
+require 'deimos/ext/consumer_route'
+require 'deimos/ext/producer_route'
 
 require 'deimos/railtie' if defined?(Rails)
 
@@ -112,6 +115,31 @@ module Deimos
     end
   end
 end
+    # @return [Array<Karafka::Routing::Topic]
+    def karafka_configs
+      Karafka::App.routes.flat_map(&:topics).flat_map(&:to_a)
+    end
+
+    # @param topic [String]
+    # @return [Karafka::Routing::Topic,nil]
+    def karafka_config_for(topic: nil, producer: nil)
+      if topic
+        karafka_configs.find { |t| t.name == topic}
+      elsif producer
+        karafka_configs.find { |t| t.producer_class == producer}
+      end
+    end
+
+    # @param handler_class [Class]
+    # @return [String,nil]
+    def topic_for_consumer(handler_class)
+      Deimos.karafka_configs.each do |topic|
+        if topic.consumer == handler_class
+          return topic.name
+        end
+      end
+      nil
+    end
 
   end
 end

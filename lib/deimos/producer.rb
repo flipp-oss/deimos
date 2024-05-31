@@ -50,6 +50,8 @@ module Deimos
     # @param producer_class [Class]
     # @return [Boolean]
     def producers_disabled?(producer_class=nil)
+      return true if Deimos.config.producers.disabled
+
       Thread.current[:frk_disable_all_producers] ||
         Thread.current[:frk_disabled_producers]&.include?(producer_class)
     end
@@ -88,12 +90,6 @@ module Deimos
       # @return [String]
       def partition_key(_payload)
         nil
-      end
-
-      # @param size [Integer] Override the default batch size for publishing.
-      # @return [void]
-      def max_batch_size(size)
-        config[:max_batch_size] = size
       end
 
       # Publish the payload to the topic.
@@ -136,6 +132,14 @@ module Deimos
         end
       end
 
+      def karafka_config
+        Deimos.karafka_configs.find { |topic| topic.producer_class == self }
+      end
+
+      def topic
+        karafka_config.name
+      end
+
       # @param sync [Boolean]
       # @param force_send [Boolean]
       # @return [Class<Deimos::Backends::Base>]
@@ -159,18 +163,6 @@ module Deimos
       # @return [void]
       def produce_batch(backend, batch)
         backend.publish(producer_class: self, messages: batch)
-      end
-
-      # @return [Deimos::SchemaBackends::Base]
-      def encoder
-        @encoder ||= Deimos.schema_backend(schema: config[:schema],
-                                           namespace: config[:namespace])
-      end
-
-      # @return [Deimos::SchemaBackends::Base]
-      def key_encoder
-        @key_encoder ||= Deimos.schema_backend(schema: config[:key_schema],
-                                               namespace: config[:namespace])
       end
 
       # Override this in active record producers to add

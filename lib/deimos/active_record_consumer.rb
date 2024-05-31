@@ -30,26 +30,6 @@ module Deimos
         config[:record_class] = klass
       end
 
-      # @return [String,nil]
-      def bulk_import_id_column
-        config[:bulk_import_id_column]
-      end
-
-      # @return [Proc]
-      def bulk_import_id_generator
-        config[:bulk_import_id_generator]
-      end
-
-      # @return [Boolean]
-      def replace_associations
-        config[:replace_associations]
-      end
-
-      # @return [Boolean]
-      def save_associations_first
-        config[:save_associations_first]
-      end
-
       # @param val [Boolean] Turn pre-compaction of the batch on or off. If true,
       # only the last message for each unique key in a batch is processed.
       # @return [void]
@@ -62,18 +42,48 @@ module Deimos
       def max_db_batch_size(limit)
         config[:max_db_batch_size] = limit
       end
+
+    end
+
+    # @return [Boolean]
+    def replace_associations
+      self.topic.replace_associations
+    end
+
+    # @return [String,nil]
+    def bulk_import_id_column
+      self.topic.bulk_import_id_column
+    end
+
+    # @return [Proc]
+    def bulk_import_id_generator
+      topic.bulk_import_id_generator
+    end
+
+    # @return [Boolean]
+    def save_associations_first
+      topic.save_associations_first
+    end
+
+    def key_decoder
+      self.topic.serializers[:key]&.backend
     end
 
     # Setup
     def initialize
       @klass = self.class.config[:record_class]
-      @converter = ActiveRecordConsume::SchemaModelConverter.new(self.class.decoder, @klass)
-
-      if self.class.config[:key_schema]
-        @key_converter = ActiveRecordConsume::SchemaModelConverter.new(self.class.key_decoder, @klass)
-      end
-
       @compacted = self.class.config[:compacted] != false
+    end
+
+    def converter
+      decoder = self.topic.deserializers[:payload].backend
+      @converter ||= ActiveRecordConsume::SchemaModelConverter.new(decoder, @klass)
+    end
+
+    def key_converter
+      decoder = self.topic.deserializers[:key]&.backend
+      return nil if decoder.nil?
+      @key_converter ||= ActiveRecordConsume::SchemaModelConverter.new(decoder, @klass)
     end
 
     # Override this method (with `super`) if you want to add/change the default
@@ -82,7 +92,7 @@ module Deimos
     # @param _key [String]
     # @return [Hash]
     def record_attributes(payload, _key=nil)
-      @converter.convert(payload)
+      self.converter.convert(payload)
     end
 
     # Override this message to conditionally save records
