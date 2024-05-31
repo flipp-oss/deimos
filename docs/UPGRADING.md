@@ -215,6 +215,7 @@ The following events have been **renamed**:
 * `fatal_error?` now receives a Karafka `messages` object instead of a payload hash or array of hashes.
 * `watched_attributes` has been moved from the corresponding ActiveRecord class to the ActiveRecordProducer class. The object being watched is passed into the method.
 * Removed `TestHelpers.full_integration_test!` and `kafka_test!` as Karafka does not currently support these use cases. If we need them back, we will need to put in changes to the testing library to support them.
+* `test_consume_message` and `test_consume_batch` used to not fully validate schemas when using the `:avro_validation` backend. Now these are fully validated, which may cause test errors when upgrading.
 
 ### New functionality
 
@@ -229,7 +230,7 @@ The following events have been **renamed**:
 - You can now call `.produce(messages)` directly on a `Deimos::Producer` which allows for use of these features while still passing a Karafka message hash. This removes the need to add a `payload_key` key into your payload. This is now the recommended method to use in a Deimos Producer.
 
 ### New deprecations
-* For testing, you no longer have to call `unit_test!` to get the right settings. It is handled automatically by Karafka.
+* For testing, you no longer have to call `unit_test!` to get the right settings. It is handled automatically by Karafka. The only thing this method now does is set the schema backend to `:avro_validation`, and you can do that in a single line.
 * The `skip_expectation` and `call_original` arguments to `test_consume_message` and `test_consume_batch` have been deprecated and no longer need to be provided. The assumption is that `call_original` is always true.
 
 ## Upgrading from < 1.5.0 to >= 1.5.0

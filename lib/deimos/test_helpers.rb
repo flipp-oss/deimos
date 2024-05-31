@@ -38,7 +38,7 @@ module Deimos
       # @return [void]
       def unit_test!
         Deimos.config.schema.backend = :avro_validation
-        warn "unit_test! is deprecated and no longer necessary. All test behavior is provided by Karafka."
+        warn "unit_test! is deprecated and can be replaced by setting Deimos's schema backend to `:avro_validation`. All other test behavior is provided by Karafka."
       end
     end
 

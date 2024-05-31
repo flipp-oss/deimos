@@ -230,6 +230,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       setting :bulk_import_id_column, removed: "Use topic.bulk_import_id_column in Karafka settings."
       setting :replace_associations, removed: "Use topic.replace_associations in Karafka settings."
       setting :bulk_import_id_generator, removed: "Use topic.bulk_import_id_generator in Karafka settings."
+      setting :save_associations_first, removed: "Use topic.save_associations_first"
       setting :group_id, removed: "Use kafka(group.id) in Karafka settings."
       setting :max_concurrency, removed: "Use Karafka's 'config.concurrency' in the setup block."
       setting :start_from_beginning, removed: "Use initial_offset in the setup block, or kafka(auto.offset.reset) in topic settings."

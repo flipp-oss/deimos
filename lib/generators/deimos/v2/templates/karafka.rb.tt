@@ -94,14 +94,16 @@ class KarafkaApp < Karafka::App
     end
     <%- end -%>
 
-    <%- consumer_configs.each do |consumer| -%>
+    <%- consumer_configs.each do |group_id, topics| -%>
+    <%- if consumer_configs.length > 1 -%>
+    consumer_group :<%= group_id %> do<%- end -%>
+    <%- topics.each do |consumer| %>
     topic "<%= consumer[:topic] -%>" do
       <%- if consumer[:kafka].present? -%>
       kafka(
         <%- consumer[:kafka].each do |k, v| -%>
         "<%= k.to_s %>": <%= v.inspect %>,
         <%- end -%>
-
       )
       <%- end -%>
       <%- consumer.except(:topic, :kafka).each do |k, v| -%>
@@ -112,6 +114,9 @@ class KarafkaApp < Karafka::App
       <%- end -%>
       <%- end -%>
     end
+    <%- end -%>
+    <%- if consumer_configs.length > 1 -%>
+    end<%- end %>
     <%- end -%>
 
     # Uncomment this if you use Karafka with ActiveJob

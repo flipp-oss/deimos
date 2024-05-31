@@ -25,7 +25,7 @@ module Deimos
       # they are split
       # @return [void]
       def consume_batch
-        deimos_messages = messages.map { |p, k| Deimos::Message.new(p.payload, key: p.key) }
+        deimos_messages = messages.map { |p| Deimos::Message.new(p.payload, key: p.key) }
 
         tag = topic.name
         Deimos.config.tracer.active_span.set_tag('topic', tag)
@@ -71,7 +71,7 @@ module Deimos
         elsif self.topic.key_config[:field].nil?
           { @klass.primary_key => key }
         else
-          { self.topic.key_config[:field] => key }
+          { self.topic.key_config[:field].to_s => key }
         end
       end
 

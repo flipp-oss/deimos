@@ -51,7 +51,7 @@ module Deimos
           assign_key(record, message.payload, message.key)
         end
 
-        attrs = record_attributes(message.payload.to_h.with_indifferent_access, message.key)
+        attrs = record_attributes((message.payload || {}).with_indifferent_access, message.key)
         # don't use attributes= - bypass Rails < 5 attr_protected
         attrs.each do |k, v|
           record.send("#{k}=", v)

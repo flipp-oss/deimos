@@ -107,29 +107,30 @@ module Deimos
         end
 
         def consumer_configs
-          deimos_config.consumer_objects.map do |consumer|
-            kafka_configs = {}
-            kafka_configs["auto.offset.reset"] = consumer.start_from_beginning ? 'earliest' : 'latest'
-            kafka_configs["session.timeout.ms"] = consumer.session_timeout * 1000 unless consumer.default_value?(:session_timeout)
-            kafka_configs["auto.commit.interval.ms"] = consumer.offset_commit_interval * 1000 unless consumer.default_value?(:offset_commit_interval)
-            kafka_configs["heartbeat.interval.ms"] = consumer.heartbeat_interval * 1000 unless consumer.default_value?(:heartbeat_interval)
-            configs = {
-              kafka: kafka_configs.compact,
-              group_id: consumer.group_id,
-              topic: consumer.topic,
-              consumer: ProcString.new(consumer.class_name),
-              schema: consumer.schema,
-              namespace: consumer.namespace,
-              key_config: consumer.key_config,
-            }
-            configs[:use_schema_classes] = consumer.use_schema_classes unless consumer.default_value?(:use_schema_classes)
-            configs[:max_db_batch_size] = consumer.max_db_batch_size unless consumer.default_value?(:max_db_batch_size)
-            configs[:bulk_import_id_column] = consumer.bulk_import_id_column unless consumer.default_value?(:bulk_import_id_column)
-            configs[:replace_associations] = consumer.replace_associations unless consumer.default_value?(:replace_associations)
-            configs[:active] = false if consumer.disabled
-            configs[:each_message] = true unless consumer.delivery.to_s == 'inline_batch'
-            configs
-          end
+          deimos_config.consumer_objects.group_by(&:group_id).map do |group_id, consumers|
+            [group_id, consumers.map do |consumer|
+              kafka_configs = {}
+              kafka_configs["auto.offset.reset"] = consumer.start_from_beginning ? 'earliest' : 'latest'
+              kafka_configs["session.timeout.ms"] = consumer.session_timeout * 1000 unless consumer.default_value?(:session_timeout)
+              kafka_configs["auto.commit.interval.ms"] = consumer.offset_commit_interval * 1000 unless consumer.default_value?(:offset_commit_interval)
+              kafka_configs["heartbeat.interval.ms"] = consumer.heartbeat_interval * 1000 unless consumer.default_value?(:heartbeat_interval)
+              configs = {
+                kafka: kafka_configs.compact,
+                topic: consumer.topic,
+                consumer: ProcString.new(consumer.class_name),
+                schema: consumer.schema,
+                namespace: consumer.namespace,
+                key_config: consumer.key_config,
+              }
+              configs[:use_schema_classes] = consumer.use_schema_classes unless consumer.default_value?(:use_schema_classes)
+              configs[:max_db_batch_size] = consumer.max_db_batch_size unless consumer.default_value?(:max_db_batch_size)
+              configs[:bulk_import_id_column] = consumer.bulk_import_id_column unless consumer.default_value?(:bulk_import_id_column)
+              configs[:replace_associations] = consumer.replace_associations unless consumer.default_value?(:replace_associations)
+              configs[:active] = false if consumer.disabled
+              configs[:each_message] = true unless consumer.delivery.to_s == 'inline_batch'
+              configs
+            end]
+          end.to_h
         end
 
         def producer_configs
