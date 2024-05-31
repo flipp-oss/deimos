@@ -76,7 +76,7 @@ module Deimos
           return [self.kafka_producer]
         end
 
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # This is an internal method, part of the activerecord_import gem. It's

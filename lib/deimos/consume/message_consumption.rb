@@ -31,7 +31,7 @@ module Deimos
       # @param _metadata [Hash]
       # @return [void]
       def consume(_payload, _metadata)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
     private

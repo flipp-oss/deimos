@@ -90,7 +90,7 @@ module Deimos
       # The content type to use when encoding / decoding requests over HTTP via ActionController.
       # @return [String]
       def self.content_type
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Converts your schema to String form for generated YARD docs.
@@ -98,7 +98,7 @@ module Deimos
       # @param schema [Object]
       # @return [String] A string representation of the Type
       def self.field_type(schema)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Encode a payload. To be defined by subclass.
@@ -107,7 +107,7 @@ module Deimos
       # @param topic [String]
       # @return [String]
       def encode_payload(payload, schema:, topic: nil)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Decode a payload. To be defined by subclass.
@@ -115,7 +115,7 @@ module Deimos
       # @param schema [String,Symbol]
       # @return [Hash]
       def decode_payload(payload, schema:)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Validate that a payload matches the schema. To be defined by subclass.
@@ -123,13 +123,13 @@ module Deimos
       # @param schema [String,Symbol]
       # @return [void]
       def validate(payload, schema:)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # List of field names belonging to the schema. To be defined by subclass.
       # @return [Array<SchemaField>]
       def schema_fields
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Given a value and a field definition (as defined by whatever the
@@ -139,7 +139,7 @@ module Deimos
       # @param value [Object]
       # @return [Object]
       def coerce_field(field, value)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Given a field definition, return the SQL type that might be used in
@@ -150,7 +150,7 @@ module Deimos
       # @param field [SchemaField]
       # @return [Symbol]
       def sql_type(field)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Encode a message key. To be defined by subclass.
@@ -159,7 +159,7 @@ module Deimos
       # @param topic [String]
       # @return [String]
       def encode_key(key, key_id, topic: nil)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Decode a message key. To be defined by subclass.
@@ -167,13 +167,13 @@ module Deimos
       # @param key_id [String,Symbol] the field in the message to decode.
       # @return [String]
       def decode_key(payload, key_id)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Forcefully loads the schema into memory.
       # @return [Object] The schema that is of use.
       def load_schema
-        raise NotImplementedError
+        raise MissingImplementationError
       end
     end
   end

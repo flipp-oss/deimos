@@ -39,7 +39,7 @@ module Deimos
       # @param _metadata [Hash]
       # @return [void]
       def consume_batch(_payloads, _metadata)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
     protected
