@@ -1,0 +1,12 @@
+  # Define a consumer
+  consumer do
+    class_name '<%= consumer_name.classify %>'
+    topic 'TopicToConsume'
+    schema '<%= schema %>'
+    namespace '<%= namespace %>'
+    key_config <%= @key_type %>: :<%= @key_value %>
+    # include Phobos / RubyKafka configs
+    start_from_beginning true
+    heartbeat_interval 10
+    use_schema_classes true
+  end

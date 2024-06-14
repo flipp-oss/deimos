@@ -1,0 +1,16 @@
+Deimos.configure do
+  # Define a consumer
+  consumer do
+    class_name 'WidgetConsumer'
+    topic 'TopicToConsume'
+    schema 'Widget'
+    namespace 'com.my-namespace'
+    key_config schema: :MyKeySchema-key
+    # include Phobos / RubyKafka configs
+    start_from_beginning true
+    heartbeat_interval 10
+    use_schema_classes true
+  end
+
+end
+

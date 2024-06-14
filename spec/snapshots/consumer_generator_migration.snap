@@ -1,0 +1,22 @@
+class CreateWidgets < ActiveRecord::Migration[6.1]
+  def up
+    if table_exists?(:widgets)
+      warn "widgets already exists, exiting"
+      return
+    end
+    create_table :widgets do |t|
+      t.bigint :widget_id
+      t.string :name
+
+      t.timestamps
+
+      # TODO add indexes as necessary
+    end
+  end
+
+  def down
+    return unless table_exists?(:widgets)
+    drop_table :widgets
+  end
+
+end
