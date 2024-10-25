@@ -34,6 +34,7 @@ Built on Phobos and hence Ruby-Kafka.
         * [Integration Test Helpers](#integration-test-helpers)
    * [Utilities](#utilities)
    * [Contributing](#contributing) 
+   * [FAQ](#faq)
 <!--te-->
 
 # Additional Documentation
@@ -1293,6 +1294,22 @@ You can/should re-generate RBS types when methods or classes change by running t
 
 Deimos uses Rubocop to lint the code. Please run Rubocop on your code 
 before submitting a PR. The GitHub CI will also run rubocop on your pull request. 
+
+
+### FAQ
+#### LoadError in mysql client upon starting up
+```
+LoadError: libmysqlclient.so.21: cannot open shared object file: No such file or directory - /var/app/vendor/bundle/ruby/3.3.0/gems/mysql2-0.5.4/lib/mysql2/mysql2.so (LoadError)
+```
+If you see this error, you are likely missing some mysql client dependencies in your dockerfiles. You need to add the following code to your dockerfiles to install these missing dependencies:
+```dockerfile
+RUN apt-get update
+RUN apt-get install sudo
+RUN echo "deb http://ftp.us.debian.org/debian unstable main contrib non-free" >> /etc/apt/sources.list.d/unstable.list
+RUN sudo apt-get update --fix-missing
+# install dependencies and force default dpkg conflict resolution for openssl configuration if parent image added it
+RUN apt-get install -y default-libmysqlclient-dev libmysqlclient21 iproute2 --option=Dpkg::Options::=--force-confdef
+```
 
 ---
 <p align="center">
