@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 - Feature: Added `max_batch_size` config to producer to allow custom batch size for publishing.
+- README Update: Add in FAQ section and solution to mysql client dependency issues.
 
 # 1.24.3 - 2024-05-13
 - Feature: Enable `producers.persistent_connections` phobos setting
