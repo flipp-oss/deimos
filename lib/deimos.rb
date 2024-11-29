@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'active_support'
-require 'deimos/ext/redraw'
 require 'karafka'
 
 require 'deimos/version'
