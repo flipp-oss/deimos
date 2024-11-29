@@ -111,7 +111,7 @@ module DbConfigs
       host: ENV['PG_HOST'] || 'localhost'
     },
     {
-      adapter: 'mysql2',
+      adapter: 'trilogy',
       port: 3306,
       username: 'root',
       database: 'test',

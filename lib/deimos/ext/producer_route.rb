@@ -5,11 +5,11 @@ module Deimos
     Config = Struct.new(*FIELDS, keyword_init: true)
     module Topic
       FIELDS.each do |field|
-        define_method(field) do |val=Karafka::Routing::Default.new(nil)|
+        define_method(field) do |*args|
           active(false) if field == :producer_class
           @deimos_producer_config ||= Config.new
-          unless val.is_a?(Karafka::Routing::Default)
-            @deimos_producer_config.public_send("#{field}=", val)
+          if args.any?
+            @deimos_producer_config.public_send("#{field}=", args[0])
             _deimos_setup_transcoders if schema && namespace
           end
           @deimos_producer_config[field]

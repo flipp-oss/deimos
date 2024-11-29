@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'active_support'
+require 'deimos/ext/redraw'
 require 'karafka'
 
 require 'deimos/version'
@@ -25,6 +26,7 @@ require 'deimos/ext/schema_route'
 require 'deimos/ext/consumer_route'
 require 'deimos/ext/producer_route'
 require 'deimos/ext/producer_middleware'
+require 'deimos/ext/routing_defaults'
 
 require 'deimos/railtie' if defined?(Rails)
 

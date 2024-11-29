@@ -142,9 +142,9 @@ module Deimos
     def test_consume_message(handler_class_or_topic,
                              payload,
                              key: nil,
-                             call_original: Karafka::Routing::Default.new(nil),
+                             call_original: nil,
                              partition_key: nil)
-      unless call_original.is_a?(Karafka::Routing::Default)
+      unless call_original.nil?
         puts "test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
       test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key], single: true)
@@ -157,7 +157,7 @@ module Deimos
     # @param handler_class_or_topic [Class, String] Class which inherits from
     # Deimos::Consumer or the topic as a string
     # @param payloads [Array<Hash>] the payload to consume
-    # @param call_original [Symbol] legacy parameter.
+    # @param call_original [Boolean,nil] legacy parameter.
     # @param keys [Array<Object>]
     # @param partition_keys [Array<Object>]
     # @param single [Boolean] used internally.
@@ -165,10 +165,10 @@ module Deimos
     def test_consume_batch(handler_class_or_topic,
                            payloads,
                            keys: [],
-                           call_original: Karafka::Routing::Default.new(nil),
+                           call_original: nil,
                            single: false,
                            partition_keys: [])
-      unless call_original.is_a?(Karafka::Routing::Default)
+      unless call_original.nil?
         puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
       consumer = nil

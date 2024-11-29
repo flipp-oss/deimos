@@ -10,6 +10,10 @@ There are a number of breaking changes. We provide a `v2` generator to attempt t
 
     KARAFKA_BOOT_FILE=false rails g deimos:v2
 
+### Running Deimos
+
+Instead of running `rake deimos:start`, you now run your Kafka consumers the same way any Karafka consumers are run: `karafka server`.
+
 ### Configuration
 
 In V1, Deimos configuration was all done in a single `Deimos.configure` block, including Kafka configs, consumers and producers:
