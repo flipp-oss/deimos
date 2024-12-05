@@ -19,10 +19,11 @@ module Deimos
             bulk_import_id_column: :bulk_import_id,
             replace_associations: true,
             each_message: false,
+            reraise_errors: Rails.env.test?,
             bulk_import_id_generator: proc { SecureRandom.uuid },
             fatal_error: proc { false }
           )
-          if args.any?
+          if args.size.positive?
             @deimos_config.public_send("#{field}=", args[0])
           end
           @deimos_config[field]

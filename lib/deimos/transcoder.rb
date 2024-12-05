@@ -38,9 +38,11 @@ module Deimos
       return nil if key.nil? || self.key_field.nil?
 
       decoded_key = self.backend.decode_key(key, self.key_field)
-      return decoded_key unless @use_schema_classes
+      return decoded_key if self.key_field || !@use_schema_classes
 
-      Utils::SchemaClass.instance(decoded_key,
+      schema_key = decoded_key.is_a?(Hash) ? decoded_key : { self.key_field => decoded_key }
+
+      Utils::SchemaClass.instance(schema_key,
                                   "#{@schema}_key",
                                   @namespace)
     end

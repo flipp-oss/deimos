@@ -98,6 +98,8 @@ module Deimos
         message_key = Deimos::TestHelpers.normalize_message(key)
         hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
         Deimos::TestHelpers.sent_messages.any? do |m|
+          message.delete(:payload_key) if message.respond_to?(:[]) && message[:payload_key].nil?
+          m[:payload].delete(:payload_key) if m.respond_to?(:[]) && m[:payload]&.respond_to?(:[]) && m[:payload][:payload_key].nil?
           hash_matcher.send(:match, message, m[:payload]) &&
             topic == m[:topic] &&
             (key.present? ? message_key == m[:key] : true) &&
@@ -171,6 +173,7 @@ module Deimos
       unless call_original.nil?
         puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
+      karafka.consumer_messages.clear
       consumer = nil
       topic_name = nil
       if handler_class_or_topic.is_a?(String)
@@ -183,15 +186,22 @@ module Deimos
 
       Deimos.karafka_config_for(topic: topic_name).each_message(single)
 
-       payloads.each_with_index do |payload, i|
-         karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})
-       end
-       if block_given?
-         allow_any_instance_of(consumer_class).to receive(:consume_batch) do
-           yield
-         end
-       end
-       consumer.consume
+      # don't record messages sent with test_consume_batch
+      original_messages = karafka.produced_messages.dup
+      payloads.each_with_index do |payload, i|
+       karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})
       end
+      if block_given?
+       allow_any_instance_of(consumer_class).to receive(:consume_batch) do
+         yield
+       end
+      end
+
+      # sent_messages should only include messages sent by application code, not this method
+      karafka.produced_messages.clear
+      karafka.produced_messages.concat(original_messages)
+
+      consumer.consume
+    end
   end
 end

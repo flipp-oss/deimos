@@ -162,7 +162,7 @@ module Deimos
       if topic
         karafka_configs.find { |t| t.name == topic}
       elsif producer
-        karafka_configs.find { |t| t.producer_class == producer}
+        karafka_configs.find { |t| t.producer_classes.include?(producer)}
       end
     end
 

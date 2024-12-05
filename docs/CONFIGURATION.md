@@ -86,21 +86,22 @@ Deimos.configure do
 end
 ```
 
-| Config name              | Default       | Description                                                                                                                           |
-|--------------------------|---------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| producer_class           | nil           | ActiveRecordProducer class to use for sending messages.                                                                               |
-| mode                     | :time_based   | Whether to use time-based polling or state-based polling.                                                                             |
-| run_every                | 60            | Amount of time in seconds to wait between runs.                                                                                       |
+| Config name              | Default      | Description                                                                                                                           |
+|--------------------------|--------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| producer_class           | nil          | ActiveRecordProducer class to use for sending messages.                                                                               |
+| producer_classes         | []           | Array of ActiveRecordProducer classes to use for sending messages. You can use this instead of `producer_class`.                      |
+| mode                     | :time_based  | Whether to use time-based polling or state-based polling.                                                                             |
+| run_every                | 60           | Amount of time in seconds to wait between runs.                                                                                       |
 | timestamp_column         | `:updated_at` | Name of the column to query. Remember to add an index to this column!                                                                 |
-| delay_time               | 2             | Amount of time in seconds to wait before picking up records, to allow for transactions to finish.                                     |
-| retries                  | 1             | The number of times to retry for a *non-Kafka* error.                                                                                 |
-| full_table               | false         | If set to true, do a full table dump to Kafka each run. Good for very small tables. Time-based only.                                  |
-| start_from_beginning     | true          | If false, start from the current time instead of the beginning of time if this is the first time running the poller. Time-based only. |
-| state_column             | nil           | If set, this represents the DB column to use to update publishing status. State-based only.                                           |
-| publish_timestamp_column | nil           | If set, this represents the DB column to use to update when publishing is done. State-based only.                                     |
-| published_state          | nil           | If set, the poller will update the `state_column` to this value when publishing succeeds. State-based only.                           |
-| failed_state             | nil           | If set, the poller will update the `state_column` to this value when publishing fails. State-based only.                              |
-| poller_class             | nil           | Poller subclass name to use for publishing to multiple kafka topics from a single poller.                                             |
+| delay_time               | 2            | Amount of time in seconds to wait before picking up records, to allow for transactions to finish.                                     |
+| retries                  | 1            | The number of times to retry for a *non-Kafka* error.                                                                                 |
+| full_table               | false        | If set to true, do a full table dump to Kafka each run. Good for very small tables. Time-based only.                                  |
+| start_from_beginning     | true         | If false, start from the current time instead of the beginning of time if this is the first time running the poller. Time-based only. |
+| state_column             | nil          | If set, this represents the DB column to use to update publishing status. State-based only.                                           |
+| publish_timestamp_column | nil          | If set, this represents the DB column to use to update when publishing is done. State-based only.                                     |
+| published_state          | nil          | If set, the poller will update the `state_column` to this value when publishing succeeds. State-based only.                           |
+| failed_state             | nil          | If set, the poller will update the `state_column` to this value when publishing fails. State-based only.                              |
+| poller_class             | nil          | Poller subclass name to use for publishing to multiple kafka topics from a single poller.                                             |
 
 ## Karafka Routing
 
