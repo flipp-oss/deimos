@@ -3,7 +3,11 @@ module Deimos
     class << self
 
       def log_add(method, msg)
-        Karafka.logger.tagged('Deimos') do |logger|
+        if Karafka.logger.respond_to?(:tagged)
+          Karafka.logger.tagged('Deimos') do |logger|
+            logger.send(method, msg.to_json)
+          end
+        else
           logger.send(method, msg.to_json)
         end
 
