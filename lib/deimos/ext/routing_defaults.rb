@@ -13,6 +13,10 @@ class Matcher
 
   def replay_on(topic_node)
     @applications.each do |method, kwargs|
+      if method == :kafka
+        topic_node.kafka = kwargs
+        next
+      end
       if kwargs.is_a?(Hash)
         ref = topic_node.public_send(method)
 
