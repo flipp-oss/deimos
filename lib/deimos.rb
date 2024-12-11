@@ -139,6 +139,9 @@ module Deimos
 
     def setup_karafka
       Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
+      # for multiple setup calls
+      Karafka.producer.config.kafka =
+        Karafka::Setup::AttributesMap.producer(Karafka::Setup::Config.config.kafka.dup)
       EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.register_event(type) }
 
       Karafka.producer.monitor.subscribe('error.occurred') do |event|
