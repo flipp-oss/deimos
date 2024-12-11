@@ -8,9 +8,8 @@ module Deimos
             logger.send(method, msg.to_json)
           end
         else
-          logger.send(method, msg.to_json)
+          Karafka.logger.send(method, msg.to_json)
         end
-
       end
 
       def log_info(*args)
