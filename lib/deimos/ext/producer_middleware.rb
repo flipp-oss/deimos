@@ -10,7 +10,7 @@ module Deimos
           message: message
         ) do
           config = Deimos.karafka_config_for(topic: message[:topic])
-          return message if config.nil?
+          return message if config.nil? || config.schema.nil?
           return if message[:payload] && !message[:payload].is_a?(Hash) && !message[:payload].is_a?(SchemaClass::Record)
 
           m = Deimos::Message.new(message[:payload].to_h,

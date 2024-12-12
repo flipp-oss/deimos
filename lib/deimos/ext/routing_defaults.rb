@@ -14,7 +14,7 @@ class Matcher
   def replay_on(topic_node)
     @applications.each do |method, kwargs|
       if method == :kafka
-        topic_node.kafka = kwargs
+        topic_node.kafka = kwargs.is_a?(Array) ? kwargs[0] : kwargs
         next
       end
       if kwargs.is_a?(Hash)

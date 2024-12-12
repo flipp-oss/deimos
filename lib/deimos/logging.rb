@@ -42,7 +42,12 @@ module Deimos
         case payload_log
         when :keys
           keys = messages.map do |m|
-            m.respond_to?(:payload) ? m.key || m.payload['message_id'] : m[:key] || m[:payload_key] || m[:payload]['message_id']
+            if m.respond_to?(:payload)
+              m.key || m.payload['message_id']
+            elsif m
+              payload = m[:payload]&.with_indifferent_access
+              m[:key] || m[:payload_key] || payload[:payload_key] || payload[:message_id]
+            end
           end
           log_message.merge!(
             payload_keys: keys
