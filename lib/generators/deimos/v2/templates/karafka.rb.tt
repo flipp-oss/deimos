@@ -26,11 +26,11 @@ class KarafkaApp < Karafka::App
     <%- setup_configs.each do |k, v| -%>
     config.<%= k %> = <%= v.inspect %>
     <%- end -%>
-    config.kafka = {
+    config.kafka.merge!({
       <%- default_kafka_configs.compact.each do |k, v| -%>
       "<%= k.to_s %>": <%= v.inspect %>,
       <%- end -%>
-    }
+    })
     # Recreate consumers with each batch. This will allow Rails code reload to work in the
     # development mode. Otherwise Karafka process would not be aware of code changes
     config.consumer_persistence = !Rails.env.development?
@@ -104,6 +104,7 @@ class KarafkaApp < Karafka::App
         <%- consumer[:kafka].each do |k, v| -%>
         "<%= k.to_s %>": <%= v.inspect %>,
         <%- end -%>
+        inherit: true
       )
       <%- end -%>
       <%- consumer.except(:topic, :kafka).each do |k, v| -%>

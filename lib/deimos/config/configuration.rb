@@ -63,7 +63,7 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     setting :phobos_logger, removed: 'Separate logger for Phobos is no longer supported'
 
     setting :kafka do
-      setting :logger, removed: "Karafka uses Rails logger by default"
+      setting :logger, Logger.new(STDOUT), removed: "Karafka uses Rails logger by default"
       setting :seed_brokers, ['localhost:9092'], removed: 'Use kafka(bootstrap.servers) in Karafka settings'
       setting :client_id, 'phobos', removed: 'Use client_id in Karafka setup block.'
       setting :connect_timeout, 15, removed: 'Use kafka(socket.connection.setup.timeout.ms) in Karafka settings'

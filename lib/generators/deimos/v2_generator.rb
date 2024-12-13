@@ -80,9 +80,9 @@ module Deimos
                                              "sasl_plain"
                                            end
                                          end
-          configs["ssl.ca.pem"] = deimos_config.kafka.ssl.ca_cert
-          configs["ssl.certificate.pem"] = deimos_config.kafka.ssl.client_cert
-          configs["ssl.key.pem"] = deimos_config.kafka.ssl.client_cert_key
+          configs["ssl.ca.location"] = deimos_config.kafka.ssl.ca_cert
+          configs["ssl.certificate.location"] = deimos_config.kafka.ssl.client_cert
+          configs["ssl.key.location"] = deimos_config.kafka.ssl.client_cert_key
           configs["ssl.endpoint.identification.algorithm"] = "https" if deimos_config.kafka.ssl.verify_hostname
           configs["sasl.kerberos.principal"] = deimos_config.kafka.sasl.gssapi_principal
           configs["sasl.kerberos.keytab"] = deimos_config.kafka.sasl.gssapi_keytab
@@ -126,6 +126,7 @@ module Deimos
               configs[:max_db_batch_size] = consumer.max_db_batch_size unless consumer.default_value?(:max_db_batch_size)
               configs[:bulk_import_id_column] = consumer.bulk_import_id_column unless consumer.default_value?(:bulk_import_id_column)
               configs[:replace_associations] = consumer.replace_associations unless consumer.default_value?(:replace_associations)
+              configs[:save_associations_first] = consumer.save_associations_first unless consumer.default_value?(:save_associations_first)
               configs[:active] = false if consumer.disabled
               configs[:each_message] = true unless consumer.delivery.to_s == 'inline_batch'
               configs
@@ -172,6 +173,9 @@ module Deimos
           template('karafka.rb.tt', "karafka.rb", force: true)
           rename_consumer_methods
           fix_specs
+          insert_into_file("Gemfile", "  gem 'karafka-testing'\n", after: "group :test do\n")
+          # to avoid inserting multiple times, just in case there isn't a single group :test
+          insert_into_file("Gemfile", "  gem 'karafka-testing'\n", after: /group .*test.* do\n/)
         end
 
       end
@@ -181,10 +185,18 @@ module Deimos
       def generate
         process_all_files
         say "Generation complete! You are safe to remove the existing initializer that configures Deimos.", :green
+        print_warnings
+      end
+
+      def print_warnings
         say "Note: The following settings cannot be determined by the generator:", :yellow
         say "*  logger / phobos_logger (dynamic object, cannot be printed out)", :yellow
         say "*  kafka.sasl.oauth_token_provider", :yellow
         say "*  producers.max_buffer_size", :yellow
+        say "*  metrics", :yellow
+        say "*  tracer", :yellow
+        say "*  consumers.bulk_import_id_generator", :yellow
+        say "*  consumer.fatal_error", :yellow
         say "*  consumer.backoff (only handles minimum, not maximum)", :yellow
         say "For more information, see https://github.com/flipp-oss/deimos/blob/master/docs/UPGRADING.md", :yellow
       end

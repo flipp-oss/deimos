@@ -66,7 +66,7 @@ module Deimos
       def record_key(key)
         if key.nil?
           {}
-        elsif key.is_a?(Hash)
+        elsif key.is_a?(Hash) || key.is_a?(SchemaClass::Record)
           self.key_converter.convert(key)
         elsif self.topic.key_config[:field].nil?
           { @klass.primary_key => key }
