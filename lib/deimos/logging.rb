@@ -45,8 +45,12 @@ module Deimos
             if m.respond_to?(:payload)
               m.key || m.payload['message_id']
             elsif m
-              payload = m[:payload]&.with_indifferent_access
-              m[:key] || m[:payload_key] || payload[:payload_key] || payload[:message_id]
+              if m[:payload].is_a?(String)
+                m[:key] || m[:payload_key]
+              else
+                payload = m[:payload]&.with_indifferent_access
+                m[:key] || m[:payload_key] || payload[:payload_key] || payload[:message_id]
+              end
             end
           end
           log_message.merge!(
