@@ -36,6 +36,8 @@ module Deimos
       # @param force_send [Boolean]
       # @return [void]
       def send_events(records, force_send: false)
+        return if Deimos.producers_disabled?(self)
+
         primary_key = @record_class&.primary_key
         messages = records.map do |record|
           if record.respond_to?(:attributes)
