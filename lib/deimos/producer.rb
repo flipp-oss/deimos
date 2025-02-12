@@ -126,7 +126,7 @@ module Deimos
       end
 
       def topic
-        karafka_config.name
+        karafka_config&.name
       end
 
       # @param sync [Boolean]
