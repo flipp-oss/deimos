@@ -9,9 +9,9 @@ module Deimos
         # @param messages [Array<Hash>]
         # @return [void]
         def publish(producer_class:, messages:)
+          execute(producer_class: producer_class, messages: messages)
           message = ::Deimos::Logging.messages_log_text(producer_class.karafka_config.payload_log, messages)
           Deimos::Logging.log_info({message: 'Publishing Messages:'}.merge(message))
-          execute(producer_class: producer_class, messages: messages)
         end
 
         # @param producer_class [Class<Deimos::Producer>]
