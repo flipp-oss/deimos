@@ -18,8 +18,26 @@ module Deimos
       union_types = type.schemas.map { |s| s.type.to_sym }
       return nil if val.nil? && union_types.include?(:null)
 
-      schema_type = type.schemas.find { |s| s.type.to_sym != :null }
+      schema_type = find_schema_type(type, val)
       coerce_type(schema_type, val)
+    end
+
+    # Find the right schema for val from a UnionSchema.
+    # @param type [Avro::Schema::UnionSchema]
+    # @param val [Object]
+    # @return [Avro::Schema::PrimitiveSchema]
+    def find_schema_type(type, val)
+      schema_type = type.schemas.find do |schema|
+        if schema.type.to_sym == :record
+          schema.fields.map(&:name).sort == val.keys.sort
+        else # for types other than record, pick the first non-null type
+          schema.type.to_sym != :null
+        end
+      end
+
+      raise "NO SCHEMA TYPE FOUND FOR #{val}, #{type}" if schema_type.nil?
+
+      schema_type
     end
 
     # Coerce sub-records in a payload to match the schema.
