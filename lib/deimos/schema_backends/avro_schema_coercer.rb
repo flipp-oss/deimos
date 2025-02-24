@@ -27,15 +27,35 @@ module Deimos
     # @param val [Object]
     # @return [Avro::Schema::PrimitiveSchema]
     def find_schema_type(type, val)
+      int_classes = [Time, ActiveSupport::TimeWithZone]
+
       schema_type = type.schemas.find do |schema|
-        if schema.type.to_sym == :record
-          schema.fields.map(&:name).sort == val.keys.sort
-        else # for types other than record, pick the first non-null type
+        field_type = schema.type.to_sym
+
+        case field_type
+        when :int, :long
+          val.is_a?(Integer) ||
+            _is_integer_string?(val) ||
+            int_classes.any? { |klass| val.is_a?(klass) }
+        when :float, :double
+          val.is_a?(Numeric) || _is_float_string?(val)
+        when :array
+          val.is_a?(Array)
+        when :record
+          if val.is_a?(Hash)
+            schema_fields_set = Set.new(schema.fields.map(&:name))
+            Set.new(val.keys).subset?(schema_fields_set)
+          else
+            # If the value is not a hash, we can't coerce it to a record.
+            # Keep looking for another schema
+            false
+          end
+        else
           schema.type.to_sym != :null
         end
       end
 
-      raise "NO SCHEMA TYPE FOUND FOR #{val}, #{type}" if schema_type.nil?
+      raise "No Schema type found for VALUE: #{val}\n TYPE: #{type}" if schema_type.nil?
 
       schema_type
     end
