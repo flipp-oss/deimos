@@ -18,6 +18,10 @@ module Deimos
                                   partition_key: message[:partition_key])
           _process_message(m, message, config)
           message[:payload] = m.encoded_payload
+          message[:label] = {
+            original_payload: m.payload,
+            original_key: m.key
+          }
           message[:key] = m.encoded_key
           message[:partition_key] = if m.partition_key
                                       m.partition_key.to_s

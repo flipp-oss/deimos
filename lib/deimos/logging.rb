@@ -36,22 +36,42 @@ module Deimos
 
       end
 
+      def payload(m)
+        return nil if m.nil?
+
+        if m.respond_to?(:payload)
+          m.payload
+        elsif m[:label]
+          m.dig(:label, :raw_payload)
+        else
+          m[:payload]
+        end
+      end
+
+      def key(m)
+        return nil if m.nil?
+
+        if m.respond_to?(:payload) && m.payload
+          m.key || m.payload['message_id']
+        elsif m.respond_to?(:[])
+          if m[:label]
+            m.dig(:label, :original_key)
+          elsif m[:payload].is_a?(String)
+            m[:key] || m[:payload_key]
+          else
+            payload = m[:payload]&.with_indifferent_access
+            m[:key] || m[:payload_key] || payload[:payload_key] || payload[:message_id]
+          end
+        end
+      end
+
       def messages_log_text(payload_log, messages)
         log_message = {}
 
         case payload_log
         when :keys
           keys = messages.map do |m|
-            if m.respond_to?(:payload)
-              m.key || m.payload['message_id']
-            elsif m
-              if m[:payload].is_a?(String)
-                m[:key] || m[:payload_key]
-              else
-                payload = m[:payload]&.with_indifferent_access
-                m[:key] || m[:payload_key] || payload[:payload_key] || payload[:message_id]
-              end
-            end
+            key(m)
           end
           log_message.merge!(
             payload_keys: keys
@@ -68,8 +88,8 @@ module Deimos
           log_message.merge!(
             payloads: messages.map do |m|
               {
-                payload: m.respond_to?(:payload) ? m.payload : m[:payload],
-                key: m.respond_to?(:payload) ? m.key : m[:key]
+                payload: payload(m),
+                key: key(m)
               }
             end
           )
