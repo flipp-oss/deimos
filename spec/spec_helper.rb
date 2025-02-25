@@ -276,28 +276,18 @@ RSpec.shared_context('with widgets') do
   end
 end
 
-RSpec.shared_context('with widgets_with_complex_types') do
+RSpec.shared_context('with widget_with_union_types') do
   before(:all) do
-    ActiveRecord::Base.connection.create_table(:widget_with_complex_types, force: true) do |t|
+    ActiveRecord::Base.connection.create_table(:widget_with_union_types, force: true) do |t|
       t.string(:test_id)
-      t.float(:test_float)
-      t.json(:test_string_array)
-      t.json(:test_int_array)
-      t.integer(:test_optional_int)
-      t.json(:some_integer_map)
-      t.json(:some_record)
-      t.json(:some_optional_record)
-      t.json(:some_record_array)
-      t.json(:some_record_map)
-      t.json(:some_enum_array)
-      t.string(:some_optional_enum)
-      t.string(:some_enum_with_default)
+      t.bigint(:test_long)
+      t.json(:test_union_type)
 
       t.timestamps
     end
 
     # :nodoc:
-    class WidgetWithComplexType < ActiveRecord::Base
+    class WidgetWithUnionType < ActiveRecord::Base
       # @return [String]
       def generated_id
         'generated_id'
@@ -306,7 +296,7 @@ RSpec.shared_context('with widgets_with_complex_types') do
   end
 
   after(:all) do
-    ActiveRecord::Base.connection.drop_table(:widget_with_complex_types)
+    ActiveRecord::Base.connection.drop_table(:widget_with_union_types)
   end
 end
 
