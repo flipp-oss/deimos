@@ -60,8 +60,8 @@
           "fields": [
             {
               "name": "record3_id",
-              "type": "string",
-              "default": ""
+              "type": "float",
+              "default": 0.0
             }
           ]
         },
