@@ -144,7 +144,7 @@ describe Deimos::ActiveRecordProducer do
             test_id: "abc",
             test_long: 399999,
             test_union_type: {
-              record3_id: "hello world"
+              record2_id: "hello world"
             }
           ))
 
@@ -152,7 +152,23 @@ describe Deimos::ActiveRecordProducer do
                                                   test_id: "abc",
                                                   test_long: 399999,
                                                   test_union_type: {
-                                                    record3_id: "hello world"
+                                                    record2_id: "hello world"
+                                                  }
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: {
+              record3_id:10.1010
+            }
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type: {
+                                                    record3_id:10.1010
                                                   }
                                                 )
 
