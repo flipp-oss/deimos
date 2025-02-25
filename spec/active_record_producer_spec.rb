@@ -3,7 +3,7 @@
 describe Deimos::ActiveRecordProducer do
 
   include_context 'with widgets'
-  include_context 'with widgets_with_complex_types'
+  include_context 'with widget_with_union_types'
 
   prepend_before(:each) do
 
@@ -48,13 +48,13 @@ describe Deimos::ActiveRecordProducer do
     stub_const('MyProducerWithUniqueID', producer_class)
 
     producer_class = Class.new(Deimos::ActiveRecordProducer) do
-      schema 'MySchemaWithComplexTypes'
+      schema 'MySchemaWithUnionType'
       namespace 'com.my-namespace'
-      topic 'my-topic-with-complex-types'
+      topic 'my-topic-with-union-type'
       key_config none: true
-      record_class WidgetWithComplexType
+      record_class WidgetWithUnionType
     end
-    stub_const('MyProducerWithComplexType', producer_class)
+    stub_const('MyProducerWithUnionType', producer_class)
 
     producer_class = Class.new(Deimos::ActiveRecordProducer) do
       schema 'MySchemaWithUniqueId'
@@ -90,6 +90,82 @@ describe Deimos::ActiveRecordProducer do
           expect('my-topic').to have_sent(test_id: 'abc', some_int: 3)
         end
 
+        it 'should coerce values for a UnionSchema' do
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: %w(hello world)
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type: %w(hello world)
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: {
+              record1_map:{ a:9999, b:234 },
+              record1_id: 567
+            }
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type:{
+                                                    record1_map:{ a:9999, b:234 },
+                                                    record1_id: 567
+                                                  }
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: 1010101
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type:1010101
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: {
+              record3_id: "hello world"
+            }
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type: {
+                                                    record3_id: "hello world"
+                                                  }
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: {
+              record4_id:101010
+            }
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type: {
+                                                    record4_id:101010
+                                                  }
+                                                )
+        end
+
         it 'should coerce values' do
           MyProducer.send_event(Widget.new(test_id: 'abc', some_int: '3'))
           MyProducer.send_event(Widget.new(test_id: 'abc', some_int: 4.5))
@@ -103,38 +179,6 @@ describe Deimos::ActiveRecordProducer do
           MyBooleanProducer.send_event(Widget.new(test_id: 'abc', some_bool: true))
           expect('my-topic-with-boolean').to have_sent(test_id: 'abc', some_bool: false)
           expect('my-topic-with-boolean').to have_sent(test_id: 'abc', some_bool: true)
-
-          MyProducerWithComplexType.send_event(WidgetWithComplexType.new(
-            test_id: "abc",
-            test_float: 3.14,
-            test_string_array: ["hello", "world"],
-            test_int_array: [1, 2, 3],
-            test_optional_int: 42,
-            some_integer_map: { "key1" => 100, "key2" => 200 },
-            some_record: { a_record_field: "Some Value" },
-            some_optional_record: { a_record_field: "Optional Record" },
-            some_record_array: [{ a_record_field: "Array Record 1" }, { a_record_field: "Array Record 2" }],
-            some_record_map: { "map_key" => { a_record_field: "Map Record" } },
-            some_enum_array: ["sym1", "sym2"],
-            some_optional_enum: "sym4",
-            some_enum_with_default: "sym6"
-          ))
-
-          expect('my-topic-with-complex-types').to have_sent(
-            test_id: "abc",
-            test_float: 3.14,
-            test_string_array: ["hello", "world"],
-            test_int_array: [1, 2, 3],
-            test_optional_int: 42,
-            some_integer_map: { "key1" => 100, "key2" => 200 },
-            some_record: { a_record_field: "Some Value" },
-            some_optional_record: { a_record_field: "Optional Record" },
-            some_record_array: [{ a_record_field: "Array Record 1" }, { a_record_field: "Array Record 2" }],
-            some_record_map: { "map_key" => { a_record_field: "Map Record" } },
-            some_enum_array: ["sym1", "sym2"],
-            some_optional_enum: "sym4",
-            some_enum_with_default: "sym6"
-          )
         end
 
         it 'should be able to call the record' do
