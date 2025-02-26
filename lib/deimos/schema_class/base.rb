@@ -36,6 +36,8 @@ module Deimos
         comparison == self.as_json
       end
 
+      alias_method :eql?, :==
+
       # @return [String]
       def inspect
         klass = self.class
