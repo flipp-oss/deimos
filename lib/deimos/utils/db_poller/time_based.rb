@@ -28,14 +28,14 @@ module Deimos
         def process_updates
           time_from = @config.full_table ? Time.new(0) : @info.last_sent.in_time_zone
           time_to = Time.zone.now - @config.delay_time
-          Deimos.config.logger.info("Polling #{log_identifier} from #{time_from} to #{time_to}")
+          Deimos::Logging.log_info("Polling #{log_identifier} from #{time_from} to #{time_to}")
           status = PollStatus.new(0, 0, 0)
           first_batch = true
 
           # poll_query gets all the relevant data from the database, as defined
           # by the producer itself.
           loop do
-            Deimos.config.logger.debug("Polling #{log_identifier}, batch #{status.current_batch}")
+            Deimos::Logging.log_debug("Polling #{log_identifier}, batch #{status.current_batch}")
             batch = fetch_results(time_from, time_to).to_a
             break if batch.empty?
 
@@ -47,14 +47,14 @@ module Deimos
           # If there were no results at all, we update last_sent so that we still get a wait
           # before the next poll.
           @info.touch(:last_sent) if first_batch
-          Deimos.config.logger.info("Poll #{log_identifier} complete at #{time_to} (#{status.report})")
+          Deimos::Logging.log_info("Poll #{log_identifier} complete at #{time_to} (#{status.report})")
         end
 
         # @param time_from [ActiveSupport::TimeWithZone]
         # @param time_to [ActiveSupport::TimeWithZone]
         # @return [ActiveRecord::Relation]
         def fetch_results(time_from, time_to)
-          id = self.producer_classes.first.config[:record_class].primary_key
+          id = self.producer_classes.first.record_class.primary_key
           quoted_timestamp = ActiveRecord::Base.connection.quote_column_name(@config.timestamp_column)
           quoted_id = ActiveRecord::Base.connection.quote_column_name(id)
           @resource_class.poll_query(time_from: time_from,

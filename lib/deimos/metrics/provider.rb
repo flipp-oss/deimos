@@ -9,7 +9,7 @@ module Deimos
       # @param options [Hash] Any additional options, e.g. :tags
       # @return [void]
       def increment(metric_name, options={})
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Send an counter increment metric
@@ -18,7 +18,7 @@ module Deimos
       # @param options [Hash] Any additional options, e.g. :tags
       # @return [void]
       def gauge(metric_name, count, options={})
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Send an counter increment metric
@@ -27,7 +27,7 @@ module Deimos
       # @param options [Hash] Any additional options, e.g. :tags
       # @return [void]
       def histogram(metric_name, count, options={})
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Time a yielded block, and send a timer metric
@@ -35,7 +35,7 @@ module Deimos
       # @param options [Hash] Any additional options, e.g. :tags
       # @return [void]
       def time(metric_name, options={})
-        raise NotImplementedError
+        raise MissingImplementationError
       end
     end
   end

@@ -4,8 +4,7 @@ module Deimos
   module Utils
     # Class which continually polls the kafka_messages table
     # in the database and sends Kafka messages.
-    class DbProducer
-      include Phobos::Producer
+    class OutboxProducer
       attr_accessor :id, :current_topic
 
       # @return [Integer]
@@ -14,17 +13,19 @@ module Deimos
       DELETE_BATCH_SIZE = 10
       # @return [Integer]
       MAX_DELETE_ATTEMPTS = 3
+      # @return [Array<Symbol>]
+      FATAL_CODES = %i(invalid_msg_size msg_size_too_large)
 
       # @param logger [Logger]
       def initialize(logger=Logger.new(STDOUT))
         @id = SecureRandom.uuid
         @logger = logger
-        @logger.push_tags("DbProducer #{@id}") if @logger.respond_to?(:push_tags)
+        @logger.push_tags("OutboxProducer #{@id}") if @logger.respond_to?(:push_tags)
       end
 
       # @return [FigTree]
       def config
-        Deimos.config.db_producer
+        Deimos.config.outbox
       end
 
       # Start the poll.
@@ -82,7 +83,6 @@ module Deimos
       rescue StandardError => e
         @logger.error("Error processing messages for topic #{@current_topic}: #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
         KafkaTopicInfo.register_error(@current_topic, @id)
-        shutdown_producer
       end
 
       # Process a single batch in a topic.
@@ -94,24 +94,23 @@ module Deimos
         batch_size = messages.size
         compacted_messages = compact_messages(messages)
         log_messages(compacted_messages)
-        Deimos.instrument('db_producer.produce', topic: @current_topic, messages: compacted_messages) do
+        Karafka.monitor.instrument('deimos.outbox.produce', topic: @current_topic, messages: compacted_messages) do
           begin
-            produce_messages(compacted_messages.map(&:phobos_message))
-          rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge, Kafka::RecordListTooLarge => e
-            delete_messages(messages)
-            @logger.error('Message batch too large, deleting...')
-            begin
-              @logger.error(Deimos::KafkaMessage.decoded(messages))
-            rescue StandardError => logging_exception # rubocop:disable Naming/RescuedExceptionsVariableName
-              @logger.error("Large message details logging failure: #{logging_exception.message}")
-            ensure
+            produce_messages(compacted_messages.map(&:karafka_message))
+          rescue WaterDrop::Errors::ProduceManyError => e
+            if FATAL_CODES.include?(e.cause.try(:code))
+              @logger.error('Message batch too large, deleting...')
+              delete_messages(messages)
               raise e
+            else
+              Deimos.log_error("Got error #{e.cause.class.name} when publishing #{batch_size} messages, retrying...")
+              retry
             end
           end
         end
         delete_messages(messages)
         Deimos.config.metrics&.increment(
-          'db_producer.process',
+          'outbox.process',
           tags: %W(topic:#{@current_topic}),
           by: messages.size
         )
@@ -197,16 +196,6 @@ module Deimos
         end
       end
 
-      # Shut down the sync producer if we have to. Phobos will automatically
-      # create a new one. We should call this if the producer can be in a bad
-      # state and e.g. we need to clear the buffer.
-      # @return [void]
-      def shutdown_producer
-        if self.class.producer.respond_to?(:sync_producer_shutdown) # Phobos 1.8.3
-          self.class.producer.sync_producer_shutdown
-        end
-      end
-
       # Produce messages in batches, reducing the size 1/10 if the batch is too
       # large. Does not retry batches of messages that have already been sent.
       # @param batch [Array<Hash>]
@@ -217,30 +206,10 @@ module Deimos
         begin
           batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
             @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
-            producer.publish_list(group)
-            Deimos.config.metrics&.increment(
-              'publish',
-              tags: %W(status:success topic:#{@current_topic}),
-              by: group.size
-            )
+            Karafka.producer.produce_many_sync(group)
             current_index += group.size
             @logger.info("Sent #{group.size} messages to #{@current_topic}")
           end
-        rescue Kafka::BufferOverflow, Kafka::MessageSizeTooLarge,
-               Kafka::RecordListTooLarge => e
-          if batch_size == 1
-            shutdown_producer
-            raise
-          end
-
-          @logger.error("Got error #{e.class.name} when publishing #{batch.size} in groups of #{batch_size}, retrying...")
-          batch_size = if batch_size < 10
-                         1
-                       else
-                         (batch_size / 10).to_i
-                       end
-          shutdown_producer
-          retry
         end
       end
 
