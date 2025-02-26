@@ -29,13 +29,7 @@ describe Deimos::ActiveRecordProducer do
     stub_const('MyProducerWithUniqueID', producer_class)
 
     producer_class = Class.new(Deimos::ActiveRecordProducer) do
-      schema 'MySchemaWithUnionType'
-      namespace 'com.my-namespace'
-      topic 'my-topic-with-union-type'
-      key_config none: true
-      record_class WidgetWithUnionType
-    end
-    stub_const('MyProducerWithUnionType', producer_class)
+      record_class Widget
 
       # :nodoc:
       def self.post_process(batch)
@@ -47,6 +41,12 @@ describe Deimos::ActiveRecordProducer do
     end
 
     stub_const('MyProducerWithPostProcess', producer_class)
+
+    producer_class = Class.new(Deimos::ActiveRecordProducer) do
+      record_class WidgetWithUnionType
+    end
+    stub_const('MyProducerWithUnionType', producer_class)
+
     Karafka::App.routes.redraw do
       topic 'my-topic' do
         schema 'MySchema'
@@ -78,6 +78,13 @@ describe Deimos::ActiveRecordProducer do
         key_config none: true
         producer_class MyProducerWithPostProcess
       end
+      topic 'my-topic-with-union-type' do
+        schema 'MySchemaWithUnionType'
+        namespace 'com.my-namespace'
+        key_config none: true
+        producer_class MyProducerWithUnionType
+      end
+
     end
 
   end
@@ -208,11 +215,11 @@ describe Deimos::ActiveRecordProducer do
           widget = Widget.create!(test_id: 'abc2', some_int: 3)
           MyProducerWithID.send_event({id: widget.id, test_id: 'abc2', some_int: 3})
           expect('my-topic-with-id').to have_sent(
-            test_id: 'abc2',
-            some_int: 3,
-            message_id: 'generated_id',
-            timestamp: anything
-          )
+                                          test_id: 'abc2',
+                                          some_int: 3,
+                                          message_id: 'generated_id',
+                                          timestamp: anything
+                                        )
         end
 
         it 'should post process the batch of records in #send_events' do
