@@ -4,8 +4,17 @@ require 'generators/deimos/schema_class_generator'
 require 'fileutils'
 
 class MultiFileSerializer
+  def process_string(s)
+    # Ruby 3.4 changes how hashes are printed
+    if Gem::Version.new(RUBY_VERSION) > Gem::Version.new('3.4.0')
+      s.gsub(/{"(.*)" => /, '{"\1"=>')
+    else
+      s
+    end
+
+  end
   def dump(value)
-    value.keys.sort.map { |k| "#{k}:\n#{value[k]}\n" }.join("\n")
+    value.keys.sort.map { |k| "#{k}:\n#{process_string(value[k])}\n" }.join("\n")
   end
 end
 
