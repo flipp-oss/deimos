@@ -10,8 +10,8 @@ A Ruby framework for marrying Kafka, a schema definition like Avro, and/or Activ
 a useful toolbox of goodies for Ruby-based Kafka development.
 Built on [Karafka](https://karafka.io/).
 
-[!IMPORTANT]  
-Deimos 2.x is a major rewrite from 1.x. Please see the [Upgrading Guide](./docs/UPGRADING.md) for information on the changes and how to upgrade.
+> [!IMPORTANT]  
+> Deimos 2.x is a major rewrite from 1.x. Please see the [Upgrading Guide](./docs/UPGRADING.md) for information on the changes and how to upgrade.
 
 Version 1.0 documentation can be found [here](https://github.com/flipp-oss/deimos/tree/v1).
 
