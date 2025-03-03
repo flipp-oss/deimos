@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-## 2.0.0 - TBA
-- Full rewrite of Deimos to work with Karafka. Please see [Upgrading](./docs/UPGRADING.md) for full information.
+## 2.0.0 - 2025-03-03
+- ***Full rewrite of Deimos to work with Karafka.*** Please see [Upgrading](./docs/UPGRADING.md) for full information.
 
 # 1.24.3 - 2024-05-13
 - Feature: Enable `producers.persistent_connections` phobos setting
