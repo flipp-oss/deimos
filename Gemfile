@@ -6,3 +6,4 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'mutex_m' # for older activesupport
+gem 'bigdecimal'
