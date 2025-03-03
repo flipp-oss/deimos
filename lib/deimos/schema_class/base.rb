@@ -15,7 +15,7 @@ module Deimos
       # @param _opts [Hash]
       # @return [Hash] a hash representation of the payload
       def as_json(_opts={})
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # @param key [String,Symbol]
@@ -36,6 +36,8 @@ module Deimos
         comparison == self.as_json
       end
 
+      alias_method :eql?, :==
+
       # @return [String]
       def inspect
         klass = self.class
@@ -46,7 +48,7 @@ module Deimos
       # @param value [Object]
       # @return [SchemaClass::Base]
       def self.initialize_from_value(value)
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
     protected

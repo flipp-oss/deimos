@@ -4,6 +4,7 @@ require 'deimos/active_record_consume/batch_slicer'
 require 'deimos/active_record_consume/batch_record'
 require 'deimos/active_record_consume/batch_record_list'
 require 'deimos/active_record_consume/mass_updater'
+require 'deimos/consume/batch_consumption'
 
 require 'deimos/utils/deadlock_retry'
 require 'deimos/message'
@@ -14,28 +15,26 @@ module Deimos
     # Methods for consuming batches of messages and saving them to the database
     # in bulk ActiveRecord operations.
     module BatchConsumption
+      include Deimos::Consume::BatchConsumption
+
       # Handle a batch of Kafka messages. Batches are split into "slices",
       # which are groups of independent messages that can be processed together
       # in a single database operation.
       # If two messages in a batch have the same key, we cannot process them
       # in the same operation as they would interfere with each other. Thus
       # they are split
-      # @param payloads [Array<Hash,Deimos::SchemaClass::Record>] Decoded payloads
-      # @param metadata [Hash] Information about batch, including keys.
       # @return [void]
-      def consume_batch(payloads, metadata)
-        messages = payloads.
-          zip(metadata[:keys]).
-          map { |p, k| Deimos::Message.new(p, nil, key: k) }
+      def consume_batch
+        deimos_messages = messages.map { |p| Deimos::Message.new(p.payload, key: p.key) }
 
-        tag = metadata[:topic]
+        tag = topic.name
         Deimos.config.tracer.active_span.set_tag('topic', tag)
 
-        Deimos.instrument('ar_consumer.consume_batch', tag) do
-          if @compacted || self.class.config[:no_keys]
-            update_database(compact_messages(messages))
+        Karafka.monitor.instrument('deimos.ar_consumer.consume_batch', {topic: tag}) do
+          if @compacted && deimos_messages.map(&:key).compact.any?
+            update_database(compact_messages(deimos_messages))
           else
-            uncompacted_update(messages)
+            uncompacted_update(deimos_messages)
           end
         end
       end
@@ -67,12 +66,12 @@ module Deimos
       def record_key(key)
         if key.nil?
           {}
-        elsif key.is_a?(Hash)
-          @key_converter.convert(key)
-        elsif self.class.config[:key_field].nil?
+        elsif key.is_a?(Hash) || key.is_a?(SchemaClass::Record)
+          self.key_converter.convert(key)
+        elsif self.topic.key_config[:field].nil?
           { @klass.primary_key => key }
         else
-            { self.class.config[:key_field] => key }
+          { self.topic.key_config[:field].to_s => key }
         end
       end
 
@@ -154,10 +153,10 @@ module Deimos
         record_list = build_records(messages)
         invalid = filter_records(record_list)
         if invalid.any?
-          ActiveSupport::Notifications.instrument('batch_consumption.invalid_records', {
-                                                    records: invalid,
-                                                    consumer: self.class
-                                                  })
+          Karafka.monitor.instrument('deimos.batch_consumption.invalid_records', {
+            records: invalid,
+            consumer: self.class
+          })
         end
         return if record_list.empty?
 
@@ -167,14 +166,14 @@ module Deimos
         updater = MassUpdater.new(@klass,
                                   key_col_proc: key_col_proc,
                                   col_proc: col_proc,
-                                  replace_associations: self.class.replace_associations,
-                                  bulk_import_id_generator: self.class.bulk_import_id_generator,
-                                  save_associations_first: self.class.save_associations_first,
-                                  bulk_import_id_column: self.class.bulk_import_id_column)
-        ActiveSupport::Notifications.instrument('batch_consumption.valid_records', {
-                                                  records: updater.mass_update(record_list),
-                                                  consumer: self.class
-                                                })
+                                  replace_associations: self.replace_associations,
+                                  bulk_import_id_generator: self.bulk_import_id_generator,
+                                  save_associations_first: self.save_associations_first,
+                                  bulk_import_id_column: self.bulk_import_id_column)
+        Karafka.monitor.instrument('deimos.batch_consumption.valid_records', {
+          records: updater.mass_update(record_list),
+          consumer: self.class
+        })
       end
 
       # @param record_list [BatchRecordList]
@@ -205,14 +204,14 @@ module Deimos
           attrs = attrs.merge(record_key(m.key))
           next unless attrs
 
-          col = if @klass.column_names.include?(self.class.bulk_import_id_column.to_s)
-                  self.class.bulk_import_id_column
+          col = if @klass.column_names.include?(self.bulk_import_id_column.to_s)
+                  self.bulk_import_id_column
                 end
 
           BatchRecord.new(klass: @klass,
                           attributes: attrs,
                           bulk_import_column: col,
-                          bulk_import_id_generator: self.class.bulk_import_id_generator)
+                          bulk_import_id_generator: self.bulk_import_id_generator)
         end
         BatchRecordList.new(records.compact)
       end

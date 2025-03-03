@@ -10,14 +10,14 @@ module Deimos
         # Send messages for updated data.
         # @return [void]
         def process_updates
-          Deimos.config.logger.info("Polling #{log_identifier}")
+          Deimos::Logging.log_info("Polling #{log_identifier}")
           status = PollStatus.new(0, 0, 0)
           first_batch = true
 
           # poll_query gets all the relevant data from the database, as defined
           # by the producer itself.
           loop do
-            Deimos.config.logger.debug("Polling #{log_identifier}, batch #{status.current_batch}")
+            Deimos::Logging.log_debug("Polling #{log_identifier}, batch #{status.current_batch}")
             batch = fetch_results.to_a
             break if batch.empty?
 
@@ -29,7 +29,7 @@ module Deimos
           # If there were no results at all, we update last_sent so that we still get a wait
           # before the next poll.
           @info.touch(:last_sent) if first_batch
-          Deimos.config.logger.info("Poll #{log_identifier} complete (#{status.report}")
+          Deimos::Logging.log_info("Poll #{log_identifier} complete (#{status.report}")
         end
 
         # @return [ActiveRecord::Relation]

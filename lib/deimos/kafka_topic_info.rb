@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Deimos
-  # Record that keeps track of which topics are being worked on by DbProducers.
+  # Record that keeps track of which topics are being worked on by OutboxProducers.
   class KafkaTopicInfo < ActiveRecord::Base
     self.table_name = 'kafka_topic_info'
 

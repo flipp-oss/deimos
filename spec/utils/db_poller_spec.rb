@@ -20,21 +20,27 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
   describe '#start!' do
 
     before(:each) do
-      producer_class = Class.new(Deimos::Producer) do
-        schema 'MySchema'
-        namespace 'com.my-namespace'
-        topic 'my-topic'
-        key_config field: 'test_id'
-      end
+      producer_class = Class.new(Deimos::Producer)
       stub_const('MyProducer', producer_class)
 
-      producer_class = Class.new(Deimos::Producer) do
-        schema 'MySchemaWithId'
-        namespace 'com.my-namespace'
-        topic 'my-topic'
-        key_config plain: true
-      end
+      producer_class = Class.new(Deimos::Producer)
       stub_const('MyProducerWithID', producer_class)
+
+      Karafka::App.routes.redraw do
+        topic 'my-topic' do
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config field: 'test_id'
+          producer_class MyProducer
+        end
+        topic 'my-topic-with-id' do
+          schema 'MySchemaWithId'
+          namespace 'com.my-namespace'
+          key_config plain: true
+          producer_class MyProducerWithID
+        end
+      end
+
     end
 
     it 'should raise an error if no pollers configured' do
@@ -76,12 +82,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     let(:config) { Deimos.config.db_poller_objects.first.dup }
 
     before(:each) do
-      Widget.delete_all
       producer_class = Class.new(Deimos::ActiveRecordProducer) do
-        schema 'MySchemaWithId'
-        namespace 'com.my-namespace'
-        topic 'my-topic-with-id'
-        key_config none: true
         record_class Widget
 
         # :nodoc:
@@ -90,6 +91,16 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         end
       end
       stub_const('MyProducer', producer_class)
+
+      Widget.delete_all
+      Karafka::App.routes.redraw do
+        topic 'my-topic-with-id' do
+          schema 'MySchemaWithId'
+          namespace 'com.my-namespace'
+          key_config none: true
+          producer_class MyProducer
+        end
+      end
 
       Deimos.configure do
         db_poller do
@@ -195,7 +206,9 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         before(:each) { config.skip_too_large_messages = true }
 
         it 'should skip and move on' do
-          error = Kafka::MessageSizeTooLarge.new('OH NOES')
+          rdkafka_error = instance_double(Rdkafka::RdkafkaError, code: :msg_size_too_large)
+          error = WaterDrop::Errors::ProduceManyError.new(nil, nil)
+          allow(error).to receive(:cause).and_return(rdkafka_error)
           allow(poller).to receive(:sleep)
           allow(poller).to receive(:process_batch) do
             raise error
@@ -331,7 +344,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
       end
 
       it 'should send events across multiple batches' do
-        allow(Deimos.config.logger).to receive(:info)
+        allow(Deimos::Logging).to receive(:log_info)
         allow(MyProducer).to receive(:poll_query).and_call_original
         expect(poller).to receive(:process_and_touch_info).ordered.
           with([widgets[0], widgets[1], widgets[2]], anything).and_call_original
@@ -376,7 +389,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
                time_to: time_value(secs: 120), # yes this is weird but it's because of travel_to
                column_name: :updated_at,
                min_id: last_widget.id)
-        expect(Deimos.config.logger).to have_received(:info).
+        expect(Deimos::Logging).to have_received(:log_info).
           with('Poll MyProducer: ["my-topic-with-id"] complete at 2015-05-05 00:59:58 -0400 (3 batches, 0 errored batches, 7 processed messages)')
       end
 
@@ -398,7 +411,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
       describe 'errors' do
         before(:each) do
           poller.config.retries = 0
-          allow(Deimos.config.logger).to receive(:info)
+          allow(Deimos::Logging).to receive(:log_info)
         end
 
         after(:each) do
@@ -428,7 +441,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
           info = Deimos::PollInfo.last
           expect(info.last_sent.in_time_zone).to eq(time_value(mins: -61, secs: 30))
           expect(info.last_sent_id).to eq(widgets[6].id)
-          expect(Deimos.config.logger).to have_received(:info).
+          expect(Deimos::Logging).to have_received(:log_info).
             with('Poll MyProducer: ["my-topic-with-id"] complete at 2015-05-05 00:59:58 -0400 (2 batches, 1 errored batches, 7 processed messages)')
         end
       end
@@ -449,10 +462,6 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     before(:each) do
       Widget.delete_all
       producer_class = Class.new(Deimos::ActiveRecordProducer) do
-        schema 'MySchemaWithId'
-        namespace 'com.my-namespace'
-        topic 'my-topic-with-id'
-        key_config none: true
         record_class Widget
 
         # :nodoc:
@@ -461,20 +470,22 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
         end
       end
       stub_const('ProducerOne', producer_class)
+      stub_const('ProducerTwo', producer_class)
 
-      producer_class = Class.new(Deimos::ActiveRecordProducer) do
-        schema 'MySchemaWithId'
-        namespace 'com.my-namespace'
-        topic 'my-topic-with-id'
-        key_config none: true
-        record_class Widget
-
-        # :nodoc:
-        def self.generate_payload(attrs, widget)
-          super.merge(message_id: widget.generated_id)
+      Karafka::App.routes.redraw do
+        topic 'my-topic-with-id' do
+          schema 'MySchemaWithId'
+          namespace 'com.my-namespace'
+          key_config none: true
+          producer_class ProducerOne
+        end
+        topic 'my-topic-with-id2' do
+          schema 'MySchemaWithId'
+          namespace 'com.my-namespace'
+          key_config none: true
+          producer_class ProducerTwo
         end
       end
-      stub_const('ProducerTwo', producer_class)
 
       poller_class = Class.new(Deimos::Utils::DbPoller::StateBased) do
         def self.producers
@@ -513,8 +524,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
       expect(Deimos::Utils::DbPoller::MultiProducerPoller).to receive(:poll_query).at_least(:once)
       poller.process_updates
 
-      expect(ProducerOne).to have_received(:send_events).with(widgets)
-      expect(ProducerTwo).to have_received(:send_events).with(widgets)
+      expect(ProducerOne).to have_received(:send_events).twice.with(widgets)
       expect(widgets.map(&:reload).map(&:publish_status)).to eq(%w(PUBLISHED PUBLISHED PUBLISHED))
     end
 

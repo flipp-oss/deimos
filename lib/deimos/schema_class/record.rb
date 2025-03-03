@@ -46,13 +46,13 @@ module Deimos
       # Returns the schema name of the inheriting class.
       # @return [String]
       def schema
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Returns the namespace for the schema of the inheriting class.
       # @return [String]
       def namespace
-        raise NotImplementedError
+        raise MissingImplementationError
       end
 
       # Returns the full schema name of the inheriting class.

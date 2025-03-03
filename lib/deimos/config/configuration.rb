@@ -1,332 +1,121 @@
 # frozen_string_literal: true
 
 require 'fig_tree'
-require_relative 'phobos_config'
 require_relative '../metrics/mock'
 require_relative '../tracing/mock'
-require 'active_support/core_ext/numeric'
+require 'active_support/core_ext/object'
 
 # :nodoc:
 module Deimos # rubocop:disable Metrics/ModuleLength
   include FigTree
 
   # :nodoc:
-  class FigTree::ConfigStruct
-    include Deimos::PhobosConfig
-  end
-
-  # :nodoc:
   after_configure do
-    Phobos.configure(self.config.phobos_config)
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
-    self.config.producer_objects.each do |producer|
-      configure_producer_or_consumer(producer)
-    end
-    self.config.consumer_objects.each do |consumer|
-      configure_producer_or_consumer(consumer)
-    end
-    validate_consumers
-    validate_db_backend if self.config.producers.backend == :db
+    generate_key_schemas
+    validate_outbox_backend if self.config.producers.backend == :outbox
   end
 
-  # Loads generated classes
-  # @return [void]
-  def self.load_generated_schema_classes
-    if Deimos.config.schema.generated_class_path.nil?
-      raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
-    end
+  class << self
 
-    Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.each { |f| require f }
-  rescue LoadError
-    raise 'Cannot load schema classes. Please regenerate classes with rake deimos:generate_schema_models.'
-  end
+    def generate_key_schemas
+      Deimos.karafka_configs.each do |config|
+        transcoder = config.deserializers[:key]
 
-  # Ensure everything is set up correctly for the DB backend.
-  # @!visibility private
-  def self.validate_db_backend
-    begin
-      require 'activerecord-import'
-    rescue LoadError
-      raise 'Cannot set producers.backend to :db without activerecord-import! Please add it to your Gemfile.'
-    end
-    if Deimos.config.producers.required_acks != :all
-      raise 'Cannot set producers.backend to :db unless producers.required_acks is set to ":all"!'
-    end
-  end
-
-  # Validate that consumers are configured correctly, including their
-  # delivery mode.
-  # @!visibility private
-  def self.validate_consumers
-    Phobos.config.listeners.each do |listener|
-      handler_class = listener.handler.constantize
-      delivery = listener.delivery
-
-      next unless handler_class < Deimos::Consumer
-
-      # Validate that each consumer implements the correct method for its type
-      if delivery == 'inline_batch'
-        if handler_class.instance_method(:consume_batch).owner == Deimos::Consume::BatchConsumption
-          raise "BatchConsumer #{listener.handler} does not implement `consume_batch`"
+        if transcoder.respond_to?(:key_field) && transcoder.key_field
+          transcoder.backend = Deimos.schema_backend(schema: config.schema,
+                                                     namespace: config.namespace)
+          transcoder.backend.generate_key_schema(transcoder.key_field)
         end
-      elsif handler_class.instance_method(:consume).owner == Deimos::Consume::MessageConsumption
-        raise "Non-batch Consumer #{listener.handler} does not implement `consume`"
+      end
+    end
+
+    # Loads generated classes
+    # @return [void]
+    def load_generated_schema_classes
+      if Deimos.config.schema.generated_class_path.nil?
+        raise 'Cannot use schema classes without schema.generated_class_path. Please provide a directory.'
+      end
+
+      Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.each { |f| require f }
+    rescue LoadError
+      raise 'Cannot load schema classes. Please regenerate classes with rake deimos:generate_schema_models.'
+    end
+
+    # Ensure everything is set up correctly for the DB backend.
+    # @!visibility private
+    def validate_outbox_backend
+      begin
+        require 'activerecord-import'
+      rescue LoadError
+        raise 'Cannot set producers.backend to :outbox without activerecord-import! Please add it to your Gemfile.'
       end
     end
   end
 
-  # @!visibility private
-  # @param kafka_config [FigTree::ConfigStruct]
-  # rubocop:disable  Metrics/PerceivedComplexity, Metrics/AbcSize
-  def self.configure_producer_or_consumer(kafka_config)
-    klass = kafka_config.class_name.constantize
-    klass.class_eval do
-      topic(kafka_config.topic) if kafka_config.topic.present? && klass.respond_to?(:topic)
-      schema(kafka_config.schema) if kafka_config.schema.present?
-      namespace(kafka_config.namespace) if kafka_config.namespace.present?
-      key_config(**kafka_config.key_config) if kafka_config.key_config.present?
-      schema_class_config(kafka_config.use_schema_classes) if kafka_config.use_schema_classes.present?
-      if kafka_config.respond_to?(:bulk_import_id_column) # consumer
-        klass.config.merge!(
-          bulk_import_id_column: kafka_config.bulk_import_id_column,
-          replace_associations: if kafka_config.replace_associations.nil?
-                                  Deimos.config.consumers.replace_associations
-                                else
-                                  kafka_config.replace_associations
-                                end,
-          bulk_import_id_generator: kafka_config.bulk_import_id_generator ||
-            Deimos.config.consumers.bulk_import_id_generator,
-          save_associations_first: kafka_config.save_associations_first
-        )
-      end
-    end
-  end
   # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize
 
   define_settings do
-
-    # @return [Logger]
-    setting :logger, Logger.new(STDOUT)
-
-    # @return [Symbol]
-    setting :payload_log, :full
-
-    # @return [Logger]
-    setting :phobos_logger, default_proc: proc { Deimos.config.logger.clone }
+    setting :logger, removed: 'Use "logger" in Karafka setup block.'
+    setting :payload_log, removed: 'Use topic.payload_log in Karafka settings'
+    setting :phobos_logger, removed: 'Separate logger for Phobos is no longer supported'
 
     setting :kafka do
-
-      # @return [Logger]
-      setting :logger, default_proc: proc { Deimos.config.logger.clone }
-
-      # URL of the seed broker.
-      # @return [Array<String>]
-      setting :seed_brokers, ['localhost:9092']
-
-      # Identifier for this application.
-      # @return [String]
-      setting :client_id, 'phobos'
-
-      # The socket timeout for connecting to the broker, in seconds.
-      # @return [Integer]
-      setting :connect_timeout, 15
-
-      # The socket timeout for reading and writing to the broker, in seconds.
-      # @return [Integer]
-      setting :socket_timeout, 15
+      setting :logger, Logger.new(STDOUT), removed: "Karafka uses Rails logger by default"
+      setting :seed_brokers, ['localhost:9092'], removed: 'Use kafka(bootstrap.servers) in Karafka settings'
+      setting :client_id, 'phobos', removed: 'Use client_id in Karafka setup block.'
+      setting :connect_timeout, 15, removed: 'Use kafka(socket.connection.setup.timeout.ms) in Karafka settings'
+      setting :socket_timeout, 15, removed: 'Use kafka(socket.timeout.ms) in Karafka settings'
 
       setting :ssl do
-        # Whether SSL is enabled on the brokers.
-        # @return [Boolean]
-        setting :enabled
-
-        # a PEM encoded CA cert, a file path to the cert, or an Array of certs,
-        # to use with an SSL connection.
-        # @return [String|Array<String>]
-        setting :ca_cert
-
-        # a PEM encoded client cert to use with an SSL connection, or a file path
-        # to the cert.
-        # @return [String]
-        setting :client_cert
-
-        # a PEM encoded client cert key to use with an SSL connection.
-        # @return [String]
-        setting :client_cert_key
-
-        # Verify certificate hostname if supported (ruby >= 2.4.0)
-        setting :verify_hostname, true
-
-        # Use CA certs from system. This is useful to have enabled for Confluent Cloud
-        # @return [Boolean]
-        setting :ca_certs_from_system, false
+        setting :enabled, removed: 'Use kafka(security.protocol=ssl) in Karafka settings'
+        setting :ca_cert, removed: 'Use kafka(ssl.ca.pem) in Karafka settings'
+        setting :client_cert, removed: 'Use kafka(ssl.certificate.pem) in Karafka settings'
+        setting :client_cert_key, removed: 'Use kafka(ssl.key.pem) in Karafka settings'
+        setting :verify_hostname, removed: 'Use kafka(ssl.endpoint.identification.algorithm=https) in Karafka settings'
+        setting :ca_certs_from_system, removed: 'Should not be necessary with librdkafka.'
       end
 
       setting :sasl do
-        # Whether SASL is enabled on the brokers.
-        # @return [Boolean]
-        setting :enabled
-
-        # A KRB5 principal.
-        # @return [String]
-        setting :gssapi_principal
-
-        # A KRB5 keytab filepath.
-        # @return [String]
-        setting :gssapi_keytab
-
-        # Plain authorization ID. It needs to default to '' in order for it to work.
-        # This is because Phobos expects it to be truthy for using plain SASL.
-        # @return [String]
-        setting :plain_authzid, ''
-
-        # Plain username.
-        # @return [String]
-        setting :plain_username
-
-        # Plain password.
-        # @return [String]
-        setting :plain_password
-
-        # SCRAM username.
-        # @return [String]
-        setting :scram_username
-
-        # SCRAM password.
-        # @return [String]
-        setting :scram_password
-
-        # Scram mechanism, either "sha256" or "sha512".
-        # @return [String]
-        setting :scram_mechanism
-
-        # Whether to enforce SSL with SASL.
-        # @return [Boolean]
-        setting :enforce_ssl
-
-        # OAuthBearer Token Provider instance that implements
-        # method token. See {Sasl::OAuth#initialize}.
-        # @return [Object]
-        setting :oauth_token_provider
+        setting :enabled, removed: 'Use kafka(security.protocol=sasl_ssl or sasl_plaintext) in Karafka settings'
+        setting :gssapi_principal, removed: 'Use kafka(sasl.kerberos.principal) in Karafka settings'
+        setting :gssapi_keytab, removed: 'Use kafka(sasl.kerberos.keytab) in Karafka settings'
+        setting :plain_authzid, removed: 'No longer needed with rdkafka'
+        setting :plain_username, removed: 'Use kafka(sasl.username) in Karafka settings'
+        setting :plain_password, removed: 'Use kafka(sasl.password) in Karafka settings'
+        setting :scram_username, removed: 'Use kafka(sasl.username) in Karafka settings'
+        setting :scram_password, removed: 'Use kafka(sasl.password) in Karafka settings'
+        setting :scram_mechanism, removed: 'Use kafka(sasl.mechanisms) in Karafka settings'
+        setting :enforce_ssl, removed: 'Use kafka(security.protocol=sasl_ssl) in Karafka settings'
+        setting :oauth_token_provider, removed: 'See rdkafka configs for details'
       end
     end
 
     setting :consumers do
-
-      # Number of seconds after which, if a client hasn't contacted the Kafka cluster,
-      # it will be kicked out of the group.
-      # @return [Integer]
-      setting :session_timeout, 300
-
-      # Interval between offset commits, in seconds.
-      # @return [Integer]
-      setting :offset_commit_interval, 10
-
-      # Number of messages that can be processed before their offsets are committed.
-      # If zero, offset commits are not triggered by message processing
-      # @return [Integer]
-      setting :offset_commit_threshold, 0
-
-      # Interval between heartbeats; must be less than the session window.
-      # @return [Integer]
-      setting :heartbeat_interval, 10
-
-      # Minimum and maximum number of milliseconds to back off after a consumer
-      # error.
-      setting :backoff, (1000..60_000)
-
-      # By default, consumer errors will be consumed and logged to
-      # the metrics provider.
-      # Set this to true to force the error to be raised.
-      # @return [Boolean]
-      setting :reraise_errors
-
-      # @return [Boolean]
-      setting :report_lag
-
-      # Block taking an exception, payload and metadata and returning
-      # true if this should be considered a fatal error and false otherwise.
-      # Not needed if reraise_errors is set to true.
-      # @return [Block]
-      setting(:fatal_error, proc { false })
-
-      # The default function to generate a bulk ID for bulk consumers
-      # @return [Block]
-      setting(:bulk_import_id_generator, proc { SecureRandom.uuid })
-
-      # If true, multi-table consumers will blow away associations rather than appending to them.
-      # Applies to all consumers unless specified otherwise
-      # @return [Boolean]
-      setting :replace_associations, true
+      setting :reraise_errors, removed: 'Use topic.reraise_errors in Karafka settings'
+      setting :report_lag, removed: "Use Karafka's built in lag reporting"
+      setting(:fatal_error, removed: "Use topic.fatal_error in Karafka settings")
+      setting(:bulk_import_id_generator, removed: "Use topic.bulk_import_id_generator in Karafka settings")
+      setting :save_associations_first, removed: "Use topic.save_associations_first"
+      setting :replace_associations, removed: "Use topic.replace_associations in Karafka settings"
     end
 
     setting :producers do
-      # Number of seconds a broker can wait for replicas to acknowledge
-      # a write before responding with a timeout.
-      # @return [Integer]
-      setting :ack_timeout, 5
-
-      # Number of replicas that must acknowledge a write, or `:all`
-      # if all in-sync replicas must acknowledge.
-      # @return [Integer|Symbol]
-      setting :required_acks, 1
-
-      # Number of retries that should be attempted before giving up sending
-      # messages to the cluster. Does not include the original attempt.
-      # @return [Integer]
-      setting :max_retries, 2
-
-      # Number of seconds to wait between retries.
-      # @return [Integer]
-      setting :retry_backoff, 1
-
-      # Number of messages allowed in the buffer before new writes will
-      # raise {BufferOverflow} exceptions.
-      # @return [Integer]
-      setting :max_buffer_size, 10_000
-
-      # Maximum size of the buffer in bytes. Attempting to produce messages
-      # when the buffer reaches this size will result in {BufferOverflow} being raised.
-      # @return [Integer]
-      setting :max_buffer_bytesize, 10_000_000
-
-      # Name of the compression codec to use, or nil if no compression should be performed.
-      # Valid codecs: `:snappy` and `:gzip`
-      # @return [Symbol]
-      setting :compression_codec
-
-      # Number of messages that needs to be in a message set before it should be compressed.
-      # Note that message sets are per-partition rather than per-topic or per-producer.
-      # @return [Integer]
-      setting :compression_threshold, 1
-
-      # Maximum number of messages allowed in the queue. Only used for async_producer.
-      # @return [Integer]
-      setting :max_queue_size, 10_000
-
-      # If greater than zero, the number of buffered messages that will automatically
-      # trigger a delivery. Only used for async_producer.
-      # @return [Integer]
-      setting :delivery_threshold, 0
-
-      # if greater than zero, the number of seconds between automatic message
-      # deliveries. Only used for async_producer.
-      # @return [Integer]
-      setting :delivery_interval, 0
-
-      # Set this to true to keep the producer connection between publish calls.
-      # This can speed up subsequent messages by around 30%, but it does mean
-      # that you need to manually call sync_producer_shutdown before exiting,
-      # similar to async_producer_shutdown.
-      # @return [Boolean]
-      setting :persistent_connections, false
-
-      # Default namespace for all producers. Can remain nil. Individual
-      # producers can override.
-      # @return [String]
-      setting :schema_namespace
+      setting :ack_timeout, removed: "Not supported in rdkafka"
+      setting :required_acks, 1, removed: "Use kafka(request.required.acks) in Karafka settings"
+      setting :max_retries, removed: "Use kafka(message.send.max.retries) in Karafka settings"
+      setting :retry_backoff, removed: "Use kafka(retry.backoff.ms) in Karafka settings"
+      setting :max_buffer_size, removed: "Not relevant with Karafka. You may want to see the queue.buffering.max.messages setting."
+      setting :max_buffer_bytesize, removed: "Not relevant with Karafka."
+      setting :compression_codec, removed: "Use kafka(compression.codec) in Karafka settings"
+      setting :compression_threshold, removed: "Not supported in Karafka."
+      setting :max_queue_size, removed: "Not relevant to Karafka."
+      setting :delivery_threshold, removed: "Not relevant to Karafka."
+      setting :delivery_interval, removed: "Not relevant to Karafka."
+      setting :persistent_connections, removed: "Karafka connections are always persistent."
+      setting :schema_namespace, removed: "Use topic.namespace in Karafka settings"
 
       # Add a prefix to all topic names. This can be useful if you're using
       # the same Kafka broker for different environments that are producing
@@ -344,10 +133,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # sync in your consumers or delayed workers.
       # @return [Symbol]
       setting :backend, :kafka_async
-
-      # Maximum publishing batch size. Individual producers can override.
-      # @return [Integer]
-      setting :max_batch_size, 500
     end
 
     setting :schema do
@@ -375,9 +160,9 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # @return [String]
       setting :generated_class_path, 'app/lib/schema_classes'
 
-      # Set to true to use the generated schema classes in your application
+      # Set to true to use the generated schema classes in your application.
       # @return [Boolean]
-      setting :use_schema_classes, false
+      setting :use_schema_classes
 
       # Set to false to generate child schemas as their own files.
       # @return [Boolean]
@@ -402,10 +187,10 @@ module Deimos # rubocop:disable Metrics/ModuleLength
     # @return [Tracing::Provider]
     setting :tracer, default_proc: proc { Tracing::Mock.new }
 
-    setting :db_producer do
+    setting :outbox do
 
       # @return [Logger]
-      setting :logger, default_proc: proc { Deimos.config.logger }
+      setting :logger, default_proc: proc { Karafka.logger }
 
       # @return [Symbol|Array<String>] A list of topics to log all messages, or
       # :all to log all topics.
@@ -417,94 +202,48 @@ module Deimos # rubocop:disable Metrics/ModuleLength
 
     end
 
+    setting :db_producer do
+      setting :logger, removed: "Use outbox.logger"
+      setting :log_topics, removed: "Use outbox.log_topics"
+      setting :compact_topics, removed: "Use outbox.compact_topics"
+    end
+
     setting_object :producer do
-      # Producer class.
-      # @return [String]
-      setting :class_name
-      # Topic to produce to.
-      # @return [String]
-      setting :topic
-      # Schema of the data in the topic.
-      # @return [String]
-      setting :schema
-      # Optional namespace to access the schema.
-      # @return [String]
-      setting :namespace
-      # Key configuration (see docs).
-      # @return [Hash]
-      setting :key_config
-      # Configure the usage of generated schema classes for this producer
-      # @return [Boolean]
-      setting :use_schema_classes
-      # If true, and using the multi-table feature of ActiveRecordConsumers, replace associations
-      # instead of appending to them.
-      # @return [Boolean]
-      setting :replace_associations
-      # Maximum publishing batch size for this producer.
-      # @return [Integer]
-      setting :max_batch_size
+      setting :class_name, removed: "Use topic.producer_class in Karafka settings."
+      setting :topic, removed: "Use Karafka settings."
+      setting :schema, removed: "Use topic.schema(schema:) in Karafka settings."
+      setting :namespace, removed: "Use topic.schema(namespace:) in Karafka settings."
+      setting :key_config, removed: "Use topic.schema(key_config:) in Karafka settings."
+      setting :use_schema_classes, removed: "Use topic.schema(use_schema_classes:) in Karafka settings."
     end
 
     setting_object :consumer do
-      # Consumer class.
-      # @return [String]
-      setting :class_name
-      # Topic to read from.
-      # @return [String]
-      setting :topic
-      # Schema of the data in the topic.
-      # @return [String]
-      setting :schema
-      # Optional namespace to access the schema.
-      # @return [String]
-      setting :namespace
-      # Key configuration (see docs).
-      # @return [Hash]
-      setting :key_config
-      # Set to true to ignore the consumer in the Phobos config and not actually start up a
-      # listener.
-      # @return [Boolean]
-      setting :disabled, false
-      # Configure the usage of generated schema classes for this consumer
-      # @return [Boolean]
-      setting :use_schema_classes
-      # Optional maximum limit for batching database calls to reduce the load on the db.
-      # @return [Integer]
-      setting :max_db_batch_size
-      # Column to use for bulk imports, for multi-table feature.
-      # @return [String]
-      setting :bulk_import_id_column, :bulk_import_id
-      # If true, multi-table consumers will blow away associations rather than appending to them.
-      # @return [Boolean]
-      setting :replace_associations, nil
-
-      # The default function to generate a bulk ID for this consumer
-      # Uses the consumers proc defined in the consumers config by default unless
-      # specified for individual consumers
-      # @return [Block]
-      setting :bulk_import_id_generator, nil
-
-      # If enabled save associated records prior to saving the main record class
-      # This will also set foreign keys for associated records
-      # @return [Boolean]
-      setting :save_associations_first, false
-
-      # These are the phobos "listener" configs. See CONFIGURATION.md for more
-      # info.
-      setting :group_id
-      setting :max_concurrency, 1
-      setting :start_from_beginning, true
-      setting :max_bytes_per_partition, 500.kilobytes
-      setting :min_bytes, 1
-      setting :max_wait_time, 5
-      setting :force_encoding
-      setting :delivery, :batch
-      setting :backoff
-      setting :session_timeout, 300
-      setting :offset_commit_interval, 10
-      setting :offset_commit_threshold, 0
-      setting :offset_retention_time
-      setting :heartbeat_interval, 10
+      setting :class_name, removed: "Use topic.consumer in Karafka settings."
+      setting :topic, removed: "Use Karafka settings."
+      setting :schema, removed: "Use topic.schema(schema:) in Karafka settings."
+      setting :namespace, removed: "Use topic.schema(namespace:) in Karafka settings."
+      setting :key_config, removed: "Use topic.schema(key_config:) in Karafka settings."
+      setting :disabled, removed: "Use topic.active in Karafka settings."
+      setting :use_schema_classes, removed: "Use topic.use_schema_classes in Karafka settings."
+      setting :max_db_batch_size, removed: "Use topic.max_db_batch_size in Karafka settings."
+      setting :bulk_import_id_column, removed: "Use topic.bulk_import_id_column in Karafka settings."
+      setting :replace_associations, removed: "Use topic.replace_associations in Karafka settings."
+      setting :bulk_import_id_generator, removed: "Use topic.bulk_import_id_generator in Karafka settings."
+      setting :save_associations_first, removed: "Use topic.save_associations_first"
+      setting :group_id, removed: "Use kafka(group.id) in Karafka settings."
+      setting :max_concurrency, removed: "Use Karafka's 'config.concurrency' in the setup block."
+      setting :start_from_beginning, removed: "Use initial_offset in the setup block, or kafka(auto.offset.reset) in topic settings."
+      setting :max_bytes_per_partition, removed: "Use max_messages in the setup block."
+      setting :min_bytes, removed: "Not supported in Karafka."
+      setting :max_wait_time, removed: "Use max_wait_time in the setup block."
+      setting :force_encoding, removed: "Not supported with Karafka."
+      setting :delivery, :batch, removed: "Use batch: true/false in Karafka topic configs."
+      setting :backoff, removed: "Use kafka(retry.backoff.ms) and retry.backoff.max.ms in Karafka settings."
+      setting :session_timeout, removed: "Use kafka(session.timeout.ms) in Karafka settings."
+      setting :offset_commit_interval, removed: "Use kafka(auto.commit.interval.ms) in Karafka settings."
+      setting :offset_commit_threshold, removed: "Not supported with Karafka."
+      setting :offset_retention_time, removed: "Not supported with Karafka."
+      setting :heartbeat_interval, removed: "Use kafka(heartbeat.interval.ms) in Karafka settings."
     end
 
     setting_object :db_poller do
@@ -547,21 +286,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # Inherited poller class name to use for publishing to multiple kafka topics from a single poller
       setting :poller_class, nil
     end
-
-    deprecate 'kafka_logger', 'kafka.logger'
-    deprecate 'reraise_consumer_errors', 'consumers.reraise_errors'
-    deprecate 'schema_registry_url', 'schema.registry_url'
-    deprecate 'seed_broker', 'kafka.seed_brokers'
-    deprecate 'schema_path', 'schema.path'
-    deprecate 'producer_schema_namespace', 'producers.schema_namespace'
-    deprecate 'producer_topic_prefix', 'producers.topic_prefix'
-    deprecate 'disable_producers', 'producers.disabled'
-    deprecate 'ssl_enabled', 'kafka.ssl.enabled'
-    deprecate 'ssl_ca_cert', 'kafka.ssl.ca_cert'
-    deprecate 'ssl_client_cert', 'kafka.ssl.client_cert'
-    deprecate 'ssl_client_cert_key', 'kafka.ssl.client_cert_key'
-    deprecate 'publish_backend', 'producers.backend'
-    deprecate 'report_lag', 'consumers.report_lag'
 
   end
 end

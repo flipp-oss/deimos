@@ -9,11 +9,11 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
     describe 'upsert_records' do
       let(:records) do
         [
-          Deimos::Message.new({ v: 1 }, nil, key: 1),
-          Deimos::Message.new({ v: 2 }, nil, key: 2),
-          Deimos::Message.new({ v: 3 }, nil, key: 3),
-          Deimos::Message.new({ v: 4 }, nil, key: 4),
-          Deimos::Message.new({ v: 5 }, nil, key: 5)
+          Deimos::Message.new({ v: 1 }, key: 1),
+          Deimos::Message.new({ v: 2 }, key: 2),
+          Deimos::Message.new({ v: 3 }, key: 3),
+          Deimos::Message.new({ v: 4 }, key: 4),
+          Deimos::Message.new({ v: 5 }, key: 5)
         ]
       end
 
@@ -56,11 +56,11 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
     describe 'remove_records' do
       let(:records) do
         [
-          Deimos::Message.new(nil, nil, key: 1),
-          Deimos::Message.new(nil, nil, key: 2),
-          Deimos::Message.new(nil, nil, key: 3),
-          Deimos::Message.new(nil, nil, key: 4),
-          Deimos::Message.new(nil, nil, key: 5)
+          Deimos::Message.new(nil, key: 1),
+          Deimos::Message.new(nil, key: 2),
+          Deimos::Message.new(nil, key: 3),
+          Deimos::Message.new(nil, key: 4),
+          Deimos::Message.new(nil, key: 5)
         ]
       end
 
@@ -98,6 +98,52 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
 
         batch_consumer.send(:update_database, records)
       end
+    end
+  end
+
+  describe '#compact_messages' do
+    it 'for scalars' do
+      message_1 = Deimos::Message.new({ v: "first" }, key: 1234)
+      message_2 = Deimos::Message.new({ v: "last" }, key: 1234)
+      result = batch_consumer.send(:compact_messages, [message_1, message_2])
+      expect(result.size).to eq(1)
+      expect(result.first.equal?(message_2)).to eq(true)
+    end
+
+    it 'for hashes' do
+      message_1 = Deimos::Message.new({ v: "first" }, key: { a: 1, b:2.0, c: "c"})
+      message_2 = Deimos::Message.new({ v: "last" }, key: { a: 1, b:2.0, c: "c"})
+      result = batch_consumer.send(:compact_messages, [message_1, message_2])
+      expect(result.size).to eq(1)
+      expect(result.first.equal?(message_2)).to eq(true)
+    end
+
+    it 'for schema classes' do
+      module Schemas
+        class Key < Deimos::SchemaClass::Record
+          attr_accessor :some_name
+
+          # @override
+          def initialize(some_name: "")
+            super
+            self.some_name = some_name
+          end
+
+          # @override
+          def as_json(_opts={})
+            {
+              'some_name' => @some_name
+            }
+          end
+        end
+      end
+
+      message_1 = Deimos::Message.new({ v: "first" }, key: Schemas::Key.new(some_name: "2"))
+      message_2 = Deimos::Message.new({ v: "last" }, key: Schemas::Key.new(some_name: "2"))
+
+      result = batch_consumer.send(:compact_messages, [message_1, message_2])
+      expect(result.size).to eq(1)
+      expect(result.first.equal?(message_2)).to eq(true) # The object is same as the latest one in the batch
     end
   end
 end

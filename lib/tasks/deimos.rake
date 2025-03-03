@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'phobos'
-require 'phobos/cli'
 require 'generators/deimos/schema_class_generator'
 require 'optparse'
 
@@ -15,17 +13,17 @@ namespace :deimos do
     ENV['DEIMOS_TASK_NAME'] = 'consumer'
     STDOUT.sync = true
     Rails.logger.info('Running deimos:start rake task.')
-    Phobos::CLI::Commands.start(%w(start --skip_config))
+    Karafka::Server.run
   end
 
   desc 'Starts the Deimos database producer'
-  task db_producer: :environment do
+  task outbox: :environment do
     ENV['DEIMOS_RAKE_TASK'] = 'true'
-    ENV['DEIMOS_TASK_NAME'] = 'db_producer'
+    ENV['DEIMOS_TASK_NAME'] = 'outbox'
     STDOUT.sync = true
-    Rails.logger.info('Running deimos:db_producer rake task.')
+    Rails.logger.info('Running deimos:outbox rake task.')
     thread_count = ENV['THREAD_COUNT'].to_i.zero? ? 1 : ENV['THREAD_COUNT'].to_i
-    Deimos.start_db_backend!(thread_count: thread_count)
+    Deimos.start_outbox_backend!(thread_count: thread_count)
   end
 
   task db_poller: :environment do

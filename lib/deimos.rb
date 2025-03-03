@@ -1,17 +1,15 @@
 # frozen_string_literal: true
 
 require 'active_support'
+require 'karafka'
 
-require 'phobos'
 require 'deimos/version'
+require 'deimos/logging'
 require 'deimos/config/configuration'
 require 'deimos/producer'
 require 'deimos/active_record_producer'
 require 'deimos/active_record_consumer'
 require 'deimos/consumer'
-require 'deimos/batch_consumer'
-require 'deimos/instrumentation'
-require 'deimos/utils/lag_reporter'
 
 require 'deimos/backends/base'
 require 'deimos/backends/kafka'
@@ -23,27 +21,38 @@ require 'deimos/utils/schema_class'
 require 'deimos/schema_class/enum'
 require 'deimos/schema_class/record'
 
-require 'deimos/monkey_patches/phobos_cli'
+require 'deimos/ext/schema_route'
+require 'deimos/ext/consumer_route'
+require 'deimos/ext/producer_route'
+require 'deimos/ext/producer_middleware'
+require 'deimos/ext/routing_defaults'
 
 require 'deimos/railtie' if defined?(Rails)
-require 'deimos/utils/schema_controller_mixin' if defined?(ActionController)
 
 if defined?(ActiveRecord)
   require 'deimos/kafka_source'
   require 'deimos/kafka_topic_info'
-  require 'deimos/backends/db'
+  require 'deimos/backends/outbox'
   require 'sigurd'
-  require 'deimos/utils/db_producer'
+  require 'deimos/utils/outbox_producer'
   require 'deimos/utils/db_poller'
 end
 
-require 'deimos/utils/inline_consumer'
 require 'yaml'
 require 'erb'
 
 # Parent module.
 module Deimos
+  EVENT_TYPES = %w(
+    deimos.ar_consumer.consume_batch
+    deimos.encode_message
+    deimos.batch_consumption.invalid_records
+    deimos.batch_consumption.valid_records
+    deimos.outbox.produce
+  )
+
   class << self
+
     # @return [Class<Deimos::SchemaBackends::Base>]
     def schema_backend_class
       backend = Deimos.config.schema.backend.to_s
@@ -57,7 +66,7 @@ module Deimos
     # @param namespace [String]
     # @return [Deimos::SchemaBackends::Base]
     def schema_backend(schema:, namespace:)
-      if Utils::SchemaClass.use?(config.to_h)
+      if config.schema.use_schema_classes
         # Initialize an instance of the provided schema
         # in the event the schema class is an override, the inherited
         # schema and namespace will be applied
@@ -91,13 +100,26 @@ module Deimos
       self.schema_backend(schema: schema, namespace: namespace).decode(payload)
     end
 
+    # @param message [Hash] a Karafka message with keys :payload, :key and :topic
+    def decode_message(message)
+      topic = message[:topic]
+      if Deimos.config.producers.topic_prefix
+        topic = topic.sub(Deimos.config.producers.topic_prefix, '')
+      end
+      config = karafka_config_for(topic: topic)
+      message[:payload] = config.deserializers[:payload].decode_message_hash(message[:payload])
+      if message[:key] && config.deserializers[:key].respond_to?(:decode_message_hash)
+        message[:key] = config.deserializers[:key].decode_message_hash(message[:key])
+      end
+    end
+
     # Start the DB producers to send Kafka messages.
     # @param thread_count [Integer] the number of threads to start.
     # @return [void]
-    def start_db_backend!(thread_count: 1)
+    def start_outbox_backend!(thread_count: 1)
       Sigurd.exit_on_signal = true
-      if self.config.producers.backend != :db
-        raise('Publish backend is not set to :db, exiting')
+      if self.config.producers.backend != :outbox
+        raise('Publish backend is not set to :outbox, exiting')
       end
 
       if thread_count.nil? || thread_count.zero?
@@ -105,25 +127,58 @@ module Deimos
       end
 
       producers = (1..thread_count).map do
-        Deimos::Utils::DbProducer.
-          new(self.config.db_producer.logger || self.config.logger)
+        Deimos::Utils::OutboxProducer.
+          new(self.config.outbox.logger || Karafka.logger)
       end
       executor = Sigurd::Executor.new(producers,
                                       sleep_seconds: 5,
-                                      logger: self.config.logger)
+                                      logger: Karafka.logger)
       signal_handler = Sigurd::SignalHandler.new(executor)
       signal_handler.run!
     end
-  end
-end
 
-at_exit do
-  begin
-    Deimos::Backends::KafkaAsync.shutdown_producer
-    Deimos::Backends::Kafka.shutdown_producer
-  rescue StandardError => e
-    Deimos.config.logger.error(
-      "Error closing producer on shutdown: #{e.message} #{e.backtrace.join("\n")}"
-    )
+    def setup_karafka
+      Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
+      # for multiple setup calls
+      Karafka.producer.config.kafka =
+        Karafka::Setup::AttributesMap.producer(Karafka::Setup::Config.config.kafka.dup)
+      EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.register_event(type) }
+
+      Karafka.producer.monitor.subscribe('error.occurred') do |event|
+        if event.payload.key?(:messages)
+          topic = event[:messages].first[:topic]
+          config = Deimos.karafka_config_for(topic: topic)
+          message = Deimos::Logging.messages_log_text(config&.payload_log, event[:messages])
+          Karafka.logger.error("Error producing messages: #{event[:error].message} #{message.to_json}")
+        end
+      end
+    end
+
+    # @return [Array<Karafka::Routing::Topic]
+    def karafka_configs
+      Karafka::App.routes.flat_map(&:topics).flat_map(&:to_a)
+    end
+
+    # @param topic [String]
+    # @return [Karafka::Routing::Topic,nil]
+    def karafka_config_for(topic: nil, producer: nil)
+      if topic
+        karafka_configs.find { |t| t.name == topic}
+      elsif producer
+        karafka_configs.find { |t| t.producer_classes.include?(producer)}
+      end
+    end
+
+    # @param handler_class [Class]
+    # @return [String,nil]
+    def topic_for_consumer(handler_class)
+      Deimos.karafka_configs.each do |topic|
+        if topic.consumer == handler_class
+          return topic.name
+        end
+      end
+      nil
+    end
+
   end
 end

@@ -18,9 +18,11 @@ module Deimos
       # a record object, refetch the record to pass into the `generate_payload`
       # method.
       # @return [void]
-      def record_class(klass, refetch: true)
-        config[:record_class] = klass
-        config[:refetch_record] = refetch
+      def record_class(klass=nil, refetch: true)
+        return @record_class if klass.nil?
+
+        @record_class = klass
+        @refetch_record = refetch
       end
 
       # @param record [ActiveRecord::Base]
@@ -34,20 +36,31 @@ module Deimos
       # @param force_send [Boolean]
       # @return [void]
       def send_events(records, force_send: false)
-        primary_key = config[:record_class]&.primary_key
+        return if Deimos.producers_disabled?(self)
+
+        primary_key = @record_class&.primary_key
         messages = records.map do |record|
           if record.respond_to?(:attributes)
             attrs = record.attributes.with_indifferent_access
           else
             attrs = record.with_indifferent_access
-            if config[:refetch_record] && attrs[primary_key]
-              record = config[:record_class].find(attrs[primary_key])
+            if @refetch_record && attrs[primary_key]
+              record = @record_class.find(attrs[primary_key])
             end
           end
           generate_payload(attrs, record).with_indifferent_access
         end
         self.publish_list(messages, force_send: force_send)
         self.post_process(records)
+      end
+
+      def config
+        Deimos.karafka_configs.find { |t| t.producer_classes.include?(self) }
+      end
+
+      def encoder
+        raise "No schema or namespace configured for #{self.name}" if config.nil?
+        config.deserializers[:payload].backend
       end
 
       # Generate the payload, given a list of attributes or a record..
@@ -62,9 +75,9 @@ module Deimos
         payload.delete_if do |k, _|
           k.to_sym != :payload_key && !fields.map(&:name).include?(k)
         end
-        return payload unless Utils::SchemaClass.use?(config.to_h)
+        return payload unless self.config.use_schema_classes
 
-        Utils::SchemaClass.instance(payload, config[:schema], config[:namespace])
+        Utils::SchemaClass.instance(payload, encoder.schema, encoder.namespace)
       end
 
       # Query to use when polling the database with the DbPoller. Add
@@ -76,7 +89,7 @@ module Deimos
       # than this value).
       # @return [ActiveRecord::Relation]
       def poll_query(time_from:, time_to:, column_name: :updated_at, min_id:)
-        klass = config[:record_class]
+        klass = @record_class
         table = ActiveRecord::Base.connection.quote_table_name(klass.table_name)
         column = ActiveRecord::Base.connection.quote_column_name(column_name)
         primary = ActiveRecord::Base.connection.quote_column_name(klass.primary_key)
@@ -93,6 +106,14 @@ module Deimos
       # Post process records after publishing
       # @param records [Array<ActiveRecord::Base>]
       def post_process(_records)
+      end
+
+      # Override this in active record producers to add
+      # non-schema fields to check for updates
+      # @param _record [ActiveRecord::Base]
+      # @return [Array<String>] fields to check for updates
+      def watched_attributes(_record)
+        self.encoder.schema_fields.map(&:name)
       end
 
     end
