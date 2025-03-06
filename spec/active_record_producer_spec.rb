@@ -3,6 +3,7 @@
 describe Deimos::ActiveRecordProducer do
 
   include_context 'with widgets'
+  include_context 'with widget_with_union_types'
 
   prepend_before(:each) do
     producer_class = Class.new(Deimos::ActiveRecordProducer)
@@ -40,6 +41,12 @@ describe Deimos::ActiveRecordProducer do
     end
 
     stub_const('MyProducerWithPostProcess', producer_class)
+
+    producer_class = Class.new(Deimos::ActiveRecordProducer) do
+      record_class WidgetWithUnionType
+    end
+    stub_const('MyProducerWithUnionType', producer_class)
+
     Karafka::App.routes.redraw do
       topic 'my-topic' do
         schema 'MySchema'
@@ -71,6 +78,13 @@ describe Deimos::ActiveRecordProducer do
         key_config none: true
         producer_class MyProducerWithPostProcess
       end
+      topic 'my-topic-with-union-type' do
+        schema 'MySchemaWithUnionType'
+        namespace 'com.my-namespace'
+        key_config none: true
+        producer_class MyProducerWithUnionType
+      end
+
     end
 
   end
@@ -88,6 +102,98 @@ describe Deimos::ActiveRecordProducer do
         it 'should send events correctly' do
           MyProducer.send_event(Widget.new(test_id: 'abc', some_int: 3))
           expect('my-topic').to have_sent(test_id: 'abc', some_int: 3)
+        end
+
+        it 'should coerce values for a UnionSchema' do
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: %w(hello world)
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type: %w(hello world)
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: {
+              record1_map:{ a:9999, b:234 },
+              record1_id: 567
+            }
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type:{
+                                                    record1_map:{ a:9999, b:234 },
+                                                    record1_id: 567
+                                                  }
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: 1010101
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type:1010101
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: {
+              record2_id: "hello world"
+            }
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type: {
+                                                    record2_id: "hello world"
+                                                  }
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: {
+              record3_id:10.1010
+            }
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type: {
+                                                    record3_id:10.1010
+                                                  }
+                                                )
+
+          MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
+            test_id: "abc",
+            test_long: 399999,
+            test_union_type: {
+              record4_id:101010
+            }
+          ))
+
+          expect('my-topic-with-union-type').to have_sent(
+                                                  test_id: "abc",
+                                                  test_long: 399999,
+                                                  test_union_type: {
+                                                    record4_id:101010
+                                                  }
+                                                )
         end
 
         it 'should coerce values' do
@@ -109,11 +215,11 @@ describe Deimos::ActiveRecordProducer do
           widget = Widget.create!(test_id: 'abc2', some_int: 3)
           MyProducerWithID.send_event({id: widget.id, test_id: 'abc2', some_int: 3})
           expect('my-topic-with-id').to have_sent(
-            test_id: 'abc2',
-            some_int: 3,
-            message_id: 'generated_id',
-            timestamp: anything
-          )
+                                          test_id: 'abc2',
+                                          some_int: 3,
+                                          message_id: 'generated_id',
+                                          timestamp: anything
+                                        )
         end
 
         it 'should post process the batch of records in #send_events' do

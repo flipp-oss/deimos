@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## UNRELEASED
+- Fix: Added support to handle producing union type of multiple records & data types.
 
 ## 2.0.0 - 2025-03-03
 - ***Full rewrite of Deimos to work with Karafka.*** Please see [Upgrading](./docs/UPGRADING.md) for full information.
