@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## UNRELEASED
+<<<<<<< HEAD
 
 ## 2.0.1 - 2025-03-10
+- Fix: Added support to handle producing union type of multiple records & data types.
 - Fix: Outbox producer was trying to double-encode messages.
+=======
+>>>>>>> parent of 91a65ea (Merge pull request #222 from flipp-oss/CIE-534)
 
 ## 2.0.0 - 2025-03-03
 - ***Full rewrite of Deimos to work with Karafka.*** Please see [Upgrading](./docs/UPGRADING.md) for full information.
