@@ -1,0 +1,4 @@
+Deimos.configure do
+<%= @consumer_config %>
+end
+
