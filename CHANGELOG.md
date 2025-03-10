@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 - Fix: Added support to handle producing union type of multiple records & data types.
+- Fix: Outbox producer was trying to double-encode messages.
 
 ## 2.0.0 - 2025-03-03
 - ***Full rewrite of Deimos to work with Karafka.*** Please see [Upgrading](./docs/UPGRADING.md) for full information.

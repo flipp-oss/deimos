@@ -146,12 +146,14 @@ each_db_config(Deimos::Utils::OutboxProducer) do
       expect(producer).to receive(:send_pending_metrics).twice
       expect(producer).to receive(:produce_messages).ordered.with([
                                                                     {
+                                                                      already_encoded: true,
                                                                       payload: 'mess1',
                                                                       key: nil,
                                                                       partition_key: 'key1',
                                                                       topic: 'my-topic'
                                                                     },
                                                                     {
+                                                                      already_encoded: true,
                                                                       payload: 'mess2',
                                                                       key: nil,
                                                                       partition_key: 'key2',
@@ -167,12 +169,14 @@ each_db_config(Deimos::Utils::OutboxProducer) do
         and_return(messages[2..3])
       expect(producer).to receive(:produce_messages).ordered.with([
                                                                     {
+                                                                      already_encoded: true,
                                                                       payload: 'mess3',
                                                                       partition_key: 'key3',
                                                                       key: nil,
                                                                       topic: 'my-topic'
                                                                     },
                                                                     {
+                                                                      already_encoded: true,
                                                                       payload: 'mess4',
                                                                       partition_key: 'key4',
                                                                       key: nil,
@@ -357,12 +361,14 @@ each_db_config(Deimos::Utils::OutboxProducer) do
 
     expect(producer).to have_received(:produce_messages).with([
                                                                 {
+                                                                  already_encoded: true,
                                                                   payload: 'mess1',
                                                                   partition_key: 'key1',
                                                                   key: nil,
                                                                   topic: 'topic1'
                                                                 },
                                                                 {
+                                                                  already_encoded: true,
                                                                   payload: 'mess2',
                                                                   key: nil,
                                                                   partition_key: 'key2',
@@ -371,12 +377,14 @@ each_db_config(Deimos::Utils::OutboxProducer) do
                                                               ])
     expect(producer).to have_received(:produce_messages).with([
                                                                 {
+                                                                  already_encoded: true,
                                                                   payload: 'mess3',
                                                                   key: nil,
                                                                   partition_key: 'key3',
                                                                   topic: 'topic1'
                                                                 },
                                                                 {
+                                                                  already_encoded: true,
                                                                   payload: 'mess4',
                                                                   key: nil,
                                                                   partition_key: 'key4',
@@ -385,12 +393,14 @@ each_db_config(Deimos::Utils::OutboxProducer) do
                                                               ])
     expect(producer).to have_received(:produce_messages).with([
                                                                 {
+                                                                  already_encoded: true,
                                                                   payload: 'mess1',
                                                                   key: 'key1',
                                                                   partition_key: 'key1',
                                                                   topic: 'topic3'
                                                                 },
                                                                 {
+                                                                  already_encoded: true,
                                                                   payload: 'mess2',
                                                                   partition_key: 'key2',
                                                                   key: 'key2',
@@ -399,12 +409,14 @@ each_db_config(Deimos::Utils::OutboxProducer) do
                                                               ])
     expect(producer).to have_received(:produce_messages).with([
                                                                 {
+                                                                  already_encoded: true,
                                                                   payload: 'mess3',
                                                                   key: 'key3',
                                                                   partition_key: 'key3',
                                                                   topic: 'topic3'
                                                                 },
                                                                 {
+                                                                  already_encoded: true,
                                                                   payload: 'mess4',
                                                                   partition_key: 'key4',
                                                                   key: 'key4',
