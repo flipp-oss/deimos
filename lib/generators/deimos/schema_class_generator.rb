@@ -211,6 +211,17 @@ module Deimos
       def _generate_class_template_from_schema(schema, key_config)
         _set_instance_variables(schema, key_config)
 
+        # temp = case schema.class
+        #        when Avro::Schema::RecordSchema
+        #          _record_class_template
+        #        when Avro::Schema::EnumSchema
+        #          _enum_class_template
+        #        when Avro::Schema::UnionSchema
+        #          # I think we need a template here for a Avro::Schema::UnionSchema class
+        #        else
+        #           raise "Unhandled schema type: #{schema.class}"
+        #        end
+
         temp = schema.is_a?(Avro::Schema::RecordSchema) ? _record_class_template : _enum_class_template
         res = ERB.new(temp, nil, '-')
         res.result(binding)
