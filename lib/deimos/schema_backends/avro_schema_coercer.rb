@@ -38,7 +38,7 @@ module Deimos
             _is_integer_string?(val) ||
             int_classes.any? { |klass| val.is_a?(klass) }
         when :float, :double
-          val.is_a?(Float) || _is_float_string?(val)
+          val.is_a?(Numeric) || _is_float_string?(val)
         when :array
           val.is_a?(Array)
         when :record
