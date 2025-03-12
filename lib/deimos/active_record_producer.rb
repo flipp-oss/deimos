@@ -55,7 +55,7 @@ module Deimos
       end
 
       def config
-        Deimos.karafka_configs.find { |t| t.producer_classes.include?(self) }
+        Deimos.karafka_configs.find { |t| t.producer_classes&.include?(self) }
       end
 
       def encoder
