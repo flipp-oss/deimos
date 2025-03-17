@@ -10,7 +10,7 @@ module KafkaSourceSpec
         t.integer(:widget_id)
         t.string(:description)
         t.string(:model_id, default: '')
-        t.string(:name)
+        t.string(:name, limit: 100)
         t.timestamps
       end
       ActiveRecord::Base.connection.add_index(:widgets, :widget_id)
@@ -103,6 +103,54 @@ module KafkaSourceSpec
       widget.destroy
       expect('my-topic').to have_sent(nil, widget.id)
       expect('my-topic-the-second').to have_sent(nil, widget.id)
+    end
+
+    context 'with truncation off' do
+      before(:each) do
+        Deimos.config.producers.truncate_columns = false
+      end
+      it 'should not truncate values' do
+        widget = Widget.create!(widget_id: 1, name: 'a'*500)
+        expect('my-topic').to have_sent({
+                                          widget_id: 1,
+                                          name: 'a'*500,
+                                          id: widget.id,
+                                          created_at: anything,
+                                          updated_at: anything
+                                        }, 1)
+        widget.update_attribute(:name, 'b'*500)
+        expect('my-topic').to have_sent({
+                                          widget_id: 1,
+                                          name: 'b'*500,
+                                          id: widget.id,
+                                          created_at: anything,
+                                          updated_at: anything
+                                        }, 1)
+      end
+    end
+
+    context 'with truncation on' do
+      before(:each) do
+        Deimos.config.producers.truncate_columns = true
+      end
+      it 'should truncate values' do
+        widget = Widget.create!(widget_id: 1, name: 'a'*500)
+        expect('my-topic').to have_sent({
+                                          widget_id: 1,
+                                          name: 'a'*100,
+                                          id: widget.id,
+                                          created_at: anything,
+                                          updated_at: anything
+                                        }, 1)
+        widget.update_attribute(:name, 'b'*500)
+        expect('my-topic').to have_sent({
+                                          widget_id: 1,
+                                          name: 'b'*100,
+                                          id: widget.id,
+                                          created_at: anything,
+                                          updated_at: anything
+                                        }, 1)
+      end
     end
 
     it 'should send events on import' do
