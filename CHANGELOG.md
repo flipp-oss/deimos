@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 2.0.4 - 2025-03-17
+
 - Feature: Added `producers.truncate_columns` config.
 
 ## 2.0.3 - 2025-03-12
