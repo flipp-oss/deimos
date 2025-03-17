@@ -6,10 +6,6 @@ module Deimos
   module KafkaSource
     extend ActiveSupport::Concern
 
-    # @return [String]
-    DEPRECATION_WARNING = 'The kafka_producer interface will be deprecated ' \
-        'in future releases. Please use kafka_producers instead.'
-
     included do
       after_create(:send_kafka_event_on_create)
       after_update(:send_kafka_event_on_update)
@@ -22,6 +18,7 @@ module Deimos
       return unless self.persisted?
       return unless self.class.kafka_config[:create]
 
+      self.truncate_columns if Deimos.config.producers.truncate_columns
       self.class.kafka_producers.each { |p| p.send_event(self) }
     end
 
@@ -39,6 +36,7 @@ module Deimos
         field_change.present? && field_change[0] != field_change[1]
       end
       return unless any_changes
+      self.truncate_columns if Deimos.config.producers.truncate_columns
 
       producers.each { |p| p.send_event(self) }
     end
@@ -123,6 +121,18 @@ module Deimos
         end
         results
       end
+    end
+
+    # check if any field has value longer than the field limit
+    def truncate_columns
+      self.class.columns.each do |col|
+        next unless col.type == :string
+        next if self[col.name].blank?
+        if self[col.name].to_s.length > col.limit
+          self[col.name] = self[col.name][0..col.limit - 1]
+        end
+      end
+      false
     end
   end
 end

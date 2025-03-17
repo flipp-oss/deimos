@@ -133,6 +133,10 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # sync in your consumers or delayed workers.
       # @return [Symbol]
       setting :backend, :kafka_async
+
+      # If set to true, KafkaSource will automatically truncate fields to match the column
+      # length in the database.
+      setting :truncate_columns
     end
 
     setting :schema do

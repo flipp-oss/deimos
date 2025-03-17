@@ -43,11 +43,12 @@ things you need to reference into local variables before calling `configure`.
 
 ### Producer Configuration
 
-| Config name            | Default        | Description                                                                                                                                                                                    |
-|------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| producers.topic_prefix | nil            | Add a prefix to all topic names. This can be useful if you're using the same Kafka broker for different environments that are producing the same topics.                                       |
-| producers.disabled     | false          | Disable all actual message producing. Generally more useful to use the `disable_producers` method instead.                                                                                     |
-| producers.backend      | `:kafka_async` | Currently can be set to `:db`, `:kafka`, or `:kafka_async`. If using Kafka directly, a good pattern is to set to async in your user-facing app, and sync in your consumers or delayed workers. |
+| Config name                | Default        | Description                                                                                                                                                                                    |
+|----------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| producers.topic_prefix     | nil            | Add a prefix to all topic names. This can be useful if you're using the same Kafka broker for different environments that are producing the same topics.                                       |
+| producers.disabled         | false          | Disable all actual message producing. Generally more useful to use the `disable_producers` method instead.                                                                                     |
+| producers.backend          | `:kafka_async` | Currently can be set to `:db`, `:kafka`, or `:kafka_async`. If using Kafka directly, a good pattern is to set to async in your user-facing app, and sync in your consumers or delayed workers. |
+| producers.truncate_columns | false          | If set to true, will truncate values to their database limits when using KafkaSource.                                                                                                          |
 
 ### Schema Configuration
 
