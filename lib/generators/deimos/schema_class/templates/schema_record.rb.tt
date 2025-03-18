@@ -45,6 +45,24 @@
 
   <%- end -%>
 <% end -%>
+<%- if @field_assignments.select{ |h| h[:is_complex_union] }.any? -%>
+    <%- @field_assignments.select{ |h| h[:is_complex_union] }.each do |method_definition| -%>
+    # Helper method to determine which schema type to use for <%= method_definition[:field].name %>
+    # @param value [Hash, nil]
+    # @return [Object, nil]
+    def initialize_<%= method_definition[:field].name %>_type(value)
+      return nil if value.nil?
+
+      klass = [<%= method_definition[:field].type.schemas.reject { |s| s.type_sym == :null }.select { |s| s.type_sym == :record }.map { |s| Deimos::SchemaBackends::AvroBase.schema_classname(s) }.join(', ') %>].find do |candidate|
+        fields = candidate.new.as_json.keys
+        (value.keys - fields).empty?
+      end
+
+      klass.initialize_from_value(value)
+    end
+
+    <%- end -%>
+<% end -%>
     # @override
     <%= @initialization_definition %>
       super
