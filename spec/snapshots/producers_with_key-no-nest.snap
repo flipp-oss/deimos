@@ -1034,7 +1034,21 @@ module Schemas
     ### Attribute Writers ###
     # @return [nil, Record1, Record2, Record3, Record4, Integer, Array<String>]
     def test_union_type=(value)
-      @test_union_type = Record1.initialize_from_value(value)
+      @test_union_type = initialize_test_union_type_type(value)
+    end
+
+    # Helper method to determine which schema type to use for test_union_type
+    # @param value [Hash, nil]
+    # @return [Object, nil]
+    def initialize_test_union_type_type(value)
+      return nil if value.nil?
+
+      klass = [Record1, Record2, Record3, Record4].find do |candidate|
+        fields = candidate.new.as_json.keys
+        (value.keys - fields).empty?
+      end
+
+      klass.initialize_from_value(value)
     end
 
     # @override
