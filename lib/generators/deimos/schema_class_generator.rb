@@ -298,7 +298,9 @@ module Deimos
 
           field_initialization = method_argument
 
-          if is_schema_class
+          if _is_complex_union?(field)
+            field_initialization = "initialize_#{field.name}_type(value)"
+          elsif is_schema_class
             field_initialization = "#{field_base_type}.initialize_from_value(value)"
           end
 
@@ -308,11 +310,24 @@ module Deimos
             is_schema_class: is_schema_class,
             method_argument: method_argument,
             deimos_type: deimos_field_type(field),
-            field_initialization: field_initialization
+            field_initialization: field_initialization,
+            is_complex_union: _is_complex_union?(field)
           }
         end
 
         result
+      end
+
+      # Helper method to detect if a field is a complex union type with multiple record schemas
+      # @param field [Deimos::SchemaField]
+      # @return [Boolean]
+      def _is_complex_union?(field)
+        return false unless field.type.type_sym == :union
+
+        non_null_schemas = field.type.schemas.reject { |s| s.type_sym == :null }
+
+        record_schemas = non_null_schemas.select { |s| s.type_sym == :record }
+        record_schemas.length > 1
       end
 
       # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.

@@ -276,6 +276,31 @@ RSpec.shared_context('with widgets') do
   end
 end
 
+RSpec.shared_context('with widget_with_union_types') do
+  before(:all) do
+    ActiveRecord::Base.connection.create_table(:widget_with_union_types, force: true) do |t|
+      t.string(:test_id)
+      t.bigint(:test_long)
+      t.json(:test_union_type)
+
+      t.timestamps
+    end
+
+    # :nodoc:
+    class WidgetWithUnionType < ActiveRecord::Base
+      # @return [String]
+      def generated_id
+        'generated_id'
+      end
+    end
+  end
+
+  after(:all) do
+    ActiveRecord::Base.connection.drop_table(:widget_with_union_types)
+  end
+end
+
+
 RSpec.shared_context('with DB') do
   before(:all) do
     setup_db(self.class.metadata[:db_config] || DbConfigs::DB_OPTIONS.last)
