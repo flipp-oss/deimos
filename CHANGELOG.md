@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 2.0.6 - 2025-03-26
+
+- Fix: One more possible crash for producers on non-producer configs.
+
 ## 2.0.5 - 2025-03-19
 
 - Fix: Added support to handle producing union type of multiple records & data types.
