@@ -122,7 +122,7 @@ module Deimos
       end
 
       def karafka_config
-        Deimos.karafka_configs.find { |topic| topic.producer_classes.include?(self) }
+        Deimos.karafka_configs.find { |topic| topic.producer_classes&.include?(self) }
       end
 
       def topic

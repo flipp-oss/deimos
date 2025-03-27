@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 2.0.7 - 2025-03-27
+
+- Fix: Yet another crash for producers on non-producer configs.
+
 ## 2.0.6 - 2025-03-26
 
 - Fix: One more possible crash for producers on non-producer configs.
