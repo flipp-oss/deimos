@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix: KafkaTopicInfo: Change reference to variable instead of plain string
+
 ## 2.0.7 - 2025-03-27
 
 - Fix: Yet another crash for producers on non-producer configs.
