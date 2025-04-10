@@ -26,7 +26,7 @@ module Deimos
         # Lock the record
         qtopic = self.connection.quote(topic)
         qlock_id = self.connection.quote(lock_id)
-        qtable = self.connection.quote_table_name('kafka_topic_info')
+        qtable = self.connection.quote_table_name(self.table_name)
         qnow = self.connection.quote(quote_time(Time.zone.now))
         qfalse = self.connection.quoted_false
         qtime = self.connection.quote(quote_time(1.minute.ago))
