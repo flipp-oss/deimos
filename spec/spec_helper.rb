@@ -26,7 +26,7 @@ SCHEMA_CLASS_SETTINGS = { off: false, on: true }.freeze
 class DeimosApp < Rails::Application
 end
 DeimosApp.initializer("setup_root_dir", before: "karafka.require_karafka_boot_file") do
-  ENV['KARAFKA_ROOT_DIR'] = "#{Rails.root}/spec/karafka"
+  ENV['KARAFKA_BOOT_FILE'] = "#{Rails.root}/spec/karafka/karafka.rb"
 end
 DeimosApp.initialize!
 
