@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 env:
   GIT_COMMIT_SHA: ${{ github.sha }}
