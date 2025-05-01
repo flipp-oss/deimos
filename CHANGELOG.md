@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Add MinimalDatadog metrics listener.
+
 ## 2.0.9 - 2025-04-10
 
 - Fix: KafkaTopicInfo: Change reference to variable instead of plain string
