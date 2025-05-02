@@ -1,3 +1,6 @@
+require 'karafka/instrumentation/vendors/datadog/metrics_listener'
+require 'waterdrop/instrumentation/vendors/datadog/metrics_listener'
+
 module Deimos
   module Metrics
     class MinimalDatadogListener < ::Karafka::Instrumentation::Vendors::Datadog::MetricsListener

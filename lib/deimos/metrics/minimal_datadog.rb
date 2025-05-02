@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'deimos/metrics/provider'
-require 'karafka/instrumentation/vendors/datadog/metrics_listener'
-require 'waterdrop/instrumentation/vendors/datadog/metrics_listener'
+require 'deimos/metrics/datadog'
+require 'deimos/metrics/minimal_datadog_listener'
 
 module Deimos
   module Metrics
