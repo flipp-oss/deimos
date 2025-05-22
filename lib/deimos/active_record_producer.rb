@@ -54,13 +54,9 @@ module Deimos
         self.post_process(records)
       end
 
-      def config
-        Deimos.karafka_configs.find { |t| t.producer_classes&.include?(self) }
-      end
-
       def encoder
-        raise "No schema or namespace configured for #{self.name}" if config.nil?
-        config.deserializers[:payload].backend
+        raise "No schema or namespace configured for #{self.name}" if karafka_config.nil?
+        karafka_config.deserializers[:payload].backend
       end
 
       # Generate the payload, given a list of attributes or a record..
@@ -75,7 +71,7 @@ module Deimos
         payload.delete_if do |k, _|
           k.to_sym != :payload_key && !fields.map(&:name).include?(k)
         end
-        return payload unless self.config.use_schema_classes
+        return payload unless self.karafka_config.use_schema_classes
 
         Utils::SchemaClass.instance(payload, encoder.schema, encoder.namespace)
       end
