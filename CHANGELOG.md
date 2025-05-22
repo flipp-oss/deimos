@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix: Allow for hot reloading of producer classes without crashing.
+
+## 2.0.10 - 2025-05-02
+
 - Feature: Add MinimalDatadog metrics listener.
 
 ## 2.0.9 - 2025-04-10
