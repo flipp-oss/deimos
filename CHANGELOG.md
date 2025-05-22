@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 2.0.12 - 2025-05-22
+
 - Fix: Allow for hot reloading of producer classes without crashing.
 
 ## 2.0.10 - 2025-05-02
