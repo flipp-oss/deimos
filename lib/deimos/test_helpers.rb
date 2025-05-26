@@ -98,6 +98,8 @@ module Deimos
         message_key = Deimos::TestHelpers.normalize_message(key)
         hash_matcher = RSpec::Matchers::BuiltIn::Match.new(message)
         Deimos::TestHelpers.sent_messages.any? do |m|
+          return m[:payload] == message if message.is_a?(String)
+
           message.delete(:payload_key) if message.respond_to?(:[]) && message[:payload_key].nil?
           m[:payload].delete(:payload_key) if m.respond_to?(:[]) && m[:payload]&.respond_to?(:[]) && m[:payload][:payload_key].nil?
           hash_matcher.send(:match, message, m[:payload]) &&
