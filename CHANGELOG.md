@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 2.0.13 - 2025-05-26
+
 - Fix: Outbox producer would crash if no Deimos producer was defined for the topic.
 
 ## 2.0.12 - 2025-05-22
