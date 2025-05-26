@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 2.0.14 - 2025-05-26
+
 - Fix: Log actual payloads by default (was logging "null" for the payload).
 
 ## 2.0.13 - 2025-05-26
