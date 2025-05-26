@@ -272,6 +272,50 @@ module ProducerTest
                                                       }, '456', '4561')
     end
 
+    describe 'payload logging' do
+      context 'with default / full' do
+        it 'should log full payload' do
+          allow(Karafka.logger).to receive(:info)
+          MyProducerWithID.publish_list(
+            [
+              { 'test_id' => 'foo', 'some_int' => 123, :payload_key => 'key' },
+              { 'test_id' => 'foo2', 'some_int' => 123, :payload_key => 'key2' },
+            ]
+          )
+          expect(Karafka.logger).to have_received(:info).with(match_message({
+            'message' => 'Publishing Messages:',
+            'payloads' => [
+              {
+                'payload' => { 'test_id' => 'foo', 'some_int' => 123 },
+                'key' => 'key'
+              },
+              {
+                'payload' => { 'test_id' => 'foo2', 'some_int' => 123 },
+                'key' => 'key2'
+              }
+            ]
+          }))
+        end
+      end
+
+      context 'with count' do
+        it 'should log only count' do
+          Deimos.karafka_config_for(topic: 'my-topic-with-id').payload_log :count
+          allow(Karafka.logger).to receive(:info)
+          MyProducerWithID.publish_list(
+            [
+              { 'test_id' => 'foo', 'some_int' => 123, :payload_key => 'key' },
+              { 'test_id' => 'foo2', 'some_int' => 123, :payload_key => 'key' }
+            ]
+          )
+          expect(Karafka.logger).to have_received(:info).with(match_message({
+            'message' => 'Publishing Messages:',
+            'payloads_count' => 2
+          }))
+        end
+      end
+    end
+
     context 'with Schema Class payloads' do
       it 'should fail on invalid message with error handler' do
         expect(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
