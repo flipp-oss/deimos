@@ -107,6 +107,8 @@ module Deimos
         topic = topic.sub(Deimos.config.producers.topic_prefix, '')
       end
       config = karafka_config_for(topic: topic)
+      return message unless config
+
       message[:payload] = config.deserializers[:payload].decode_message_hash(message[:payload])
       if message[:key] && config.deserializers[:key].respond_to?(:decode_message_hash)
         message[:key] = config.deserializers[:key].decode_message_hash(message[:key])

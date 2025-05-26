@@ -340,6 +340,17 @@ each_db_config(Deimos::Utils::OutboxProducer) do
   end
 
   example 'Full integration test' do
+    Deimos::KafkaMessage.create!(topic: "topic1",
+                                 message: "mess1",
+                                 partition_key: "key1")
+    producer.process_next_messages
+    expect(Deimos::KafkaTopicInfo.count).to eq(1)
+    expect(Deimos::KafkaTopicInfo.first.topic).to eq('topic1')
+    expect(Deimos::KafkaMessage.count).to eq(0)
+    expect('topic1').to have_sent('mess1')
+  end
+
+  example 'Integration test - batching' do
     (1..4).each do |i|
       (1..2).each do |j|
         Deimos::KafkaMessage.create!(topic: "topic#{j}",
