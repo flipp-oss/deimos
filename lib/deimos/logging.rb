@@ -42,7 +42,7 @@ module Deimos
         if m.respond_to?(:payload)
           m.payload
         elsif m[:label]
-          m.dig(:label, :raw_payload)
+          m.dig(:label, :original_payload)
         else
           m[:payload]
         end

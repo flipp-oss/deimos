@@ -343,3 +343,18 @@ RSpec.shared_context('with publish_backend') do
     end
   end
 end
+
+RSpec::Matchers.define :match_message do |msg|
+  match do |actual|
+    begin
+      parsed = JSON.parse(actual)
+      parsed['payloads']&.each do |p|
+        p['payload'].delete('timestamp')
+        p['payload'].delete('message_id')
+      end
+      expect(parsed).to match(a_hash_including(msg))
+    rescue JSON::ParserError
+      false
+    end
+  end
+end
