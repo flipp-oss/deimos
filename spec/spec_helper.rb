@@ -347,14 +347,13 @@ end
 RSpec::Matchers.define :match_message do |msg|
   match do |actual|
     begin
-      parsed = JSON.parse(actual)
-      parsed['payloads']&.each do |p|
-        p['payload'].delete('timestamp')
-        p['payload'].delete('message_id')
+      return false unless actual.is_a?(Hash)
+
+      actual[:payloads]&.each do |p|
+        p[:payload].delete('timestamp')
+        p[:payload].delete('message_id')
       end
-      expect(parsed).to match(a_hash_including(msg))
-    rescue JSON::ParserError
-      false
+      expect(actual).to match(a_hash_including(msg))
     end
   end
 end

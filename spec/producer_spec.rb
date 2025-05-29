@@ -283,15 +283,15 @@ module ProducerTest
             ]
           )
           expect(Karafka.logger).to have_received(:info).with(match_message({
-            'message' => 'Publishing Messages:',
-            'payloads' => [
+            message: 'Publishing Messages for my-topic-with-id:',
+            payloads: [
               {
-                'payload' => { 'test_id' => 'foo', 'some_int' => 123 },
-                'key' => 'key'
+                payload: { 'test_id' => 'foo', 'some_int' => 123 },
+                key: 'key'
               },
               {
-                'payload' => { 'test_id' => 'foo2', 'some_int' => 123 },
-                'key' => 'key2'
+                payload: { 'test_id' => 'foo2', 'some_int' => 123 },
+                key: 'key2'
               }
             ]
           }))
@@ -309,8 +309,8 @@ module ProducerTest
             ]
           )
           expect(Karafka.logger).to have_received(:info).with(match_message({
-            'message' => 'Publishing Messages:',
-            'payloads_count' => 2
+            message: 'Publishing Messages for my-topic-with-id:',
+            payloads_count: 2
           }))
         end
       end
