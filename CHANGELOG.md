@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix: Do not force data to JSON when logging payloads. This allows log formatters to handle the payloads on their own (e.g. adding additional fields).
+- Fix: Add topic to "Publishing Messages" log message.
+
 ## 2.0.14 - 2025-05-26
 
 - Fix: Log actual payloads by default (was logging "null" for the payload).
