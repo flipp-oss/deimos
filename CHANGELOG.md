@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix: Send `publish` metric even if the producer was not a Deimos producer.
+
 ## 2.0.15 - 2025-05-29
 
 - Fix: Do not force data to JSON when logging payloads. This allows log formatters to handle the payloads on their own (e.g. adding additional fields).
