@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Allow producers to specify `:message` and `:key` in the `publish` methods.
+
 ## 2.0.16 - 2025-05-30
 
 - Fix: Send `publish` metric even if the producer was not a Deimos producer.

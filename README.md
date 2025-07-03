@@ -259,13 +259,22 @@ If you publish a payload `{ "test_id" => "123", "some_int" => 123 }`, this
 will be turned into a key that looks like `{ "test_id" => "123"}` and schema-encoded
 before being sent to Kafka. 
 
-If you are using `plain` or `schema` as your config, you will need to have a
-special `payload_key` key to your payload hash. This will be extracted and
+If you are using `plain` or `schema` as your config, you can specify the key in two ways:
+
+* Add a special `payload_key` key to your payload hash. This will be extracted and
 used as the key (for `plain`, it will be used directly, while for `schema`
 it will be encoded first against the schema). So your payload would look like
 `{ "test_id" => "123", "some_int" => 123, payload_key: "some_other_key"}`.
 Remember that if you're using `schema`, the `payload_key` must be a *hash*,
 not a plain value.
+* Specify `:message` and `:key` values when producing messages. This can be helpful when using [schema classes](#generated-schema-classes):
+
+```ruby
+MyProducer.publish({
+                     message: MySchema.new("test_id" => "123", "some_int" => 123),
+                     key: MySchemaKey.new("test_id" => "123")
+                   })
+```
 
 ## Instrumentation
 

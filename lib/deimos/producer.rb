@@ -111,12 +111,17 @@ module Deimos
         backend = determine_backend_class(sync, force_send)
 
         messages = Array(payloads).map do |p|
-          {
+          m = {
             payload: p&.to_h,
             headers: headers,
             topic: topic,
             partition_key: self.partition_key(p)
           }
+          if m.dig(:payload, :key).present? && m.dig(:payload, :message).present?
+            m[:key] = m[:payload][:key].to_h
+            m[:payload] = m[:payload][:message].to_h
+          end
+          m
         end
         self.produce(messages, backend: backend)
       end
