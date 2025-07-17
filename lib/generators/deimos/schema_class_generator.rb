@@ -245,7 +245,7 @@ module Deimos
           "record.tombstone_key = key\n      record.#{key_config[:field]} = key"
         elsif key_schema
           field_base_type = _field_type(key_schema)
-          "record.tombstone_key = #{field_base_type}.initialize_from_value(key)\n      record.payload_key = key"
+          "record.tombstone_key = #{field_base_type}.initialize_from_value(key, from_message: @from_message)\n      record.payload_key = key"
         else
           ''
         end
@@ -299,9 +299,9 @@ module Deimos
           field_initialization = method_argument
 
           if _is_complex_union?(field)
-            field_initialization = "initialize_#{field.name}_type(value)"
+            field_initialization = "initialize_#{field.name}_type(value, from_message: @from_message)"
           elsif is_schema_class
-            field_initialization = "#{field_base_type}.initialize_from_value(value)"
+            field_initialization = "#{field_base_type}.initialize_from_value(value, from_message: @from_message)"
           end
 
           result << {

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix: Allow schema classes to be used with backwards-compatible Avro messages.
+
 ## 2.0.17 - 2025-07-03
 
 - Feature: Allow producers to specify `:message` and `:key` in the `publish` methods.
