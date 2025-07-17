@@ -79,10 +79,8 @@ module Deimos
       def self.new_from_message(**kwargs)
         @from_message = true
         record = self.new
-        kwargs.each do |k, v|
-          record.send("#{k}=", v) if record.respond_to?("#{k}=")
-        end
-        record
+        attrs = kwargs.select { |k, v| record.respond_to?("#{k}=") }
+        self.new(**attrs)
       end
 
       # @return [SchemaClass::Record]

@@ -19,7 +19,7 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [MySchemaKey]
     def payload_key=(value)
-      @payload_key = MySchemaKey.initialize_from_value(value)
+      @payload_key = MySchemaKey.initialize_from_value(value, from_message: @from_message)
     end
 
     # @override
@@ -44,7 +44,7 @@ module Schemas; module MyNamespace
 
     def self.tombstone(key)
       record = self.allocate
-      record.tombstone_key = MySchemaKey.initialize_from_value(key)
+      record.tombstone_key = MySchemaKey.initialize_from_value(key, from_message: @from_message)
       record.payload_key = key
       record
     end

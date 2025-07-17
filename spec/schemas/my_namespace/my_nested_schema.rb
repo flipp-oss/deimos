@@ -71,12 +71,12 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [MyNestedRecord]
     def some_nested_record=(value)
-      @some_nested_record = MyNestedRecord.initialize_from_value(value)
+      @some_nested_record = MyNestedRecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [nil, MyNestedRecord]
     def some_optional_record=(value)
-      @some_optional_record = MyNestedRecord.initialize_from_value(value)
+      @some_optional_record = MyNestedRecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @override

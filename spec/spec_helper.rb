@@ -223,11 +223,11 @@ RSpec.configure do |config|
 
   config.before(:each) do
     Deimos.config.reset!
+    set_karafka_config(:reraise_errors, true)
     Deimos.configure do |deimos_config|
       deimos_config.producers.backend = :kafka
       deimos_config.schema.nest_child_schemas = true
       deimos_config.schema.path = File.join(File.expand_path(__dir__), 'schemas')
-      deimos_config.consumers.reraise_errors = true
       deimos_config.schema.registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
       deimos_config.logger = Logger.new('/dev/null')
       deimos_config.logger.level = Logger::INFO
