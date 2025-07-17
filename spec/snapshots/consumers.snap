@@ -121,12 +121,12 @@ module Schemas
     ### Attribute Writers ###
     # @return [AnEnum]
     def an_enum=(value)
-      @an_enum = AnEnum.initialize_from_value(value)
+      @an_enum = AnEnum.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [ARecord]
     def a_record=(value)
-      @a_record = ARecord.initialize_from_value(value)
+      @a_record = ARecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @override
@@ -352,12 +352,12 @@ module Schemas
     ### Attribute Writers ###
     # @return [MyNestedRecord]
     def some_nested_record=(value)
-      @some_nested_record = MyNestedRecord.initialize_from_value(value)
+      @some_nested_record = MyNestedRecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [nil, MyNestedRecord]
     def some_optional_record=(value)
-      @some_optional_record = MyNestedRecord.initialize_from_value(value)
+      @some_optional_record = MyNestedRecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @override
@@ -658,7 +658,7 @@ module Schemas
     # @return [Hash<String, Property>]
     def properties=(values)
       @properties = values&.transform_values do |value|
-        Property.initialize_from_value(value)
+        Property.initialize_from_value(value, from_message: @from_message)
       end
     end
 
@@ -796,43 +796,43 @@ module Schemas
     ### Attribute Writers ###
     # @return [ARecord]
     def some_record=(value)
-      @some_record = ARecord.initialize_from_value(value)
+      @some_record = ARecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [nil, ARecord]
     def some_optional_record=(value)
-      @some_optional_record = ARecord.initialize_from_value(value)
+      @some_optional_record = ARecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [Array<ARecord>]
     def some_record_array=(values)
       @some_record_array = values&.map do |value|
-        ARecord.initialize_from_value(value)
+        ARecord.initialize_from_value(value, from_message: @from_message)
       end
     end
 
     # @return [Hash<String, ARecord>]
     def some_record_map=(values)
       @some_record_map = values&.transform_values do |value|
-        ARecord.initialize_from_value(value)
+        ARecord.initialize_from_value(value, from_message: @from_message)
       end
     end
 
     # @return [Array<AnEnum>]
     def some_enum_array=(values)
       @some_enum_array = values&.map do |value|
-        AnEnum.initialize_from_value(value)
+        AnEnum.initialize_from_value(value, from_message: @from_message)
       end
     end
 
     # @return [nil, AnotherEnum]
     def some_optional_enum=(value)
-      @some_optional_enum = AnotherEnum.initialize_from_value(value)
+      @some_optional_enum = AnotherEnum.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [YetAnotherEnum]
     def some_enum_with_default=(value)
-      @some_enum_with_default = YetAnotherEnum.initialize_from_value(value)
+      @some_enum_with_default = YetAnotherEnum.initialize_from_value(value, from_message: @from_message)
     end
 
     # @override
@@ -1212,13 +1212,14 @@ module Schemas
     ### Attribute Writers ###
     # @return [nil, Record1, Record2, Record3, Record4, Integer, Array<String>]
     def test_union_type=(value)
-      @test_union_type = initialize_test_union_type_type(value)
+      @test_union_type = initialize_test_union_type_type(value, from_message: @from_message)
     end
 
     # Helper method to determine which schema type to use for test_union_type
     # @param value [Hash, nil]
+    # @param from_message [Boolean] whether this was initialized from a real Avro message
     # @return [Object, nil]
-    def initialize_test_union_type_type(value)
+    def initialize_test_union_type_type(value, from_message: false)
       return nil if value.nil?
 
       klass = [Record1, Record2, Record3, Record4].find do |candidate|
@@ -1226,7 +1227,7 @@ module Schemas
         (value.keys - fields).empty?
       end
 
-      klass.initialize_from_value(value)
+      klass.initialize_from_value(value, from_message: @from_message)
     end
 
     # @override
