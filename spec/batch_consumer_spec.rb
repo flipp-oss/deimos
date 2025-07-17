@@ -5,7 +5,7 @@ module ConsumerTest
   describe Deimos::Consumer, 'Batch Consumer' do
     let(:schema) { 'MySchema' }
     let(:use_schema_classes) { false }
-    let(:reraise_errors) { false }
+    let(:should_reraise_errors) { false }
     let(:key_config) { { field: 'test_id' } }
     let(:consumer_class) do
       Class.new(described_class) do
@@ -22,12 +22,14 @@ module ConsumerTest
       route_schema = schema
       route_key = key_config
       route_use_classes = use_schema_classes
+      should_reraise = should_reraise_errors # for scoping
       Karafka::App.routes.redraw do
         topic 'my-topic' do
           consumer klass
           schema route_schema
           namespace 'com.my-namespace'
           key_config route_key
+          reraise_errors(should_reraise)
           use_schema_classes route_use_classes
         end
       end
@@ -77,7 +79,7 @@ module ConsumerTest
     end
 
     describe 'when reraising errors is disabled' do
-      let(:reraise_errors) { false }
+      let(:should_reraise_errors) { false }
 
       it 'should not fail when before_consume_batch fails' do
         expect {
@@ -98,23 +100,23 @@ module ConsumerTest
       end
 
       it 'should decode payloads for all messages in the batch' do
-        test_consume_batch('my-topic', batch) do
+        test_consume_batch('my-topic', batch) do |received|
           # Mock decoder simply returns the payload
-          expect(messages.payloads).to eq(batch)
+          expect(received.payloads).to eq(batch)
         end
       end
 
       it 'should decode keys for all messages in the batch' do
-        test_consume_batch('my-topic', batch, keys: keys) do
-          expect(messages.map(&:key)).to eq([{'test_id' => 'foo'}, {'test_id' => 'bar'}])
+        test_consume_batch('my-topic', batch, keys: keys) do |received|
+          expect(received.map(&:key)).to eq(%w(foo bar))
         end
       end
 
       context 'with plain keys' do
         let(:key_config) { { plain: true } }
         it 'should decode plain keys for all messages in the batch' do
-          test_consume_batch('my-topic', batch, keys: [1, 2]) do |_received, metadata|
-            expect(metadata[:keys]).to eq([1, 2])
+          test_consume_batch('my-topic', batch, keys: [1, 2]) do |received|
+            expect(received.map(&:key)).to eq(["1", "2"])
           end
         end
       end
@@ -173,8 +175,8 @@ module ConsumerTest
         #                               a_kind_of(Numeric),
         #                               tags: %w(time:time_delayed topic:my-topic)).twice
 
-        test_consume_batch('my-topic', batch_with_time) do
-          expect(messages.payloads).to eq(batch_with_time)
+        test_consume_batch('my-topic', batch_with_time) do |received|
+          expect(received.payloads).to eq(batch_with_time)
         end
       end
 
@@ -186,8 +188,8 @@ module ConsumerTest
         #                               a_kind_of(Numeric),
         #                               tags: %w(time:time_delayed topic:my-topic)).twice
 
-        test_consume_batch('my-topic', batch) do
-          expect(messages.payloads).to eq(batch)
+        test_consume_batch('my-topic', batch) do |received|
+          expect(received.payloads).to eq(batch)
         end
       end
     end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'rails/generators'
+
 # :nodoc:
 # rubocop:disable Metrics/ModuleLength
 module ConsumerTest
@@ -12,7 +14,7 @@ module ConsumerTest
 
         # :nodoc:
         def fatal_error?(_exception, messages)
-          messages.payloads.first&.dig(:test_id) == ['fatal']
+          messages.payloads.first&.to_h&.dig(:test_id) == ['fatal']
         end
 
         # :nodoc:
@@ -29,6 +31,7 @@ module ConsumerTest
           namespace 'com.my-namespace'
           key_config field: 'test_id'
           consumer consumer_class
+          reraise_errors true
           use_schema_classes route_usc
           reraise_errors route_rre
         end
@@ -43,6 +46,10 @@ module ConsumerTest
           before(:each) do
             Deimos.configure do |config|
               config.schema.use_full_namespace = true
+              config.schema.schema_namespace_map = {
+                'com' => 'Schemas',
+                'com.my-namespace.my-suborg' => %w(Schemas MyNamespace)
+              }
             end
           end
 
@@ -56,8 +63,8 @@ module ConsumerTest
           end
 
           it 'should consume a nil message' do
-            test_consume_message(MyConsumer, nil, key: 'foo') do
-              expect(messages).to be_empty
+            test_consume_message(MyConsumer, nil, key: 'foo') do |message|
+              expect(message).to be_nil
             end
           end
 
@@ -118,7 +125,7 @@ module ConsumerTest
         end
       end
 
-      context 'with overriden schema classes' do
+      context 'with overridden schema classes' do
 
         before(:each) do
           set_karafka_config(:use_schema_classes, true)
@@ -142,6 +149,7 @@ module ConsumerTest
               namespace 'com.my-namespace'
               key_config field: 'test_id'
               consumer consumer_class
+              reraise_errors true
             end
           end
         end
@@ -160,8 +168,46 @@ module ConsumerTest
         end
 
       end
-    end
 
+      context 'with backwards compatible schema classes' do
+        before(:each) do
+          set_karafka_config(:use_schema_classes, true)
+          Deimos.configure do |config|
+            config.schema.use_full_namespace = true
+            config.schema.schema_namespace_map = {
+              'com' => 'Schemas',
+              'com.my-namespace.my-suborg' => %w(Schemas MyNamespace)
+            }
+          end
+          # update the Avro to include a new field
+          generator.append_to_file(schema_file, additional_field_json, after: '"fields": [')
+        end
+
+        after(:each) do
+          generator.gsub_file(schema_file, additional_field_json, '')
+        end
+
+        let(:generator) { Rails::Generators::Base.new }
+        let(:schema_file) { File.join(__dir__, 'schemas/com/my-namespace/MySchema.avsc') }
+        let(:additional_field_json) do
+          '{"name": "additional_field", "type": "string", "default": ""},'
+        end
+
+        it 'should consume correctly and ignore the additional field' do
+          test_consume_message('my_consume_topic',
+                               { 'test_id' => 'foo',
+                                 'additional_field' => 'bar',
+                                 'some_int' => 1 }) do |payload, _metadata|
+            expect(payload['test_id']).to eq('foo')
+            expect(payload['some_int']).to eq(1)
+            expect(payload.to_h).not_to have_key('additional_field')
+          end
+
+        end
+      end
+
+    end
   end
 end
+
 # rubocop:enable Metrics/ModuleLength

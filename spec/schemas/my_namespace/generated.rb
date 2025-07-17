@@ -81,12 +81,12 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [AnEnum]
     def an_enum=(value)
-      @an_enum = AnEnum.initialize_from_value(value)
+      @an_enum = AnEnum.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [ARecord]
     def a_record=(value)
-      @a_record = ARecord.initialize_from_value(value)
+      @a_record = ARecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @override

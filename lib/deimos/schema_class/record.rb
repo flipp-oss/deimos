@@ -72,11 +72,28 @@ module Deimos
         validator.schema_fields.map(&:name)
       end
 
+      # Used internally within Deimos so that we don't crash on unknown fields that come from
+      # a backwards compatible schema.
+      # @param kwargs [Hash] the attributes to set on the new object.
       # @return [SchemaClass::Record]
-      def self.initialize_from_value(value)
+      def self.new_from_message(**kwargs)
+        @from_message = true
+        record = self.new
+        attrs = kwargs.select { |k, v| record.respond_to?("#{k}=") }
+        self.new(**attrs)
+      end
+
+      # @return [SchemaClass::Record]
+      # @param from_message [Boolean] whether it's being initialized from a real Avro message.
+      def self.initialize_from_value(value, from_message: false)
         return nil if value.nil?
 
-        value.is_a?(self) ? value : self.new(**value.symbolize_keys)
+        return value if value.is_a?(self)
+        if from_message
+          self.new_from_message(**value.symbolize_keys)
+        else
+          self.new(**value.symbolize_keys)
+        end
       end
     end
   end

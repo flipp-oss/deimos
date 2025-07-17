@@ -105,43 +105,43 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [ARecord]
     def some_record=(value)
-      @some_record = ARecord.initialize_from_value(value)
+      @some_record = ARecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [nil, ARecord]
     def some_optional_record=(value)
-      @some_optional_record = ARecord.initialize_from_value(value)
+      @some_optional_record = ARecord.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [Array<ARecord>]
     def some_record_array=(values)
       @some_record_array = values&.map do |value|
-        ARecord.initialize_from_value(value)
+        ARecord.initialize_from_value(value, from_message: @from_message)
       end
     end
 
     # @return [Hash<String, ARecord>]
     def some_record_map=(values)
       @some_record_map = values&.transform_values do |value|
-        ARecord.initialize_from_value(value)
+        ARecord.initialize_from_value(value, from_message: @from_message)
       end
     end
 
     # @return [Array<AnEnum>]
     def some_enum_array=(values)
       @some_enum_array = values&.map do |value|
-        AnEnum.initialize_from_value(value)
+        AnEnum.initialize_from_value(value, from_message: @from_message)
       end
     end
 
     # @return [nil, AnotherEnum]
     def some_optional_enum=(value)
-      @some_optional_enum = AnotherEnum.initialize_from_value(value)
+      @some_optional_enum = AnotherEnum.initialize_from_value(value, from_message: @from_message)
     end
 
     # @return [YetAnotherEnum]
     def some_enum_with_default=(value)
-      @some_enum_with_default = YetAnotherEnum.initialize_from_value(value)
+      @some_enum_with_default = YetAnotherEnum.initialize_from_value(value, from_message: @from_message)
     end
 
     # @override
@@ -150,8 +150,8 @@ module Schemas; module MyNamespace
                    test_string_array: ["test"],
                    test_int_array: [123],
                    test_optional_int: 123,
-                   some_integer_map: { "abc"=>123 },
-                   some_record: { "a_record_field"=>"Test String" },
+                   some_integer_map: {"abc"=>123},
+                   some_record: {"a_record_field"=>"Test String"},
                    some_optional_record: nil,
                    some_record_array: nil,
                    some_record_map: nil,

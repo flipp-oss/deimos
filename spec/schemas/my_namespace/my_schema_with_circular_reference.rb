@@ -47,7 +47,7 @@ module Schemas; module MyNamespace
     # @return [Hash<String, Property>]
     def properties=(values)
       @properties = values&.transform_values do |value|
-        Property.initialize_from_value(value)
+        Property.initialize_from_value(value, from_message: @from_message)
       end
     end
 

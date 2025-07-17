@@ -43,7 +43,7 @@ module Deimos
           klass = klass(schema, namespace)
           return payload if klass.nil? || payload.nil?
 
-          klass.new(**payload.symbolize_keys)
+          klass.new_from_message(**payload.symbolize_keys)
         end
 
         # Determine and return the SchemaClass with the provided schema and namespace

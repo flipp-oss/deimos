@@ -49,8 +49,9 @@
     <%- @field_assignments.select{ |h| h[:is_complex_union] }.each do |method_definition| -%>
     # Helper method to determine which schema type to use for <%= method_definition[:field].name %>
     # @param value [Hash, nil]
+    # @param from_message [Boolean] whether this was initialized from a real Avro message
     # @return [Object, nil]
-    def initialize_<%= method_definition[:field].name %>_type(value)
+    def initialize_<%= method_definition[:field].name %>_type(value, from_message: false)
       return nil if value.nil?
 
       klass = [<%= method_definition[:field].type.schemas.reject { |s| s.type_sym == :null }.select { |s| s.type_sym == :record }.map { |s| Deimos::SchemaBackends::AvroBase.schema_classname(s) }.join(', ') %>].find do |candidate|
@@ -58,7 +59,7 @@
         (value.keys - fields).empty?
       end
 
-      klass.initialize_from_value(value)
+      klass.initialize_from_value(value, from_message: @from_message)
     end
 
     <%- end -%>

@@ -147,11 +147,17 @@ module Deimos
                              payload,
                              key: nil,
                              call_original: nil,
-                             partition_key: nil)
+                             partition_key: nil,
+                             &block)
       unless call_original.nil?
         puts "test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
-      test_consume_batch(handler_class_or_topic, [payload], keys: [key], partition_keys: [partition_key], single: true)
+      test_consume_batch(handler_class_or_topic,
+                         [payload],
+                         keys: [key],
+                         partition_keys: [partition_key],
+                         single: true,
+                         &block)
     end
 
     # Test that a given handler will consume a given batch payload correctly,
@@ -171,7 +177,7 @@ module Deimos
                            keys: [],
                            call_original: nil,
                            single: false,
-                           partition_keys: [])
+                           partition_keys: [], &block)
       unless call_original.nil?
         puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
       end
@@ -194,9 +200,15 @@ module Deimos
        karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})
       end
       if block_given?
-       allow_any_instance_of(consumer_class).to receive(:consume_batch) do
-         yield
-       end
+        if single
+          allow(consumer).to receive(:consume_message) do
+           yield consumer.messages.first.payload, consumer.messages.first.as_json['metadata']
+          end
+        else
+          allow(consumer).to receive(:consume_batch) do
+           yield consumer.messages
+          end
+        end
       end
 
       # sent_messages should only include messages sent by application code, not this method
