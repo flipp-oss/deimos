@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+## 2.1.0 - 2025-07-17
+
 - ***BREAKING CHANGE***: Allow schema classes to be used with backwards-compatible Avro messages. In order to update to this version, you will need to regenerate your schema classes using the `deimos:generate_schema_classes` generator.
 
 ## 2.0.17 - 2025-07-03
