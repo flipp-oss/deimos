@@ -92,9 +92,9 @@ module Deimos
 
         return value if value.is_a?(self)
         if from_message
-          self.new(**value.symbolize_keys)
-        else
           self.new_from_message(**value.symbolize_keys)
+        else
+          self.new(**value.symbolize_keys)
         end
       end
     end
