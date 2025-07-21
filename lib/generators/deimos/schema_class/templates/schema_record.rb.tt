@@ -59,7 +59,7 @@
         (value.keys - fields).empty?
       end
 
-      klass.initialize_from_value(value, from_message: @from_message)
+      klass.initialize_from_value(value, from_message: self._from_message)
     end
 
     <%- end -%>
