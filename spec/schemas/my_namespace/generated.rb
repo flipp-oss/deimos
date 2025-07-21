@@ -15,7 +15,8 @@ module Schemas; module MyNamespace
       attr_accessor :a_record_field
   
       # @override
-      def initialize(a_record_field: nil)
+      def initialize(_from_message: false, a_record_field: nil)
+        @_from_message = _from_message
         super
         self.a_record_field = a_record_field
       end
@@ -81,16 +82,16 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [AnEnum]
     def an_enum=(value)
-      @an_enum = AnEnum.initialize_from_value(value, from_message: @from_message)
+      @an_enum = AnEnum.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @return [ARecord]
     def a_record=(value)
-      @a_record = ARecord.initialize_from_value(value, from_message: @from_message)
+      @a_record = ARecord.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @override
-    def initialize(a_string: nil,
+    def initialize(_from_message: false, a_string: nil,
                    a_int: nil,
                    a_long: nil,
                    a_float: nil,
@@ -102,6 +103,7 @@ module Schemas; module MyNamespace
                    timestamp: nil,
                    message_id: nil,
                    a_record: nil)
+      @_from_message = _from_message
       super
       self.a_string = a_string
       self.a_int = a_int

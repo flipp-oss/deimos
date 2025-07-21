@@ -15,7 +15,8 @@ module Schemas; module MyNamespace
       attr_accessor :a_record_field
   
       # @override
-      def initialize(a_record_field: nil)
+      def initialize(_from_message: false, a_record_field: nil)
+        @_from_message = _from_message
         super
         self.a_record_field = a_record_field
       end
@@ -105,47 +106,47 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [ARecord]
     def some_record=(value)
-      @some_record = ARecord.initialize_from_value(value, from_message: @from_message)
+      @some_record = ARecord.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @return [nil, ARecord]
     def some_optional_record=(value)
-      @some_optional_record = ARecord.initialize_from_value(value, from_message: @from_message)
+      @some_optional_record = ARecord.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @return [Array<ARecord>]
     def some_record_array=(values)
       @some_record_array = values&.map do |value|
-        ARecord.initialize_from_value(value, from_message: @from_message)
+        ARecord.initialize_from_value(value, from_message: self._from_message)
       end
     end
 
     # @return [Hash<String, ARecord>]
     def some_record_map=(values)
       @some_record_map = values&.transform_values do |value|
-        ARecord.initialize_from_value(value, from_message: @from_message)
+        ARecord.initialize_from_value(value, from_message: self._from_message)
       end
     end
 
     # @return [Array<AnEnum>]
     def some_enum_array=(values)
       @some_enum_array = values&.map do |value|
-        AnEnum.initialize_from_value(value, from_message: @from_message)
+        AnEnum.initialize_from_value(value, from_message: self._from_message)
       end
     end
 
     # @return [nil, AnotherEnum]
     def some_optional_enum=(value)
-      @some_optional_enum = AnotherEnum.initialize_from_value(value, from_message: @from_message)
+      @some_optional_enum = AnotherEnum.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @return [YetAnotherEnum]
     def some_enum_with_default=(value)
-      @some_enum_with_default = YetAnotherEnum.initialize_from_value(value, from_message: @from_message)
+      @some_enum_with_default = YetAnotherEnum.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    test_float: nil,
                    test_string_array: ["test"],
                    test_int_array: [123],
@@ -158,6 +159,7 @@ module Schemas; module MyNamespace
                    some_enum_array: nil,
                    some_optional_enum: nil,
                    some_enum_with_default: "sym6")
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.test_float = test_float

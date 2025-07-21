@@ -260,7 +260,7 @@ module Deimos
           arg.strip
         end
 
-        result = "def initialize(#{arguments.first}"
+        result = "def initialize(_from_message: false, #{arguments.first}"
         arguments[1..-1].each_with_index do |arg, _i|
           result += ",#{INITIALIZE_WHITESPACE}#{arg}"
         end

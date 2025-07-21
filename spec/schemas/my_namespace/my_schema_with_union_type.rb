@@ -17,8 +17,9 @@ module Schemas; module MyNamespace
       attr_accessor :record1_id
   
       # @override
-      def initialize(record1_map: {},
+      def initialize(_from_message: false, record1_map: {},
                      record1_id: 0)
+        @_from_message = _from_message
         super
         self.record1_map = record1_map
         self.record1_id = record1_id
@@ -51,7 +52,8 @@ module Schemas; module MyNamespace
       attr_accessor :record2_id
   
       # @override
-      def initialize(record2_id: "")
+      def initialize(_from_message: false, record2_id: "")
+        @_from_message = _from_message
         super
         self.record2_id = record2_id
       end
@@ -82,7 +84,8 @@ module Schemas; module MyNamespace
       attr_accessor :record3_id
   
       # @override
-      def initialize(record3_id: 0.0)
+      def initialize(_from_message: false, record3_id: 0.0)
+        @_from_message = _from_message
         super
         self.record3_id = record3_id
       end
@@ -113,7 +116,8 @@ module Schemas; module MyNamespace
       attr_accessor :record4_id
   
       # @override
-      def initialize(record4_id: 0)
+      def initialize(_from_message: false, record4_id: 0)
+        @_from_message = _from_message
         super
         self.record4_id = record4_id
       end
@@ -150,7 +154,7 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [nil, Record1, Record2, Record3, Record4, Integer, Array<String>]
     def test_union_type=(value)
-      @test_union_type = initialize_test_union_type_type(value, from_message: @from_message)
+      @test_union_type = initialize_test_union_type_type(value, from_message: self._from_message)
     end
 
     # Helper method to determine which schema type to use for test_union_type
@@ -165,13 +169,14 @@ module Schemas; module MyNamespace
         (value.keys - fields).empty?
       end
 
-      klass.initialize_from_value(value, from_message: @from_message)
+      klass.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @override
-    def initialize(test_id: "",
+    def initialize(_from_message: false, test_id: "",
                    test_long: nil,
                    test_union_type: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.test_long = test_long

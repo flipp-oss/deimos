@@ -66,6 +66,7 @@
 <% end -%>
     # @override
     <%= @initialization_definition %>
+      @_from_message = _from_message
       super
 <%- @fields.each do |field| -%>
       self.<%= field.name %> = <%= field.name %>

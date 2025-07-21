@@ -27,7 +27,7 @@ module Schemas; module MyNamespace
     attr_accessor :created_at
 
     # @override
-    def initialize(id: nil,
+    def initialize(_from_message: false, id: nil,
                    wibble_id: nil,
                    name: nil,
                    floop: nil,
@@ -36,6 +36,7 @@ module Schemas; module MyNamespace
                    birthday_optional: nil,
                    updated_at: nil,
                    created_at: nil)
+      @_from_message = _from_message
       super
       self.id = id
       self.wibble_id = wibble_id

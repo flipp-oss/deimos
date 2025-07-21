@@ -19,11 +19,12 @@ module Schemas; module MyNamespace
     attr_accessor :timestamp
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    updated_at: nil,
                    some_int: nil,
                    some_datetime_int: nil,
                    timestamp: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.updated_at = updated_at

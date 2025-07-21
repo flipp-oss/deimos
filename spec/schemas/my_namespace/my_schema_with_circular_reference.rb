@@ -15,7 +15,8 @@ module Schemas; module MyNamespace
       attr_accessor :property
   
       # @override
-      def initialize(property: nil)
+      def initialize(_from_message: false, property: nil)
+        @_from_message = _from_message
         super
         self.property = property
       end
@@ -47,12 +48,13 @@ module Schemas; module MyNamespace
     # @return [Hash<String, Property>]
     def properties=(values)
       @properties = values&.transform_values do |value|
-        Property.initialize_from_value(value, from_message: @from_message)
+        Property.initialize_from_value(value, from_message: self._from_message)
       end
     end
 
     # @override
-    def initialize(properties: {})
+    def initialize(_from_message: false, properties: {})
+      @_from_message = _from_message
       super
       self.properties = properties
     end

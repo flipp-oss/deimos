@@ -180,7 +180,19 @@ module ConsumerTest
             }
           end
           # update the Avro to include a new field
-          generator.append_to_file(schema_file, additional_field_json, after: '"fields": [')
+          generator.insert_into_file(schema_file, additional_field_json, after: '"fields": [', force: true)
+
+          Karafka::App.routes.redraw do
+            topic 'my_consume_topic' do
+              schema 'MyNestedSchema'
+              namespace 'com.my-namespace'
+              key_config field: 'test_id'
+              consumer ConsumerTest::MyConsumer
+              reraise_errors true
+              use_schema_classes true
+              reraise_errors true
+            end
+          end
         end
 
         after(:each) do
@@ -188,7 +200,7 @@ module ConsumerTest
         end
 
         let(:generator) { Rails::Generators::Base.new }
-        let(:schema_file) { File.join(__dir__, 'schemas/com/my-namespace/MySchema.avsc') }
+        let(:schema_file) { File.join(__dir__, 'schemas/com/my-namespace/MyNestedSchema.avsc') }
         let(:additional_field_json) do
           '{"name": "additional_field", "type": "string", "default": ""},'
         end
@@ -196,11 +208,20 @@ module ConsumerTest
         it 'should consume correctly and ignore the additional field' do
           test_consume_message('my_consume_topic',
                                { 'test_id' => 'foo',
+                                 'test_float' => 4.0,
+                                 'test_array' => ["1", "2"],
                                  'additional_field' => 'bar',
-                                 'some_int' => 1 }) do |payload, _metadata|
+                                 'some_nested_record' => {
+                                    'some_int' => 1,
+                                    'some_float' => 10.0,
+                                    'some_string' => 'hi mom',
+                                    'additional_field' => 'baz'
+                                 } }) do |payload, _metadata|
             expect(payload['test_id']).to eq('foo')
-            expect(payload['some_int']).to eq(1)
+            expect(payload['test_float']).to eq(4.0)
+            expect(payload['some_nested_record']['some_int']).to eq(1)
             expect(payload.to_h).not_to have_key('additional_field')
+            expect(payload.to_h['some_nested_record']).not_to have_key('additional_field')
           end
 
         end

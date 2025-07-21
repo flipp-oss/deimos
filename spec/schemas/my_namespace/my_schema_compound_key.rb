@@ -13,8 +13,9 @@ module Schemas; module MyNamespace
     attr_accessor :part_two
 
     # @override
-    def initialize(part_one: nil,
+    def initialize(_from_message: false, part_one: nil,
                    part_two: nil)
+      @_from_message = _from_message
       super
       self.part_one = part_one
       self.part_two = part_two

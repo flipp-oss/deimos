@@ -1083,7 +1083,7 @@ decoded = Deimos.decode(schema: 'MySchema', namespace: 'com.my-namespace', paylo
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/flipp-oss/deimos .
 
-If making changes to the generator, you should regenerate the test schema classes by running `./regenerate_test_schema_classes.rb` .
+If making changes to the generator, you should regenerate the test schema classes by running `bundle exec ./regenerate_test_schema_classes.rb` .
 
 You can/should re-generate RBS types when methods or classes change by running the following:
 

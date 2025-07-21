@@ -79,8 +79,7 @@ module Deimos
       def self.new_from_message(**kwargs)
         record = self.new
         attrs = kwargs.select { |k, v| record.respond_to?("#{k}=") }
-        record = self.new(**attrs)
-        record._from_message = true
+        record = self.new(_from_message: true, **attrs)
         record
       end
 

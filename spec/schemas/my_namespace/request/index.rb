@@ -11,7 +11,8 @@ module Schemas; module MyNamespace; module Request
     attr_accessor :request_id
 
     # @override
-    def initialize(request_id: nil)
+    def initialize(_from_message: false, request_id: nil)
+      @_from_message = _from_message
       super
       self.request_id = request_id
     end

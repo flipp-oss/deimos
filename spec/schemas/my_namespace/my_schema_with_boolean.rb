@@ -13,8 +13,9 @@ module Schemas; module MyNamespace
     attr_accessor :some_bool
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    some_bool: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.some_bool = some_bool

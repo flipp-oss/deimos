@@ -19,13 +19,14 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [MySchemaKey]
     def payload_key=(value)
-      @payload_key = MySchemaKey.initialize_from_value(value, from_message: @from_message)
+      @payload_key = MySchemaKey.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    some_int: nil,
                    payload_key: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.some_int = some_int
@@ -44,7 +45,7 @@ module Schemas; module MyNamespace
 
     def self.tombstone(key)
       record = self.allocate
-      record.tombstone_key = MySchemaKey.initialize_from_value(key, from_message: @from_message)
+      record.tombstone_key = MySchemaKey.initialize_from_value(key, from_message: self._from_message)
       record.payload_key = key
       record
     end

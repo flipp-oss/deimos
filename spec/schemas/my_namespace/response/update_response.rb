@@ -11,7 +11,8 @@ module Schemas; module MyNamespace; module Response
     attr_accessor :update_response_id
 
     # @override
-    def initialize(update_response_id: nil)
+    def initialize(_from_message: false, update_response_id: nil)
+      @_from_message = _from_message
       super
       self.update_response_id = update_response_id
     end

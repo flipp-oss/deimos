@@ -11,7 +11,8 @@ module Schemas; module MyNamespace
     attr_accessor :id
 
     # @override
-    def initialize(id: nil)
+    def initialize(_from_message: false, id: nil)
+      @_from_message = _from_message
       super
       self.id = id
     end

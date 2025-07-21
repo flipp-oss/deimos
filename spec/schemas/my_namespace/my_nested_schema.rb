@@ -21,10 +21,11 @@ module Schemas; module MyNamespace
       attr_accessor :some_optional_int
   
       # @override
-      def initialize(some_int: nil,
+      def initialize(_from_message: false, some_int: nil,
                      some_float: nil,
                      some_string: nil,
                      some_optional_int: nil)
+        @_from_message = _from_message
         super
         self.some_int = some_int
         self.some_float = some_float
@@ -71,20 +72,21 @@ module Schemas; module MyNamespace
     ### Attribute Writers ###
     # @return [MyNestedRecord]
     def some_nested_record=(value)
-      @some_nested_record = MyNestedRecord.initialize_from_value(value, from_message: @from_message)
+      @some_nested_record = MyNestedRecord.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @return [nil, MyNestedRecord]
     def some_optional_record=(value)
-      @some_optional_record = MyNestedRecord.initialize_from_value(value, from_message: @from_message)
+      @some_optional_record = MyNestedRecord.initialize_from_value(value, from_message: self._from_message)
     end
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    test_float: nil,
                    test_array: nil,
                    some_nested_record: nil,
                    some_optional_record: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.test_float = test_float
