@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-## 2.1.1 - 2025-07-21
+## 2.1.2 - 2025-07-21
 
 - Fix: Backwards-compatible fix wasn't working correctly.
 
