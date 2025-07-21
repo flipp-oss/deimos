@@ -8,7 +8,7 @@ module Deimos
     # Base Class of Record Classes generated from Avro.
     class Record < Base
 
-      attr_accessor :tombstone_key
+      attr_accessor :tombstone_key, :_from_message
 
       # Converts the object attributes to a hash which can be used for Kafka
       # @return [Hash] the payload as a hash.
@@ -77,10 +77,11 @@ module Deimos
       # @param kwargs [Hash] the attributes to set on the new object.
       # @return [SchemaClass::Record]
       def self.new_from_message(**kwargs)
-        @from_message = true
         record = self.new
         attrs = kwargs.select { |k, v| record.respond_to?("#{k}=") }
-        self.new(**attrs)
+        record = self.new(**attrs)
+        record._from_message = true
+        record
       end
 
       # @return [SchemaClass::Record]
