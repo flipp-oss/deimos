@@ -241,7 +241,7 @@ module Deimos
           "record.tombstone_key = key\n      record.#{key_config[:field]} = key"
         elsif key_schema
           field_base_type = _field_type(key_schema)
-          "record.tombstone_key = #{field_base_type}.initialize_from_value(key, from_message: self._from_message)\n      record.payload_key = key"
+          "record.tombstone_key = #{field_base_type}.initialize_from_value(key)\n      record.payload_key = key"
         else
           ''
         end

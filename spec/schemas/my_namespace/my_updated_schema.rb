@@ -8,7 +8,8 @@ module Schemas; module Com; module MyNamespace
 
     attr_accessor :super_int
 
-    def initialize(test_id: nil,
+    def initialize(_from_message: false,
+                   test_id: nil,
                    some_int: nil)
       super
       self.super_int = some_int.nil? ? 10 : some_int * 9000
