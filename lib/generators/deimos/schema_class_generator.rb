@@ -162,26 +162,22 @@ module Deimos
       def generate
         _validate
         Rails.logger.info("Generating schemas from Deimos.config to #{Deimos.config.schema.generated_class_path}")
-        found_schemas = Set.new
-        Deimos.config.producer_objects.each do |config|
+        found_schemas = {}
+        Deimos.karafka_configs.each do |config|
           schema_name = config.schema
+          next if schema_name.nil?
           namespace = config.namespace || Deimos.config.producers.schema_namespace
           key_schema_name = config.key_config[:schema]
-          found_schemas.add("#{namespace}.#{schema_name}")
-          found_schemas.add("#{namespace}.#{key_schema_name}") if key_schema_name
+
+          # don't regenerate if the schema was already found and had a payload key
+          next if found_schemas["#{namespace}.#{schema_name}"].present?
+
+          found_schemas["#{namespace}.#{schema_name}"] = key_schema_name
+          found_schemas["#{namespace}.#{key_schema_name}"] = nil
           generate_classes(schema_name, namespace, config.key_config)
         end
 
-        Deimos.config.consumer_objects.each do |config|
-          schema_name = config.schema
-          namespace = config.namespace
-          key_schema_name = config.key_config[:schema]
-          found_schemas.add("#{namespace}.#{schema_name}")
-          found_schemas.add("#{namespace}.#{key_schema_name}") if key_schema_name
-          generate_classes(schema_name, namespace, config.key_config)
-        end
-
-        generate_from_schema_files(found_schemas)
+        generate_from_schema_files(found_schemas.keys)
 
       end
 

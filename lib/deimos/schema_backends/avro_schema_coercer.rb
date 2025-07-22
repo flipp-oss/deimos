@@ -65,6 +65,8 @@ module Deimos
     # @param val [Object]
     # @return [Object]
     def coerce_record(type, val)
+      return nil if val.nil?
+
       record = val.map do |name, value|
         field = type.fields.find { |f| f.name == name }
         coerce_type(field.type, value)
