@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Add interrogation methods (e.g. `approved?`) for schema class enums.
+
 # 2.1.3 - 2025-07-22
 
 - Fix: Schema class generation was missing payload_key for a number of cases.
