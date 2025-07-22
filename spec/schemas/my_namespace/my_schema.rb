@@ -45,7 +45,7 @@ module Schemas; module MyNamespace
 
     def self.tombstone(key)
       record = self.allocate
-      record.tombstone_key = MySchemaKey.initialize_from_value(key, from_message: self._from_message)
+      record.tombstone_key = MySchemaKey.initialize_from_value(key)
       record.payload_key = key
       record
     end

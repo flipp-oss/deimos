@@ -12,7 +12,8 @@ module Schemas
     attr_accessor :response_id
 
     # @override
-    def initialize(response_id: nil)
+    def initialize(_from_message: false, response_id: nil)
+      @_from_message = _from_message
       super
       self.response_id = response_id
     end
@@ -55,7 +56,8 @@ module Schemas
       attr_accessor :a_record_field
   
       # @override
-      def initialize(a_record_field: nil)
+      def initialize(_from_message: false, a_record_field: nil)
+        @_from_message = _from_message
         super
         self.a_record_field = a_record_field
       end
@@ -130,7 +132,7 @@ module Schemas
     end
 
     # @override
-    def initialize(a_string: nil,
+    def initialize(_from_message: false, a_string: nil,
                    a_int: nil,
                    a_long: nil,
                    a_float: nil,
@@ -142,6 +144,7 @@ module Schemas
                    timestamp: nil,
                    message_id: nil,
                    a_record: nil)
+      @_from_message = _from_message
       super
       self.a_string = a_string
       self.a_int = a_int
@@ -202,7 +205,8 @@ module Schemas
     attr_accessor :response_id
 
     # @override
-    def initialize(response_id: nil)
+    def initialize(_from_message: false, response_id: nil)
+      @_from_message = _from_message
       super
       self.response_id = response_id
     end
@@ -243,8 +247,9 @@ module Schemas
     attr_accessor :some_int
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    some_int: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.some_int = some_int
@@ -295,10 +300,11 @@ module Schemas
       attr_accessor :some_optional_int
   
       # @override
-      def initialize(some_int: nil,
+      def initialize(_from_message: false, some_int: nil,
                      some_float: nil,
                      some_string: nil,
                      some_optional_int: nil)
+        @_from_message = _from_message
         super
         self.some_int = some_int
         self.some_float = some_float
@@ -354,11 +360,12 @@ module Schemas
     end
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    test_float: nil,
                    test_array: nil,
                    some_nested_record: nil,
                    some_optional_record: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.test_float = test_float
@@ -414,8 +421,9 @@ module Schemas
     attr_accessor :some_int
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    some_int: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.some_int = some_int
@@ -458,8 +466,9 @@ module Schemas
     attr_accessor :part_two
 
     # @override
-    def initialize(part_one: nil,
+    def initialize(_from_message: false, part_one: nil,
                    part_two: nil)
+      @_from_message = _from_message
       super
       self.part_one = part_one
       self.part_two = part_two
@@ -500,7 +509,8 @@ module Schemas
     attr_accessor :id
 
     # @override
-    def initialize(id: nil)
+    def initialize(_from_message: false, id: nil)
+      @_from_message = _from_message
       super
       self.id = id
     end
@@ -539,7 +549,8 @@ module Schemas
     attr_accessor :test_id
 
     # @override
-    def initialize(test_id: nil)
+    def initialize(_from_message: false, test_id: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
     end
@@ -580,8 +591,9 @@ module Schemas
     attr_accessor :some_bool
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    some_bool: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.some_bool = some_bool
@@ -626,7 +638,8 @@ module Schemas
       attr_accessor :property
   
       # @override
-      def initialize(property: nil)
+      def initialize(_from_message: false, property: nil)
+        @_from_message = _from_message
         super
         self.property = property
       end
@@ -663,7 +676,8 @@ module Schemas
     end
 
     # @override
-    def initialize(properties: {})
+    def initialize(_from_message: false, properties: {})
+      @_from_message = _from_message
       super
       self.properties = properties
     end
@@ -706,7 +720,8 @@ module Schemas
       attr_accessor :a_record_field
   
       # @override
-      def initialize(a_record_field: nil)
+      def initialize(_from_message: false, a_record_field: nil)
+        @_from_message = _from_message
         super
         self.a_record_field = a_record_field
       end
@@ -836,7 +851,7 @@ module Schemas
     end
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    test_float: nil,
                    test_string_array: ["test"],
                    test_int_array: [123],
@@ -849,6 +864,7 @@ module Schemas
                    some_enum_array: nil,
                    some_optional_enum: nil,
                    some_enum_with_default: "sym6")
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.test_float = test_float
@@ -919,11 +935,12 @@ module Schemas
     attr_accessor :timestamp
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    updated_at: nil,
                    some_int: nil,
                    some_datetime_int: nil,
                    timestamp: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.updated_at = updated_at
@@ -976,10 +993,11 @@ module Schemas
     attr_accessor :timestamp
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    some_int: nil,
                    message_id: nil,
                    timestamp: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.some_int = some_int
@@ -1028,9 +1046,10 @@ module Schemas
     attr_accessor :title
 
     # @override
-    def initialize(test_id: nil,
+    def initialize(_from_message: false, test_id: nil,
                    some_int: nil,
                    title: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.some_int = some_int
@@ -1079,8 +1098,9 @@ module Schemas
       attr_accessor :record1_id
   
       # @override
-      def initialize(record1_map: {},
+      def initialize(_from_message: false, record1_map: {},
                      record1_id: 0)
+        @_from_message = _from_message
         super
         self.record1_map = record1_map
         self.record1_id = record1_id
@@ -1113,7 +1133,8 @@ module Schemas
       attr_accessor :record2_id
   
       # @override
-      def initialize(record2_id: "")
+      def initialize(_from_message: false, record2_id: "")
+        @_from_message = _from_message
         super
         self.record2_id = record2_id
       end
@@ -1144,7 +1165,8 @@ module Schemas
       attr_accessor :record3_id
   
       # @override
-      def initialize(record3_id: 0.0)
+      def initialize(_from_message: false, record3_id: 0.0)
+        @_from_message = _from_message
         super
         self.record3_id = record3_id
       end
@@ -1175,7 +1197,8 @@ module Schemas
       attr_accessor :record4_id
   
       # @override
-      def initialize(record4_id: 0)
+      def initialize(_from_message: false, record4_id: 0)
+        @_from_message = _from_message
         super
         self.record4_id = record4_id
       end
@@ -1231,9 +1254,10 @@ module Schemas
     end
 
     # @override
-    def initialize(test_id: "",
+    def initialize(_from_message: false, test_id: "",
                    test_long: nil,
                    test_union_type: nil)
+      @_from_message = _from_message
       super
       self.test_id = test_id
       self.test_long = test_long
@@ -1284,11 +1308,12 @@ module Schemas
     attr_accessor :timestamp
 
     # @override
-    def initialize(id: nil,
+    def initialize(_from_message: false, id: nil,
                    test_id: nil,
                    some_int: nil,
                    message_id: nil,
                    timestamp: nil)
+      @_from_message = _from_message
       super
       self.id = id
       self.test_id = test_id
@@ -1335,7 +1360,8 @@ module Schemas
     attr_accessor :update_request_id
 
     # @override
-    def initialize(update_request_id: nil)
+    def initialize(_from_message: false, update_request_id: nil)
+      @_from_message = _from_message
       super
       self.update_request_id = update_request_id
     end
@@ -1374,7 +1400,8 @@ module Schemas
     attr_accessor :update_response_id
 
     # @override
-    def initialize(update_response_id: nil)
+    def initialize(_from_message: false, update_response_id: nil)
+      @_from_message = _from_message
       super
       self.update_response_id = update_response_id
     end
@@ -1429,7 +1456,7 @@ module Schemas
     attr_accessor :created_at
 
     # @override
-    def initialize(id: nil,
+    def initialize(_from_message: false, id: nil,
                    wibble_id: nil,
                    name: nil,
                    floop: nil,
@@ -1438,6 +1465,7 @@ module Schemas
                    birthday_optional: nil,
                    updated_at: nil,
                    created_at: nil)
+      @_from_message = _from_message
       super
       self.id = id
       self.wibble_id = wibble_id
@@ -1500,11 +1528,12 @@ module Schemas
     attr_accessor :created_at
 
     # @override
-    def initialize(id: nil,
+    def initialize(_from_message: false, id: nil,
                    widget_id: nil,
                    name: nil,
                    updated_at: nil,
                    created_at: nil)
+      @_from_message = _from_message
       super
       self.id = id
       self.widget_id = widget_id
@@ -1559,11 +1588,12 @@ module Schemas
     attr_accessor :created_at
 
     # @override
-    def initialize(id: nil,
+    def initialize(_from_message: false, id: nil,
                    widget_id: nil,
                    model_id: nil,
                    updated_at: nil,
                    created_at: nil)
+      @_from_message = _from_message
       super
       self.id = id
       self.widget_id = widget_id
