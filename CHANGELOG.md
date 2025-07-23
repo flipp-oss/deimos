@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Skip batch_record_list fill_primary_keys! if the primary key has already been filled during consumption
+
 # 2.1.6 - 2025-07-23
 
 - Fix: Allows rails to handle querying bulk_import_id when replacing associations for non-string bulk_import_ids

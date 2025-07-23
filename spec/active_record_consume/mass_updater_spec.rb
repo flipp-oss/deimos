@@ -251,5 +251,192 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
 
       end
 
+      context 'with recorded primary_keys' do
+        before(:all) do
+          ActiveRecord::Base.connection.create_table(:fidgets, force: true, id: false) do |t|
+            t.string :test_id, primary_key: true
+            t.integer(:some_int)
+            t.string(:bulk_import_id)
+            t.timestamps
+          end
+
+          ActiveRecord::Base.connection.create_table(:fidget_details, force: true) do |t|
+            t.string(:title)
+            t.string(:bulk_import_id)
+            t.belongs_to(:fidget)
+
+            t.index(%i(title), unique: true)
+          end
+
+        end
+
+        after(:all) do
+          ActiveRecord::Base.connection.drop_table(:fidgets)
+          ActiveRecord::Base.connection.drop_table(:fidget_details)
+        end
+
+        let(:fidget_detail_class) do
+          Class.new(ActiveRecord::Base) do
+            self.table_name = 'fidget_details'
+            belongs_to :fidget
+          end
+        end
+
+        let(:fidget_class) do
+          Class.new(ActiveRecord::Base) do
+            self.table_name = 'fidgets'
+            has_one :fidget_detail
+          end
+        end
+
+        let(:bulk_id_generator) { proc { SecureRandom.uuid } }
+
+        let(:key_proc) do
+          lambda do |klass|
+            case klass.to_s
+            when 'Fidget'
+              %w(test_id)
+            when 'FidgetDetail'
+              %w(title)
+            else
+              raise "Key Columns for #{klass} not defined"
+            end
+
+          end
+        end
+
+        before(:each) do
+          stub_const('Fidget', fidget_class)
+          stub_const('FidgetDetail', fidget_detail_class)
+          Fidget.reset_column_information
+        end
+
+
+        let(:batch) do
+          Deimos::ActiveRecordConsume::BatchRecordList.new(
+          [
+            Deimos::ActiveRecordConsume::BatchRecord.new(
+              klass: Fidget,
+              attributes: { test_id: 'id1', some_int: 5, fidget_detail: { title: 'Title 1' } },
+              bulk_import_column: 'bulk_import_id',
+              bulk_import_id_generator: bulk_id_generator
+            ),
+            Deimos::ActiveRecordConsume::BatchRecord.new(
+              klass: Fidget,
+              attributes: { test_id: 'id2', some_int: 10, fidget_detail: { title: 'Title 2' } },
+              bulk_import_column: 'bulk_import_id',
+              bulk_import_id_generator: bulk_id_generator
+            )
+          ]
+        )
+        end
+
+        it 'should not backfill the primary key when the primary_key exists' do
+          allow(Fidget).to receive(:where).and_call_original
+          results = described_class.new(Widget,
+                                        bulk_import_id_generator: bulk_id_generator,
+                                        bulk_import_id_column: 'bulk_import_id',
+                                        key_col_proc: key_proc).mass_update(batch)
+          expect(results.count).to eq(2)
+          expect(Fidget.count).to eq(2)
+          expect(Fidget).not_to have_received(:where).with(:bulk_import_id => [instance_of(String), instance_of(String)])
+        end
+
+      end
+
+      context 'without recorded primary_keys' do
+        before(:all) do
+          ActiveRecord::Base.connection.create_table(:fidgets, force: true) do |t|
+            t.string(:test_id)
+            t.integer(:some_int)
+            t.string(:bulk_import_id)
+            t.timestamps
+          end
+
+          ActiveRecord::Base.connection.create_table(:fidget_details, force: true) do |t|
+            t.string(:title)
+            t.string(:bulk_import_id)
+            t.belongs_to(:fidget)
+
+            t.index(%i(title), unique: true)
+          end
+
+        end
+
+        after(:all) do
+          ActiveRecord::Base.connection.drop_table(:fidgets)
+          ActiveRecord::Base.connection.drop_table(:fidget_details)
+        end
+
+        let(:fidget_detail_class) do
+          Class.new(ActiveRecord::Base) do
+            self.table_name = 'fidget_details'
+            belongs_to :fidget
+          end
+        end
+
+        let(:fidget_class) do
+          Class.new(ActiveRecord::Base) do
+            self.table_name = 'fidgets'
+            has_one :fidget_detail
+          end
+        end
+
+        let(:bulk_id_generator) { proc { SecureRandom.uuid } }
+
+        let(:key_proc) do
+          lambda do |klass|
+            case klass.to_s
+            when 'Fidget'
+              %w(id)
+            when 'FidgetDetail'
+              %w(title)
+            else
+              raise "Key Columns for #{klass} not defined"
+            end
+
+          end
+        end
+
+        before(:each) do
+          stub_const('Fidget', fidget_class)
+          stub_const('FidgetDetail', fidget_detail_class)
+          Fidget.reset_column_information
+        end
+
+
+        let(:batch) do
+          Deimos::ActiveRecordConsume::BatchRecordList.new(
+            [
+              Deimos::ActiveRecordConsume::BatchRecord.new(
+                klass: Fidget,
+                attributes: { test_id: 'id1', some_int: 5, fidget_detail: { title: 'Title 1' } },
+                bulk_import_column: 'bulk_import_id',
+                bulk_import_id_generator: bulk_id_generator
+              ),
+              Deimos::ActiveRecordConsume::BatchRecord.new(
+                klass: Fidget,
+                attributes: { test_id: 'id2', some_int: 10, fidget_detail: { title: 'Title 2' } },
+                bulk_import_column: 'bulk_import_id',
+                bulk_import_id_generator: bulk_id_generator
+              )
+            ]
+          )
+        end
+
+        it 'should not backfill the primary key when the primary_key exists' do
+          allow(Fidget).to receive(:where).and_call_original
+          results = described_class.new(Widget,
+                                        bulk_import_id_generator: bulk_id_generator,
+                                        bulk_import_id_column: 'bulk_import_id',
+                                        key_col_proc: key_proc).mass_update(batch)
+          expect(results.count).to eq(2)
+          expect(Fidget.count).to eq(2)
+          expect(Fidget).to have_received(:where).with(:bulk_import_id => [instance_of(String), instance_of(String)])
+          expect(batch.records.map(&:id)).to eq([1,2])
+        end
+
+      end
+
     end
 end
