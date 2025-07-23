@@ -69,6 +69,11 @@ module Deimos
       self.topic.serializers[:key]&.backend
     end
 
+    # @return [Boolean]
+    def fill_primary_key
+      topic.fill_primary_key
+    end
+
     # Setup
     def initialize
       @klass = self.class.config[:record_class]

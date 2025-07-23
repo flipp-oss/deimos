@@ -251,5 +251,66 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
 
       end
 
+      context 'with fill_primary_key' do
+        let(:key_proc) do
+          lambda do |klass|
+            case klass.to_s
+            when 'Widget',
+              %w(id)
+            when 'Detail'
+              %w(title)
+            else
+              raise "Key Columns for #{klass} not defined"
+            end
+
+          end
+        end
+
+
+        let(:batch) do
+          Deimos::ActiveRecordConsume::BatchRecordList.new(
+          [
+            Deimos::ActiveRecordConsume::BatchRecord.new(
+              klass: Widget,
+              attributes: { test_id: 'id1', some_int: 5, detail: { title: 'Title 1' } },
+              bulk_import_column: 'bulk_import_id',
+              bulk_import_id_generator: bulk_id_generator
+            ),
+            Deimos::ActiveRecordConsume::BatchRecord.new(
+              klass: Widget,
+              attributes: { test_id: 'id2', some_int: 10, detail: { title: 'Title 2' } },
+              bulk_import_column: 'bulk_import_id',
+              bulk_import_id_generator: bulk_id_generator
+            )
+          ]
+        )
+        end
+
+        it 'should backfill the primary key when fill_primary_key is true' do
+          allow(batch).to receive(:fill_primary_keys!).and_call_original
+          results = described_class.new(Widget,
+                                        bulk_import_id_generator: bulk_id_generator,
+                                        bulk_import_id_column: 'bulk_import_id',
+                                        key_col_proc: key_proc,
+                                        fill_primary_key: true).mass_update(batch)
+          expect(results.count).to eq(2)
+          expect(Widget.count).to eq(2)
+          expect(batch).to have_received(:fill_primary_keys!)
+        end
+
+        it 'should not backfill the primary key when fill_primary_key is false' do
+          allow(batch).to receive(:fill_primary_keys!).and_call_original
+          results = described_class.new(Widget,
+                                        bulk_import_id_generator: bulk_id_generator,
+                                        bulk_import_id_column: 'bulk_import_id',
+                                        key_col_proc: key_proc,
+                                        fill_primary_key: false).mass_update(batch)
+          expect(results.count).to eq(2)
+          expect(Widget.count).to eq(2)
+          expect(batch).not_to have_received(:fill_primary_keys!)
+        end
+
+      end
+
     end
 end

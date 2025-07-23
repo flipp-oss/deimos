@@ -21,12 +21,14 @@ module Deimos
       # @param replace_associations [Boolean]
       def initialize(klass, key_col_proc: nil, col_proc: nil,
                      replace_associations: true, bulk_import_id_generator: nil, save_associations_first: false,
-                     bulk_import_id_column: nil)
+                     bulk_import_id_column: nil,
+                     fill_primary_key: true)
         @klass = klass
         @replace_associations = replace_associations
         @bulk_import_id_generator = bulk_import_id_generator
         @save_associations_first = save_associations_first
         @bulk_import_id_column = bulk_import_id_column&.to_s
+        @fill_primary_key = fill_primary_key
 
         @key_cols = {}
         @key_col_proc = key_col_proc
@@ -73,7 +75,7 @@ module Deimos
       # The base table is expected to contain bulk_import_id column for indexing associated objects with id
       # @param record_list [BatchRecordList]
       def import_associations(record_list)
-        record_list.fill_primary_keys!
+        record_list.fill_primary_keys! if @fill_primary_key
 
         import_id = @replace_associations ? @bulk_import_id_generator&.call : nil
         record_list.associations.each do |assoc|
