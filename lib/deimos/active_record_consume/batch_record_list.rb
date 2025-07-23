@@ -76,10 +76,9 @@ module Deimos
         return if self.batch_records.none?
 
         primary_keys = self.primary_keys(assoc.name)
-        assoc.klass.
-          where(assoc.foreign_key => primary_keys).
-          where("#{self.bulk_import_column} != ?", import_id).
-          delete_all
+        assoc.klass.where(assoc.foreign_key => primary_keys).merge(
+          assoc.klass.where.not(self.bulk_import_column => import_id)
+        ).delete_all
       end
 
     end
