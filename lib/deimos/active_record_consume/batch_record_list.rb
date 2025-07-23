@@ -52,6 +52,9 @@ module Deimos
       # records.
       def fill_primary_keys!
         primary_col = self.klass.primary_key
+
+        return if self.batch_records.empty? || self.batch_records.first.send(primary_col).present?
+
         bulk_import_map = self.klass.
           where(self.bulk_import_column => self.batch_records.map(&:bulk_import_id)).
           select(primary_col, self.bulk_import_column).
