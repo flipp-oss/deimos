@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 2.1.7 - 2025-07-23
+
 - Feature: Skip batch_record_list fill_primary_keys! if the primary key has already been filled during consumption
 
 # 2.1.6 - 2025-07-23
