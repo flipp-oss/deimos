@@ -251,7 +251,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
 
       end
 
-      context 'with fill_primary_key' do
+      context 'with fill_primary_keys' do
         let(:key_proc) do
           lambda do |klass|
             case klass.to_s
@@ -286,25 +286,25 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
         )
         end
 
-        it 'should backfill the primary key when fill_primary_key is true' do
+        it 'should backfill the primary key when fill_primary_keys is true' do
           allow(batch).to receive(:fill_primary_keys!).and_call_original
           results = described_class.new(Widget,
                                         bulk_import_id_generator: bulk_id_generator,
                                         bulk_import_id_column: 'bulk_import_id',
                                         key_col_proc: key_proc,
-                                        fill_primary_key: true).mass_update(batch)
+                                        fill_primary_keys: true).mass_update(batch)
           expect(results.count).to eq(2)
           expect(Widget.count).to eq(2)
           expect(batch).to have_received(:fill_primary_keys!)
         end
 
-        it 'should not backfill the primary key when fill_primary_key is false' do
+        it 'should not backfill the primary key when fill_primary_keys is false' do
           allow(batch).to receive(:fill_primary_keys!).and_call_original
           results = described_class.new(Widget,
                                         bulk_import_id_generator: bulk_id_generator,
                                         bulk_import_id_column: 'bulk_import_id',
                                         key_col_proc: key_proc,
-                                        fill_primary_key: false).mass_update(batch)
+                                        fill_primary_keys: false).mass_update(batch)
           expect(results.count).to eq(2)
           expect(Widget.count).to eq(2)
           expect(batch).not_to have_received(:fill_primary_keys!)

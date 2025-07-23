@@ -70,8 +70,8 @@ module Deimos
     end
 
     # @return [Boolean]
-    def fill_primary_key
-      topic.fill_primary_key
+    def fill_primary_keys
+      topic.fill_primary_keys
     end
 
     # Setup

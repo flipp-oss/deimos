@@ -10,7 +10,7 @@ module Deimos
                   reraise_errors
                   fatal_error
                   save_associations_first
-                  fill_primary_key
+                  fill_primary_keys
       )
       Config = Struct.new(*FIELDS, keyword_init: true)
 
@@ -23,7 +23,7 @@ module Deimos
             reraise_errors: Rails.env.test?,
             bulk_import_id_generator: proc { SecureRandom.uuid },
             fatal_error: proc { false },
-            fill_primary_key: true
+            fill_primary_keys: true
           )
           if args.size.positive?
             @deimos_config.public_send("#{field}=", args[0])
