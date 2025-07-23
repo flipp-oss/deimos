@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 2.1.5 - 2025-07-23
+
+- Fix: Schema classes with required fields caused a crash in the `Deimos.schema_backend` method.
+
 # 2.1.4 - 2025-07-22
 
 - Feature: Add interrogation methods (e.g. `approved?`) for schema class enums.

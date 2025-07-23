@@ -75,7 +75,7 @@ module Deimos
         if schema_class.nil?
           schema_backend_class.new(schema: schema, namespace: namespace)
         else
-          schema_instance = schema_class.new
+          schema_instance = schema_class.allocate
           schema_backend_class.new(schema: schema_instance.schema, namespace: schema_instance.namespace)
         end
       else
