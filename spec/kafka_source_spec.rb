@@ -105,23 +105,96 @@ module KafkaSourceSpec
       expect('my-topic-the-second').to have_sent(nil, widget.id)
     end
 
+    context 'multi-producer model using two different key fields' do
+      before(:each) do
+        class MultiKeyWidget < ActiveRecord::Base
+          include Deimos::KafkaSource
+          self.table_name = 'widgets'
+
+          def self.kafka_producers
+            [WidgetProducer, WidgetStringKeyProducer]
+          end
+        end
+
+        class WidgetStringKeyProducer < Deimos::ActiveRecordProducer
+          class << self
+
+            def generate_payload(attributes, record)
+              payload = super(attributes, record)
+              payload.merge('id' => record.model_id)
+
+            end
+
+            def generate_deletion_payload(record)
+              { payload_key: record.model_id }
+            end
+          end
+        end
+
+        Karafka::App.routes.redraw do
+          topic 'my-topic' do
+            namespace 'com.my-namespace'
+            schema 'Widget'
+            key_config field: :id
+            producer_class WidgetProducer
+          end
+
+          topic 'my-topic-the-Third' do
+            namespace 'com.my-namespace'
+            schema 'WidgetTheThird'
+            key_config field: :model_id
+            producer_class WidgetStringKeyProducer
+          end
+
+        end
+      end
+
+      it 'publishes create/delete with correct keys per producer (primary: id, secondary: model_id)' do
+        multi_key_widget = MultiKeyWidget.create!(widget_id: 7, model_id: 'model-id-123', name: 'name-123')
+
+        expect('my-topic').to have_sent({
+                                          widget_id: 7,
+                                          name: 'name-123',
+                                          id: multi_key_widget.id,
+                                          created_at: anything,
+                                          updated_at: anything
+                                        }, multi_key_widget.id)
+
+        expect('my-topic-the-Third').to have_sent({
+                                                    widget_id: 7,
+                                                    model_id: multi_key_widget.model_id,
+                                                    id: multi_key_widget.model_id,
+                                                    created_at: anything,
+                                                    updated_at: anything
+                                                  }, multi_key_widget.model_id)
+
+        expect(WidgetProducer).to receive(:generate_deletion_payload).and_call_original
+        expect(WidgetStringKeyProducer).to receive(:generate_deletion_payload).and_call_original
+
+        multi_key_widget.destroy
+
+        expect('my-topic').to have_sent(nil, multi_key_widget.id)
+        expect('my-topic-the-Third').to have_sent(nil, multi_key_widget.model_id)
+      end
+    end
+
     context 'with truncation off' do
       before(:each) do
         Deimos.config.producers.truncate_columns = false
       end
       it 'should not truncate values' do
-        widget = Widget.create!(widget_id: 1, name: 'a'*500)
+        widget = Widget.create!(widget_id: 1, name: 'a' * 500)
         expect('my-topic').to have_sent({
                                           widget_id: 1,
-                                          name: 'a'*500,
+                                          name: 'a' * 500,
                                           id: widget.id,
                                           created_at: anything,
                                           updated_at: anything
                                         }, 1)
-        widget.update_attribute(:name, 'b'*500)
+        widget.update_attribute(:name, 'b' * 500)
         expect('my-topic').to have_sent({
                                           widget_id: 1,
-                                          name: 'b'*500,
+                                          name: 'b' * 500,
                                           id: widget.id,
                                           created_at: anything,
                                           updated_at: anything
@@ -134,18 +207,18 @@ module KafkaSourceSpec
         Deimos.config.producers.truncate_columns = true
       end
       it 'should truncate values' do
-        widget = Widget.create!(widget_id: 1, name: 'a'*500)
+        widget = Widget.create!(widget_id: 1, name: 'a' * 500)
         expect('my-topic').to have_sent({
                                           widget_id: 1,
-                                          name: 'a'*100,
+                                          name: 'a' * 100,
                                           id: widget.id,
                                           created_at: anything,
                                           updated_at: anything
                                         }, 1)
-        widget.update_attribute(:name, 'b'*500)
+        widget.update_attribute(:name, 'b' * 500)
         expect('my-topic').to have_sent({
                                           widget_id: 1,
-                                          name: 'b'*100,
+                                          name: 'b' * 100,
                                           id: widget.id,
                                           created_at: anything,
                                           updated_at: anything
@@ -304,6 +377,7 @@ module KafkaSourceSpec
             [WidgetProducer]
           end
         end
+
         WidgetNoImportHook.reset_column_information
       end
 
