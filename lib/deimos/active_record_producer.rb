@@ -76,6 +76,15 @@ module Deimos
         Utils::SchemaClass.instance(payload, encoder.schema, encoder.namespace)
       end
 
+      # Deletion payload for a record by default, delegate to the
+      # model's deletion_payload. Producers may override this method to
+      # customize the deletion key/payload per producer.
+      # @param record [ActiveRecord::Base]
+      # @return [Hash]
+      def generate_deletion_payload(record)
+        record.deletion_payload
+      end
+
       # Query to use when polling the database with the DbPoller. Add
       # includes, joins, or wheres as necessary, or replace entirely.
       # @param time_from [Time] the time to start the query from.
@@ -100,7 +109,7 @@ module Deimos
       end
 
       # Post process records after publishing
-      # @param records [Array<ActiveRecord::Base>]
+      # @param _records [Array<ActiveRecord::Base>]
       def post_process(_records)
       end
 

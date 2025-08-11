@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+##
+
+- Feature: Producers can now customize the deletion payload, so different producers using the same model can send different delete messages.
+
 # 2.1.7 - 2025-07-23
 
 - Feature: Skip batch_record_list fill_primary_keys! if the primary key has already been filled during consumption
@@ -320,7 +324,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # 1.12.2 - 2021-12-10
 
 ### Features :star:
-
 - Added `Deimos.encode` and `Deimos.decode` for non-topic-related encoding and decoding.
 
 # 1.12.1 - 2021-11-02
@@ -331,7 +334,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # 1.12.0 - 2021-11-01
 
 ### Features :star:
-
 - Generate Schema classes from Avro Schemas
 - Use Schema Classes in your consumer and producer 
 
@@ -365,7 +367,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a `save_record` method to ActiveRecordConsumer in case calling code wants to work with the record before saving.
 
 - ### Fixes :wrench:
-
 - Fixed a regression where the default values for consumer / Phobos listener configs were not correct (they were all nil). This is technically a breaking change, but it puts the configs back the way they were at version 1.4 and matches the documentation.
 
 ## 1.9.2 - 2021-01-29
@@ -382,7 +383,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped the version of ruby-kafka to latest
 
 - ### Fixes :wrench:
-
 - Prevents DB Poller from reconnecting to DB if there is an open transaction
 - Replaces `before` by `prepend_before` for more consistent test setups.
 - Adds validation in the `kafka_producers` method (fixes [#90](https://github.com/flipp-oss/deimos/issues/90))
