@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-# 2.1.8 - 2025-08-11
+##
 
 - Feature: Producers can now customize the deletion payload, so different producers using the same model can send different delete messages.
 
