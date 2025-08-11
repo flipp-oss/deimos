@@ -46,7 +46,9 @@ module Deimos
     def send_kafka_event_on_destroy
       return unless self.class.kafka_config[:delete]
 
-      self.class.kafka_producers.each { |p| p.publish_list([self.deletion_payload]) }
+      self.class.kafka_producers.each do |p|
+        p.publish_list([p.generate_deletion_payload(self)])
+      end
     end
 
     # Payload to send after we are destroyed.
