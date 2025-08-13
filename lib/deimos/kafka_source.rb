@@ -28,17 +28,19 @@ module Deimos
       return unless self.class.kafka_config[:update]
 
       producers = self.class.kafka_producers
-      fields = producers.flat_map { |p| p.watched_attributes(self) }.uniq
-      fields -= ['updated_at']
-      # Only send an event if a field we care about was changed.
-      any_changes = fields.any? do |field|
-        field_change = self.previous_changes[field]
-        field_change.present? && field_change[0] != field_change[1]
-      end
-      return unless any_changes
-      self.truncate_columns if Deimos.config.producers.truncate_columns
+      producers.each do |producer|
+        fields = producer.watched_attributes(self).uniq
+        fields -= ['updated_at']
+        # Only send an event if a field we care about was changed.
+        any_changes = fields.any? do |field|
+          field_change = self.previous_changes[field]
+          field_change.present? && field_change[0] != field_change[1]
+        end
+        next unless any_changes
 
-      producers.each { |p| p.send_event(self) }
+        self.truncate_columns if Deimos.config.producers.truncate_columns
+        producer.send_event(self)
+      end
     end
 
     # Send a deletion (null payload) event to Kafka.
@@ -82,7 +84,7 @@ module Deimos
       # @!visibility private
       def import_without_validations_or_callbacks(column_names,
                                                   array_of_attributes,
-                                                  options={})
+                                                  options = {})
         results = super
         if !self.kafka_config[:import] || array_of_attributes.empty?
           return results
@@ -112,7 +114,8 @@ module Deimos
             last_id = if self.connection.adapter_name.downcase =~ /sqlite/
                         self.connection.select_value('select last_insert_rowid()') -
                           hashes_without_id.size + 1
-                      else # mysql
+                      else
+                        # mysql
                         self.connection.select_value('select LAST_INSERT_ID()')
                       end
             hashes_without_id.each_with_index do |attrs, i|
@@ -130,6 +133,7 @@ module Deimos
       self.class.columns.each do |col|
         next unless col.type == :string
         next if self[col.name].blank?
+
         if self[col.name].to_s.length > col.limit
           self[col.name] = self[col.name][0..col.limit - 1]
         end
