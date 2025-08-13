@@ -27,9 +27,11 @@ module Deimos
     def send_kafka_event_on_update
       return unless self.class.kafka_config[:update]
 
+      self.truncate_columns if Deimos.config.producers.truncate_columns
+
       producers = self.class.kafka_producers
       producers.each do |producer|
-        fields = producer.watched_attributes(self).uniq
+        fields = producer.watched_attributes(self)
         fields -= ['updated_at']
         # Only send an event if a field we care about was changed.
         any_changes = fields.any? do |field|
@@ -38,7 +40,6 @@ module Deimos
         end
         next unless any_changes
 
-        self.truncate_columns if Deimos.config.producers.truncate_columns
         producer.send_event(self)
       end
     end
