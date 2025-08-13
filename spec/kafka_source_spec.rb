@@ -17,10 +17,16 @@ module KafkaSourceSpec
 
       # Dummy producer which mimicks the behavior of a real producer
       class WidgetProducer < Deimos::ActiveRecordProducer
+        def self.watched_attributes(_record)
+          %w(name widget_id)
+        end
       end
 
       # Dummy producer which mimicks the behavior of a real producer
       class WidgetProducerTheSecond < Deimos::ActiveRecordProducer
+        def self.watched_attributes(_record)
+          %w(description widget_id)
+        end
       end
 
       # Dummy class we can include the mixin in. Has a backing table created
@@ -122,7 +128,6 @@ module KafkaSourceSpec
             def generate_payload(attributes, record)
               payload = super(attributes, record)
               payload.merge('id' => record.model_id)
-
             end
 
             def generate_deletion_payload(record)
@@ -182,6 +187,7 @@ module KafkaSourceSpec
       before(:each) do
         Deimos.config.producers.truncate_columns = false
       end
+
       it 'should not truncate values' do
         widget = Widget.create!(widget_id: 1, name: 'a' * 500)
         expect('my-topic').to have_sent({
@@ -206,6 +212,7 @@ module KafkaSourceSpec
       before(:each) do
         Deimos.config.producers.truncate_columns = true
       end
+
       it 'should truncate values' do
         widget = Widget.create!(widget_id: 1, name: 'a' * 500)
         expect('my-topic').to have_sent({
@@ -466,5 +473,41 @@ module KafkaSourceSpec
         }.to raise_error(Deimos::MissingImplementationError)
       end
     end
+
+    describe 'Isolated watched‑attribute per producer when send_kafka_event_on_update' do
+      it 'should only send events to producers that watch the name field' do
+        widget = Widget.create!(widget_id: 1, name: 'initial', description: 'initial desc')
+        clear_kafka_messages!
+
+        widget.update_attribute(:name, 'updated name')
+
+        expect('my-topic').to have_sent(hash_including(name: 'updated name'))
+        expect('my-topic-the-second').not_to have_sent(anything)
+      end
+
+      it 'should only send events to producers that watch the description field' do
+        widget = Widget.create!(widget_id: 1, name: 'test', description: 'initial desc')
+        clear_kafka_messages!
+
+        widget.update_attribute(:description, 'updated description')
+
+        expect('my-topic-the-second').to have_sent(anything)
+        expect('my-topic').not_to have_sent(anything)
+      end
+
+      it 'should send events to all producers when a commonly watched field changes' do
+        allow(WidgetProducer).to receive(:watched_attributes).and_return(%w(name widget_id))
+        allow(WidgetProducerTheSecond).to receive(:watched_attributes).and_return(%w(description widget_id))
+
+        widget = Widget.create!(widget_id: 1, name: 'test', description: 'test desc')
+        clear_kafka_messages!
+
+        widget.update_attribute(:widget_id, 999)
+
+        expect('my-topic').to have_sent(hash_including(widget_id: 999))
+        expect('my-topic-the-second').to have_sent(hash_including(widget_id: 999))
+      end
+    end
+
   end
 end
