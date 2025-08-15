@@ -43,15 +43,27 @@ module Deimos
       # @param exception [Throwable]
       # @param message [Karafka::Messages::Message]
       def _handle_message_error(exception, message)
-        Deimos::Logging.log_warn(
-          message: 'Error consuming message',
-          handler: self.class.name,
-          metadata: Deimos::Logging.metadata_log_text(message.metadata),
-          key: message.key,
-          data: message.payload,
-          error_message: exception.message,
-          error: exception.backtrace
-        )
+        begin
+          Deimos::Logging.log_warn(
+            message: 'Error consuming message',
+            handler: self.class.name,
+            metadata: Deimos::Logging.metadata_log_text(message.metadata),
+            key: message.key,
+            data: message.payload,
+            error_message: exception.message,
+            error: exception.backtrace
+          )
+        rescue # serialization issues
+          Deimos::Logging.log_warn(
+            message: 'Error consuming message',
+            handler: self.class.name,
+            metadata: Deimos::Logging.metadata_log_text(message.metadata),
+            key: message.raw_key,
+            data: message.raw_payload,
+            error_message: exception.message,
+            error: exception.backtrace
+          )
+        end
 
         _error(exception, Karafka::Messages::Messages.new([message], messages.metadata))
       end

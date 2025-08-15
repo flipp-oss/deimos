@@ -21,10 +21,14 @@ module Deimos
 
       # @return [AvroTurf::Messaging]
       def avro_turf_messaging
-        @avro_turf_messaging ||= AvroTurf::Messaging.new(
+        path = Deimos.config.schema.path.presence || Deimos.config.schema.paths[:avro].first
+        if path.blank?
+          raise "No schema paths configured for `avro` backend!"
+        end
+         @avro_turf_messaging ||= AvroTurf::Messaging.new(
           schema_store: @schema_store,
           registry_url: Deimos.config.schema.registry_url,
-          schemas_path: Deimos.config.schema.path,
+          schemas_path: path,
           user: Deimos.config.schema.user,
           password: Deimos.config.schema.password,
           namespace: @namespace,

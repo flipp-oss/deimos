@@ -27,7 +27,9 @@ module Deimos # rubocop:disable Metrics/ModuleLength
         if transcoder.respond_to?(:key_field) && transcoder.key_field
           transcoder.backend = Deimos.schema_backend(schema: config.schema,
                                                      namespace: config.namespace)
-          transcoder.backend.generate_key_schema(transcoder.key_field)
+          if transcoder.backend.supports_key_schemas?
+            transcoder.backend.generate_key_schema(transcoder.key_field)
+          end
         end
       end
     end
@@ -159,6 +161,11 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # Local path to look for schemas in.
       # @return [String]
       setting :path
+
+      # For multi-backend, this is a hash of backend names to a list of paths to associate.
+      # E.g. {avro: ['app/schemas'], protobuf: ['protos', 'app/gen/protos']}
+      # @return [Hash]
+      setting :paths, {}
 
       # Local path for schema classes to be generated in.
       # @return [String]
