@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Support Protobuf as a schema backend.
+- Feature: Add `schema.paths` as a way to provide different paths to different schema backends, as well as the ability to provide multiple paths, e.g. for the protobuf backend.
+
 # 2.1.9 - 2025-08-13
 
 - Fix: When a model uses multiple producers, `send_kafka_event_on_update` no longer aggregates `watched_attributes` across all producers and publishes to all of them if any field changed. It now evaluates each producer’s `watched_attributes` independently and publishes only to the producers whose fields changed (per‑producer isolation).

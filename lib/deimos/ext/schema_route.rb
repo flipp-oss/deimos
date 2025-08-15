@@ -10,6 +10,7 @@ module Deimos
         schema: nil,
         namespace: nil,
         key_config: {none: true},
+        schema_backend: nil,
         use_schema_classes: Deimos.config.schema.use_schema_classes
       }.each do |field, default|
         define_method(field) do |*args|
@@ -26,6 +27,7 @@ module Deimos
         payload = Transcoder.new(
             schema: schema,
             namespace: namespace,
+            backend: schema_backend,
             use_schema_classes: use_schema_classes,
             topic: name
           )
@@ -35,6 +37,7 @@ module Deimos
         if key_config[:plain]
           key = Transcoder.new(
             schema: schema,
+            backend: schema_backend,
             namespace: namespace,
             use_schema_classes: use_schema_classes,
             topic: name
@@ -44,6 +47,7 @@ module Deimos
           if key_config[:field]
             key = Transcoder.new(
               schema: schema,
+              backend: schema_backend,
               namespace: namespace,
               use_schema_classes: use_schema_classes,
               key_field: key_config[:field].to_s,
@@ -52,6 +56,7 @@ module Deimos
           elsif key_config[:schema]
             key = Transcoder.new(
               schema: key_config[:schema] || schema,
+              backend: schema_backend,
               namespace: namespace,
               use_schema_classes: use_schema_classes,
               topic: self.name

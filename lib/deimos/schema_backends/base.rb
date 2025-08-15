@@ -41,6 +41,16 @@ module Deimos
         @namespace = namespace
       end
 
+      # @return [Boolean]
+      def supports_key_schemas?
+        false
+      end
+
+      # @return [Boolean]
+      def supports_class_generation?
+        false
+      end
+
       # Encode a payload with a schema. Public method.
       # @param payload [Hash]
       # @param schema [String,Symbol]

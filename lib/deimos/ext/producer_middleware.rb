@@ -1,7 +1,16 @@
 module Deimos
 
   module ProducerMiddleware
+
     class << self
+
+      def allowed_classes
+        arr = [Hash, SchemaClass::Record]
+        if defined?(Google::Protobuf)
+          arr.push(Google::Protobuf.const_get(:AbstractMessage))
+        end
+        @allowed_classes ||= arr.freeze
+      end
 
       def call(message)
         Karafka.monitor.instrument(
@@ -13,9 +22,12 @@ module Deimos
 
           config = Deimos.karafka_config_for(topic: message[:topic])
           return message if config.nil? || config.schema.nil?
-          return if message[:payload] && !message[:payload].is_a?(Hash) && !message[:payload].is_a?(SchemaClass::Record)
+          return if message[:payload] &&
+                    self.allowed_classes.none? { |k| message[:payload].is_a?(k) }
 
-          m = Deimos::Message.new(message[:payload].to_h,
+          payload = message[:payload]
+          payload = payload.to_h if payload.nil? || payload.is_a?(SchemaClass::Record)
+          m = Deimos::Message.new(payload,
                                   headers: message[:headers],
                                   partition_key: message[:partition_key])
           _process_message(m, message, config)
