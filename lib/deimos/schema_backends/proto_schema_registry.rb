@@ -23,17 +23,8 @@ module Deimos
 
       # @return [ProtoTurf]
       def self.proto_turf
-        paths = if Deimos.config.schema.path.present?
-                  [Deimos.config.schema.path]
-                else
-                  Deimos.config.schema.paths[:protobuf]
-                end
-        if paths.empty?
-          raise "No schema paths configured for `protobuf` backend!"
-        end
         @proto_turf ||= ProtoTurf.new(
           registry_url: Deimos.config.schema.registry_url,
-          schema_paths: paths,
           logger: Karafka.logger
         )
       end

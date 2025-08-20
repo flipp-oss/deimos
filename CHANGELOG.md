@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 - Feature: Support Protobuf as a schema backend.
-- Feature: Add `schema.paths` as a way to provide different paths to different schema backends, as well as the ability to provide multiple paths, e.g. for the protobuf backend.
+- Feature: Add the ability to specify the schema backend per topic.
 
 # 2.1.9 - 2025-08-13
 

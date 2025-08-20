@@ -162,11 +162,6 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       # @return [String]
       setting :path
 
-      # For multi-backend, this is a hash of backend names to a list of paths to associate.
-      # E.g. {avro: ['app/schemas'], protobuf: ['protos', 'app/gen/protos']}
-      # @return [Hash]
-      setting :paths, {}
-
       # Local path for schema classes to be generated in.
       # @return [String]
       setting :generated_class_path, 'app/lib/schema_classes'

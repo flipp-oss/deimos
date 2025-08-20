@@ -101,18 +101,6 @@ contribute!
 
 To create a new schema backend, please see the existing examples [here](lib/deimos/schema_backends).
 
-## Note about paths
-
-Deimos supports two ways of specifying schema paths. The simple way is to give a single path that applies across all backends. You can also specify a set of paths per backend:
-
-```ruby
-Deimos.configure do
-  schema.paths({avro: ['app/schemas'], protobuf: ['protos', 'app/gen/protos']})
-end
-```
-
-For now the only keys this hash will use are `avro` and `protobuf`.
-
 # Producers
 
 With the correct [configuration](./docs/CONFIGURATION.md), you do not need to use a Deimos producer class in order to send schema-encoded messages to Kafka. You can simply use `Karafka.producer.produce()` (see [here](https://karafka.io/docs/Producing-messages/)). There are a few features that Deimos producers provide:

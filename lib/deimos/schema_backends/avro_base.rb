@@ -15,11 +15,7 @@ module Deimos
       # @override
       def initialize(schema:, namespace:)
         super(schema: schema, namespace: namespace)
-        path = Deimos.config.schema.path.presence || Deimos.config.schema.paths[:avro].first
-        if path.blank?
-          raise "No schema paths configured for `avro` backend!"
-        end
-        @schema_store = AvroTurf::MutableSchemaStore.new(path: path)
+        @schema_store = AvroTurf::MutableSchemaStore.new(path: Deimos.config.schema.path)
       end
 
       def supports_key_schemas?

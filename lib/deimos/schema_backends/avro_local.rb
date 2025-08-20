@@ -20,12 +20,8 @@ module Deimos
 
       # @return [AvroTurf]
       def avro_turf
-        path = Deimos.config.schema.path.presence || Deimos.config.schema.paths[:avro].first
-        if path.blank?
-          raise "No schema paths configured for `avro` backend!"
-        end
         @avro_turf ||= AvroTurf.new(
-          schemas_path: path,
+          schemas_path: Deimos.config.schema.path,
           schema_store: @schema_store
         )
       end
