@@ -102,10 +102,19 @@ module Deimos
       # @param key_transcoder [Deimos::Transcoder]
       # @return [String]
       def _retrieve_key(payload, key_transcoder)
-        key = payload.delete(:payload_key)
+        key = payload.try(:delete, :payload_key)
         return key if key || !key_transcoder.respond_to?(:key_field)
 
-        key_transcoder.key_field ? payload[key_transcoder.key_field] : nil
+        if key_transcoder.key_field
+          key = key_transcoder.key_field.to_s.split('.')
+          current = payload
+          key.each do |k|
+            current = current[k] if current
+          end
+          current
+        else
+          nil
+        end
       end
     end
   end
