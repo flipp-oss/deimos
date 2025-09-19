@@ -50,7 +50,10 @@ module Deimos
       return unless self.class.kafka_config[:delete]
 
       self.class.kafka_producers.each do |p|
-        p.publish_list([p.generate_deletion_payload(self)])
+        generated = p.respond_to?(:generate_deletion_payload) ?
+                      p.generate_deletion_payload(self) :
+                      self.deletion_payload
+        p.publish_list([generated])
       end
     end
 
