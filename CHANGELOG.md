@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 2.1.10 - 2025-09-19
+
 - Feature: Added `delete_record?` method to ActiveRecordConsumer to allow inspection of the payload to decide whether to delete, instead of hardcoding it to only delete on a null payload.
 
 # 2.1.9 - 2025-08-13
