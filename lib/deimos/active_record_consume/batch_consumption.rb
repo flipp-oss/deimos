@@ -125,7 +125,7 @@ module Deimos
       def update_database(messages)
         # Find all upserted records (i.e. that have a payload) and all
         # deleted record (no payload)
-        removed, upserted = messages.partition(&:tombstone?)
+        removed, upserted = messages.partition { |m| delete_record?(m) }
 
         max_db_batch_size = self.class.config[:max_db_batch_size]
         if upserted.any?
