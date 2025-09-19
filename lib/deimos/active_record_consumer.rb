@@ -95,6 +95,14 @@ module Deimos
       self.converter.convert(payload)
     end
 
+    # Indicates whether to delete the given message. Defaults to checking if the message
+    # payload is nil.
+    # @param message [Deimos::Message]
+    # @return [Boolean]
+    def delete_record?(message)
+      message.payload.nil?
+    end
+
     # Override this message to conditionally save records
     # @param _payload [Hash,Deimos::SchemaClass::Record] The kafka message
     # @return [Boolean] if true, record is created/update.
