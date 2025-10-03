@@ -10,6 +10,11 @@
       "doc": "test string"
     },
     {
+      "name": "union_string",
+      "type": ["string", "null"],
+      "default": ""
+    },
+    {
       "name": "test_float",
       "type": "float",
       "doc": "test float"

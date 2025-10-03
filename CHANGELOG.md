@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 2.1.13 - 2025-10-03
+- Fix: Union types where the first type is string and has a default value of empty string was incorrectly turning the field into a required argument, which crashed when trying to instantiate it.
+
 # 2.1.12 - 2025-10-03
 
 - Fix: Fixes a crash when schema classes are in use and key config is set to `:plain`.

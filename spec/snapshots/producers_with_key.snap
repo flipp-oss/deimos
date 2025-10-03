@@ -825,6 +825,8 @@ module Schemas
     ### Attribute Accessors ###
     # @return [String]
     attr_accessor :test_id
+    # @return [String, nil]
+    attr_accessor :union_string
     # @return [Float]
     attr_accessor :test_float
     # @return [Array<String>]
@@ -880,6 +882,7 @@ module Schemas
 
     # @override
     def initialize(_from_message: false, test_id: nil,
+                   union_string: "",
                    test_float: nil,
                    test_string_array: ["test"],
                    test_int_array: [123],
@@ -895,6 +898,7 @@ module Schemas
       @_from_message = _from_message
       super
       self.test_id = test_id
+      self.union_string = union_string
       self.test_float = test_float
       self.test_string_array = test_string_array
       self.test_int_array = test_int_array
@@ -923,6 +927,7 @@ module Schemas
     def as_json(_opts={})
       {
         'test_id' => @test_id,
+        'union_string' => @union_string,
         'test_float' => @test_float,
         'test_string_array' => @test_string_array,
         'test_int_array' => @test_int_array,
