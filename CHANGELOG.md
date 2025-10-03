@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 2.1.12 - 2025-10-03
+
+- Fix: Fixes a crash when schema classes are in use and key config is set to `:plain`.
+
 # 2.1.11 - 2025-09-19
 
 - Fix: KafkaSource was broken when used with a non-ActiveRecordProducer.
