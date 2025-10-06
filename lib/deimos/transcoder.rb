@@ -57,7 +57,7 @@ module Deimos
       return nil if payload.nil?
 
       decoded_payload = self.backend.decode(payload)
-      return decoded_payload unless @use_schema_classes
+      return decoded_payload if !@use_schema_classes || !decoded_payload.is_a?(Hash)
 
       Utils::SchemaClass.instance(decoded_payload,
                                   @schema,

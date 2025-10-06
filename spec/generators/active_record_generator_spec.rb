@@ -16,7 +16,7 @@ RSpec.describe Deimos::Generators::ActiveRecordGenerator do
     files = Dir['db/migrate/*.rb']
     expect(files.length).to eq(1)
     results = <<~MIGRATION
-      class CreateGeneratedTable < ActiveRecord::Migration[6.1]
+      class CreateGeneratedTable < ActiveRecord::Migration[8.0]
         def up
           if table_exists?(:generated_table)
             warn "generated_table already exists, exiting"

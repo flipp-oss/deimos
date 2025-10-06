@@ -273,9 +273,12 @@ module ProducerTest
     end
 
     describe 'payload logging' do
+      before(:each) do
+        allow(Karafka.logger).to receive(:info)
+        allow(Karafka.logger).to receive(:tagged).and_yield(Karafka.logger)
+      end
       context 'with default / full' do
         it 'should log full payload' do
-          allow(Karafka.logger).to receive(:info)
           MyProducerWithID.publish_list(
             [
               { 'test_id' => 'foo', 'some_int' => 123, :payload_key => 'key' },
@@ -301,7 +304,6 @@ module ProducerTest
       context 'with count' do
         it 'should log only count' do
           Deimos.karafka_config_for(topic: 'my-topic-with-id').payload_log :count
-          allow(Karafka.logger).to receive(:info)
           MyProducerWithID.publish_list(
             [
               { 'test_id' => 'foo', 'some_int' => 123, :payload_key => 'key' },

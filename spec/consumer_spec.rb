@@ -20,6 +20,7 @@ module ConsumerTest
         # :nodoc:
         def consume_message(message)
           message.payload
+          message.key
         end
       end
       stub_const('ConsumerTest::MyConsumer', consumer_class)
@@ -80,6 +81,23 @@ module ConsumerTest
           it 'should fail on invalid message' do
             expect { test_consume_message(MyConsumer, { 'invalid' => 'key' }) }.
               to raise_error(Avro::SchemaValidator::ValidationError)
+          end
+
+          it 'should work if schema is set to string' do
+            Karafka::App.routes.redraw do
+              topic 'my_consume_topic' do
+                schema 'MySchema'
+                namespace 'com.my-namespace'
+                key_config plain: true
+                consumer MyConsumer
+                reraise_errors true
+                use_schema_classes use_schema_classes
+                reraise_errors true
+              end
+            end
+
+            test_consume_message(MyConsumer, { 'test_id' => 'foo',
+                                 'some_int' => 123 }, key: 'a key')
           end
 
           it 'should fail if reraise is false but fatal_error is true' do

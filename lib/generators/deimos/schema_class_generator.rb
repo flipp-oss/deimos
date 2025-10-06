@@ -276,7 +276,11 @@ module Deimos
         default = field.default
         return ' nil' if default == :no_default || default.nil? || IGNORE_DEFAULTS.include?(field.name)
 
-        case field.type.type_sym
+        type_sym = field.type.type_sym
+        if type_sym == :union
+          type_sym = field.type.schemas.find { |s| s.type_sym != :null }&.type_sym
+        end
+        case type_sym
         when :string, :enum
           " \"#{default}\""
         when :record

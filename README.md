@@ -501,6 +501,12 @@ class MyConsumer < Deimos::ActiveRecordConsumer
   def destroy_record(record)
     super
   end
+  
+  # Optional override of the logic determining whether to delete the record. Default is to
+  # delete it if the payload is nil.
+  def delete_record?(record)
+    super
+  end
  
   # Optional override to change the attributes of the record before they
   # are saved.

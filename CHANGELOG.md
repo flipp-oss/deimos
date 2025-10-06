@@ -10,6 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature: Support Protobuf as a schema backend.
 - Feature: Add the ability to specify the schema backend per topic.
 
+# 2.1.13 - 2025-10-03
+- Fix: Union types where the first type is string and has a default value of empty string was incorrectly turning the field into a required argument, which crashed when trying to instantiate it.
+
+# 2.1.12 - 2025-10-03
+
+- Fix: Fixes a crash when schema classes are in use and key config is set to `:plain`.
+
+# 2.1.11 - 2025-09-19
+
+- Fix: KafkaSource was broken when used with a non-ActiveRecordProducer.
+
+# 2.1.10 - 2025-09-19
+
+- Feature: Added `delete_record?` method to ActiveRecordConsumer to allow inspection of the payload to decide whether to delete, instead of hardcoding it to only delete on a null payload.
+
 # 2.1.9 - 2025-08-13
 
 - Fix: When a model uses multiple producers, `send_kafka_event_on_update` no longer aggregates `watched_attributes` across all producers and publishes to all of them if any field changed. It now evaluates each producer’s `watched_attributes` independently and publishes only to the producers whose fields changed (per‑producer isolation).

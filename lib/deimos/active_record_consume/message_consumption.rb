@@ -46,7 +46,7 @@ module Deimos
           payload = payload.to_h.with_indifferent_access
         end
         record = fetch_record(klass, payload, message.key)
-        if message.payload.nil?
+        if delete_record?(message)
           destroy_record(record)
           return
         end
