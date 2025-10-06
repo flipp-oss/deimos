@@ -27,7 +27,9 @@ module Deimos # rubocop:disable Metrics/ModuleLength
         if transcoder.respond_to?(:key_field) && transcoder.key_field
           transcoder.backend = Deimos.schema_backend(schema: config.schema,
                                                      namespace: config.namespace)
-          transcoder.backend.generate_key_schema(transcoder.key_field)
+          if transcoder.backend.supports_key_schemas?
+            transcoder.backend.generate_key_schema(transcoder.key_field)
+          end
         end
       end
     end

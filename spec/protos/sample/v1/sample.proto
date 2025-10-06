@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package sample.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message NestedMessage {
+  string nested_str = 1;
+  int32 nested_num = 2;
+}
+
+message SampleMessage {
+  string str = 1;
+  int32 num = 2;
+  repeated string str_arr = 3;
+  bool flag = 4;
+  google.protobuf.Timestamp timestamp = 5;
+  oneof union {
+    NestedMessage nested = 6;
+    string union_str = 7;
+  }
+  NestedMessage non_union_nested = 8;
+  map<string, string> str_map = 9;
+}

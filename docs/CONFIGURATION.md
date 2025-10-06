@@ -52,18 +52,18 @@ things you need to reference into local variables before calling `configure`.
 
 ### Schema Configuration
 
-| Config name                 | Default                  | Description                                                                                                                                             |
-|-----------------------------|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| schema.backend              | `:mock`                  | Backend representing the schema encoder/decoder. You can see a full list [here](../lib/deimos/schema_backends).                                         |
-| schema.registry_url         | `http://localhost:8081`  | URL of the Confluent schema registry.                                                                                                                   |
-| schema.user                 | nil                      | Basic auth user.                                                                                                                                        |
-| schema.password             | nil                      | Basic auth password.                                                                                                                                    |
-| schema.path                 | nil                      | Local path to find your schemas.                                                                                                                        |
-| schema.use_schema_classes   | false                    | Set this to true to use generated schema classes in your application.                                                                                   |
-| schema.generated_class_path | `app/lib/schema_classes` | Local path to generated schema classes.                                                                                                                 |
-| schema.nest_child_schemas   | false                    | Set to true to nest subschemas within the generated class for the parent schema.                                                                        |
-| schema.use_full_namespace   | false                    | Set to true to generate folders for schemas matching the full namespace.                                                                                |
-| schema.schema_namespace_map | {}                       | A map of namespace prefixes to base module name(s). Example: { 'com.mycompany.suborg' => ['SchemaClasses'] }. Requires `use_full_namespace` to be true. |
+| Config name                 | Default                  | Description                                                                                                                                                |
+|-----------------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| schema.backend              | `:mock`                  | Backend representing the schema encoder/decoder. You can see a full list [here](../lib/deimos/schema_backends).                                            |
+| schema.registry_url         | `http://localhost:8081`  | URL of the Confluent schema registry.                                                                                                                      |
+| schema.user                 | nil                      | Basic auth user.                                                                                                                                           |
+| schema.password             | nil                      | Basic auth password.                                                                                                                                       |
+| schema.path                 | nil                      | Local path to find your schemas.                                                                                                                           |
+| schema.use_schema_classes   | false                    | Set this to true to use generated schema classes in your application.                                                                                      |
+| schema.generated_class_path | `app/lib/schema_classes` | Local path to generated schema classes.                                                                                                                    |
+| schema.nest_child_schemas   | false                    | Set to true to nest subschemas within the generated class for the parent schema.                                                                           |
+| schema.use_full_namespace   | false                    | Set to true to generate folders for schemas matching the full namespace.                                                                                   |
+| schema.schema_namespace_map | {}                       | A map of namespace prefixes to base module name(s). Example: { 'com.mycompany.suborg' => ['SchemaClasses'] }. Requires `use_full_namespace` to be true.    |
 
 ### Outbox Configuration
 
@@ -113,8 +113,8 @@ The following are additional settings that can be added to the `topic` block in 
 | Config name        | Default | Description                                                                                                                                                                                     |
 |--------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | payload_log        | :full   | Determines how much data is logged per payload.</br>`:full` - all keys and payloads are logged.</br>`:keys` - only keys are logged.</br>`:count` - only the total count of messages are logged. |
-| schema             | nil     | Name of the schema to use to encode data before producing.                                                                                                                                      |
-| namespace          | nil     | Namespace of the schema to use when finding it locally.                                                                                                                                         |
+| schema             | nil     | Name of the schema to use to encode data before producing. For Avro, namespace and schema are separated, but protobuf uses only the fully resolved name including package.                      |
+| namespace          | nil     | Namespace of the schema to use when finding it locally. Leave blank for protobuf.                                                                                                               |
 | key_config         | nil     | Configuration hash for message keys. See [Kafka Message Keys](../README.md#kafka-message-keys).                                                                                                 |
 | use_schema_classes | nil     | Set to true or false to enable or disable using the producers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes).                                            |
 

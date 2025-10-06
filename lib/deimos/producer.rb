@@ -111,15 +111,20 @@ module Deimos
         backend = determine_backend_class(sync, force_send)
 
         messages = Array(payloads).map do |p|
+          payload = p
+          payload = payload.to_h if p.is_a?(SchemaClass::Record)
           m = {
-            payload: p&.to_h,
+            payload: payload,
             headers: headers,
             topic: topic,
             partition_key: self.partition_key(p)
           }
           if m.dig(:payload, :key).present? && m.dig(:payload, :message).present?
-            m[:key] = m[:payload][:key].to_h
-            m[:payload] = m[:payload][:message].to_h
+            m[:key] = m[:payload][:key]
+            m[:key] = m[:key].to_h if m[:key].nil? || m[:key].is_a?(SchemaClass::Record)
+            m[:payload] = m[:payload][:message]
+            m[:payload] = m[:payload].to_h if m[:payload].nil? ||
+                                              m[:payload].is_a?(SchemaClass::Record)
           end
           m
         end
