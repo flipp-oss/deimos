@@ -36,7 +36,7 @@ module Deimos
     # @param fields [Array<String>] existing name fields in the schema.
     # @return [void]
     def add_fields(fields)
-      return if @payload.to_h.except(:payload_key, :partition_key).blank?
+      return if @payload.to_h.with_indifferent_access.except(:payload_key, :partition_key).blank?
 
       if fields.include?('message_id')
         @payload['message_id'] ||= SecureRandom.uuid
