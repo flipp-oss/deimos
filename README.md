@@ -84,21 +84,19 @@ For a full configuration reference, please see [the configuration docs ](docs/CO
 
 # Schemas
 
-Deimos was originally written only supporting Avro encoding via a schema registry.
-This has since been expanded to a plugin architecture allowing messages to be
-encoded and decoded via any schema specification you wish. 
+Deimos has a plugin architecture allowing messages to be encoded and decoded via any schema specification you wish. 
 
 Currently we have the following possible schema backends:
 * Avro Local (use pure Avro)
 * Avro Schema Registry (use the Confluent Schema Registry)
 * Avro Validation (validate using an Avro schema but leave decoded - this is useful
   for unit testing and development)
+* Protobuf Schema Registry (use Protobuf with the Confluent Schema Registry)
 * Mock (no actual encoding/decoding).
 
-Note that to use Avro-encoding, you must include the [avro_turf](https://github.com/dasch/avro_turf) gem in your
-Gemfile.
+Note that to use Protobuf, you must include the [proto_turf](https://github.com/flipp-oss/proto_turf) gem in your Gemfile.
 
-Other possible schemas could include [Protobuf](https://developers.google.com/protocol-buffers), [JSONSchema](https://json-schema.org/), etc. Feel free to
+Other possible schemas could [JSONSchema](https://json-schema.org/), etc. Feel free to
 contribute!
 
 To create a new schema backend, please see the existing examples [here](lib/deimos/schema_backends).
@@ -140,6 +138,8 @@ class MyProducer < Deimos::Producer
   end
 end
 ```
+
+Note that if you are using Protobuf, you need to pass a Protobuf message object as the payload - you can't use a bare hash.
 
 ## Auto-added Fields
 
@@ -275,6 +275,9 @@ MyProducer.publish({
                      key: MySchemaKey.new("test_id" => "123")
                    })
 ```
+
+> [!IMPORTANT]
+> Protobuf should *not* be used as a key schema, since the binary encoding is [unstable](https://protobuf.dev/programming-guides/encoding/#implications) and may break partitioning. Deimos will automatically convert key fields to plain values and key hashes to JSON.
 
 ## Instrumentation
 
@@ -1090,6 +1093,10 @@ decoded = Deimos.decode(schema: 'MySchema', namespace: 'com.my-namespace', paylo
 Bug reports and pull requests are welcome on GitHub at https://github.com/flipp-oss/deimos .
 
 If making changes to the generator, you should regenerate the test schema classes by running `bundle exec ./regenerate_test_schema_classes.rb` .
+
+You can regenerate test Protobuf classes by running:
+
+    protoc -I spec/protos --ruby_out=spec/gen --ruby_opt=paths=source_relative spec/protos/**/*.proto
 
 You can/should re-generate RBS types when methods or classes change by running the following:
 

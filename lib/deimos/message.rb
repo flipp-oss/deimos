@@ -23,7 +23,8 @@ module Deimos
     # @param key [String, Integer, Hash]
     # @param partition_key [Integer]
     def initialize(payload, topic: nil, key: nil, headers: nil, partition_key: nil)
-      @payload = payload&.with_indifferent_access
+      @payload = payload
+      @payload = @payload.with_indifferent_access if @payload.is_a?(Hash)
       @topic = topic
       @key = key
       @headers = headers&.with_indifferent_access
@@ -35,7 +36,7 @@ module Deimos
     # @param fields [Array<String>] existing name fields in the schema.
     # @return [void]
     def add_fields(fields)
-      return if @payload.except(:payload_key, :partition_key).blank?
+      return if @payload.to_h.with_indifferent_access.except(:payload_key, :partition_key).blank?
 
       if fields.include?('message_id')
         @payload['message_id'] ||= SecureRandom.uuid

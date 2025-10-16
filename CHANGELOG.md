@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Support Protobuf as a schema backend.
+- Feature: Add the ability to specify the schema backend per topic.
+
 # 2.1.13 - 2025-10-03
 - Fix: Union types where the first type is string and has a default value of empty string was incorrectly turning the field into a required argument, which crashed when trying to instantiate it.
 

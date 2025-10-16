@@ -41,7 +41,11 @@ module Deimos
         end
 
         klass = self.class.config[:record_class]
-        record = fetch_record(klass, message.payload.to_h.with_indifferent_access, message.key)
+        payload = message.payload
+        if payload.is_a?(Hash) || payload.nil? || payload.is_a?(SchemaClass::Record)
+          payload = payload.to_h.with_indifferent_access
+        end
+        record = fetch_record(klass, payload, message.key)
         if delete_record?(message)
           destroy_record(record)
           return
