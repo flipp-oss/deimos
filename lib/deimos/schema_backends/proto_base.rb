@@ -31,7 +31,7 @@ module Deimos
       # @override
       def encode_key(key_id, key, topic: nil)
         if key.is_a?(Hash)
-          key_id ? key[key_id].to_s : key.sort.to_h.to_json
+          key_id ? key.with_indifferent_access[key_id].to_s : key.sort.to_h.to_json
         else
           key.to_s
         end
