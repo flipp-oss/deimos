@@ -1,7 +1,7 @@
 module Deimos
   class Transcoder
 
-    attr_accessor :key_field, :backend
+    attr_accessor :key_field, :backend, :backend_type
 
     # @param schema [String]
     # @param namespace [String]
