@@ -1,24 +1,28 @@
 module Deimos
   class Transcoder
 
-    attr_accessor :key_field, :backend
+    attr_accessor :key_field, :backend, :backend_type
 
     # @param schema [String]
     # @param namespace [String]
     # @param key_field [Symbol]
     # @param use_schema_classes [Boolean]
+    # @param backend [Symbol]
     # @param topic [String]
-    def initialize(schema:, namespace:, key_field: nil, use_schema_classes: nil, topic: nil)
+    def initialize(schema:, namespace:, key_field: nil, use_schema_classes: nil, topic: nil, backend: nil)
       @schema = schema
       @namespace = namespace
       self.key_field = key_field
       @use_schema_classes = use_schema_classes
+      @backend_type = backend
       @topic = topic
     end
 
     # @return [Class < Deimos::SchemaBackends::Base]
     def backend
-      @backend ||= Deimos.schema_backend(schema: @schema, namespace: @namespace)
+      @backend ||= Deimos.schema_backend(schema: @schema,
+                                         namespace: @namespace,
+                                         backend: @backend_type)
     end
 
     # for use in test helpers

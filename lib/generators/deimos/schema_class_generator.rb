@@ -48,11 +48,17 @@ module Deimos
         # @param namespace [String]
         # @param key_config [Hash,nil]
         # @return [void]
-        def generate_classes(schema_name, namespace, key_config)
-          schema_base = Deimos.schema_backend(schema: schema_name, namespace: namespace)
+        def generate_classes(schema_name, namespace, key_config, backend: nil)
+          schema_base = Deimos.schema_backend(schema: schema_name,
+                                              namespace: namespace,
+                                              backend: backend)
+          return unless schema_base.supports_class_generation?
+
           schema_base.load_schema
           if key_config&.dig(:schema)
-            key_schema_base = Deimos.schema_backend(schema: key_config[:schema], namespace: namespace)
+            key_schema_base = Deimos.schema_backend(schema: key_config[:schema],
+                                                    namespace: namespace,
+                                                    backend: backend)
             key_schema_base.load_schema
             generate_class_from_schema_base(key_schema_base, key_config: nil)
           end
@@ -174,7 +180,7 @@ module Deimos
 
           found_schemas["#{namespace}.#{schema_name}"] = key_schema_name
           found_schemas["#{namespace}.#{key_schema_name}"] = nil
-          generate_classes(schema_name, namespace, config.key_config)
+          generate_classes(schema_name, namespace, config.key_config, backend: config.schema_backend)
         end
 
         generate_from_schema_files(found_schemas.keys)
@@ -184,7 +190,8 @@ module Deimos
     private
 
       def generate_from_schema_files(found_schemas)
-        schema_store = AvroTurf::MutableSchemaStore.new(path: Deimos.config.schema.path)
+        path = Deimos.config.schema.path || Deimos.config.schema.paths[:avro].first
+        schema_store = AvroTurf::MutableSchemaStore.new(path: path)
         schema_store.load_schemas!
         schema_store.schemas.values.sort_by { |s| "#{s.namespace}#{s.name}" }.each do |schema|
           name = "#{schema.namespace}.#{schema.name}"

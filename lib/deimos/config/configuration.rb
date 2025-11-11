@@ -24,10 +24,13 @@ module Deimos # rubocop:disable Metrics/ModuleLength
       Deimos.karafka_configs.each do |config|
         transcoder = config.deserializers[:key]
 
-        if transcoder.respond_to?(:key_field) && transcoder.key_field
-          transcoder.backend = Deimos.schema_backend(schema: config.schema,
-                                                     namespace: config.namespace)
-          transcoder.backend.generate_key_schema(transcoder.key_field)
+        if transcoder.respond_to?(:key_field) &&
+           transcoder.key_field &&
+           transcoder.backend.supports_key_schemas?
+            transcoder.backend = Deimos.schema_backend(schema: config.schema,
+                                                       namespace: config.namespace,
+                                                       backend: transcoder.backend_type)
+            transcoder.backend.generate_key_schema(transcoder.key_field)
         end
       end
     end

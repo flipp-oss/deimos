@@ -18,6 +18,15 @@ module Deimos
         @schema_store = AvroTurf::MutableSchemaStore.new(path: Deimos.config.schema.path)
       end
 
+      def supports_key_schemas?
+        true
+      end
+
+      # @return [Boolean]
+      def supports_class_generation?
+        true
+      end
+
       # @override
       def encode_key(key_id, key, topic: nil)
         begin

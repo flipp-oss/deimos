@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency('avro_turf', '>= 1.4', '< 2')
+  spec.add_runtime_dependency('benchmark', '~> 0.5')
   spec.add_runtime_dependency('karafka', '~> 2.0')
   spec.add_runtime_dependency('fig_tree', '~> 0.2.0')
   spec.add_runtime_dependency('sigurd', '>= 0.1.0', '< 1.0')
@@ -29,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('database_cleaner', '~> 2.1')
   spec.add_development_dependency('ddtrace', '>= 0.11')
   spec.add_development_dependency('dogstatsd-ruby', '>= 4.2')
+  spec.add_development_dependency('proto_turf')
   spec.add_development_dependency('guard', '~> 2')
   spec.add_development_dependency('guard-rspec', '~> 4')
   spec.add_development_dependency('guard-rubocop', '~> 1')
