@@ -42,6 +42,10 @@ module Deimos
       def decode_key(payload, key_id)
         payload[key_id]
       end
+
+      def supports_key_schemas?
+        true
+      end
     end
   end
 end
