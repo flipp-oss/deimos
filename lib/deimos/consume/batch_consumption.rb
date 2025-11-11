@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'benchmark'
+
 module Deimos
   module Consume
     # Helper methods used by batch consumers, i.e. those with "inline_batch"

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'benchmark'
+
 module Deimos
   module Consume
     # Methods used by message-by-message (non-batch) consumers. These consumers
