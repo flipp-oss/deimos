@@ -12,7 +12,7 @@ module Deimos
     # @param mess [Object]
     # @return [void]
     def message=(mess)
-      write_attribute(:message, mess ? mess.to_s : nil)
+      write_attribute(:message, mess&.to_s)
     end
 
     # Decoded payload for this message.

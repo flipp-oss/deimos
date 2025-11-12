@@ -38,9 +38,9 @@ module Deimos
         if column.type == :datetime
           int_val = begin
                       val.is_a?(Integer) ? val : (val.is_a?(String) && Integer(val))
-                    rescue StandardError
+          rescue StandardError
                       nil
-                    end
+          end
 
           return Time.zone.at(int_val) if int_val
         end

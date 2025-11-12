@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe Deimos::Logging do
   include_context 'with publish_backend'
   describe '#messages_log_text' do

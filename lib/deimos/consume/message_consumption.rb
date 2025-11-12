@@ -20,7 +20,7 @@ module Deimos
 
       def _consume_messages
         messages.each do |message|
-          begin
+
             _with_span do
               _received_message(message)
               benchmark = Benchmark.measure do
@@ -30,7 +30,7 @@ module Deimos
             rescue StandardError => e
               _handle_message_error(e, message)
             end
-          end
+
         end
       end
 
@@ -55,7 +55,7 @@ module Deimos
             error_message: exception.message,
             error: exception.backtrace
           )
-        rescue # serialization issues
+        rescue StandardError # serialization issues
           Deimos::Logging.log_warn(
             message: 'Error consuming message',
             handler: self.class.name,

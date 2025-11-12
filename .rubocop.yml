@@ -1,14 +1,21 @@
 inherit_from: .rubocop_todo.yml
 
-require: rubocop-rspec
+plugins:
+  - rubocop-rspec
 
 AllCops:
   TargetRubyVersion: 2.5
   Exclude:
     - lib/deimos/monkey_patches/*.rb
+    - spec/gen/**/*.rb
+    - lib/deimos/ext/routing_defaults.rb # provided by Maciej
     - vendor/**/*
     - Guardfile
   NewCops: enable
+  SuggestExtensions: false
+
+Gemspec/DevelopmentDependencies:
+  EnforcedStyle: gemspec
 
 # class Plumbus
 # private
@@ -41,9 +48,9 @@ Layout/EmptyLinesAroundBlockBody:
 Layout/LineLength:
   Max: 120
   Severity: refactor
-#  TODO: uncomment the files below once rubocop is fixed
-#  Exclude:
-#  - 'spec/**/*'
+  SplitStrings: true
+  Exclude:
+  - bin/console # this causes LineLength to crash for some reason on line 15
 
 # foo = if expression
 #         'bar'
@@ -73,6 +80,10 @@ Lint/AssignmentInCondition:
   AllowSafeAssignment: false
   Severity: convention
 
+Lint/UnderscorePrefixedVariableName:
+  Exclude:
+    - spec/schemas/**/*.rb
+
 Lint/UnusedBlockArgument:
   AllowUnusedKeywordArguments: true
 
@@ -81,7 +92,10 @@ Lint/UnusedMethodArgument:
 
 Metrics/AbcSize:
   Severity: refactor
-  Max: 35
+  Max: 40
+  Exclude:
+    - lib/generators/deimos/v2_generator.rb
+    - lib/deimos/test_helpers.rb
 
 Metrics/BlockLength:
   Enabled: false
@@ -108,7 +122,10 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Severity: refactor
-  Max: 10
+  Max: 15
+  Exclude:
+    - lib/generators/deimos/v2_generator.rb
+    - lib/deimos/test_helpers.rb
 
 # Use alias_method instead of alias
 Style/Alias:
@@ -152,20 +169,8 @@ Style/CollectionMethods:
 Style/DateTime:
   AllowCoercion: true
 
-# TODO: uncomment the lines below once rubocop is fixed
-#Style/Documentation:
-#  Exclude:
-#  - 'app/controllers/**/*'
-#  - 'app/helpers/**/*'
-#  - 'db/**/*'
-
-# Force documentation for public methods and classes
-Style/DocumentationMethod:
-  Enabled: true
-# TODO: uncomment the file below once rubocop is fixed
-#  Exclude:
-#  - 'app/controllers/**/*'
-#  - 'db/**/*'
+Style/Documentation:
+  Enabled: false
 
 # Allow else with just nil in it
 Style/EmptyElse:
@@ -202,7 +207,7 @@ Style/LineEndConcatenation:
 # Require parentheses around all method arguments except for whitelist
 Style/MethodCallWithArgsParentheses:
   Enabled: true
-  IgnoredMethods:
+  AllowedMethods:
     - puts
     - render
     - redirect_to
@@ -236,10 +241,6 @@ Style/MethodCallWithArgsParentheses:
     - before_destroy
     - after_destroy
     - queue_as
-# TODO: uncomment the file below once rubocop is fixed
-#  Exclude:
-#    - 'bin/**/*'
-#    - 'Gemfile'
 
 # Do not allow "end.something"
 Style/MethodCalledOnDoEndBlock:
@@ -292,10 +293,6 @@ RSpec/ExampleLength:
 RSpec/ExampleWording:
   Enabled: false
 
-# Allow describing specs without only using classes and methods
-RSpec/FilePath:
-  Enabled: false
-
 # Use before(:each), not before or before(:example)
 RSpec/HookArgument:
   EnforcedStyle: each
@@ -318,8 +315,11 @@ RSpec/MessageSpies:
   Enabled: false
 
 RSpec/MultipleExpectations:
-  Max: 10
+  Max: 20
   Severity: refactor
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
 
 # Allow both and_return() and block returns (use these for multi-line)
 RSpec/ReturnFromStub:
@@ -332,6 +332,9 @@ RSpec/ExpectActual:
   Enabled: false
 
 RSpec/BeforeAfterAll:
+  Enabled: false
+
+RSpec/SpecFilePathFormat:
   Enabled: false
 
 Security/YAMLLoad:

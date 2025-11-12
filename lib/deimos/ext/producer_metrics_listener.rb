@@ -2,10 +2,10 @@
 
 module Deimos
   class ProducerMetricsListener
-      %i[
+      %i(
         produced_sync
         produced_async
-      ].each do |event_scope|
+      ).each do |event_scope|
         define_method(:"on_message_#{event_scope}") do |event|
           Deimos.config.metrics&.increment(
             'publish',

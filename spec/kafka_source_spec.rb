@@ -5,6 +5,7 @@ require 'activerecord-import'
 # Wrap in a module so our classes don't leak out afterwards
 module KafkaSourceSpec
   RSpec.describe Deimos::KafkaSource do
+    # rubocop:disable Lint/ConstantDefinitionInBlock
     before(:all) do
       ActiveRecord::Base.connection.create_table(:widgets, force: true) do |t|
         t.integer(:widget_id)
@@ -40,8 +41,8 @@ module KafkaSourceSpec
         end
       end
       Widget.reset_column_information
-
     end
+    # rubocop:enable Lint/ConstantDefinitionInBlock
 
     after(:all) do
       ActiveRecord::Base.connection.drop_table(:widgets)
@@ -111,22 +112,24 @@ module KafkaSourceSpec
       expect('my-topic-the-second').to have_sent(nil, widget.id)
     end
 
-    context 'multi-producer model using two different key fields' do
+    describe 'multi-producer model using two different key fields' do
       before(:each) do
-        class MultiKeyWidget < ActiveRecord::Base
+        klass = Class.new(ActiveRecord::Base) do
           include Deimos::KafkaSource
+
           self.table_name = 'widgets'
 
           def self.kafka_producers
             [WidgetProducer, WidgetStringKeyProducer]
           end
         end
+        stub_const('MultiKeyWidget', klass)
 
-        class WidgetStringKeyProducer < Deimos::ActiveRecordProducer
+        klass = Class.new(Deimos::ActiveRecordProducer) do
           class << self
 
             def generate_payload(attributes, record)
-              payload = super(attributes, record)
+              payload = super
               payload.merge('id' => record.model_id)
             end
 
@@ -135,6 +138,7 @@ module KafkaSourceSpec
             end
           end
         end
+        stub_const('WidgetStringKeyProducer', klass)
 
         Karafka::App.routes.redraw do
           topic 'my-topic' do
@@ -365,8 +369,9 @@ module KafkaSourceSpec
       before(:each) do
         # Dummy class we can include the mixin in. Has a backing table created
         # earlier and has the import hook disabled
-        class WidgetNoImportHook < ActiveRecord::Base
+        klass = Class.new(ActiveRecord::Base) do
           include Deimos::KafkaSource
+
           self.table_name = 'widgets'
 
           # :nodoc:
@@ -385,6 +390,7 @@ module KafkaSourceSpec
           end
         end
 
+        stub_const('WidgetNoImportHook', klass)
         WidgetNoImportHook.reset_column_information
       end
 
@@ -451,6 +457,7 @@ module KafkaSourceSpec
         # earlier and has the import hook disabled
         buggy_class = Class.new(ActiveRecord::Base) do
           include Deimos::KafkaSource
+
           self.table_name = 'widgets'
 
           # :nodoc:

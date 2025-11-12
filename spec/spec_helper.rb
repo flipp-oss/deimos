@@ -16,8 +16,6 @@ require 'handlers/my_consumer'
 require 'rspec/rails'
 require 'rspec/snapshot'
 require 'karafka/testing/rspec/helpers'
-require "trilogy_adapter/connection"
-ActiveRecord::Base.public_send :extend, TrilogyAdapter::Connection
 Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
 
 # Constants used for consumer specs
@@ -31,18 +29,17 @@ end
 DeimosApp.initialize!
 
 module Helpers
-
   def set_karafka_config(method, val)
     Deimos.karafka_configs.each { |c| c.send(method.to_sym, val) }
   end
 
-  def register_consumer(klass, schema, namespace='com.my-namespace', key_config:{none: true}, configs: {})
+  def register_consumer(klass, schema, namespace='com.my-namespace', key_config: { none: true }, configs: {})
     Karafka::App.routes.redraw do
-      topic 'my-topic' do
-        consumer klass
-        schema schema
-        namespace namespace
-        key_config key_config
+      topic('my-topic') do
+        consumer(klass)
+        schema(schema)
+        namespace(namespace)
+        key_config(key_config)
         configs.each do |k, v|
           public_send(k, v)
         end
@@ -99,7 +96,7 @@ module DbConfigs
   # @param topic [String]
   # @param key [String]
   def build_message(payload, topic, key)
-    { payload: payload, topic: topic, key: key}
+    { payload: payload, topic: topic, key: key }
   end
 
   DB_OPTIONS = [
@@ -201,7 +198,7 @@ RSpec.configure do |config|
 
   config.before(:all) do
     Time.zone = 'Eastern Time (US & Canada)'
-    ActiveRecord::Base.logger = Logger.new('/dev/null')
+    ActiveRecord::Base.logger = Logger.new(File::NULL)
     ActiveRecord::Base.establish_connection(
       'adapter' => 'sqlite3',
       'database' => 'test.sqlite3'
@@ -229,7 +226,7 @@ RSpec.configure do |config|
       deimos_config.schema.nest_child_schemas = true
       deimos_config.schema.path = File.join(File.expand_path(__dir__), 'schemas')
       deimos_config.schema.registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
-      deimos_config.logger = Logger.new('/dev/null')
+      deimos_config.logger = Logger.new(File::NULL)
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
       deimos_config.schema.generated_class_path = 'spec/schemas'
@@ -263,7 +260,7 @@ RSpec.shared_context('with widgets') do
     end
 
     # :nodoc:
-    class Widget < ActiveRecord::Base
+    class Widget < ActiveRecord::Base # rubocop:disable Lint/ConstantDefinitionInBlock
       # @return [String]
       def generated_id
         'generated_id'
@@ -287,7 +284,7 @@ RSpec.shared_context('with widget_with_union_types') do
     end
 
     # :nodoc:
-    class WidgetWithUnionType < ActiveRecord::Base
+    class WidgetWithUnionType < ActiveRecord::Base # rubocop:disable Lint/ConstantDefinitionInBlock
       # @return [String]
       def generated_id
         'generated_id'
@@ -299,7 +296,6 @@ RSpec.shared_context('with widget_with_union_types') do
     ActiveRecord::Base.connection.drop_table(:widget_with_union_types)
   end
 end
-
 
 RSpec.shared_context('with DB') do
   before(:all) do
@@ -346,7 +342,7 @@ end
 
 RSpec::Matchers.define :match_message do |msg|
   match do |actual|
-    begin
+
       return false unless actual.is_a?(Hash)
 
       actual[:payloads]&.each do |p|
@@ -354,6 +350,6 @@ RSpec::Matchers.define :match_message do |msg|
         p[:payload].delete('message_id')
       end
       expect(actual).to match(a_hash_including(msg))
-    end
+
   end
 end

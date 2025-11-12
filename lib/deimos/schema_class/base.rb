@@ -47,7 +47,7 @@ module Deimos
       # Initializes this class from a given value
       # @param value [Object]
       # @return [SchemaClass::Base]
-      def self.initialize_from_value(value)
+      def self.initialize_from_value(_value)
         raise MissingImplementationError
       end
 

@@ -5,10 +5,10 @@ module ProducerTest
   describe Deimos::Producer do
 
     prepend_before(:each) do
-      producer_class = Class.new(Deimos::Producer)
+      producer_class = Class.new(described_class)
       stub_const('MyProducer', producer_class)
 
-      producer_class = Class.new(Deimos::Producer)
+      producer_class = Class.new(described_class)
       stub_const('MyProducerWithID', producer_class)
 
       producer_class = Class.new(Deimos::Producer) do
@@ -19,16 +19,16 @@ module ProducerTest
       end
       stub_const('MyNonEncodedProducer', producer_class)
 
-      producer_class = Class.new(Deimos::Producer)
+      producer_class = Class.new(described_class)
       stub_const('MyNoKeyProducer', producer_class)
 
-      producer_class = Class.new(Deimos::Producer)
+      producer_class = Class.new(described_class)
       stub_const('MyNestedSchemaProducer', producer_class)
 
-      producer_class = Class.new(Deimos::Producer)
+      producer_class = Class.new(described_class)
       stub_const('MySchemaProducer', producer_class)
 
-      producer_class = Class.new(Deimos::Producer)
+      producer_class = Class.new(described_class)
       stub_const('MyErrorProducer', producer_class)
 
       Karafka::App.routes.redraw do
@@ -84,7 +84,7 @@ module ProducerTest
     end
 
     it 'should fail on invalid message' do
-      expect(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
+      allow(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
       expect { MyProducer.publish({ 'invalid' => 'key', :payload_key => 'key' }) }.
         to raise_error('OH NOES')
     end
@@ -110,7 +110,7 @@ module ProducerTest
         [{ 'test_id' => 'foo', 'some_int' => 123 },
          { 'test_id' => 'bar', 'some_int' => 124 }]
       )
-      expect('my-topic').to have_sent({'test_id' => 'foo', 'some_int' => 123}, 'foo', 'foo')
+      expect('my-topic').to have_sent({ 'test_id' => 'foo', 'some_int' => 123 }, 'foo', 'foo')
       expect('your-topic').not_to have_sent('test_id' => 'foo', 'some_int' => 123)
       expect('my-topic').not_to have_sent('test_id' => 'foo2', 'some_int' => 123)
     end
@@ -277,12 +277,13 @@ module ProducerTest
         allow(Karafka.logger).to receive(:info)
         allow(Karafka.logger).to receive(:tagged).and_yield(Karafka.logger)
       end
+
       context 'with default / full' do
         it 'should log full payload' do
           MyProducerWithID.publish_list(
             [
               { 'test_id' => 'foo', 'some_int' => 123, :payload_key => 'key' },
-              { 'test_id' => 'foo2', 'some_int' => 123, :payload_key => 'key2' },
+              { 'test_id' => 'foo2', 'some_int' => 123, :payload_key => 'key2' }
             ]
           )
           expect(Karafka.logger).to have_received(:info).with(match_message({
@@ -303,7 +304,7 @@ module ProducerTest
 
       context 'with count' do
         it 'should log only count' do
-          Deimos.karafka_config_for(topic: 'my-topic-with-id').payload_log :count
+          Deimos.karafka_config_for(topic: 'my-topic-with-id').payload_log(:count)
           MyProducerWithID.publish_list(
             [
               { 'test_id' => 'foo', 'some_int' => 123, :payload_key => 'key' },
@@ -320,7 +321,7 @@ module ProducerTest
 
     context 'with Schema Class payloads' do
       it 'should fail on invalid message with error handler' do
-        expect(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
+        allow(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
         expect { MyProducer.publish(Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 'invalid')) }.
           to raise_error('OH NOES')
       end
@@ -332,7 +333,7 @@ module ProducerTest
             hash_including({
               payload: { 'test_id' => 'foo', 'some_int' => 123, 'payload_key' => nil },
               topic: 'my-topic',
-              partition_key: nil,
+              partition_key: nil
             }),
             hash_including({
               payload: { 'test_id' => 'bar', 'some_int' => 124, 'payload_key' => nil },
@@ -364,17 +365,21 @@ module ProducerTest
       it 'should encode the key' do
         Deimos.configure { |c| c.producers.topic_prefix = nil }
 
-        MyProducer.publish_list(
-          [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123),
-           Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124)]
-        )
+        expect {
+          MyProducer.publish_list(
+            [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123),
+             Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124)]
+          )
+        }.not_to raise_error
       end
 
       it 'should encode with a schema' do
-        MySchemaProducer.publish_list(
-          [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123, payload_key: { 'test_id' => 'foo_key' }),
-           Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124, payload_key: { 'test_id' => 'bar_key' })]
-        )
+        expect {
+          MySchemaProducer.publish_list(
+            [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123, payload_key: { 'test_id' => 'foo_key' }),
+             Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124, payload_key: { 'test_id' => 'bar_key' })]
+          )
+        }.not_to raise_error
       end
 
       it 'should properly encode and coerce values with a nested record' do

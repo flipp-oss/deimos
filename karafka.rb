@@ -1,14 +1,17 @@
+# frozen_string_literal: true
+
 # Used in regenerate_test_schema_classes.rb
 
 class MyConsumer < Deimos::Consumer
-  def consume(payload, metadata); end
+  def consume(payload, metadata)
+  end
 end
 
-require_relative "./lib/generators/deimos/schema_class_generator"
+require_relative 'lib/generators/deimos/schema_class_generator'
 
 Deimos.configure do |deimos_config|
   deimos_config.schema.nest_child_schemas = true
-  deimos_config.schema.path = "spec/schemas"
+  deimos_config.schema.path = 'spec/schemas'
   deimos_config.schema.backend = :avro_validation
   deimos_config.schema.generated_class_path = './spec/schemas'
   deimos_config.schema.use_full_namespace = true
@@ -21,7 +24,7 @@ end
 class KarafkaApp < Karafka::App
   setup do
     config.kafka = {
-      "bootstrap.servers": '127.0.0.1:9092'
+      'bootstrap.servers': '127.0.0.1:9092'
     }
   end
   routes.draw do

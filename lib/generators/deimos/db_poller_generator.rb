@@ -8,6 +8,7 @@ module Deimos
     # Generate the database backend migration.
     class DbPollerGenerator < Rails::Generators::Base
       include Rails::Generators::Migration
+
       if Rails.version < '4'
         extend(ActiveRecord::Generators::Migration)
       else

@@ -78,9 +78,8 @@ module Deimos
       # @return [SchemaClass::Record]
       def self.new_from_message(**kwargs)
         record = self.new
-        attrs = kwargs.select { |k, v| record.respond_to?("#{k}=") }
-        record = self.new(_from_message: true, **attrs)
-        record
+        attrs = kwargs.select { |k, _v| record.respond_to?("#{k}=") }
+        self.new(_from_message: true, **attrs)
       end
 
       # @return [SchemaClass::Record]
@@ -89,6 +88,7 @@ module Deimos
         return nil if value.nil?
 
         return value if value.is_a?(self)
+
         if from_message
           self.new_from_message(**value&.symbolize_keys || {})
         else

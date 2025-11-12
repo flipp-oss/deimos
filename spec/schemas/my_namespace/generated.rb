@@ -44,8 +44,7 @@ module Schemas; module MyNamespace
       # @override
       def symbols
         %w(sym1 sym2)
-      end
-  
+      end  
       
       def sym1?
         @value == 'sym1'

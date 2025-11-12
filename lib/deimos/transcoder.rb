@@ -1,7 +1,11 @@
+# frozen_string_literal: true
+
 module Deimos
   class Transcoder
 
-    attr_accessor :key_field, :backend, :backend_type
+    attr_accessor :key_field, :backend_type
+    # @param backend [Class<Deimos::SchemaBackends::Base>]
+    attr_writer :backend
 
     # @param schema [String]
     # @param namespace [String]
@@ -18,7 +22,7 @@ module Deimos
       @topic = topic
     end
 
-    # @return [Class < Deimos::SchemaBackends::Base]
+    # @return [Class<Deimos::SchemaBackends::Base>]
     def backend
       @backend ||= Deimos.schema_backend(schema: @schema,
                                          namespace: @namespace,

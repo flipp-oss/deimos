@@ -8,6 +8,7 @@ module ConsumerTest
   describe Deimos::Consumer, 'Message Consumer' do
     let(:use_schema_classes) { false }
     let(:reraise_errors) { false }
+
     prepend_before(:each) do
       # :nodoc:
       consumer_class = Class.new(described_class) do
@@ -96,12 +97,14 @@ module ConsumerTest
               end
             end
 
-            test_consume_message(MyConsumer, { 'test_id' => 'foo',
+            expect {
+              test_consume_message(MyConsumer, { 'test_id' => 'foo',
                                  'some_int' => 123 }, key: 'a key')
+            }.not_to raise_error
           end
 
           it 'should fail if reraise is false but fatal_error is true' do
-            expect { test_consume_message(MyConsumer, {test_id: 'fatal'}) }.
+            expect { test_consume_message(MyConsumer, { test_id: 'fatal' }) }.
               to raise_error(Avro::SchemaValidator::ValidationError)
           end
 
@@ -114,10 +117,12 @@ module ConsumerTest
           it 'should fail on message with extra fields' do
             allow_any_instance_of(Deimos::SchemaBackends::AvroValidation).
               to receive(:coerce) { |_, m| m.with_indifferent_access }
-            expect { test_consume_message(MyConsumer,
-                                         { 'test_id' => 'foo',
-                                         'some_int' => 123,
-                                         'extra_field' => 'field name' }) }.
+            expect {
+              test_consume_message(MyConsumer,
+                                   { 'test_id' => 'foo',
+                                   'some_int' => 123,
+                                   'extra_field' => 'field name' })
+            }.
               to raise_error(Avro::SchemaValidator::ValidationError)
           end
 
@@ -127,17 +132,22 @@ module ConsumerTest
               test_consume_message(
                 MyConsumer,
                 { 'test_id' => 'foo',
-                  'some_int' => 123 }) { raise 'OH NOES' }
+                  'some_int' => 123 }
+              ) { raise 'OH NOES' }
             }.not_to raise_error
           end
 
           it 'should not fail when consume fails without reraising errors' do
             set_karafka_config(:reraise_errors, false)
-            allow(Deimos::ProducerMiddleware).to receive(:call) { |m| m[:payload] = m[:payload].to_json; m }
+            allow(Deimos::ProducerMiddleware).to receive(:call) do |m|
+              m[:payload] = m[:payload].to_json
+              m
+            end
             expect {
               test_consume_message(
                 MyConsumer,
-                { 'invalid' => 'key' })
+                { 'invalid' => 'key' }
+              )
             }.not_to raise_error
           end
         end
@@ -171,6 +181,7 @@ module ConsumerTest
             end
           end
         end
+
         after(:each) do
           Karafka::App.routes.clear
         end
@@ -227,10 +238,10 @@ module ConsumerTest
           test_consume_message('my_consume_topic',
                                { 'test_id' => 'foo',
                                  'test_float' => 4.0,
-                                 'test_array' => ["1", "2"],
+                                 'test_array' => %w(1 2),
                                  'additional_field' => 'bar',
                                  'some_nested_record' => {
-                                    'some_int' => 1,
+                                   'some_int' => 1,
                                     'some_float' => 10.0,
                                     'some_string' => 'hi mom',
                                     'additional_field' => 'baz'
@@ -240,7 +251,7 @@ module ConsumerTest
             expect(payload['some_nested_record']['some_int']).to eq(1)
             expect(payload.to_h).not_to have_key('additional_field')
             expect(payload.to_h['some_nested_record']).not_to have_key('additional_field')
-          end
+                                 end
 
         end
       end

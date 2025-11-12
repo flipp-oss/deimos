@@ -22,14 +22,14 @@ module Deimos
       # @return [AvroTurf::Messaging]
       def avro_turf_messaging
          @avro_turf_messaging ||= AvroTurf::Messaging.new(
-          schema_store: @schema_store,
-          registry_url: Deimos.config.schema.registry_url,
-          schemas_path: Deimos.config.schema.path,
-          user: Deimos.config.schema.user,
-          password: Deimos.config.schema.password,
-          namespace: @namespace,
-          logger: Karafka.logger
-        )
+           schema_store: @schema_store,
+           registry_url: Deimos.config.schema.registry_url,
+           schemas_path: Deimos.config.schema.path,
+           user: Deimos.config.schema.user,
+           password: Deimos.config.schema.password,
+           namespace: @namespace,
+           logger: Karafka.logger
+         )
       end
     end
   end

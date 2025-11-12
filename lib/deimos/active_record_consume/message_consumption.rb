@@ -8,6 +8,7 @@ module Deimos
     # as ActiveRecord instances.
     module MessageConsumption
       include Deimos::Consume::MessageConsumption
+
       # Find the record specified by the given payload and key.
       # Default is to use the primary key column and the value of the first
       # field in the key.
@@ -33,10 +34,10 @@ module Deimos
       def consume_message(message)
         unless self.process_message?(message)
           Deimos::Logging.log_debug(
-              message: 'Skipping processing of message',
-              payload: message.payload.to_h,
-              metadata: Deimos::Logging.metadata_log_text(message.metadata)
-            )
+            message: 'Skipping processing of message',
+            payload: message.payload.to_h,
+            metadata: Deimos::Logging.metadata_log_text(message.metadata)
+          )
           return
         end
 

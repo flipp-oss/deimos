@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Deimos
   module Logging
     class << self
@@ -33,34 +35,33 @@ module Deimos
       end
 
       def _payloads(messages)
-
       end
 
-      def payload(m)
-        return nil if m.nil?
+      def payload(msg)
+        return nil if msg.nil?
 
-        if m.respond_to?(:payload)
-          m.payload
-        elsif m[:label]
-          m.dig(:label, :original_payload)
+        if msg.respond_to?(:payload)
+          msg.payload
+        elsif msg[:label]
+          msg.dig(:label, :original_payload)
         else
-          m[:payload]
+          msg[:payload]
         end
       end
 
-      def key(m)
-        return nil if m.nil?
+      def key(msg)
+        return nil if msg.nil?
 
-        if m.respond_to?(:payload) && m.payload
-          m.key || m.payload['message_id']
-        elsif m.respond_to?(:[])
-          if m[:label]
-            m.dig(:label, :original_key)
-          elsif m[:payload].is_a?(String)
-            m[:key] || m[:payload_key]
+        if msg.respond_to?(:payload) && msg.payload
+          msg.key || msg.payload['message_id']
+        elsif msg.respond_to?(:[])
+          if msg[:label]
+            msg.dig(:label, :original_key)
+          elsif msg[:payload].is_a?(String)
+            msg[:key] || msg[:payload_key]
           else
-            payload = m[:payload]&.with_indifferent_access
-            m[:key] || m[:payload_key] || payload[:payload_key] || payload[:message_id]
+            payload = msg[:payload]&.with_indifferent_access
+            msg[:key] || msg[:payload_key] || payload[:payload_key] || payload[:message_id]
           end
         end
       end

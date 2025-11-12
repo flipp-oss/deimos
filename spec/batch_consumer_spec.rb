@@ -4,6 +4,15 @@
 module ConsumerTest
   describe Deimos::Consumer, 'Batch Consumer' do
     let(:schema) { 'MySchema' }
+    let(:batch) do
+      [
+        { 'test_id' => 'foo', 'some_int' => 123 },
+        { 'test_id' => 'bar', 'some_int' => 456 }
+      ]
+    end
+    let(:invalid_payloads) do
+      batch.push({ 'invalid' => 'key' })
+    end
     let(:use_schema_classes) { false }
     let(:should_reraise_errors) { false }
     let(:key_config) { { field: 'test_id' } }
@@ -14,6 +23,7 @@ module ConsumerTest
         end
       end
     end
+
     before(:each) do
       # :nodoc:
       stub_const('MyBatchConsumer', consumer_class)
@@ -35,19 +45,8 @@ module ConsumerTest
       end
     end
 
-    let(:batch) do
-      [
-        { 'test_id' => 'foo', 'some_int' => 123 },
-        { 'test_id' => 'bar', 'some_int' => 456 }
-      ]
-    end
-
-    let(:invalid_payloads) do
-      batch.concat([{ 'invalid' => 'key' }])
-    end
-
     describe 'consume_batch' do
-      SCHEMA_CLASS_SETTINGS.each do |setting, use_schema_classes|
+      SCHEMA_CLASS_SETTINGS.each_key do |setting|
         context "with Schema Class consumption #{setting}" do
 
           let(:schema_class_batch) do
@@ -114,9 +113,10 @@ module ConsumerTest
 
       context 'with plain keys' do
         let(:key_config) { { plain: true } }
+
         it 'should decode plain keys for all messages in the batch' do
           test_consume_batch('my-topic', batch, keys: [1, 2]) do |received|
-            expect(received.map(&:key)).to eq(["1", "2"])
+            expect(received.map(&:key)).to eq(%w(1 2))
           end
         end
       end
@@ -124,11 +124,6 @@ module ConsumerTest
 
     describe 'timestamps' do
       let(:schema) { 'MySchemaWithDateTimes' }
-      let(:key_config) { { none: true } }
-      before(:each) do
-        allow(Deimos.config.metrics).to receive(:histogram)
-      end
-
       let(:batch_with_time) do
         [
           {
@@ -145,7 +140,6 @@ module ConsumerTest
           }
         ]
       end
-
       let(:invalid_times) do
         [
           {
@@ -167,6 +161,11 @@ module ConsumerTest
             'timestamp' => '1234567890'
           }
         ]
+      end
+      let(:key_config) { { none: true } }
+
+      before(:each) do
+        allow(Deimos.config.metrics).to receive(:histogram)
       end
 
       it 'should consume a batch' do
@@ -197,6 +196,7 @@ module ConsumerTest
     describe 'logging' do
       let(:schema) { 'MySchemaWithUniqueId' }
       let(:key_config) { { plain: true } }
+
       before(:each) do
         allow(Deimos.config.metrics).to receive(:histogram)
         set_karafka_config(:payload_log, :keys)
@@ -214,7 +214,7 @@ module ConsumerTest
 
         expect(Deimos::Logging).
           to receive(:log_info).
-          with(hash_including(payload_keys: ["1", "2"]))
+          with(hash_including(payload_keys: %w(1 2)))
 
         test_consume_batch('my-topic', batch_with_message_id, keys: [1, 2])
       end

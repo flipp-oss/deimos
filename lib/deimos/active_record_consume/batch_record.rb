@@ -43,8 +43,8 @@ module Deimos
       def validate_import_id!
         return if @klass.column_names.include?(self.bulk_import_column.to_s)
 
-        raise "Create bulk_import_id on the #{@klass.table_name} table." \
-                ' Run rails g deimos:bulk_import_id {table} to create the migration.'
+        raise "Create bulk_import_id on the #{@klass.table_name} table. " \
+              'Run rails g deimos:bulk_import_id {table} to create the migration.'
       end
 
       # @return [Class < ActiveRecord::Base]

@@ -19,7 +19,7 @@ module SchemaModelConverterTest
       end
 
       # :nodoc:
-      class Wibble < ActiveRecord::Base
+      class Wibble < ActiveRecord::Base # rubocop:disable Lint/ConstantDefinitionInBlock
       end
       Wibble.reset_column_information
     end

@@ -44,8 +44,7 @@ module Schemas; module MyNamespace
       # @override
       def symbols
         %w(sym1 sym2)
-      end
-  
+      end  
       
       def sym1?
         @value == 'sym1'
@@ -62,8 +61,7 @@ module Schemas; module MyNamespace
       # @override
       def symbols
         %w(sym3 sym4)
-      end
-  
+      end  
       
       def sym3?
         @value == 'sym3'
@@ -80,8 +78,7 @@ module Schemas; module MyNamespace
       # @override
       def symbols
         %w(sym5 sym6)
-      end
-  
+      end  
       
       def sym5?
         @value == 'sym5'
@@ -175,8 +172,8 @@ module Schemas; module MyNamespace
                    test_string_array: ["test"],
                    test_int_array: [123],
                    test_optional_int: 123,
-                   some_integer_map: {"abc"=>123},
-                   some_record: {"a_record_field"=>"Test String"},
+                   some_integer_map: { "abc"=>123 },
+                   some_record: { "a_record_field"=>"Test String" },
                    some_optional_record: nil,
                    some_record_array: nil,
                    some_record_map: nil,

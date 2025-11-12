@@ -1,4 +1,7 @@
-RSpec.describe 'Karafka configs' do
+# frozen_string_literal: true
+
+# rubocop:disable Style/GlobalVars
+RSpec.describe Karafka::Routing::Topic do
   before(:each) do
     KarafkaApp.routes.clear
     $found_stuff = nil
@@ -13,8 +16,7 @@ RSpec.describe 'Karafka configs' do
   end
 
   let(:producer_class) do
-    Class.new(Deimos::Producer) do
-    end
+    Class.new(Deimos::Producer)
   end
 
   describe 'producers' do
@@ -31,8 +33,8 @@ RSpec.describe 'Karafka configs' do
           key_config(none: true)
         end
       end
-      producer_class.publish({test_id: "id1", some_int: 5})
-      expect('MyTopic').to have_sent({test_id: "id1", some_int: 5})
+      producer_class.publish({ test_id: 'id1', some_int: 5 })
+      expect('MyTopic').to have_sent({ test_id: 'id1', some_int: 5 })
     end
 
     it 'should work with key plain' do
@@ -41,11 +43,11 @@ RSpec.describe 'Karafka configs' do
           producer_class MyProducer
           schema 'MySchema'
           namespace 'com.my-namespace'
-          key_config({plain: true})
+          key_config({ plain: true })
         end
       end
-      producer_class.publish({test_id: "id1", some_int: 5, payload_key: 'key'})
-      expect('MyTopic').to have_sent({test_id: "id1", some_int: 5}, 'key')
+      producer_class.publish({ test_id: 'id1', some_int: 5, payload_key: 'key' })
+      expect('MyTopic').to have_sent({ test_id: 'id1', some_int: 5 }, 'key')
     end
 
     it 'should work with key field' do
@@ -54,11 +56,11 @@ RSpec.describe 'Karafka configs' do
           producer_class MyProducer
           schema 'MySchema'
           namespace 'com.my-namespace'
-          key_config({field: :test_id})
+          key_config({ field: :test_id })
         end
       end
-      producer_class.publish({test_id: "id1", some_int: 5})
-      expect('MyTopic').to have_sent({test_id: "id1", some_int: 5}, 'id1')
+      producer_class.publish({ test_id: 'id1', some_int: 5 })
+      expect('MyTopic').to have_sent({ test_id: 'id1', some_int: 5 }, 'id1')
     end
 
     it 'should work with key schema' do
@@ -67,11 +69,11 @@ RSpec.describe 'Karafka configs' do
           producer_class MyProducer
           schema 'MySchema'
           namespace 'com.my-namespace'
-          key_config({schema: 'MySchema_key'})
+          key_config({ schema: 'MySchema_key' })
         end
       end
-      producer_class.publish({test_id: "id1", some_int: 5, payload_key: {test_id: 'id3'}})
-      expect('MyTopic').to have_sent({test_id: "id1", some_int: 5}, { test_id: 'id3'})
+      producer_class.publish({ test_id: 'id1', some_int: 5, payload_key: { test_id: 'id3' } })
+      expect('MyTopic').to have_sent({ test_id: 'id1', some_int: 5 }, { test_id: 'id3' })
     end
 
   end
@@ -83,15 +85,16 @@ RSpec.describe 'Karafka configs' do
         consumer MyConsumer
         schema 'MySchema'
         namespace 'com.my-namespace'
-        key_config({field: :test_id})
+        key_config({ field: :test_id })
       end
     end
 
-    test_consume_message('MyTopic', {test_id: "id1", some_int: 5}, key: "id1")
-    expect($found_stuff).to eq({'test_id' => "id1", 'some_int' => 5})
+    test_consume_message('MyTopic', { test_id: 'id1', some_int: 5 }, key: 'id1')
+    expect($found_stuff).to eq({ 'test_id' => 'id1', 'some_int' => 5 })
     $found_stuff = nil
-    test_consume_message(MyConsumer, {test_id: "id1", some_int: 5}, key: "id1")
-    expect($found_stuff).to eq({'test_id' => "id1", 'some_int' => 5})
+    test_consume_message(MyConsumer, { test_id: 'id1', some_int: 5 }, key: 'id1')
+    expect($found_stuff).to eq({ 'test_id' => 'id1', 'some_int' => 5 })
   end
 
 end
+# rubocop:enable Style/GlobalVars

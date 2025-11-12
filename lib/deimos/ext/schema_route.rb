@@ -1,6 +1,8 @@
-require "deimos/transcoder"
-require "deimos/ext/producer_middleware"
-require "deimos/schema_backends/plain"
+# frozen_string_literal: true
+
+require 'deimos/transcoder'
+require 'deimos/ext/producer_middleware'
+require 'deimos/schema_backends/plain'
 
 module Deimos
   class SchemaRoute < Karafka::Routing::Features::Base
@@ -9,7 +11,7 @@ module Deimos
       {
         schema: nil,
         namespace: nil,
-        key_config: {none: true},
+        key_config: { none: true },
         schema_backend: nil,
         use_schema_classes: Deimos.config.schema.use_schema_classes
       }.each do |field, default|
@@ -23,14 +25,14 @@ module Deimos
           @_deimos_config[:schema][field] || default
         end
       end
-      def _deimos_setup_transcoders
+      def _deimos_setup_transcoders # rubocop:disable Metrics/AbcSize
         payload = Transcoder.new(
-            schema: schema,
-            namespace: namespace,
-            backend: schema_backend,
-            use_schema_classes: use_schema_classes,
-            topic: name
-          )
+          schema: schema,
+          namespace: namespace,
+          backend: schema_backend,
+          use_schema_classes: use_schema_classes,
+          topic: name
+        )
 
         key = nil
 

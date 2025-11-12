@@ -14,10 +14,10 @@ module Deimos
       # @return [Integer]
       MAX_DELETE_ATTEMPTS = 3
       # @return [Array<Symbol>]
-      FATAL_CODES = %i(invalid_msg_size msg_size_too_large)
+      FATAL_CODES = %i(invalid_msg_size msg_size_too_large).freeze
 
       # @param logger [Logger]
-      def initialize(logger=Logger.new(STDOUT))
+      def initialize(logger=Logger.new($stdout))
         @id = SecureRandom.uuid
         @logger = logger
         @logger.push_tags("OutboxProducer #{@id}") if @logger.respond_to?(:push_tags)
@@ -81,13 +81,14 @@ module Deimos
 
         KafkaTopicInfo.clear_lock(@current_topic, @id)
       rescue StandardError => e
-        @logger.error("Error processing messages for topic #{@current_topic}: #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
+        @logger.error('Error processing messages for topic ' \
+                      "#{@current_topic}: #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
         KafkaTopicInfo.register_error(@current_topic, @id)
       end
 
       # Process a single batch in a topic.
       # @return [void]
-      def process_topic_batch
+      def process_topic_batch # rubocop:disable Naming/PredicateMethod
         messages = retrieve_messages
         return false if messages.empty?
 
@@ -95,9 +96,9 @@ module Deimos
         compacted_messages = compact_messages(messages)
         log_messages(compacted_messages)
         Karafka.monitor.instrument('deimos.outbox.produce', topic: @current_topic, messages: compacted_messages) do
-          begin
+
             produce_messages(compacted_messages.map(&:karafka_message))
-          rescue WaterDrop::Errors::ProduceManyError => e
+        rescue WaterDrop::Errors::ProduceManyError => e
             if FATAL_CODES.include?(e.cause.try(:code))
               @logger.error('Message batch too large, deleting...')
               delete_messages(messages)
@@ -106,7 +107,7 @@ module Deimos
               Deimos.log_error("Got error #{e.cause.class.name} when publishing #{batch_size} messages, retrying...")
               retry
             end
-          end
+
         end
         delete_messages(messages)
         Deimos.config.metrics&.increment(
@@ -203,13 +204,12 @@ module Deimos
       def produce_messages(batch)
         batch_size = batch.size
         current_index = 0
-        begin
-          batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
-            @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
-            Karafka.producer.produce_many_sync(group)
-            current_index += group.size
-            @logger.info("Sent #{group.size} messages to #{@current_topic}")
-          end
+
+        batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
+          @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
+          Karafka.producer.produce_many_sync(group)
+          current_index += group.size
+          @logger.info("Sent #{group.size} messages to #{@current_topic}")
         end
       end
 

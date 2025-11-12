@@ -107,7 +107,7 @@ module Deimos
       # To be defined by subclass.
       # @param schema [Object]
       # @return [String] A string representation of the Type
-      def self.field_type(schema)
+      def self.field_type(_schema)
         raise MissingImplementationError
       end
 
@@ -116,7 +116,7 @@ module Deimos
       # @param schema [String,Symbol]
       # @param topic [String]
       # @return [String]
-      def encode_payload(payload, schema:, topic: nil)
+      def encode_payload(_payload, schema:, topic: nil)
         raise MissingImplementationError
       end
 
@@ -124,7 +124,7 @@ module Deimos
       # @param payload [String]
       # @param schema [String,Symbol]
       # @return [Hash]
-      def decode_payload(payload, schema:)
+      def decode_payload(_payload, schema:)
         raise MissingImplementationError
       end
 
@@ -132,7 +132,7 @@ module Deimos
       # @param payload [Hash]
       # @param schema [String,Symbol]
       # @return [void]
-      def validate(payload, schema:)
+      def validate(_payload, schema:)
         raise MissingImplementationError
       end
 
@@ -148,7 +148,7 @@ module Deimos
       # @param field [SchemaField]
       # @param value [Object]
       # @return [Object]
-      def coerce_field(field, value)
+      def coerce_field(_field, _value)
         raise MissingImplementationError
       end
 
@@ -159,14 +159,14 @@ module Deimos
       # `:enum` is also recognized.
       # @param field [SchemaField]
       # @return [Symbol]
-      def sql_type(field)
+      def sql_type(_field)
         raise MissingImplementationError
       end
 
       # Generate a key schema from the given value schema and key ID. This
       # is used when encoding or decoding keys from an existing value schema.
       # @param field_name [Symbol]
-      def generate_key_schema(field_name)
+      def generate_key_schema(_field_name)
         raise MissingImplementationError
       end
 
@@ -175,7 +175,7 @@ module Deimos
       # @param key_id [String,Symbol] the field name of the key.
       # @param topic [String]
       # @return [String]
-      def encode_key(key, key_id, topic: nil)
+      def encode_key(_key, _key_id, topic: nil)
         raise MissingImplementationError
       end
 
@@ -183,7 +183,7 @@ module Deimos
       # @param payload [Hash] the message itself.
       # @param key_id [String,Symbol] the field in the message to decode.
       # @return [String]
-      def decode_key(payload, key_id)
+      def decode_key(_payload, _key_id)
         raise MissingImplementationError
       end
 

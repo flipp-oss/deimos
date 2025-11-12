@@ -15,7 +15,7 @@ module Deimos
       # @param topic [String]
       # @param lock_id [String]
       # @return [Boolean]
-      def lock(topic, lock_id)
+      def lock(topic, lock_id) # rubocop:disable Naming/PredicateMethod
         # Try to create it - it's fine if it already exists
         begin
           self.create(topic: topic, last_processed_at: Time.zone.now)

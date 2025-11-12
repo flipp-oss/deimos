@@ -195,7 +195,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
           WidgetFidget.reset_column_information
         end
 
-        # rubocop:disable RSpec/MultipleExpectations, RSpec/ExampleLength
+        # rubocop:disable RSpec/ExampleLength
         it 'should backfill the associations when upserting primary records' do
           batch = Deimos::ActiveRecordConsume::BatchRecordList.new(
             [
@@ -247,14 +247,14 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
             expect(widget_fidget.note).to eq("Stuff #{ind + 1}")
           end
         end
-        # rubocop:enable RSpec/MultipleExpectations, RSpec/ExampleLength
+        # rubocop:enable RSpec/ExampleLength
 
       end
 
       context 'with recorded primary_keys' do
         before(:all) do
           ActiveRecord::Base.connection.create_table(:fidgets, force: true, id: false) do |t|
-            t.string :test_id, primary_key: true
+            t.string(:test_id, primary_key: true)
             t.integer(:some_int)
             t.string(:bulk_import_id)
             t.timestamps
@@ -280,6 +280,24 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
             self.table_name = 'fidget_details'
             belongs_to :fidget
           end
+        end
+        let(:batch) do
+          Deimos::ActiveRecordConsume::BatchRecordList.new(
+            [
+              Deimos::ActiveRecordConsume::BatchRecord.new(
+                klass: Fidget,
+                attributes: { test_id: 'id1', some_int: 5, fidget_detail: { title: 'Title 1' } },
+                bulk_import_column: 'bulk_import_id',
+                bulk_import_id_generator: bulk_id_generator
+              ),
+              Deimos::ActiveRecordConsume::BatchRecord.new(
+                klass: Fidget,
+                attributes: { test_id: 'id2', some_int: 10, fidget_detail: { title: 'Title 2' } },
+                bulk_import_column: 'bulk_import_id',
+                bulk_import_id_generator: bulk_id_generator
+              )
+            ]
+          )
         end
 
         let(:fidget_class) do
@@ -311,26 +329,6 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
           Fidget.reset_column_information
         end
 
-
-        let(:batch) do
-          Deimos::ActiveRecordConsume::BatchRecordList.new(
-          [
-            Deimos::ActiveRecordConsume::BatchRecord.new(
-              klass: Fidget,
-              attributes: { test_id: 'id1', some_int: 5, fidget_detail: { title: 'Title 1' } },
-              bulk_import_column: 'bulk_import_id',
-              bulk_import_id_generator: bulk_id_generator
-            ),
-            Deimos::ActiveRecordConsume::BatchRecord.new(
-              klass: Fidget,
-              attributes: { test_id: 'id2', some_int: 10, fidget_detail: { title: 'Title 2' } },
-              bulk_import_column: 'bulk_import_id',
-              bulk_import_id_generator: bulk_id_generator
-            )
-          ]
-        )
-        end
-
         it 'should not backfill the primary key when the primary_key exists' do
           allow(Fidget).to receive(:where).and_call_original
           results = described_class.new(Widget,
@@ -339,7 +337,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
                                         key_col_proc: key_proc).mass_update(batch)
           expect(results.count).to eq(2)
           expect(Fidget.count).to eq(2)
-          expect(Fidget).not_to have_received(:where).with(:bulk_import_id => [instance_of(String), instance_of(String)])
+          expect(Fidget).not_to have_received(:where).with(bulk_import_id: [instance_of(String), instance_of(String)])
         end
 
       end
@@ -374,6 +372,24 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
             belongs_to :fidget
           end
         end
+        let(:batch) do
+          Deimos::ActiveRecordConsume::BatchRecordList.new(
+            [
+              Deimos::ActiveRecordConsume::BatchRecord.new(
+                klass: Fidget,
+                attributes: { test_id: 'id1', some_int: 5, fidget_detail: { title: 'Title 1' } },
+                bulk_import_column: 'bulk_import_id',
+                bulk_import_id_generator: bulk_id_generator
+              ),
+              Deimos::ActiveRecordConsume::BatchRecord.new(
+                klass: Fidget,
+                attributes: { test_id: 'id2', some_int: 10, fidget_detail: { title: 'Title 2' } },
+                bulk_import_column: 'bulk_import_id',
+                bulk_import_id_generator: bulk_id_generator
+              )
+            ]
+          )
+        end
 
         let(:fidget_class) do
           Class.new(ActiveRecord::Base) do
@@ -404,26 +420,6 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
           Fidget.reset_column_information
         end
 
-
-        let(:batch) do
-          Deimos::ActiveRecordConsume::BatchRecordList.new(
-            [
-              Deimos::ActiveRecordConsume::BatchRecord.new(
-                klass: Fidget,
-                attributes: { test_id: 'id1', some_int: 5, fidget_detail: { title: 'Title 1' } },
-                bulk_import_column: 'bulk_import_id',
-                bulk_import_id_generator: bulk_id_generator
-              ),
-              Deimos::ActiveRecordConsume::BatchRecord.new(
-                klass: Fidget,
-                attributes: { test_id: 'id2', some_int: 10, fidget_detail: { title: 'Title 2' } },
-                bulk_import_column: 'bulk_import_id',
-                bulk_import_id_generator: bulk_id_generator
-              )
-            ]
-          )
-        end
-
         it 'should not backfill the primary key when the primary_key exists' do
           allow(Fidget).to receive(:where).and_call_original
           results = described_class.new(Widget,
@@ -432,8 +428,8 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
                                         key_col_proc: key_proc).mass_update(batch)
           expect(results.count).to eq(2)
           expect(Fidget.count).to eq(2)
-          expect(Fidget).to have_received(:where).with(:bulk_import_id => [instance_of(String), instance_of(String)])
-          expect(batch.records.map(&:id)).to eq([1,2])
+          expect(Fidget).to have_received(:where).with(bulk_import_id: [instance_of(String), instance_of(String)])
+          expect(batch.records.map(&:id)).to eq([1, 2])
         end
 
       end

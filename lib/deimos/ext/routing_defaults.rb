@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This monkey patch was provided by Maciej, the maintainer of Karafka. This allows
 # configs to override each other on a more granular basis rather than each `configure` call
 # blowing away all fields. It also supports multiple default blocks.
@@ -46,11 +48,11 @@ class Matcher
   end
 
   def method_missing(m, *args, **kwargs)
-    if args.empty?
-      @applications << [m, kwargs]
-    else
-      @applications << [m, args]
-    end
+    @applications << if args.empty?
+      [m, kwargs]
+                     else
+      [m, args]
+                     end
   end
 end
 
@@ -72,5 +74,5 @@ module ConsumerGroup
   end
 end
 
-Karafka::Routing::Builder.prepend Builder
-Karafka::Routing::ConsumerGroup.prepend ConsumerGroup
+Karafka::Routing::Builder.prepend(Builder)
+Karafka::Routing::ConsumerGroup.prepend(ConsumerGroup)

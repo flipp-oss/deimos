@@ -18,18 +18,10 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchSlicer do
 
       expect(slices).
         to match([
-                   match_array([
-                                 Deimos::Message.new({ v: 1 }, key: 'C'),
-                                 Deimos::Message.new({ v: 123 }, key: 'A'),
-                                 Deimos::Message.new({ v: 999 }, key: 'B')
-                               ]),
-                   match_array([
-                                 Deimos::Message.new({ v: 456 }, key: 'A'),
-                                 Deimos::Message.new({ v: 2 }, key: 'C')
-                               ]),
-                   match_array([
-                                 Deimos::Message.new({ v: 3 }, key: 'C')
-                               ])
+                   contain_exactly(Deimos::Message.new({ v: 1 }, key: 'C'), Deimos::Message.new({ v: 123 }, key: 'A'),
+                                   Deimos::Message.new({ v: 999 }, key: 'B')),
+                   contain_exactly(Deimos::Message.new({ v: 456 }, key: 'A'), Deimos::Message.new({ v: 2 }, key: 'C')),
+                   contain_exactly(Deimos::Message.new({ v: 3 }, key: 'C'))
                  ])
     end
 

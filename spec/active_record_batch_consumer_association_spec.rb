@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Lint/ConstantDefinitionInBlock
 module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
   describe Deimos::ActiveRecordConsumer,
            'Batch Consumer with MySQL handling associations',
@@ -179,8 +180,8 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
         expect {
           publish_batch([{ key: 2,
                            payload: { test_id: 'xyz', some_int: 5, title: 'Widget Title' } }])
-        }.to raise_error('Create bulk_import_id on the widgets table. Run rails g deimos:bulk_import_id {table}'\
-        ' to create the migration.')
+        }.to raise_error('Create bulk_import_id on the widgets table. Run rails g deimos:bulk_import_id {table} ' \
+                         'to create the migration.')
       end
     end
 
@@ -204,6 +205,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with one-to-many relationship in association and default bulk_import_id' do
       let(:replace_associations) { false }
+
       before(:each) do
         consumer_class.record_attributes_proc = proc do |payload|
           {
@@ -243,6 +245,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with replace_associations on' do
       let(:replace_associations) { true }
+
       before(:each) do
         consumer_class.record_attributes_proc = proc do |payload|
           {
@@ -318,3 +321,4 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     end
            end
 end
+# rubocop:enable Lint/ConstantDefinitionInBlock

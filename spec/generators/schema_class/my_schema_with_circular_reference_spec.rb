@@ -90,7 +90,8 @@ RSpec.describe Schemas::MyNamespace::MySchemaWithCircularReference do
     end
 
     it 'should return a JSON string of the payload' do
-      s = '{"properties":{"a_boolean":{"property":true},"an_integer":{"property":1},"a_float":{"property":4.5},"a_string":{"property":"string"},"an_array":{"property":[1,2,3]},"an_hash":{"property":{"a_key":"a_value"}}}}'
+      s = '{"properties":{"a_boolean":{"property":true},"an_integer":{"property":1},"a_float":{"property":4.5},"a_str' \
+          'ing":{"property":"string"},"an_array":{"property":[1,2,3]},"an_hash":{"property":{"a_key":"a_value"}}}}'
       expect(klass.to_json).to eq(s)
     end
   end

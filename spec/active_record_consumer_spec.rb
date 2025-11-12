@@ -16,7 +16,7 @@ module ActiveRecordConsumerTest
       end
 
       # :nodoc:
-      class Widget < ActiveRecord::Base
+      class Widget < ActiveRecord::Base # rubocop:disable Lint/ConstantDefinitionInBlock
         default_scope -> { where(some_bool: false) }
       end
       Widget.reset_column_information
@@ -75,6 +75,7 @@ module ActiveRecordConsumerTest
                        some_int: nil)
           self.test_id = test_id
           self.some_int = some_int
+          super
         end
 
         def as_json(_opts={})
@@ -107,6 +108,7 @@ module ActiveRecordConsumerTest
                        updated_at: nil,
                        some_datetime_int: nil,
                        timestamp: nil)
+          super
           self.test_id = test_id
           self.some_int = some_int
           self.updated_at = updated_at
@@ -128,19 +130,19 @@ module ActiveRecordConsumerTest
       stub_const('Schemas::MySchemaWithDateTimes', schema_datetime_class)
 
       Karafka::App.routes.redraw do
-        topic "my-topic" do
+        topic 'my-topic' do
           consumer MyConsumer
           schema 'MySchemaWithDateTimes'
           namespace 'com.my-namespace'
           key_config plain: true
         end
-        topic "my-topic2" do
+        topic 'my-topic2' do
           consumer MyConsumerWithKey
           schema 'MySchemaWithDateTimes'
           namespace 'com.my-namespace'
           key_config schema: 'MySchemaId_key'
         end
-        topic "my-topic3" do
+        topic 'my-topic3' do
           consumer MyCustomFetchConsumer
           schema 'MySchema'
           namespace 'com.my-namespace'
@@ -180,7 +182,7 @@ module ActiveRecordConsumerTest
               expect(widget.test_id).to eq('abc')
               expect(widget.some_int).to eq(3)
               expect(widget.some_datetime_int).to eq(Time.zone.now)
-              expect(widget.some_bool).to eq(false)
+              expect(widget.some_bool).to be(false)
               expect(widget.updated_at).to eq(Time.zone.now)
 
               # test unscoped

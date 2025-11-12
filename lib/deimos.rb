@@ -50,7 +50,7 @@ module Deimos
     deimos.batch_consumption.invalid_records
     deimos.batch_consumption.valid_records
     deimos.outbox.produce
-  )
+  ).freeze
 
   class << self
 
@@ -66,7 +66,7 @@ module Deimos
 
     # @param schema [String, Symbol]
     # @param namespace [String]
-    # @return [Deimos::SchemaBackends::Base]
+    # @return [Class<Deimos::SchemaBackends::Base>]
     def schema_backend(schema:, namespace:, backend: Deimos.config.schema.backend)
       if config.schema.use_schema_classes
         # Initialize an instance of the provided schema
@@ -170,9 +170,9 @@ module Deimos
     # @return [Karafka::Routing::Topic,nil]
     def karafka_config_for(topic: nil, producer: nil)
       if topic
-        karafka_configs.find { |t| t.name == topic}
+        karafka_configs.find { |t| t.name == topic }
       elsif producer
-        karafka_configs.find { |t| t.producer_classes&.include?(producer)}
+        karafka_configs.find { |t| t.producer_classes&.include?(producer) }
       end
     end
 
