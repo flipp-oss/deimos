@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Lint/ConstantDefinitionInBlock
 # Wrapped in a module to prevent class leakage
 module ActiveRecordBatchConsumerTest
   describe Deimos::ActiveRecordConsumer, 'Batch Consumer' do
@@ -94,11 +95,11 @@ module ActiveRecordBatchConsumerTest
             )
 
             expect(all_widgets).
-              to match_array(
-                [
-                  have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start, created_at: start),
-                  have_attributes(id: 2, test_id: 'def', some_int: 4, updated_at: start, created_at: start)
-                ]
+              to contain_exactly(
+                have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start,
+                                created_at: start),
+                have_attributes(id: 2, test_id: 'def', some_int: 4, updated_at: start,
+                                created_at: start)
               )
           end
 
@@ -143,11 +144,9 @@ module ActiveRecordBatchConsumerTest
             )
 
             expect(all_widgets).
-              to match_array(
-                [
-                  have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: Time.zone.now, created_at: Time.zone.now)
-                ]
-              )
+              to contain_exactly(have_attributes(id: 1, test_id: 'abc', some_int: 3,
+                                                 updated_at: Time.zone.now,
+                                                 created_at: Time.zone.now))
           end
 
           it 'should handle a double update' do
@@ -165,11 +164,9 @@ module ActiveRecordBatchConsumerTest
             )
 
             expect(all_widgets).
-              to match_array(
-                [
-                  have_attributes(id: 1, test_id: 'ghi', some_int: 4, updated_at: Time.zone.now, created_at: start)
-                ]
-              )
+              to contain_exactly(have_attributes(id: 1, test_id: 'ghi', some_int: 4,
+                                                 updated_at: Time.zone.now,
+                                                 created_at: start))
           end
 
           it 'should handle a double deletion' do
@@ -201,11 +198,7 @@ module ActiveRecordBatchConsumerTest
             )
 
             expect(all_widgets).
-              to match_array(
-                [
-                  have_attributes(id: 2, test_id: 'def', some_int: 5)
-                ]
-              )
+              to contain_exactly(have_attributes(id: 2, test_id: 'def', some_int: 5))
           end
 
           it 'should handle deletes with deadlock retries' do
@@ -292,13 +285,9 @@ module ActiveRecordBatchConsumerTest
         )
 
         expect(all_widgets).
-          to match_array(
-            [
-              have_attributes(id: 1, test_id: 'abc', some_int: 3),
-              have_attributes(id: 2, test_id: 'def', some_int: 4),
-              have_attributes(id: 3, test_id: 'hij', some_int: 9)
-            ]
-          )
+          to contain_exactly(have_attributes(id: 1, test_id: 'abc', some_int: 3),
+                             have_attributes(id: 2, test_id: 'def', some_int: 4),
+                             have_attributes(id: 3, test_id: 'hij', some_int: 9))
       end
     end
 
@@ -347,12 +336,10 @@ module ActiveRecordBatchConsumerTest
         )
 
         expect(all_widgets).
-          to match_array(
-            [
-              have_attributes(test_id: 'aaa', some_int: 3, part_one: 'abc', part_two: 'def'),
-              have_attributes(test_id: 'bbb', some_int: 4, part_one: 'ghi', part_two: 'jkl')
-            ]
-          )
+          to contain_exactly(have_attributes(test_id: 'aaa', some_int: 3, part_one: 'abc',
+                                             part_two: 'def'),
+                             have_attributes(test_id: 'bbb', some_int: 4, part_one: 'ghi',
+                                             part_two: 'jkl'))
       end
     end
 
@@ -375,13 +362,9 @@ module ActiveRecordBatchConsumerTest
         )
 
         expect(all_widgets).
-          to match_array(
-            [
-              have_attributes(test_id: 'xxx', some_int: 2),
-              have_attributes(test_id: 'aaa', some_int: 3),
-              have_attributes(test_id: 'bbb', some_int: 4)
-            ]
-          )
+          to contain_exactly(have_attributes(test_id: 'xxx', some_int: 2),
+                             have_attributes(test_id: 'aaa', some_int: 3),
+                             have_attributes(test_id: 'bbb', some_int: 4))
       end
     end
 
@@ -439,18 +422,14 @@ module ActiveRecordBatchConsumerTest
         )
 
         expect(all_widgets).
-          to match_array(
-            [
-              have_attributes(id: 1, test_id: 'abc', some_int: 2, deleted: true,
-                              created_at: start, updated_at: Time.zone.now),
-              have_attributes(id: 2, test_id: 'def', some_int: 3, deleted: true,
-                              created_at: Time.zone.now, updated_at: Time.zone.now),
-              have_attributes(id: 3, test_id: 'ghi', some_int: 4, deleted: false,
-                              created_at: start, updated_at: Time.zone.now),
-              have_attributes(id: 4, test_id: 'uvw', some_int: 5, deleted: false,
-                              created_at: start, updated_at: Time.zone.now)
-            ]
-          )
+          to contain_exactly(have_attributes(id: 1, test_id: 'abc', some_int: 2, deleted: true,
+                                             created_at: start, updated_at: Time.zone.now),
+                             have_attributes(id: 2, test_id: 'def', some_int: 3, deleted: true,
+                                             created_at: Time.zone.now, updated_at: Time.zone.now),
+                             have_attributes(id: 3, test_id: 'ghi', some_int: 4, deleted: false,
+                                             created_at: start, updated_at: Time.zone.now),
+                             have_attributes(id: 4, test_id: 'uvw', some_int: 5, deleted: false,
+                                             created_at: start, updated_at: Time.zone.now))
       end
     end
 
@@ -485,7 +464,7 @@ module ActiveRecordBatchConsumerTest
         )
 
         expect(all_widgets).
-          to match_array([have_attributes(id: 2, test_id: 'abc123')])
+          to contain_exactly(have_attributes(id: 2, test_id: 'abc123'))
       end
     end
 
@@ -552,16 +531,12 @@ module ActiveRecordBatchConsumerTest
           )
 
           expect(all_widgets).
-            to match_array(
-              [
-                have_attributes(id: 1,
-                                test_id: 'abc',
-                                some_int: 3,
-                                updated_at: start,
-                                created_at: start,
-                                bulk_import_id: 'global')
-              ]
-            )
+            to contain_exactly(have_attributes(id: 1,
+                                               test_id: 'abc',
+                                               some_int: 3,
+                                               updated_at: start,
+                                               created_at: start,
+                                               bulk_import_id: 'global'))
 
         end
 
@@ -592,16 +567,12 @@ module ActiveRecordBatchConsumerTest
           )
 
           expect(all_widgets).
-            to match_array(
-              [
-                have_attributes(id: 1,
-                                test_id: 'abc',
-                                some_int: 3,
-                                updated_at: start,
-                                created_at: start,
-                                bulk_import_id: 'custom')
-              ]
-            )
+            to contain_exactly(have_attributes(id: 1,
+                                               test_id: 'abc',
+                                               some_int: 3,
+                                               updated_at: start,
+                                               created_at: start,
+                                               bulk_import_id: 'custom'))
 
         end
       end
@@ -649,18 +620,16 @@ module ActiveRecordBatchConsumerTest
         )
 
         expect(Widget.count).to eq(2)
-        expect(Widget.all.to_a).to match_array([
-                                                 have_attributes(id: 1,
-                                                                 test_id: 'abc',
-                                                                 some_int: 11,
-                                                                 updated_at: start,
-                                                                 created_at: start),
-                                                 have_attributes(id: 2,
-                                                                 test_id: 'def',
-                                                                 some_int: 2,
-                                                                 updated_at: start,
-                                                                 created_at: start)
-                                               ])
+        expect(Widget.all.to_a).to contain_exactly(have_attributes(id: 1,
+                                                                   test_id: 'abc',
+                                                                   some_int: 11,
+                                                                   updated_at: start,
+                                                                   created_at: start),
+                                                   have_attributes(id: 2,
+                                                                   test_id: 'def',
+                                                                   some_int: 2,
+                                                                   updated_at: start,
+                                                                   created_at: start))
       end
 
     end
@@ -692,7 +661,8 @@ module ActiveRecordBatchConsumerTest
             def self.process_invalid_records(invalid)
               # Invalid
               attrs = invalid.first.record.attributes
-              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).
+                update!(some_int: attrs['some_int'])
             end
 
             Karafka.monitor.subscribe('deimos.batch_consumption.invalid_records') do |payload|
@@ -751,7 +721,8 @@ module ActiveRecordBatchConsumerTest
             def self.process_invalid_records(invalid)
               # Invalid
               attrs = invalid.first.record.attributes
-              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).update!(some_int: attrs['some_int'])
+              Widget.find_by(id: attrs['id'], test_id: attrs['test_id']).
+                update!(some_int: attrs['some_int'])
             end
 
             Karafka.monitor.subscribe('deimos.batch_consumption.invalid_records') do |payload|
@@ -836,3 +807,4 @@ module ActiveRecordBatchConsumerTest
 
   end
 end
+# rubocop:enable Lint/ConstantDefinitionInBlock

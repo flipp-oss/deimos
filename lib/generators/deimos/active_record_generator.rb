@@ -10,6 +10,7 @@ module Deimos
     # Generator for ActiveRecord model and migration.
     class ActiveRecordGenerator < Rails::Generators::Base
       include Rails::Generators::Migration
+
       if Rails.version < '4'
         extend(ActiveRecord::Generators::Migration)
       else
@@ -47,7 +48,7 @@ module Deimos
         # @return [String]
         def schema
           last_dot = self.full_schema.rindex('.')
-          self.full_schema[last_dot + 1..-1]
+          self.full_schema[(last_dot + 1)..-1]
         end
 
         # @return [String]

@@ -4,12 +4,12 @@ require 'generators/deimos/schema_class_generator'
 require 'fileutils'
 
 class MultiFileSerializer
-  def process_string(s)
+  def process_string(str)
     # Ruby 3.4 changes how hashes are printed
     if Gem::Version.new(RUBY_VERSION) > Gem::Version.new('3.4.0')
-      s.gsub(/{"(.*)" => /, '{"\1"=>')
+      str.gsub(/{"(.*)" => /, '{"\1"=>')
     else
-      s
+      str
     end
   end
 
@@ -32,7 +32,7 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
   end
 
   after(:each) do
-    FileUtils.rm_rf('spec/app') if File.exist?('spec/app')
+    FileUtils.rm_rf('spec/app')
   end
 
   context 'with a Consumers Schema' do

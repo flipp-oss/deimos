@@ -141,6 +141,7 @@ module Deimos
         karafka_config&.name
       end
 
+      # rubocop:disable Style/OptionalBooleanParameter
       # @param sync [Boolean]
       # @param force_send [Boolean]
       # @return [Class<Deimos::Backends::Base>]
@@ -157,6 +158,7 @@ module Deimos
         end
         "Deimos::Backends::#{backend.to_s.classify}".constantize
       end
+      # rubocop:enable Style/OptionalBooleanParameter
 
       # Send a batch to the backend.
       # @param backend [Class<Deimos::Backends::Base>]

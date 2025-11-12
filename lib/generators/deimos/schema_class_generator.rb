@@ -75,7 +75,7 @@ module Deimos
           elsif schema.respond_to?(:items)
             [schema.items]
           elsif schema.respond_to?(:schemas)
-            schema.schemas.reject { |s| s.class == Avro::Schema::PrimitiveSchema }
+            schema.schemas.reject { |s| s.instance_of?(Avro::Schema::PrimitiveSchema) }
           else
             []
           end

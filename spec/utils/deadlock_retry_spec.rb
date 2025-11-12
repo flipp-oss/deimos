@@ -52,10 +52,7 @@ RSpec.describe Deimos::Utils::DeadlockRetry do
         Widget.create(test_id: 'second')
       end
 
-      expect(Widget.all).to match_array([
-                                          have_attributes(test_id: 'first'),
-                                          have_attributes(test_id: 'second')
-                                        ])
+      expect(Widget.all).to contain_exactly(have_attributes(test_id: 'first'), have_attributes(test_id: 'second'))
     end
 
     it 'should not retry non-deadlock exceptions' do

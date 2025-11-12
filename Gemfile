@@ -4,9 +4,3 @@ source 'https://rubygems.org'
 
 # Specify your gem's dependencies in boilerplate.gemspec
 gemspec
-
-# for older activesupport
-gem 'benchmark'
-gem 'bigdecimal'
-gem 'drb'
-gem 'mutex_m'

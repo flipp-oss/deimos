@@ -5,8 +5,8 @@ require 'generators/deimos/active_record_generator'
 RSpec.describe Deimos::Generators::ActiveRecordGenerator do
 
   after(:each) do
-    FileUtils.rm_rf('db') if File.exist?('db')
-    FileUtils.rm_rf('app') if File.exist?('app')
+    FileUtils.rm_rf('db')
+    FileUtils.rm_rf('app')
   end
 
   it 'should generate a migration' do
@@ -39,12 +39,12 @@ RSpec.describe Deimos::Generators::ActiveRecordGenerator do
             # TODO add indexes as necessary
           end
         end
-      
+
         def down
           return unless table_exists?(:generated_table)
           drop_table :generated_table
         end
-      
+
       end
     MIGRATION
     expect(File.read(files[0])).to eq(results)

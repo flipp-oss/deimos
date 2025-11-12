@@ -15,11 +15,15 @@ each_db_config(Deimos::Utils::OutboxProducer) do
   end
 
   specify '#process_next_messages' do
-    expect(producer).to receive(:retrieve_topics).and_return(%w(topic1 topic2))
-    expect(producer).to receive(:process_topic).twice
-    expect(Deimos::KafkaTopicInfo).to receive(:ping_empty_topics).with(%w(topic1 topic2))
-    expect(producer).to receive(:sleep).with(0.5)
+    allow(producer).to receive(:retrieve_topics).and_return(%w(topic1 topic2))
+    allow(producer).to receive(:process_topic)
+    allow(Deimos::KafkaTopicInfo).to receive(:ping_empty_topics)
+    allow(producer).to receive(:sleep)
     producer.process_next_messages
+    expect(producer).to have_received(:retrieve_topics)
+    expect(producer).to have_received(:process_topic).twice
+    expect(Deimos::KafkaTopicInfo).to have_received(:ping_empty_topics).with(%w(topic1 topic2))
+    expect(producer).to have_received(:sleep).with(0.5)
   end
 
   specify '#retrieve_topics' do
@@ -45,7 +49,7 @@ each_db_config(Deimos::Utils::OutboxProducer) do
     producer.current_topic = 'topic1'
     messages = producer.retrieve_messages
     expect(messages.size).to eq(3)
-    expect(messages).to all(be_a_kind_of(Deimos::KafkaMessage))
+    expect(messages).to all(be_a(Deimos::KafkaMessage))
   end
 
   describe '#produce_messages' do
@@ -125,13 +129,16 @@ each_db_config(Deimos::Utils::OutboxProducer) do
     end
 
     it 'should do nothing if lock fails' do
-      expect(Deimos::KafkaTopicInfo).to receive(:lock).
-        with('my-topic', 'abc').and_return(false)
-      expect(producer).not_to receive(:retrieve_messages)
+      allow(Deimos::KafkaTopicInfo).to receive(:lock).and_return(false)
+      allow(producer).to receive(:retrieve_messages)
       producer.process_topic('my-topic')
+      expect(Deimos::KafkaTopicInfo).to have_received(:lock).with('my-topic', 'abc')
+      expect(producer).not_to have_received(:retrieve_messages)
     end
 
-    it 'should complete successfully' do
+    # using expect(x).to have_received(:y).ordered doesn't work
+    # rubocop:disable RSpec/StubbedMock
+    it 'should complete successfully' do # rubocop:disable RSpec/ExampleLength
       messages = (1..4).map do |i|
         Deimos::KafkaMessage.new(
           topic: 'my-topic',
@@ -196,13 +203,16 @@ each_db_config(Deimos::Utils::OutboxProducer) do
         with('my-topic', 'abc').once
       producer.process_topic('my-topic')
     end
+    # rubocop:enable RSpec/StubbedMock
 
     it 'should register an error if it gets an error' do
-      expect(producer).to receive(:retrieve_messages).and_raise('OH NOES')
-      expect(Deimos::KafkaTopicInfo).to receive(:register_error).
-        with('my-topic', 'abc')
-      expect(producer).not_to receive(:produce_messages)
+      allow(producer).to receive(:retrieve_messages).and_raise('OH NOES')
+      allow(Deimos::KafkaTopicInfo).to receive(:register_error)
+      allow(producer).to receive(:produce_messages)
       producer.process_topic('my-topic')
+      expect(producer).to have_received(:retrieve_messages)
+      expect(Deimos::KafkaTopicInfo).to have_received(:register_error).with('my-topic', 'abc')
+      expect(producer).not_to have_received(:produce_messages)
     end
 
     it 'should move on if it gets a partial batch' do
@@ -225,10 +235,9 @@ each_db_config(Deimos::Utils::OutboxProducer) do
         )
       end
 
-      expect(Deimos::KafkaTopicInfo).to receive(:lock).
-        with('my-topic', 'abc').and_return(true)
-      expect(producer).to receive(:produce_messages).and_raise('OH NOES')
-      expect(producer).to receive(:retrieve_messages).and_return(messages)
+      allow(Deimos::KafkaTopicInfo).to receive(:lock).and_return(true)
+      allow(producer).to receive(:produce_messages).and_raise('OH NOES')
+      allow(producer).to receive(:retrieve_messages).and_return(messages)
       expect(Deimos::KafkaTopicInfo).to receive(:register_error)
 
       expect(Deimos::KafkaMessage.count).to eq(4)
@@ -237,6 +246,9 @@ each_db_config(Deimos::Utils::OutboxProducer) do
         expect(event.payload[:messages]).to eq(messages)
       end
       producer.process_topic('my-topic')
+      expect(Deimos::KafkaTopicInfo).to have_received(:lock).with('my-topic', 'abc')
+      expect(producer).to have_received(:produce_messages)
+      expect(producer).to have_received(:retrieve_messages)
       # don't delete for regular errors
       expect(Deimos::KafkaMessage.count).to eq(4)
       Karafka.monitor.notifications_bus.clear('deimos.outbox.produce')
@@ -269,14 +281,14 @@ each_db_config(Deimos::Utils::OutboxProducer) do
         m.call(*args)
       end
 
-      expect(Deimos::KafkaTopicInfo).to receive(:lock).
-        with('my-topic', 'abc').and_return(true)
+      allow(Deimos::KafkaTopicInfo).to receive(:lock).and_return(true)
       expect(producer).to receive(:retrieve_messages).ordered.and_return(messages)
       expect(producer).to receive(:retrieve_messages).ordered.and_return([])
       expect(Karafka.producer).to receive(:produce_many_sync).once.with(messages.map(&:karafka_message))
 
       expect(Deimos::KafkaMessage.count).to eq(8)
       producer.process_topic('my-topic')
+      expect(Deimos::KafkaTopicInfo).to have_received(:lock).with('my-topic', 'abc')
       expect(Deimos::KafkaMessage.count).to eq(4)
     end
 
@@ -350,7 +362,7 @@ each_db_config(Deimos::Utils::OutboxProducer) do
     expect('topic1').to have_sent('mess1')
   end
 
-  example 'Integration test - batching' do
+  example 'Integration test - batching' do # rubocop:disable RSpec/ExampleLength
     (1..4).each do |i|
       (1..2).each do |j|
         Deimos::KafkaMessage.create!(topic: "topic#{j}",

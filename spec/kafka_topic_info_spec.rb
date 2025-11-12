@@ -33,7 +33,7 @@ each_db_config(Deimos::KafkaTopicInfo) do
                             locked_at: nil, error: true)
     expect(described_class.lock('my-topic', 'abc')).to be_falsey
     expect(described_class.count).to eq(1)
-    expect(described_class.first.locked_by).to eq(nil)
+    expect(described_class.first.locked_by).to be_nil
   end
 
   specify '#clear_lock' do
@@ -47,15 +47,15 @@ each_db_config(Deimos::KafkaTopicInfo) do
       Deimos::KafkaTopicInfo.clear_lock('my-topic', 'abc')
       expect(Deimos::KafkaTopicInfo.count).to eq(2)
       record = Deimos::KafkaTopicInfo.first
-      expect(record.locked_by).to eq(nil)
-      expect(record.locked_at).to eq(nil)
-      expect(record.error).to eq(false)
+      expect(record.locked_by).to be_nil
+      expect(record.locked_at).to be_nil
+      expect(record.error).to be(false)
       expect(record.retries).to eq(0)
       expect(record.last_processed_at.in_time_zone.to_s).to eq(Time.zone.now.to_s)
       record = Deimos::KafkaTopicInfo.last
-      expect(record.locked_by).not_to eq(nil)
-      expect(record.locked_at).not_to eq(nil)
-      expect(record.error).not_to eq(false)
+      expect(record.locked_by).not_to be_nil
+      expect(record.locked_at).not_to be_nil
+      expect(record.error).not_to be(false)
       expect(record.retries).not_to eq(0)
       expect(record.last_processed_at.in_time_zone.to_s).to eq(20.seconds.ago.to_s)
     end

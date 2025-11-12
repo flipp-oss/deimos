@@ -109,7 +109,14 @@ RSpec.describe Schemas::MyNamespace::MySchemaWithComplexType do
     end
 
     it 'should return a JSON string of the payload' do
-      s = '{"test_id":"test id","union_string":"","test_float":1.2,"test_string_array":["abc","def"],"test_int_array":[123,456],"test_optional_int":123,"some_integer_map":{"int_1":1,"int_2":2},"some_record":{"a_record_field":"field 1"},"some_optional_record":{"a_record_field":"field 2"},"some_record_array":[{"a_record_field":"field 3"},{"a_record_field":"field 4"}],"some_record_map":{"record_1":{"a_record_field":"field 5"},"record_2":{"a_record_field":"field 6"}},"some_enum_array":["sym1","sym2"],"some_optional_enum":null,"some_enum_with_default":"sym6"}'
+      s = '{"test_id":"test ' \
+          'id","union_string":"","test_float":1.2,"test_string_array":["abc","def"],"test_int_array":[123,456],"test_' \
+          'optional_i' \
+          'nt":123,"some_integer_map":{"int_1":1,"int_2":2},"some_record":{"a_record_field":"field ' \
+          '1"},"some_optional_record":{"a_record_field":"field 2"},"some_record_array":[{"a_record_field":"field ' \
+          '3"},{"a_record_field":"field 4"}],"some_record_map":{"record_1":{"a_record_field":"field ' \
+          '5"},"record_2":{"a_record_field":"field ' \
+          '6"}},"some_enum_array":["sym1","sym2"],"some_optional_enum":null,"some_enum_with_default":"sym6"}'
       expect(klass.to_json).to eq(s)
     end
   end
@@ -129,7 +136,7 @@ RSpec.describe Schemas::MyNamespace::MySchemaWithComplexType do
     end
 
     it 'should set some_record to nil' do
-      klass = described_class.new(**payload_hash.merge(some_record: nil))
+      klass = described_class.new(**payload_hash, some_record: nil)
       expect(klass.some_record).to be_nil
     end
   end

@@ -39,15 +39,15 @@ module Deimos
     # @return [void]
     def load_generated_schema_classes
       if Deimos.config.schema.generated_class_path.nil?
-        raise 'Cannot use schema classes without schema.generated_class_path. '\
+        raise 'Cannot use schema classes without schema.generated_class_path. ' \
               'Please provide a directory.'
       end
 
       Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.
         each { |f| require f }
     rescue LoadError
-      raise 'Cannot load schema classes. Please regenerate classes with'\
-             'rake deimos:generate_schema_models.'
+      raise 'Cannot load schema classes. Please regenerate classes with' \
+            'rake deimos:generate_schema_models.'
     end
 
     # Ensure everything is set up correctly for the DB backend.
@@ -55,12 +55,10 @@ module Deimos
     def validate_outbox_backend
         require 'activerecord-import'
     rescue LoadError
-        raise 'Cannot set producers.backend to :outbox without activerecord-import! '\
+        raise 'Cannot set producers.backend to :outbox without activerecord-import! ' \
               'Please add it to your Gemfile.'
     end
   end
-
-  # rubocop:enable
 
   define_settings do
     setting :logger, removed: 'Use "logger" in Karafka setup block.'
@@ -69,11 +67,11 @@ module Deimos
 
     setting :kafka do
       setting :logger, Logger.new(STDOUT), removed: 'Karafka uses Rails logger by default'
-      setting :seed_brokers, ['localhost:9092'], removed: 'Use kafka(bootstrap.servers)'\
+      setting :seed_brokers, ['localhost:9092'], removed: 'Use kafka(bootstrap.servers)' \
                                                           'in Karafka settings'
       setting :client_id, 'phobos', removed: 'Use client_id in Karafka setup block.'
-      setting :connect_timeout, 15, removed: 'Use kafka(socket.connection.setup.timeout.ms)'\
-                                              'in Karafka settings'
+      setting :connect_timeout, 15, removed: 'Use kafka(socket.connection.setup.timeout.ms)' \
+                                             'in Karafka settings'
       setting :socket_timeout, 15, removed: 'Use kafka(socket.timeout.ms) in Karafka settings'
 
       setting :ssl do
@@ -81,13 +79,13 @@ module Deimos
         setting :ca_cert, removed: 'Use kafka(ssl.ca.pem) in Karafka settings'
         setting :client_cert, removed: 'Use kafka(ssl.certificate.pem) in Karafka settings'
         setting :client_cert_key, removed: 'Use kafka(ssl.key.pem) in Karafka settings'
-        setting :verify_hostname, removed: 'Use kafka(ssl.endpoint.identification.algorithm=https)'\
-                                            'in Karafka settings'
+        setting :verify_hostname, removed: 'Use kafka(ssl.endpoint.identification.algorithm=https)' \
+                                           'in Karafka settings'
         setting :ca_certs_from_system, removed: 'Should not be necessary with librdkafka.'
       end
 
       setting :sasl do
-        setting :enabled, removed: 'Use kafka(security.protocol=sasl_ssl or sasl_plaintext)'\
+        setting :enabled, removed: 'Use kafka(security.protocol=sasl_ssl or sasl_plaintext)' \
                                    'in Karafka settings'
         setting :gssapi_principal, removed: 'Use kafka(sasl.kerberos.principal) in Karafka settings'
         setting :gssapi_keytab, removed: 'Use kafka(sasl.kerberos.keytab) in Karafka settings'
@@ -106,7 +104,7 @@ module Deimos
       setting :reraise_errors, removed: 'Use topic.reraise_errors in Karafka settings'
       setting :report_lag, removed: "Use Karafka's built in lag reporting"
       setting(:fatal_error, removed: 'Use topic.fatal_error in Karafka settings')
-      setting(:bulk_import_id_generator, removed: 'Use topic.bulk_import_id_generator '\
+      setting(:bulk_import_id_generator, removed: 'Use topic.bulk_import_id_generator ' \
                                                   'in Karafka settings')
       setting :save_associations_first, removed: 'Use topic.save_associations_first'
       setting :replace_associations, removed: 'Use topic.replace_associations in Karafka settings'
@@ -117,7 +115,7 @@ module Deimos
       setting :required_acks, 1, removed: 'Use kafka(request.required.acks) in Karafka settings'
       setting :max_retries, removed: 'Use kafka(message.send.max.retries) in Karafka settings'
       setting :retry_backoff, removed: 'Use kafka(retry.backoff.ms) in Karafka settings'
-      setting :max_buffer_size, removed: 'Not relevant with Karafka. You may want to see '\
+      setting :max_buffer_size, removed: 'Not relevant with Karafka. You may want to see ' \
                                          'the queue.buffering.max.messages setting.'
       setting :max_buffer_bytesize, removed: 'Not relevant with Karafka.'
       setting :compression_codec, removed: 'Use kafka(compression.codec) in Karafka settings'
@@ -229,7 +227,7 @@ module Deimos
       setting :schema, removed: 'Use topic.schema(schema:) in Karafka settings.'
       setting :namespace, removed: 'Use topic.schema(namespace:) in Karafka settings.'
       setting :key_config, removed: 'Use topic.schema(key_config:) in Karafka settings.'
-      setting :use_schema_classes, removed: 'Use topic.schema(use_schema_classes:) in '\
+      setting :use_schema_classes, removed: 'Use topic.schema(use_schema_classes:) in ' \
                                             'Karafka settings.'
     end
 
@@ -242,25 +240,25 @@ module Deimos
       setting :disabled, removed: 'Use topic.active in Karafka settings.'
       setting :use_schema_classes, removed: 'Use topic.use_schema_classes in Karafka settings.'
       setting :max_db_batch_size, removed: 'Use topic.max_db_batch_size in Karafka settings.'
-      setting :bulk_import_id_column, removed: 'Use topic.bulk_import_id_column'\
+      setting :bulk_import_id_column, removed: 'Use topic.bulk_import_id_column' \
                                                'in Karafka settings.'
       setting :replace_associations, removed: 'Use topic.replace_associations in Karafka settings.'
-      setting :bulk_import_id_generator, removed: 'Use topic.bulk_import_id_generator '\
+      setting :bulk_import_id_generator, removed: 'Use topic.bulk_import_id_generator ' \
                                                   'in Karafka settings.'
       setting :save_associations_first, removed: 'Use topic.save_associations_first'
       setting :group_id, removed: 'Use kafka(group.id) in Karafka settings.'
       setting :max_concurrency, removed: "Use Karafka's 'config.concurrency' in the setup block."
-      setting :start_from_beginning, removed: 'Use initial_offset in the setup block, or '\
+      setting :start_from_beginning, removed: 'Use initial_offset in the setup block, or ' \
                                               'kafka(auto.offset.reset) in topic settings.'
       setting :max_bytes_per_partition, removed: 'Use max_messages in the setup block.'
       setting :min_bytes, removed: 'Not supported in Karafka.'
       setting :max_wait_time, removed: 'Use max_wait_time in the setup block.'
       setting :force_encoding, removed: 'Not supported with Karafka.'
       setting :delivery, :batch, removed: 'Use batch: true/false in Karafka topic configs.'
-      setting :backoff, removed: 'Use kafka(retry.backoff.ms) and retry.backoff.max.ms'\
-                                  'in Karafka settings.'
+      setting :backoff, removed: 'Use kafka(retry.backoff.ms) and retry.backoff.max.ms' \
+                                 'in Karafka settings.'
       setting :session_timeout, removed: 'Use kafka(session.timeout.ms) in Karafka settings.'
-      setting :offset_commit_interval, removed: 'Use kafka(auto.commit.interval.ms) '\
+      setting :offset_commit_interval, removed: 'Use kafka(auto.commit.interval.ms) ' \
                                                 'in Karafka settings.'
       setting :offset_commit_threshold, removed: 'Not supported with Karafka.'
       setting :offset_retention_time, removed: 'Not supported with Karafka.'

@@ -16,17 +16,16 @@ RSpec.describe Deimos::SchemaBackends::AvroSchemaRegistry do
 
   it 'should encode and decode correctly' do
     avro_turf = instance_double(AvroTurf::Messaging)
-    expect(avro_turf).to receive(:encode).
-      with(payload, schema_name: 'MySchema', subject: 'topic').
-      and_return('encoded-payload')
-    expect(avro_turf).to receive(:decode).
-      with('encoded-payload', schema_name: 'MySchema').
-      and_return(payload)
+    allow(avro_turf).to receive_messages(encode: 'encoded-payload', decode: payload)
     allow(backend).to receive(:avro_turf_messaging).and_return(avro_turf)
     results = backend.encode(payload, topic: 'topic')
     expect(results).to eq('encoded-payload')
     results = backend.decode(results)
     expect(results).to eq(payload)
+    expect(avro_turf).to have_received(:encode).
+      with(payload, schema_name: 'MySchema', subject: 'topic')
+    expect(avro_turf).to have_received(:decode).
+      with('encoded-payload', schema_name: 'MySchema')
   end
 
 end

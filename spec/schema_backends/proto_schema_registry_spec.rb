@@ -34,17 +34,14 @@ RSpec.describe Deimos::SchemaBackends::ProtoSchemaRegistry do
 
   it 'should encode and decode correctly' do
     proto_turf = instance_double(ProtoTurf)
-    expect(proto_turf).to receive(:encode).
-      with(payload, subject: 'topic').
-      and_return('encoded-payload')
-    expect(proto_turf).to receive(:decode).
-      with('encoded-payload').
-      and_return(payload)
+    allow(proto_turf).to receive_messages(encode: 'encoded-payload', decode: payload)
     allow(described_class).to receive(:proto_turf).and_return(proto_turf)
     results = backend.encode(payload, topic: 'topic')
     expect(results).to eq('encoded-payload')
     results = backend.decode(results)
     expect(results).to eq(payload)
+    expect(proto_turf).to have_received(:encode).with(payload, subject: 'topic')
+    expect(proto_turf).to have_received(:decode).with('encoded-payload')
   end
 
 end

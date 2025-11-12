@@ -66,7 +66,7 @@ module Deimos
 
     # @param schema [String, Symbol]
     # @param namespace [String]
-    # @return [Deimos::SchemaBackends::Base]
+    # @return [Class<Deimos::SchemaBackends::Base>]
     def schema_backend(schema:, namespace:, backend: Deimos.config.schema.backend)
       if config.schema.use_schema_classes
         # Initialize an instance of the provided schema

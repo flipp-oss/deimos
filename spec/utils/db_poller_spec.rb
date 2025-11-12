@@ -44,7 +44,7 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
     end
 
     it 'should raise an error if no pollers configured' do
-      Deimos.configure {}
+      Deimos.configure {} # rubocop:disable Lint/EmptyBlock
       expect { Deimos::Utils::DbPoller.start! }.to raise_error('No pollers configured!')
     end
 
@@ -159,17 +159,17 @@ each_db_config(Deimos::Utils::DbPoller::Base) do
 
       # run_every is set to 1 minute
       travel_to time_value(secs: 62)
-      expect(poller.should_run?).to eq(true)
+      expect(poller.should_run?).to be(true)
 
       travel_to time_value(secs: 30)
-      expect(poller.should_run?).to eq(false)
+      expect(poller.should_run?).to be(false)
 
       travel_to time_value(mins: -1) # this shouldn't be possible but meh
-      expect(poller.should_run?).to eq(false)
+      expect(poller.should_run?).to be(false)
 
       # take the 2 seconds of delay_time into account
       travel_to time_value(secs: 60)
-      expect(poller.should_run?).to eq(false)
+      expect(poller.should_run?).to be(false)
     end
 
     describe '#process_batch' do

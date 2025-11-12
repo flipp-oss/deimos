@@ -98,39 +98,43 @@ end
 
         # This will contain an array of hashes, where each hash is the actual
         # attribute hash that created the object.
-        array_of_hashes = []
-        array_of_attributes.each do |array|
-          array_of_hashes << column_names.zip(array).to_h.with_indifferent_access
+        array_of_hashes = array_of_attributes.map do |array|
+          column_names.zip(array).to_h.with_indifferent_access
         end
         hashes_with_id, hashes_without_id = array_of_hashes.partition { |arr| arr[:id].present? }
 
         self.kafka_producers.each { |p| p.send_events(hashes_with_id) }
 
         if hashes_without_id.any?
-          if options[:on_duplicate_key_update].present? &&
-             options[:on_duplicate_key_update] != [:updated_at]
-            unique_columns = column_names.map(&:to_s) -
-                             options[:on_duplicate_key_update].map(&:to_s) - %w(id created_at)
-            records = hashes_without_id.map do |hash|
-              self.where(unique_columns.map { |c| [c, hash[c]] }.to_h).first
-            end
-            self.kafka_producers.each { |p| p.send_events(records) }
-          else
-            # re-fill IDs based on what was just entered into the DB.
-            last_id = if self.connection.adapter_name.downcase =~ /sqlite/
-                        self.connection.select_value('select last_insert_rowid()') -
-                          hashes_without_id.size + 1
-                      else
-                        # mysql
-                        self.connection.select_value('select LAST_INSERT_ID()')
-                      end
-            hashes_without_id.each_with_index do |attrs, i|
-              attrs[:id] = last_id + i
-            end
-            self.kafka_producers.each { |p| p.send_events(hashes_without_id) }
-          end
+          refill_records(column_names, options, hashes_without_id)
         end
         results
+      end
+
+      # @!visibility private
+      def refill_records(column_names, options, hashes_without_id)
+        if options[:on_duplicate_key_update].present? &&
+           options[:on_duplicate_key_update] != [:updated_at]
+          unique_columns = column_names.map(&:to_s) -
+                           options[:on_duplicate_key_update].map(&:to_s) - %w(id created_at)
+          records = hashes_without_id.map do |hash|
+            self.where(unique_columns.map { |c| [c, hash[c]] }.to_h).first
+          end
+          self.kafka_producers.each { |p| p.send_events(records) }
+        else
+          # re-fill IDs based on what was just entered into the DB.
+          last_id = if self.connection.adapter_name.downcase =~ /sqlite/
+                      self.connection.select_value('select last_insert_rowid()') -
+                        hashes_without_id.size + 1
+                    else
+                      # mysql
+                      self.connection.select_value('select LAST_INSERT_ID()')
+                    end
+          hashes_without_id.each_with_index do |attrs, i|
+            attrs[:id] = last_id + i
+          end
+          self.kafka_producers.each { |p| p.send_events(hashes_without_id) }
+        end
       end
     end
 
@@ -141,10 +145,9 @@ end
         next if self[col.name].blank?
 
         if self[col.name].to_s.length > col.limit
-          self[col.name] = self[col.name][0..col.limit - 1]
+          self[col.name] = self[col.name][0..(col.limit - 1)]
         end
       end
-      false
     end
   end
 end

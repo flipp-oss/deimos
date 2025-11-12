@@ -97,8 +97,10 @@ module ConsumerTest
               end
             end
 
-            test_consume_message(MyConsumer, { 'test_id' => 'foo',
+            expect {
+              test_consume_message(MyConsumer, { 'test_id' => 'foo',
                                  'some_int' => 123 }, key: 'a key')
+            }.not_to raise_error
           end
 
           it 'should fail if reraise is false but fatal_error is true' do
@@ -137,7 +139,10 @@ module ConsumerTest
 
           it 'should not fail when consume fails without reraising errors' do
             set_karafka_config(:reraise_errors, false)
-            allow(Deimos::ProducerMiddleware).to receive(:call) { |m| m[:payload] = m[:payload].to_json; m }
+            allow(Deimos::ProducerMiddleware).to receive(:call) do |m|
+              m[:payload] = m[:payload].to_json
+              m
+            end
             expect {
               test_consume_message(
                 MyConsumer,

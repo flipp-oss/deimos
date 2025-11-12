@@ -104,7 +104,7 @@ describe Deimos::ActiveRecordProducer do
           expect('my-topic').to have_sent(test_id: 'abc', some_int: 3)
         end
 
-        it 'should coerce values for a UnionSchema' do
+        it 'should coerce strings for a UnionSchema' do
           MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
                                                test_id: 'abc',
                                                test_long: 399_999,
@@ -116,7 +116,9 @@ describe Deimos::ActiveRecordProducer do
             test_long: 399_999,
             test_union_type: %w(hello world)
           )
+        end
 
+        it 'should coerce maps for a UnionSchema' do
           MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
                                                test_id: 'abc',
                                                test_long: 399_999,
@@ -134,7 +136,9 @@ describe Deimos::ActiveRecordProducer do
               record1_id: 567
             }
           )
+        end
 
+        it 'should coerce numbers for a UnionSchema' do
           MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
                                                test_id: 'abc',
                                                test_long: 399_999,
@@ -146,7 +150,9 @@ describe Deimos::ActiveRecordProducer do
             test_long: 399_999,
             test_union_type: 1_010_101
           )
+        end
 
+        it 'should coerce records with strings for a UnionSchema' do
           MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
                                                test_id: 'abc',
                                                test_long: 399_999,
@@ -162,7 +168,9 @@ describe Deimos::ActiveRecordProducer do
               record2_id: 'hello world'
             }
           )
+        end
 
+        it 'should coerce records with floats for a UnionSchema' do
           MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
                                                test_id: 'abc',
                                                test_long: 399_999,
@@ -178,7 +186,9 @@ describe Deimos::ActiveRecordProducer do
               record3_id: 10.1010
             }
           )
+        end
 
+        it 'should coerce records with ints for a UnionSchema' do
           MyProducerWithUnionType.send_event(WidgetWithUnionType.new(
                                                test_id: 'abc',
                                                test_long: 399_999,

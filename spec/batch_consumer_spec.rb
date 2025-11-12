@@ -11,7 +11,7 @@ module ConsumerTest
       ]
     end
     let(:invalid_payloads) do
-      batch.concat([{ 'invalid' => 'key' }])
+      batch.push({ 'invalid' => 'key' })
     end
     let(:use_schema_classes) { false }
     let(:should_reraise_errors) { false }
@@ -46,7 +46,7 @@ module ConsumerTest
     end
 
     describe 'consume_batch' do
-      SCHEMA_CLASS_SETTINGS.each do |setting, _use_schema_classes|
+      SCHEMA_CLASS_SETTINGS.each_key do |setting|
         context "with Schema Class consumption #{setting}" do
 
           let(:schema_class_batch) do

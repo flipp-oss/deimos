@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Karafka configs' do
+# rubocop:disable Style/GlobalVars
+RSpec.describe Karafka::Routing::Topic do
   before(:each) do
     KarafkaApp.routes.clear
     $found_stuff = nil
@@ -15,8 +16,7 @@ RSpec.describe 'Karafka configs' do
   end
 
   let(:producer_class) do
-    Class.new(Deimos::Producer) do
-    end
+    Class.new(Deimos::Producer)
   end
 
   describe 'producers' do
@@ -97,3 +97,4 @@ RSpec.describe 'Karafka configs' do
   end
 
 end
+# rubocop:enable Style/GlobalVars

@@ -14,7 +14,7 @@ module Deimos
 
       # @override
       def initialize(schema:, namespace:)
-        super(schema: schema, namespace: namespace)
+        super
         @schema_store = AvroTurf::MutableSchemaStore.new(path: Deimos.config.schema.path)
       end
 

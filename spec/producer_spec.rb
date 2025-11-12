@@ -84,7 +84,7 @@ module ProducerTest
     end
 
     it 'should fail on invalid message' do
-      expect(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
+      allow(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
       expect { MyProducer.publish({ 'invalid' => 'key', :payload_key => 'key' }) }.
         to raise_error('OH NOES')
     end
@@ -321,7 +321,7 @@ module ProducerTest
 
     context 'with Schema Class payloads' do
       it 'should fail on invalid message with error handler' do
-        expect(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
+        allow(Deimos::ProducerMiddleware).to receive(:call).and_raise('OH NOES')
         expect { MyProducer.publish(Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 'invalid')) }.
           to raise_error('OH NOES')
       end
@@ -365,17 +365,21 @@ module ProducerTest
       it 'should encode the key' do
         Deimos.configure { |c| c.producers.topic_prefix = nil }
 
-        MyProducer.publish_list(
-          [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123),
-           Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124)]
-        )
+        expect {
+          MyProducer.publish_list(
+            [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123),
+             Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124)]
+          )
+        }.not_to raise_error
       end
 
       it 'should encode with a schema' do
-        MySchemaProducer.publish_list(
-          [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123, payload_key: { 'test_id' => 'foo_key' }),
-           Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124, payload_key: { 'test_id' => 'bar_key' })]
-        )
+        expect {
+          MySchemaProducer.publish_list(
+            [Schemas::MyNamespace::MySchema.new(test_id: 'foo', some_int: 123, payload_key: { 'test_id' => 'foo_key' }),
+             Schemas::MyNamespace::MySchema.new(test_id: 'bar', some_int: 124, payload_key: { 'test_id' => 'bar_key' })]
+          )
+        }.not_to raise_error
       end
 
       it 'should properly encode and coerce values with a nested record' do

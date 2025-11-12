@@ -40,17 +40,17 @@ module Deimos
         end
       end
 
-      def _assign_message(m, message)
-        message[:payload] = m.encoded_payload
+      def _assign_message(deimos_message, message)
+        message[:payload] = deimos_message.encoded_payload
         message[:label] = {
-          original_payload: m.payload,
-          original_key: m.key
+          original_payload: deimos_message.payload,
+          original_key: deimos_message.key
         }
-        message[:key] = m.encoded_key
-        message[:partition_key] = if m.partition_key
-                                    m.partition_key.to_s
-                                  elsif m.key
-                                    m.key.to_s
+        message[:key] = deimos_message.encoded_key
+        message[:partition_key] = if deimos_message.partition_key
+                                    deimos_message.partition_key.to_s
+                                  elsif deimos_message.key
+                                    deimos_message.key.to_s
                                   else
                                     nil
                                   end

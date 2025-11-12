@@ -41,9 +41,9 @@ module Deimos
       def decode_key(payload, key_id)
         val = begin
                 JSON.parse(payload)
-              rescue StandardError
+        rescue StandardError
                 payload
-              end
+        end
         key_id ? val[key_id.to_s] : val
       end
 

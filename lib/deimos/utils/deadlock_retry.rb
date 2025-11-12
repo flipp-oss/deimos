@@ -46,8 +46,8 @@ module Deimos
             raise if count <= 0
 
             Deimos::Logging.log_warn(
-              message: 'Deadlock encountered when trying to execute query. '\
-                "Retrying. #{count} attempt(s) remaining",
+              message: 'Deadlock encountered when trying to execute query. ' \
+                       "Retrying. #{count} attempt(s) remaining",
               tags: tags
             )
 

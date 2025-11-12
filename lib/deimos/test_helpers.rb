@@ -12,6 +12,7 @@ module Deimos
   # and add methods to use to test encoding/decoding.
   module TestHelpers
     extend ActiveSupport::Concern
+
     def self.included(base)
       super
       base.include Karafka::Testing::RSpec::Helpers
@@ -38,7 +39,8 @@ module Deimos
       # @return [void]
       def unit_test!
         Deimos.config.schema.backend = :avro_validation
-        warn("unit_test! is deprecated and can be replaced by setting Deimos's schema backend to `:avro_validation`. All other test behavior is provided by Karafka.")
+        warn("unit_test! is deprecated and can be replaced by setting Deimos's schema backend " \
+             'to `:avro_validation`. All other test behavior is provided by Karafka.')
       end
     end
 
@@ -60,16 +62,16 @@ module Deimos
       end
     end
 
-    def self.normalize_message(m)
-      return nil if m.nil?
+    def self.normalize_message(message)
+      return nil if message.nil?
 
-      if m.respond_to?(:to_h)
-        m = m.to_h
+      if message.respond_to?(:to_h)
+        message = message.to_h
       end
-      if m.respond_to?(:with_indifferent_access)
-        m = m.with_indifferent_access
+      if message.respond_to?(:with_indifferent_access)
+        message = message.with_indifferent_access
       end
-      m
+      message
     end
 
     # @!visibility private
@@ -84,7 +86,8 @@ module Deimos
         min_hash_diff = messages.min_by { |m| _hash_diff(m, message)&.keys&.size }
         diff = RSpec::Expectations.differ.diff_as_object(message, min_hash_diff[:payload])
       end
-      str = "Expected #{topic} #{'not ' if was_negated}to have sent #{message.try(:to_h) || message}"
+      printed_message = message.try(:to_h) || message
+      str = "Expected #{topic} #{'not ' if was_negated}to have sent #{printed_message}"
       str += " with key #{key}" if key
       str += " with partition key #{partition_key}" if partition_key
       str += "\nClosest message received: #{min_hash_diff}" if min_hash_diff
@@ -101,7 +104,9 @@ module Deimos
           return m[:payload] == message if message.is_a?(String)
 
           message.delete(:payload_key) if message.respond_to?(:[]) && message[:payload_key].nil?
-          m[:payload].delete(:payload_key) if m.respond_to?(:[]) && m[:payload]&.respond_to?(:[]) && m[:payload][:payload_key].nil?
+          if m.respond_to?(:[]) && m[:payload].respond_to?(:[]) && m[:payload][:payload_key].nil?
+            m[:payload].delete(:payload_key)
+          end
           hash_matcher.send(:match, message, m[:payload]) &&
             topic == m[:topic] &&
             (key.present? ? message_key == m[:key] : true) &&
@@ -128,7 +133,8 @@ module Deimos
     # particular messages were sent or not sent after a point in time.
     # @return [void]
     def clear_kafka_messages!
-      puts '[Deprecated] clear_kafka_messages! can be replaced with `karafka.produced_messages.clear`'
+      puts '[Deprecated] clear_kafka_messages! can be replaced with' \
+           '`karafka.produced_messages.clear`'
       karafka.produced_messages.clear
     end
 
@@ -150,7 +156,8 @@ module Deimos
                              partition_key: nil,
                              &block)
       unless call_original.nil?
-        puts 'test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter.'
+        puts 'test_consume_message(call_original: true) is deprecated and will be removed' \
+             'in the future. You can remove the call_original parameter.'
       end
       test_consume_batch(handler_class_or_topic,
                          [payload],
@@ -179,18 +186,16 @@ module Deimos
                            single: false,
                            partition_keys: [])
       unless call_original.nil?
-        puts 'test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter.'
+        puts 'test_consume_batch(call_original: true) is deprecated and will be removed' \
+             'in the future. You can remove the call_original parameter.'
       end
       karafka.consumer_messages.clear
-      consumer = nil
-      topic_name = nil
-      if handler_class_or_topic.is_a?(String)
-        topic_name = handler_class_or_topic
-        consumer = karafka.consumer_for(topic_name)
-      else
-        topic_name = Deimos.topic_for_consumer(handler_class_or_topic)
-        consumer = karafka.consumer_for(topic_name)
+      topic_name = if handler_class_or_topic.is_a?(String)
+        handler_class_or_topic
+                   else
+        Deimos.topic_for_consumer(handler_class_or_topic)
       end
+      consumer = karafka.consumer_for(topic_name)
 
       Deimos.karafka_config_for(topic: topic_name).each_message(single)
 

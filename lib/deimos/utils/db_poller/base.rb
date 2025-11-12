@@ -106,6 +106,7 @@ module Deimos
           raise Deimos::MissingImplementationError
         end
 
+        # rubocop:disable Naming/PredicateMethod
         # @param exception [Exception]
         # @param batch [Array<ActiveRecord::Base>]
         # @param status [PollStatus]
@@ -162,6 +163,7 @@ module Deimos
           end
           true
         end
+        # rubocop:enable Naming/PredicateMethod
 
         # Publish batch using the configured producers
         # @param batch [Array<ActiveRecord::Base>]

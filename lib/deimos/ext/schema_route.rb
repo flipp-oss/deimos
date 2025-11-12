@@ -25,7 +25,7 @@ module Deimos
           @_deimos_config[:schema][field] || default
         end
       end
-      def _deimos_setup_transcoders
+      def _deimos_setup_transcoders # rubocop:disable Metrics/AbcSize
         payload = Transcoder.new(
           schema: schema,
           namespace: namespace,

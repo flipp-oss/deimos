@@ -81,13 +81,14 @@ module Deimos
 
         KafkaTopicInfo.clear_lock(@current_topic, @id)
       rescue StandardError => e
-        @logger.error("Error processing messages for topic #{@current_topic}: #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
+        @logger.error('Error processing messages for topic ' \
+                      "#{@current_topic}: #{e.class.name}: #{e.message} #{e.backtrace.join("\n")}")
         KafkaTopicInfo.register_error(@current_topic, @id)
       end
 
       # Process a single batch in a topic.
       # @return [void]
-      def process_topic_batch
+      def process_topic_batch # rubocop:disable Naming/PredicateMethod
         messages = retrieve_messages
         return false if messages.empty?
 
@@ -203,13 +204,12 @@ module Deimos
       def produce_messages(batch)
         batch_size = batch.size
         current_index = 0
-        begin
-          batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
-            @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
-            Karafka.producer.produce_many_sync(group)
-            current_index += group.size
-            @logger.info("Sent #{group.size} messages to #{@current_topic}")
-          end
+
+        batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
+          @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
+          Karafka.producer.produce_many_sync(group)
+          current_index += group.size
+          @logger.info("Sent #{group.size} messages to #{@current_topic}")
         end
       end
 

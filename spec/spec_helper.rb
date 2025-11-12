@@ -16,8 +16,6 @@ require 'handlers/my_consumer'
 require 'rspec/rails'
 require 'rspec/snapshot'
 require 'karafka/testing/rspec/helpers'
-require "trilogy_adapter/connection"
-ActiveRecord::Base.extend(TrilogyAdapter::Connection)
 Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
 
 # Constants used for consumer specs
@@ -200,7 +198,7 @@ RSpec.configure do |config|
 
   config.before(:all) do
     Time.zone = 'Eastern Time (US & Canada)'
-    ActiveRecord::Base.logger = Logger.new('/dev/null')
+    ActiveRecord::Base.logger = Logger.new(File::NULL)
     ActiveRecord::Base.establish_connection(
       'adapter' => 'sqlite3',
       'database' => 'test.sqlite3'
@@ -228,7 +226,7 @@ RSpec.configure do |config|
       deimos_config.schema.nest_child_schemas = true
       deimos_config.schema.path = File.join(File.expand_path(__dir__), 'schemas')
       deimos_config.schema.registry_url = ENV['SCHEMA_REGISTRY'] || 'http://localhost:8081'
-      deimos_config.logger = Logger.new('/dev/null')
+      deimos_config.logger = Logger.new(File::NULL)
       deimos_config.logger.level = Logger::INFO
       deimos_config.schema.backend = :avro_validation
       deimos_config.schema.generated_class_path = 'spec/schemas'
@@ -262,7 +260,7 @@ RSpec.shared_context('with widgets') do
     end
 
     # :nodoc:
-    class Widget < ActiveRecord::Base
+    class Widget < ActiveRecord::Base # rubocop:disable Lint/ConstantDefinitionInBlock
       # @return [String]
       def generated_id
         'generated_id'
@@ -286,7 +284,7 @@ RSpec.shared_context('with widget_with_union_types') do
     end
 
     # :nodoc:
-    class WidgetWithUnionType < ActiveRecord::Base
+    class WidgetWithUnionType < ActiveRecord::Base # rubocop:disable Lint/ConstantDefinitionInBlock
       # @return [String]
       def generated_id
         'generated_id'

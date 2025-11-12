@@ -74,45 +74,64 @@ module Deimos
       val.keys.zip(record).to_h
     end
 
+    # @param type [Avro::Schema::RecordSchema]
+    # @param val [Object]
+    # @return [Integer]
+    def coerce_int(type, val)
+      int_classes = [Time, ActiveSupport::TimeWithZone]
+      if %w(timestamp-millis timestamp-micros).include?(type.logical_type)
+        val
+      elsif val.is_a?(Integer) ||
+            _is_integer_string?(val) ||
+            int_classes.any? { |klass| val.is_a?(klass) }
+        val.to_i
+      else # rubocop:disable Lint/DuplicateBranch
+        val # this will fail
+      end
+    end
+
+    # @param val [Object]
+    # @return [Float]
+    def coerce_float(val)
+      if val.is_a?(Numeric) || _is_float_string?(val)
+        val.to_f
+      else
+        val # this will fail
+      end
+    end
+
+    # @param val [Object]
+    # @return [String]
+    def coerce_string(val)
+      if val.respond_to?(:to_str) || _is_to_s_defined?(val)
+        val.to_s
+      else
+        val # this will fail
+      end
+    end
+
+    # @param val [Object]
+    # @return [Boolean]
+    def coerce_boolean(val) # rubocop:disable Naming/PredicateMethod
+      !(val.nil? || val == false)
+    end
+
     # Coerce values in a payload to match the schema.
     # @param type [Avro::Schema]
     # @param val [Object]
     # @return [Object]
     def coerce_type(type, val)
-      int_classes = [Time, ActiveSupport::TimeWithZone]
       field_type = type.type.to_sym
 
       case field_type
       when :int, :long
-        if %w(timestamp-millis timestamp-micros).include?(type.logical_type)
-          val
-        elsif val.is_a?(Integer) ||
-              _is_integer_string?(val) ||
-              int_classes.any? { |klass| val.is_a?(klass) }
-          val.to_i
-        else
-          val # this will fail
-        end
+        coerce_int(type, val)
       when :float, :double
-        if val.is_a?(Numeric) || _is_float_string?(val)
-          val.to_f
-        else
-          val # this will fail
-        end
+        coerce_float(val)
       when :string
-        if val.respond_to?(:to_str)
-          val.to_s
-        elsif _is_to_s_defined?(val)
-          val.to_s
-        else
-          val # this will fail
-        end
+        coerce_string(val)
       when :boolean
-        if val.nil? || val == false
-          false
-        else
-          true
-        end
+        coerce_boolean(val)
       when :union
         coerce_union(type, val)
       when :record

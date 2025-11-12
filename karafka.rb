@@ -7,7 +7,7 @@ class MyConsumer < Deimos::Consumer
   end
 end
 
-require_relative './lib/generators/deimos/schema_class_generator'
+require_relative 'lib/generators/deimos/schema_class_generator'
 
 Deimos.configure do |deimos_config|
   deimos_config.schema.nest_child_schemas = true
@@ -24,7 +24,7 @@ end
 class KarafkaApp < Karafka::App
   setup do
     config.kafka = {
-      "bootstrap.servers": '127.0.0.1:9092'
+      'bootstrap.servers': '127.0.0.1:9092'
     }
   end
   routes.draw do

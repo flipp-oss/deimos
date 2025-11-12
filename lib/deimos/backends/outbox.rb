@@ -13,7 +13,7 @@ module Deimos
           records = messages.map do |m|
             Deimos::ProducerMiddleware.call(m)
             message = Deimos::KafkaMessage.new(
-              message: m[:payload] ? m[:payload].to_s.b : nil,
+              message: m[:payload]&.to_s&.b,
               topic: m[:topic],
               partition_key: partition_key_for(m)
             )

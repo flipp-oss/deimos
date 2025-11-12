@@ -195,7 +195,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
           WidgetFidget.reset_column_information
         end
 
-        # rubocop:disable RSpec/MultipleExpectations, RSpec/ExampleLength
+        # rubocop:disable RSpec/ExampleLength
         it 'should backfill the associations when upserting primary records' do
           batch = Deimos::ActiveRecordConsume::BatchRecordList.new(
             [
@@ -247,7 +247,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
             expect(widget_fidget.note).to eq("Stuff #{ind + 1}")
           end
         end
-        # rubocop:enable RSpec/MultipleExpectations, RSpec/ExampleLength
+        # rubocop:enable RSpec/ExampleLength
 
       end
 
