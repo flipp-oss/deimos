@@ -36,8 +36,8 @@ module ActiveRecordBatchConsumerTest
       stub_const('ConsumerTest::MyBatchConsumer', consumer_class)
       register_consumer(MyBatchConsumer,
                         'MySchema',
-                        key_config: {plain: true},
-                        configs: {bulk_import_id_column: :bulk_import_id})
+                        key_config: { plain: true },
+                        configs: { bulk_import_id_column: :bulk_import_id })
       Widget.delete_all
     end
 
@@ -257,7 +257,7 @@ module ActiveRecordBatchConsumerTest
       before(:each) do
       register_consumer(consumer_class,
                         'MySchema',
-                        key_config: {plain: true})
+                        key_config: { plain: true })
 
       end
 
@@ -306,7 +306,7 @@ module ActiveRecordBatchConsumerTest
       before(:each) do
         register_consumer(consumer_class,
                           'MySchema',
-                          key_config: {schema: 'MySchemaCompound_key'})
+                          key_config: { schema: 'MySchemaCompound_key' })
       end
 
       let(:consumer_class) do
@@ -360,7 +360,7 @@ module ActiveRecordBatchConsumerTest
       before(:each) do
         register_consumer(consumer_class,
                           'MySchema',
-                          key_config: {none: true})
+                          key_config: { none: true })
       end
 
       it 'should handle unkeyed topics' do
@@ -389,8 +389,9 @@ module ActiveRecordBatchConsumerTest
       before(:each) do
         register_consumer(consumer_class,
                           'MySchema',
-                          key_config: {plain: true})
+                          key_config: { plain: true })
       end
+
       let(:consumer_class) do
         Class.new(described_class) do
           record_class Widget
@@ -457,8 +458,9 @@ module ActiveRecordBatchConsumerTest
       before(:each) do
         register_consumer(consumer_class,
                           'MySchema',
-                          key_config: {plain: true})
+                          key_config: { plain: true })
       end
+
       let(:consumer_class) do
         Class.new(described_class) do
           record_class Widget
@@ -492,8 +494,9 @@ module ActiveRecordBatchConsumerTest
         before(:each) do
           register_consumer(consumer_class,
                             'MySchema',
-                            key_config: {plain: true})
+                            key_config: { plain: true })
         end
+
         let(:consumer_class) do
           Class.new(described_class) do
             record_class Widget
@@ -536,9 +539,8 @@ module ActiveRecordBatchConsumerTest
         before(:each) do
           register_consumer(consumer_class,
                             'MySchema',
-                            key_config: {plain: true},
-                            configs: {bulk_import_id_generator: proc { 'global' }}
-                            )
+                            key_config: { plain: true },
+                            configs: { bulk_import_id_generator: proc { 'global' } })
         end
 
         it 'should call the default bulk_import_id_generator proc' do
@@ -571,14 +573,13 @@ module ActiveRecordBatchConsumerTest
           Karafka::App.routes.clear
           Karafka::App.routes.draw do
             defaults do
-              bulk_import_id_generator(proc { 'global'})
+              bulk_import_id_generator(proc { 'global' })
             end
           end
           register_consumer(consumer_class,
                             'MySchema',
-                            key_config: {plain: true},
-                            configs: {bulk_import_id_generator: proc { 'custom' }}
-                            )
+                            key_config: { plain: true },
+                            configs: { bulk_import_id_generator: proc { 'custom' } })
         end
 
         it 'should call the default bulk_import_id_generator proc' do
@@ -612,8 +613,9 @@ module ActiveRecordBatchConsumerTest
       before(:each) do
         register_consumer(consumer_class,
                           'MySchema',
-                          key_config: {plain: true})
+                          key_config: { plain: true })
       end
+
       let(:consumer_class) do
         Class.new(described_class) do
           record_class Widget
@@ -669,8 +671,9 @@ module ActiveRecordBatchConsumerTest
         before(:each) do
           register_consumer(consumer_class,
                             'MySchema',
-                            key_config: {plain: true})
+                            key_config: { plain: true })
         end
+
         let(:consumer_class) do
           Class.new(described_class) do
             record_class Widget
@@ -727,8 +730,9 @@ module ActiveRecordBatchConsumerTest
         before(:each) do
           register_consumer(consumer_class,
                             'MySchema',
-                            key_config: {plain: true})
+                            key_config: { plain: true })
         end
+
         let(:consumer_class) do
           Class.new(described_class) do
             record_class Widget
@@ -785,8 +789,9 @@ module ActiveRecordBatchConsumerTest
         before(:each) do
           register_consumer(consumer_class,
                             'MySchema',
-                            key_config: {plain: true})
+                            key_config: { plain: true })
         end
+
         let(:consumer_class) do
           Class.new(described_class) do
             record_class Widget

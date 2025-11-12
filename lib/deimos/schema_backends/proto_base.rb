@@ -23,7 +23,7 @@ module Deimos
         bytes: :string,
         float: :float,
         message: :record
-      }
+      }.freeze
       def proto_schema(schema=@schema)
         Google::Protobuf::DescriptorPool.generated_pool.lookup(schema)
       end
@@ -39,7 +39,11 @@ module Deimos
 
       # @override
       def decode_key(payload, key_id)
-        val = JSON.parse(payload) rescue payload
+        val = begin
+                JSON.parse(payload)
+              rescue StandardError
+                payload
+              end
         key_id ? val[key_id.to_s] : val
       end
 
@@ -81,11 +85,9 @@ module Deimos
         :mock
       end
 
-      def generate_key_schema(field_name)
+      def generate_key_schema(_field_name)
         raise 'Protobuf cannot generate key schemas! Please use field_config :plain'
       end
-
-    private
 
     end
   end

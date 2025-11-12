@@ -50,9 +50,11 @@ module Deimos
       return unless self.class.kafka_config[:delete]
 
       self.class.kafka_producers.each do |p|
-        generated = p.respond_to?(:generate_deletion_payload) ?
-                      p.generate_deletion_payload(self) :
-                      self.deletion_payload
+        generated = if p.respond_to?(:generate_deletion_payload)
+  p.generate_deletion_payload(self)
+                    else
+  self.deletion_payload
+end
         p.publish_list([generated])
       end
     end
@@ -88,7 +90,7 @@ module Deimos
       # @!visibility private
       def import_without_validations_or_callbacks(column_names,
                                                   array_of_attributes,
-                                                  options = {})
+                                                  options={})
         results = super
         if !self.kafka_config[:import] || array_of_attributes.empty?
           return results

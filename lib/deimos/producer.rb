@@ -80,7 +80,7 @@ module Deimos
       # @param headers [Hash] if specifying headers
       # @return [void]
       def publish(payload, topic: self.topic, headers: nil)
-        produce([{payload: payload, topic: topic, headers: headers}])
+        produce([{ payload: payload, topic: topic, headers: headers }])
       end
 
       # Produce a list of messages in WaterDrop message hash format.

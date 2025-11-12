@@ -6,14 +6,14 @@ require_relative "#{__dir__}/../gen/sample/v1/sample_pb"
 RSpec.describe Deimos::SchemaBackends::ProtoSchemaRegistry do
   let(:payload) do
     Sample::V1::SampleMessage.new(
-      str: "string",
+      str: 'string',
       num: 123,
-      str_arr: %w[one two],
+      str_arr: %w(one two),
       flag: true,
       timestamp: Time.utc(2017, 1, 1),
-      nested: Sample::V1::NestedMessage.new(nested_str: "string"),
+      nested: Sample::V1::NestedMessage.new(nested_str: 'string'),
       non_union_nested: Sample::V1::NestedMessage.new(nested_num: 456),
-      str_map: {'foo' => 'bar'}
+      str_map: { 'foo' => 'bar' }
     )
   end
 
@@ -22,14 +22,14 @@ RSpec.describe Deimos::SchemaBackends::ProtoSchemaRegistry do
   specify('#encode_key') do
     expect(backend.encode_key(nil, 789)).to eq('789')
     expect(backend.encode_key(nil, 'string')).to eq('string')
-    expect(backend.encode_key(nil, {foo: 'bar'})).to eq('{"foo":"bar"}')
+    expect(backend.encode_key(nil, { foo: 'bar' })).to eq('{"foo":"bar"}')
     expect(backend.encode_key(:foo, 'bar')).to eq('bar')
   end
 
   specify('#decode_key') do
     expect(backend.decode_key('789', nil)).to eq(789)
     expect(backend.decode_key('{"foo":"bar"}', :foo)).to eq('bar')
-    expect(backend.decode_key('{"foo":"bar"}', nil)).to eq({"foo" => 'bar'})
+    expect(backend.decode_key('{"foo":"bar"}', nil)).to eq({ 'foo' => 'bar' })
   end
 
   it 'should encode and decode correctly' do

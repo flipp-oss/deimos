@@ -8,7 +8,7 @@ module Deimos
       # @param metric_name [String] The name of the counter metric
       # @param options [Hash] Any additional options, e.g. :tags
       # @return [void]
-      def increment(metric_name, options={})
+      def increment(_metric_name, _options={})
         raise MissingImplementationError
       end
 
@@ -17,7 +17,7 @@ module Deimos
       # @param count [Integer]
       # @param options [Hash] Any additional options, e.g. :tags
       # @return [void]
-      def gauge(metric_name, count, options={})
+      def gauge(_metric_name, _count, _options={})
         raise MissingImplementationError
       end
 
@@ -26,7 +26,7 @@ module Deimos
       # @param count [Integer]
       # @param options [Hash] Any additional options, e.g. :tags
       # @return [void]
-      def histogram(metric_name, count, options={})
+      def histogram(_metric_name, _count, _options={})
         raise MissingImplementationError
       end
 
@@ -34,7 +34,7 @@ module Deimos
       # @param metric_name [String] The name of the metric
       # @param options [Hash] Any additional options, e.g. :tags
       # @return [void]
-      def time(metric_name, options={})
+      def time(_metric_name, _options={})
         raise MissingImplementationError
       end
     end

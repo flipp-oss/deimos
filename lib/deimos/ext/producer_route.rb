@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Deimos
   class ProducerRoute < Karafka::Routing::Features::Base
-    FIELDS = %i(producer_classes payload_log disabled)
+    FIELDS = %i(producer_classes payload_log disabled).freeze
 
     Config = Struct.new(*FIELDS, keyword_init: true) do
       def producer_class=(val)

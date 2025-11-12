@@ -12,7 +12,7 @@ module Deimos
           topic = producer_class.topic
           execute(producer_class: producer_class, messages: messages)
           message = ::Deimos::Logging.messages_log_text(producer_class.karafka_config.payload_log, messages)
-          Deimos::Logging.log_info({message: "Publishing Messages for #{topic}:" }.merge(message))
+          Deimos::Logging.log_info({ message: "Publishing Messages for #{topic}:" }.merge(message))
         end
 
         # @param producer_class [Class<Deimos::Producer>]
@@ -21,8 +21,6 @@ module Deimos
         def execute(producer_class:, messages:)
           raise MissingImplementationError
         end
-
-      private
 
       end
     end

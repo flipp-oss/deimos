@@ -18,14 +18,14 @@ module Deimos
 
       def _consume_batch
         _with_span do
-          begin
+
             benchmark = Benchmark.measure do
               consume_batch
             end
             _handle_batch_success(benchmark.real)
-          rescue StandardError => e
+        rescue StandardError => e
             _handle_batch_error(e)
-          end
+
         end
       end
 
@@ -51,9 +51,9 @@ module Deimos
             message: 'Finished processing Kafka batch event',
             time_elapsed: time_taken,
             metadata: Deimos::Logging.metadata_log_text(messages.metadata)
-          }.merge(Deimos::Logging.messages_log_text(self.topic.payload_log, messages)))
+          }.merge(Deimos::Logging.messages_log_text(self.topic.payload_log, messages))
+        )
       end
-
     end
   end
 end

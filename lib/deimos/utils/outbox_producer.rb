@@ -14,10 +14,10 @@ module Deimos
       # @return [Integer]
       MAX_DELETE_ATTEMPTS = 3
       # @return [Array<Symbol>]
-      FATAL_CODES = %i(invalid_msg_size msg_size_too_large)
+      FATAL_CODES = %i(invalid_msg_size msg_size_too_large).freeze
 
       # @param logger [Logger]
-      def initialize(logger=Logger.new(STDOUT))
+      def initialize(logger=Logger.new($stdout))
         @id = SecureRandom.uuid
         @logger = logger
         @logger.push_tags("OutboxProducer #{@id}") if @logger.respond_to?(:push_tags)
@@ -95,9 +95,9 @@ module Deimos
         compacted_messages = compact_messages(messages)
         log_messages(compacted_messages)
         Karafka.monitor.instrument('deimos.outbox.produce', topic: @current_topic, messages: compacted_messages) do
-          begin
+
             produce_messages(compacted_messages.map(&:karafka_message))
-          rescue WaterDrop::Errors::ProduceManyError => e
+        rescue WaterDrop::Errors::ProduceManyError => e
             if FATAL_CODES.include?(e.cause.try(:code))
               @logger.error('Message batch too large, deleting...')
               delete_messages(messages)
@@ -106,7 +106,7 @@ module Deimos
               Deimos.log_error("Got error #{e.cause.class.name} when publishing #{batch_size} messages, retrying...")
               retry
             end
-          end
+
         end
         delete_messages(messages)
         Deimos.config.metrics&.increment(

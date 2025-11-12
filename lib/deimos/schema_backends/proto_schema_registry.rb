@@ -19,8 +19,6 @@ module Deimos
         self.class.proto_turf.encode(msg, subject: topic)
       end
 
-    private
-
       # @return [ProtoTurf]
       def self.proto_turf
         @proto_turf ||= ProtoTurf.new(

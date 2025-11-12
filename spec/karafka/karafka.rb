@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class KarafkaApp < Karafka::App
   setup do |config|
     config.kafka = { 'bootstrap.servers': '127.0.0.1:9092' }
@@ -52,11 +53,11 @@ class KarafkaApp < Karafka::App
     # You need to define the topic per each queue name you use
     # active_job_topic :default
     #    topic :example do
-      # Uncomment this if you want Karafka to manage your topics configuration
-      # Managing topics configuration via routing will allow you to ensure config consistency
-      # across multiple environments
-      #
-      # config(partitions: 2, 'cleanup.policy': 'compact')
+    # Uncomment this if you want Karafka to manage your topics configuration
+    # Managing topics configuration via routing will allow you to ensure config consistency
+    # across multiple environments
+    #
+    # config(partitions: 2, 'cleanup.policy': 'compact')
     # consumer ExampleConsumer
     # end
   end

@@ -41,6 +41,7 @@ Layout/EmptyLinesAroundBlockBody:
 Layout/LineLength:
   Max: 120
   Severity: refactor
+  SplitStrings: true
 #  TODO: uncomment the files below once rubocop is fixed
 #  Exclude:
 #  - 'spec/**/*'
@@ -81,7 +82,7 @@ Lint/UnusedMethodArgument:
 
 Metrics/AbcSize:
   Severity: refactor
-  Max: 35
+  Max: 40
 
 Metrics/BlockLength:
   Enabled: false
@@ -152,20 +153,8 @@ Style/CollectionMethods:
 Style/DateTime:
   AllowCoercion: true
 
-# TODO: uncomment the lines below once rubocop is fixed
-#Style/Documentation:
-#  Exclude:
-#  - 'app/controllers/**/*'
-#  - 'app/helpers/**/*'
-#  - 'db/**/*'
-
-# Force documentation for public methods and classes
-Style/DocumentationMethod:
-  Enabled: true
-# TODO: uncomment the file below once rubocop is fixed
-#  Exclude:
-#  - 'app/controllers/**/*'
-#  - 'db/**/*'
+Style/Documentation:
+  Enabled: false
 
 # Allow else with just nil in it
 Style/EmptyElse:

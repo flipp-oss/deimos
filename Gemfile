@@ -6,7 +6,7 @@ source 'https://rubygems.org'
 gemspec
 
 # for older activesupport
-gem 'mutex_m'
-gem 'bigdecimal'
 gem 'benchmark'
+gem 'bigdecimal'
 gem 'drb'
+gem 'mutex_m'

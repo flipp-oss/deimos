@@ -8,14 +8,14 @@ module Deimos
       # @param span_name [String] The name of the span/trace
       # @param options [Hash] Options for the span
       # @return [Object] The span object
-      def start(span_name, options={})
+      def start(_span_name, _options={})
         raise MissingImplementationError
       end
 
       # Finishes the trace on the span object.
       # @param span [Object] The span to finish trace on
       # @return [void]
-      def finish(span)
+      def finish(_span)
         raise MissingImplementationError
       end
 
@@ -23,7 +23,7 @@ module Deimos
       # @param span [Object] The span to set error on
       # @param exception [Exception] The exception that occurred
       # @return [void]
-      def set_error(span, exception)
+      def set_error(_span, _exception)
         raise MissingImplementationError
       end
 
@@ -38,13 +38,13 @@ module Deimos
       # @param value [String]
       # @param span [Object]
       # @return [void]
-      def set_tag(tag, value, span=nil)
+      def set_tag(_tag, _value, _span=nil)
         raise MissingImplementationError
       end
 
       # Get a tag from a span with the specified tag.
       # @param tag [String]
-      def get_tag(tag)
+      def get_tag(_tag)
         raise MissingImplementationError
       end
 

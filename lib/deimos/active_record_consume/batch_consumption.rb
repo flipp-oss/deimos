@@ -30,7 +30,7 @@ module Deimos
         tag = topic.name
         Deimos.config.tracer.active_span.set_tag('topic', tag)
 
-        Karafka.monitor.instrument('deimos.ar_consumer.consume_batch', {topic: tag}) do
+        Karafka.monitor.instrument('deimos.ar_consumer.consume_batch', { topic: tag }) do
           if @compacted && deimos_messages.map(&:key).compact.any?
             update_database(compact_messages(deimos_messages))
           else
@@ -154,9 +154,9 @@ module Deimos
         invalid = filter_records(record_list)
         if invalid.any?
           Karafka.monitor.instrument('deimos.batch_consumption.invalid_records', {
-            records: invalid,
-            consumer: self.class
-          })
+                                       records: invalid,
+                                       consumer: self.class
+                                     })
         end
         return if record_list.empty?
 
@@ -171,9 +171,9 @@ module Deimos
                                   save_associations_first: self.save_associations_first,
                                   bulk_import_id_column: self.bulk_import_id_column)
         Karafka.monitor.instrument('deimos.batch_consumption.valid_records', {
-          records: updater.mass_update(record_list),
-          consumer: self.class
-        })
+                                     records: updater.mass_update(record_list),
+                                     consumer: self.class
+                                   })
       end
 
       # @param record_list [BatchRecordList]

@@ -74,7 +74,7 @@ module Deimos
         partition_key: @partition_key || @key,
         payload: @payload,
         metadata: {
-          decoded_payload: @payload,
+          decoded_payload: @payload
         }
       }.delete_if { |k, v| k == :headers && v.nil? }
     end

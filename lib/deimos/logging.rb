@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Deimos
   module Logging
     class << self
@@ -33,7 +35,6 @@ module Deimos
       end
 
       def _payloads(messages)
-
       end
 
       def payload(m)

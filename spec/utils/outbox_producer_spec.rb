@@ -7,7 +7,7 @@ each_db_config(Deimos::Utils::OutboxProducer) do
     producer
   end
 
-  let(:logger) { instance_double(Logger, error: nil, info: nil, debug: nil )}
+  let(:logger) { instance_double(Logger, error: nil, info: nil, debug: nil) }
 
   before(:each) do
     stub_const('Deimos::Utils::OutboxProducer::BATCH_SIZE', 2)
@@ -340,9 +340,9 @@ each_db_config(Deimos::Utils::OutboxProducer) do
   end
 
   example 'Full integration test' do
-    Deimos::KafkaMessage.create!(topic: "topic1",
-                                 message: "mess1",
-                                 partition_key: "key1")
+    Deimos::KafkaMessage.create!(topic: 'topic1',
+                                 message: 'mess1',
+                                 partition_key: 'key1')
     producer.process_next_messages
     expect(Deimos::KafkaTopicInfo.count).to eq(1)
     expect(Deimos::KafkaTopicInfo.first.topic).to eq('topic1')

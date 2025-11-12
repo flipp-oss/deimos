@@ -17,7 +17,7 @@ require 'rspec/rails'
 require 'rspec/snapshot'
 require 'karafka/testing/rspec/helpers'
 require "trilogy_adapter/connection"
-ActiveRecord::Base.public_send :extend, TrilogyAdapter::Connection
+ActiveRecord::Base.extend(TrilogyAdapter::Connection)
 Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
 
 # Constants used for consumer specs
@@ -31,18 +31,17 @@ end
 DeimosApp.initialize!
 
 module Helpers
-
   def set_karafka_config(method, val)
     Deimos.karafka_configs.each { |c| c.send(method.to_sym, val) }
   end
 
-  def register_consumer(klass, schema, namespace='com.my-namespace', key_config:{none: true}, configs: {})
+  def register_consumer(klass, schema, namespace='com.my-namespace', key_config: { none: true }, configs: {})
     Karafka::App.routes.redraw do
-      topic 'my-topic' do
-        consumer klass
-        schema schema
-        namespace namespace
-        key_config key_config
+      topic('my-topic') do
+        consumer(klass)
+        schema(schema)
+        namespace(namespace)
+        key_config(key_config)
         configs.each do |k, v|
           public_send(k, v)
         end
@@ -99,7 +98,7 @@ module DbConfigs
   # @param topic [String]
   # @param key [String]
   def build_message(payload, topic, key)
-    { payload: payload, topic: topic, key: key}
+    { payload: payload, topic: topic, key: key }
   end
 
   DB_OPTIONS = [
@@ -300,7 +299,6 @@ RSpec.shared_context('with widget_with_union_types') do
   end
 end
 
-
 RSpec.shared_context('with DB') do
   before(:all) do
     setup_db(self.class.metadata[:db_config] || DbConfigs::DB_OPTIONS.last)
@@ -346,7 +344,7 @@ end
 
 RSpec::Matchers.define :match_message do |msg|
   match do |actual|
-    begin
+
       return false unless actual.is_a?(Hash)
 
       actual[:payloads]&.each do |p|
@@ -354,6 +352,6 @@ RSpec::Matchers.define :match_message do |msg|
         p[:payload].delete('message_id')
       end
       expect(actual).to match(a_hash_including(msg))
-    end
+
   end
 end

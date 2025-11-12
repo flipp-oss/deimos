@@ -33,10 +33,10 @@ module Deimos
       def consume_message(message)
         unless self.process_message?(message)
           Deimos::Logging.log_debug(
-              message: 'Skipping processing of message',
-              payload: message.payload.to_h,
-              metadata: Deimos::Logging.metadata_log_text(message.metadata)
-            )
+            message: 'Skipping processing of message',
+            payload: message.payload.to_h,
+            metadata: Deimos::Logging.metadata_log_text(message.metadata)
+          )
           return
         end
 

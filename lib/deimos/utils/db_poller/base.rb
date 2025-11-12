@@ -11,7 +11,7 @@ module Deimos
       # Base poller class for retrieving and publishing messages.
       class Base
 
-        FATAL_CODES = %i(invalid_msg_size msg_size_too_large)
+        FATAL_CODES = %i(invalid_msg_size msg_size_too_large).freeze
         # @return [Integer]
         BATCH_SIZE = 1000
 
@@ -124,7 +124,6 @@ module Deimos
           end
         end
 
-        # rubocop:disable Metrics/AbcSize
         # @param batch [Array<ActiveRecord::Base>]
         # @param status [PollStatus]
         # @return [Boolean]
@@ -163,7 +162,6 @@ module Deimos
           end
           true
         end
-        # rubocop:enable Metrics/AbcSize
 
         # Publish batch using the configured producers
         # @param batch [Array<ActiveRecord::Base>]

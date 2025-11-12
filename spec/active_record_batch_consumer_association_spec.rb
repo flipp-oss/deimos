@@ -204,6 +204,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with one-to-many relationship in association and default bulk_import_id' do
       let(:replace_associations) { false }
+
       before(:each) do
         consumer_class.record_attributes_proc = proc do |payload|
           {
@@ -243,6 +244,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
 
     context 'with replace_associations on' do
       let(:replace_associations) { true }
+
       before(:each) do
         consumer_class.record_attributes_proc = proc do |payload|
           {

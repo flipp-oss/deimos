@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 module Deimos
   class ConsumerRoute < Karafka::Routing::Features::Base
     module Topic
-
       FIELDS = %i(max_db_batch_size
                   bulk_import_id_column
                   replace_associations
@@ -9,8 +10,7 @@ module Deimos
                   each_message
                   reraise_errors
                   fatal_error
-                  save_associations_first
-      )
+                  save_associations_first).freeze
       Config = Struct.new(*FIELDS, keyword_init: true)
 
       FIELDS.each do |field|

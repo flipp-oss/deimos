@@ -11,8 +11,8 @@ class MultiFileSerializer
     else
       s
     end
-
   end
+
   def dump(value)
     value.keys.sort.map { |k| "#{k}:\n#{process_string(value[k])}\n" }.join("\n")
   end

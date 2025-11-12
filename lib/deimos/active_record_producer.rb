@@ -56,6 +56,7 @@ module Deimos
 
       def encoder
         raise "No schema or namespace configured for #{self.name}" if karafka_config.nil?
+
         karafka_config.deserializers[:payload].backend
       end
 

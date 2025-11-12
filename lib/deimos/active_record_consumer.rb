@@ -83,6 +83,7 @@ module Deimos
     def key_converter
       decoder = self.topic.deserializers[:key]&.backend
       return nil if decoder.nil?
+
       @key_converter ||= ActiveRecordConsume::SchemaModelConverter.new(decoder, @klass)
     end
 

@@ -128,19 +128,19 @@ module ActiveRecordConsumerTest
       stub_const('Schemas::MySchemaWithDateTimes', schema_datetime_class)
 
       Karafka::App.routes.redraw do
-        topic "my-topic" do
+        topic 'my-topic' do
           consumer MyConsumer
           schema 'MySchemaWithDateTimes'
           namespace 'com.my-namespace'
           key_config plain: true
         end
-        topic "my-topic2" do
+        topic 'my-topic2' do
           consumer MyConsumerWithKey
           schema 'MySchemaWithDateTimes'
           namespace 'com.my-namespace'
           key_config schema: 'MySchemaId_key'
         end
-        topic "my-topic3" do
+        topic 'my-topic3' do
           consumer MyCustomFetchConsumer
           schema 'MySchema'
           namespace 'com.my-namespace'

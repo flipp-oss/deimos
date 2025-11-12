@@ -172,6 +172,7 @@ module Deimos
         Deimos.karafka_configs.each do |config|
           schema_name = config.schema
           next if schema_name.nil?
+
           namespace = config.namespace || Deimos.config.producers.schema_namespace
           key_schema_name = config.key_config[:schema]
 

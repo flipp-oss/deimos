@@ -38,7 +38,7 @@ module Deimos
       # @return [void]
       def unit_test!
         Deimos.config.schema.backend = :avro_validation
-        warn "unit_test! is deprecated and can be replaced by setting Deimos's schema backend to `:avro_validation`. All other test behavior is provided by Karafka."
+        warn("unit_test! is deprecated and can be replaced by setting Deimos's schema backend to `:avro_validation`. All other test behavior is provided by Karafka.")
       end
     end
 
@@ -80,7 +80,7 @@ module Deimos
       min_hash_diff = nil
       message = Deimos::TestHelpers.normalize_message(message)
       if messages.any?
-        message_string = messages.map { |m| m[:payload].inspect}.join("\n")
+        message_string = messages.map { |m| m[:payload].inspect }.join("\n")
         min_hash_diff = messages.min_by { |m| _hash_diff(m, message)&.keys&.size }
         diff = RSpec::Expectations.differ.diff_as_object(message, min_hash_diff[:payload])
       end
@@ -128,7 +128,7 @@ module Deimos
     # particular messages were sent or not sent after a point in time.
     # @return [void]
     def clear_kafka_messages!
-      puts "[Deprecated] clear_kafka_messages! can be replaced with `karafka.produced_messages.clear`"
+      puts '[Deprecated] clear_kafka_messages! can be replaced with `karafka.produced_messages.clear`'
       karafka.produced_messages.clear
     end
 
@@ -150,7 +150,7 @@ module Deimos
                              partition_key: nil,
                              &block)
       unless call_original.nil?
-        puts "test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
+        puts 'test_consume_message(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter.'
       end
       test_consume_batch(handler_class_or_topic,
                          [payload],
@@ -177,9 +177,9 @@ module Deimos
                            keys: [],
                            call_original: nil,
                            single: false,
-                           partition_keys: [], &block)
+                           partition_keys: [])
       unless call_original.nil?
-        puts "test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter."
+        puts 'test_consume_batch(call_original: true) is deprecated and will be removed in the future. You can remove the call_original parameter.'
       end
       karafka.consumer_messages.clear
       consumer = nil
@@ -197,16 +197,16 @@ module Deimos
       # don't record messages sent with test_consume_batch
       original_messages = karafka.produced_messages.dup
       payloads.each_with_index do |payload, i|
-       karafka.produce(payload, {key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name})
+       karafka.produce(payload, { key: keys[i], partition_key: partition_keys[i], topic: consumer.topic.name })
       end
       if block_given?
         if single
           allow(consumer).to receive(:consume_message) do
-           yield consumer.messages.first.payload, consumer.messages.first.as_json['metadata']
+           yield(consumer.messages.first.payload, consumer.messages.first.as_json['metadata'])
           end
         else
           allow(consumer).to receive(:consume_batch) do
-           yield consumer.messages
+           yield(consumer.messages)
           end
         end
       end
