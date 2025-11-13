@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix: The global `use_schema_classes` setting wasn't being respected.
 - Fix: `fetch_record` was being passed a hash even if `use_schema_classes` was set to true.
+- Fix crash on ERB 6.0 (legacy_trim_mode is removed)
 
 # 2.2.0 - 2025-11-11
 
