@@ -1,8 +1,6 @@
-# frozen_string_literal: true
-
-require 'deimos/transcoder'
-require 'deimos/ext/producer_middleware'
-require 'deimos/schema_backends/plain'
+require "deimos/transcoder"
+require "deimos/ext/producer_middleware"
+require "deimos/schema_backends/plain"
 
 module Deimos
   class SchemaRoute < Karafka::Routing::Features::Base
@@ -11,9 +9,9 @@ module Deimos
       {
         schema: nil,
         namespace: nil,
-        key_config: { none: true },
+        key_config: {none: true},
         schema_backend: nil,
-        use_schema_classes: Deimos.config.schema.use_schema_classes
+        use_schema_classes: nil
       }.each do |field, default|
         define_method(field) do |*args|
           @_deimos_config ||= {}
@@ -25,14 +23,17 @@ module Deimos
           @_deimos_config[:schema][field] || default
         end
       end
-      def _deimos_setup_transcoders # rubocop:disable Metrics/AbcSize
+      def _deimos_setup_transcoders
+        use_classes = use_schema_classes.nil? ?
+                        Deimos.config.schema.use_schema_classes :
+                        use_schema_classes
         payload = Transcoder.new(
-          schema: schema,
-          namespace: namespace,
-          backend: schema_backend,
-          use_schema_classes: use_schema_classes,
-          topic: name
-        )
+            schema: schema,
+            namespace: namespace,
+            backend: schema_backend,
+            use_schema_classes: use_classes,
+            topic: name
+          )
 
         key = nil
 
@@ -41,7 +42,7 @@ module Deimos
             schema: schema,
             backend: schema_backend,
             namespace: namespace,
-            use_schema_classes: use_schema_classes,
+            use_schema_classes: use_classes,
             topic: name
           )
           key.backend = Deimos::SchemaBackends::Plain.new(schema: nil, namespace: nil)
@@ -51,7 +52,7 @@ module Deimos
               schema: schema,
               backend: schema_backend,
               namespace: namespace,
-              use_schema_classes: use_schema_classes,
+              use_schema_classes: use_classes,
               key_field: key_config[:field].to_s,
               topic: name
             )
@@ -60,7 +61,7 @@ module Deimos
               schema: key_config[:schema] || schema,
               backend: schema_backend,
               namespace: namespace,
-              use_schema_classes: use_schema_classes,
+              use_schema_classes: use_classes,
               topic: self.name
             )
           else
