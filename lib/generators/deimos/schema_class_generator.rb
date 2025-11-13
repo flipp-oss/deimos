@@ -216,7 +216,7 @@ module Deimos
         _set_instance_variables(schema, key_config)
 
         temp = schema.is_a?(Avro::Schema::RecordSchema) ? _record_class_template : _enum_class_template
-        res = ERB.new(temp, trim_mode:'-')
+        res = ERB.new(temp, trim_mode: '-')
         res.result(binding)
       end
 
