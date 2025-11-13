@@ -72,7 +72,8 @@ module Deimos
         payload.delete_if do |k, _|
           k.to_sym != :payload_key && !fields.map(&:name).include?(k)
         end
-        return payload unless self.karafka_config.use_schema_classes
+        return payload if self.karafka_config.use_schema_classes.nil? &&
+                          !Deimos.config.schema.use_schema_classes
 
         Utils::SchemaClass.instance(payload, encoder.schema, encoder.namespace)
       end
