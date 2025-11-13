@@ -43,7 +43,7 @@ module Deimos
 
         klass = self.class.config[:record_class]
         payload = message.payload
-        if payload.is_a?(Hash) || payload.nil? || payload.is_a?(SchemaClass::Record)
+        if payload.is_a?(Hash) || payload.nil?
           payload = payload.to_h.with_indifferent_access
         end
         record = fetch_record(klass, payload, message.key)

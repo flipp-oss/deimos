@@ -13,7 +13,7 @@ module Deimos
         namespace: nil,
         key_config: { none: true },
         schema_backend: nil,
-        use_schema_classes: Deimos.config.schema.use_schema_classes
+        use_schema_classes: nil
       }.each do |field, default|
         define_method(field) do |*args|
           @_deimos_config ||= {}
@@ -26,11 +26,16 @@ module Deimos
         end
       end
       def _deimos_setup_transcoders # rubocop:disable Metrics/AbcSize
+        use_classes = if use_schema_classes.nil?
+                        Deimos.config.schema.use_schema_classes
+                      else
+                        use_schema_classes
+                      end
         payload = Transcoder.new(
           schema: schema,
           namespace: namespace,
           backend: schema_backend,
-          use_schema_classes: use_schema_classes,
+          use_schema_classes: use_classes,
           topic: name
         )
 
@@ -41,7 +46,7 @@ module Deimos
             schema: schema,
             backend: schema_backend,
             namespace: namespace,
-            use_schema_classes: use_schema_classes,
+            use_schema_classes: use_classes,
             topic: name
           )
           key.backend = Deimos::SchemaBackends::Plain.new(schema: nil, namespace: nil)
@@ -51,7 +56,7 @@ module Deimos
               schema: schema,
               backend: schema_backend,
               namespace: namespace,
-              use_schema_classes: use_schema_classes,
+              use_schema_classes: use_classes,
               key_field: key_config[:field].to_s,
               topic: name
             )
@@ -60,7 +65,7 @@ module Deimos
               schema: key_config[:schema] || schema,
               backend: schema_backend,
               namespace: namespace,
-              use_schema_classes: use_schema_classes,
+              use_schema_classes: use_classes,
               topic: self.name
             )
           else
