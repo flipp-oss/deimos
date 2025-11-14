@@ -16,7 +16,7 @@ module Deimos
     module Topic
       (FIELDS + [:producer_class]).each do |field|
         define_method(field) do |*args|
-          active(false) if %i(producer_class producer_classes).include?(field)
+          active(false) if %i(producer_class producer_classes).include?(field) && args.any?
           @deimos_producer_config ||= Config.new
           if args.any?
             @deimos_producer_config.public_send("#{field}=", args[0])
