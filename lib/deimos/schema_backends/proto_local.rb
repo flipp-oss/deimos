@@ -14,7 +14,7 @@ module Deimos
       end
 
       # @override
-      def encode_payload(payload, schema: nil, topic: nil)
+      def encode_payload(payload, schema: nil, subject: nil)
         msg = payload.is_a?(Hash) ? proto_schema.msgclass.new(**payload) : payload
         proto_schema.msgclass.encode(msg)
       end

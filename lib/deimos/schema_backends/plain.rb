@@ -15,7 +15,7 @@ module Deimos
       end
 
       # @override
-      def encode_payload(payload, schema:, topic: nil)
+      def encode_payload(payload, schema:, subject: nil)
         payload.to_s
       end
 
