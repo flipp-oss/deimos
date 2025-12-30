@@ -23,7 +23,7 @@ RSpec.describe Deimos::SchemaBackends::AvroSchemaRegistry do
     results = backend.decode(results)
     expect(results).to eq(payload)
     expect(avro_turf).to have_received(:encode).
-      with(payload, schema_name: 'MySchema', subject: 'topic')
+      with(payload, schema_name: 'MySchema', subject: 'topic-value')
     expect(avro_turf).to have_received(:decode).
       with('encoded-payload', schema_name: 'MySchema')
   end

@@ -4,7 +4,7 @@ plugins:
   - rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 3.0
   Exclude:
     - lib/deimos/monkey_patches/*.rb
     - spec/gen/**/*.rb

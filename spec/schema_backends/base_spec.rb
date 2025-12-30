@@ -6,13 +6,13 @@ describe Deimos::SchemaBackends::Base do
 
   it 'should validate on encode' do
     expect(backend).to receive(:validate).with(payload, schema: 'schema')
-    expect(backend).to receive(:encode_payload).with(payload, schema: 'schema', topic: 'topic')
+    expect(backend).to receive(:encode_payload).with(payload, schema: 'schema', subject: 'topic-value')
     backend.encode(payload, topic: 'topic')
   end
 
   it 'should validate and encode a passed schema' do
     expect(backend).to receive(:validate).with(payload, schema: 'schema2')
-    expect(backend).to receive(:encode_payload).with(payload, schema: 'schema2', topic: 'topic')
+    expect(backend).to receive(:encode_payload).with(payload, schema: 'schema2', subject: 'topic-value')
     backend.encode(payload, schema: 'schema2', topic: 'topic')
   end
 

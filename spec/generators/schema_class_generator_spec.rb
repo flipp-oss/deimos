@@ -20,7 +20,7 @@ end
 
 RSpec.describe Deimos::Generators::SchemaClassGenerator do
   let(:schema_class_path) { 'spec/app/lib/schema_classes' }
-  let(:files) { Dir["#{schema_class_path}/**/*.rb"].map { |f| [f, File.read(f)]}.to_h }
+  let(:files) { Dir["#{schema_class_path}/**/*.rb"].to_h { |f| [f, File.read(f)]} }
 
   before(:each) do
     Deimos.config.reset!

@@ -43,7 +43,8 @@ module Deimos
         @key_proto_turf ||= ProtoTurf.new(
           registry_url: Deimos.config.schema.registry_url,
           logger: Karafka.logger,
-          schema_type: 'JSON')
+          schema_type: 'JSON'
+        )
       end
 
     end
