@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package sample.v1;
+
+message SampleMessageKey {
+  string str = 1;
+}

@@ -48,7 +48,7 @@ module Deimos
         # @return [String]
         def schema
           last_dot = self.full_schema.rindex('.')
-          self.full_schema[(last_dot + 1)..-1]
+          self.full_schema[(last_dot + 1)..]
         end
 
         # @return [String]

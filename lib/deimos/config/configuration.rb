@@ -43,7 +43,7 @@ module Deimos
               'Please provide a directory.'
       end
 
-      Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.
+      Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].
         each { |f| require f }
     rescue LoadError
       raise 'Cannot load schema classes. Please regenerate classes with' \

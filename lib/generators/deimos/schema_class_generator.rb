@@ -13,7 +13,7 @@ module Deimos
       # @return [Array<Symbol>]
       SPECIAL_TYPES = %i(record enum).freeze
       # @return [String]
-      INITIALIZE_WHITESPACE = "\n#{' ' * 19}"
+      INITIALIZE_WHITESPACE = "\n#{' ' * 19}".freeze
       # @return [Array<String>]
       IGNORE_DEFAULTS = %w(message_id timestamp).freeze
       # @return [String]
@@ -265,7 +265,7 @@ module Deimos
         end
 
         result = "def initialize(_from_message: false, #{arguments.first}"
-        arguments[1..-1].each_with_index do |arg, _i|
+        arguments[1..].each_with_index do |arg, _i|
           result += ",#{INITIALIZE_WHITESPACE}#{arg}"
         end
         "#{result})"
