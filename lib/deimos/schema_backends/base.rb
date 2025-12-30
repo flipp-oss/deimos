@@ -56,9 +56,10 @@ module Deimos
       # @param schema [String,Symbol]
       # @param topic [String]
       # @return [String]
-      def encode(payload, schema: nil, topic: nil)
+      def encode(payload, schema: nil, topic: nil, is_key: false)
         validate(payload, schema: schema || @schema)
-        encode_payload(payload, schema: schema || @schema, topic: topic)
+        subject = is_key ? "#{topic}-key" : "#{topic}-value"
+        encode_payload(payload, schema: schema || @schema, subject: subject)
       end
 
       # Decode a payload with a schema. Public method.
@@ -114,9 +115,9 @@ module Deimos
       # Encode a payload. To be defined by subclass.
       # @param payload [Hash]
       # @param schema [String,Symbol]
-      # @param topic [String]
+      # @param subject [String]
       # @return [String]
-      def encode_payload(_payload, schema:, topic: nil)
+      def encode_payload(_payload, schema:, subject: nil)
         raise MissingImplementationError
       end
 

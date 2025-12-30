@@ -36,7 +36,7 @@ module Deimos
       if self.key_field
         self.backend.encode_key(self.key_field, key, topic: @topic)
       else
-        self.backend.encode(key, topic: @topic)
+        self.backend.encode(key, topic: @topic, is_key: true)
       end
     end
 

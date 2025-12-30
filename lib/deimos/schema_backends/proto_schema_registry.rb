@@ -14,9 +14,21 @@ module Deimos
       end
 
       # @override
-      def encode_payload(payload, schema: nil, topic: nil)
+      def encode_payload(payload, schema: nil, subject: nil)
         msg = payload.is_a?(Hash) ? proto_schema.msgclass.new(**payload) : payload
-        self.class.proto_turf.encode(msg, subject: topic)
+        encoder = subject&.ends_with?('-key') ? self.class.key_proto_turf : self.class.proto_turf
+        encoder.encode(msg, subject: subject)
+      end
+
+      # @override
+      def encode_proto_key(key, topic: nil, field: nil)
+        schema_text = ProtoTurf::Output::JsonSchema.output(proto_schema.to_proto, path: field)
+        self.class.key_proto_turf.encode(key, subject: "#{topic}-key", schema_text: schema_text)
+      end
+
+      # @override
+      def decode_proto_key(payload)
+        self.class.key_proto_turf.decode(payload)
       end
 
       # @return [ProtoTurf]
@@ -26,6 +38,14 @@ module Deimos
           logger: Karafka.logger
         )
       end
+
+      def self.key_proto_turf
+        @key_proto_turf ||= ProtoTurf.new(
+          registry_url: Deimos.config.schema.registry_url,
+          logger: Karafka.logger,
+          schema_type: 'JSON')
+      end
+
     end
   end
 end

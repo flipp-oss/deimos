@@ -13,8 +13,8 @@ module Deimos
       end
 
       # @override
-      def encode_payload(payload, schema: nil, topic: nil)
-        avro_turf_messaging.encode(payload, schema_name: schema, subject: topic || schema)
+      def encode_payload(payload, schema: nil, subject: nil)
+        avro_turf_messaging.encode(payload, schema_name: schema, subject: subject || schema)
       end
 
     private
