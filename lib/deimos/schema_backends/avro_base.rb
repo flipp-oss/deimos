@@ -182,7 +182,7 @@ module Deimos
       # @return [Avro::Schema]
       def avro_schema(schema=nil)
         schema ||= @schema
-        @schema_store.find(@namespace + '.' + schema)
+        @schema_store.find("#{@namespace}.#{schema}")
       end
 
       # @param value_schema [Hash]
