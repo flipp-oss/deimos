@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'proto_base'
-require 'proto_turf'
+require 'schema_registry_client'
 
 module Deimos
   module SchemaBackends
@@ -19,9 +19,9 @@ module Deimos
         proto_schema.msgclass.encode(msg)
       end
 
-      # @return [ProtoTurf]
-      def self.proto_turf
-        @proto_turf ||= ProtoTurf.new(
+      # @return [SchemaRegistry::Client]
+      def self.schema_registry
+        @schema_registry ||= SchemaRegistry::Client.new(
           registry_url: Deimos.config.schema.registry_url,
           logger: Karafka.logger
         )

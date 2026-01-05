@@ -192,7 +192,7 @@ module Deimos
 
       def generate_from_schema_files(found_schemas)
         path = Deimos.config.schema.path || Deimos.config.schema.paths[:avro].first
-        schema_store = AvroTurf::MutableSchemaStore.new(path: path)
+        schema_store = SchemaRegistry::AvroSchemaStore.new(path: path)
         schema_store.load_schemas!
         schema_store.schemas.values.sort_by { |s| "#{s.namespace}#{s.name}" }.each do |schema|
           name = "#{schema.namespace}.#{schema.name}"

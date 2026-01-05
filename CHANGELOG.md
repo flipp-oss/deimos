@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Major change: Switch from using `avro_turf` and `proto_turf` to use `schema_registry_client`, which handles both Avro and Protobuf.
+
 # 2.3.0 - 2026-01-13
 
 - Feature: Support broker setting per topic in producer configs.

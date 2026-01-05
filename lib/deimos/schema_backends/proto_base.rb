@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'base'
-require 'proto_turf'
+require 'schema_registry_client'
 
 module Deimos
   module SchemaBackends
@@ -106,7 +106,7 @@ module Deimos
       end
 
       def generate_key_schema(field_name)
-        ProtoTurf::Output::JsonSchema.output(proto_schema, field: field_name)
+        SchemaRegistry::Output::JsonSchema.output(proto_schema, field: field_name)
       end
 
       def supports_key_schemas?

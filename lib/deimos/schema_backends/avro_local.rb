@@ -8,23 +8,24 @@ module Deimos
     class AvroLocal < AvroBase
       # @override
       def decode_payload(payload, schema:)
-        avro_turf.decode(payload, schema_name: schema, namespace: @namespace)
+        stream = StringIO.new(payload)
+        schema = @schema_store.find(@namespace + '.' + schema)
+        reader = Avro::IO::DatumReader.new(nil, schema)
+        Avro::DataFile::Reader.new(stream, reader).first
       end
 
       # @override
       def encode_payload(payload, schema: nil, subject: nil)
-        avro_turf.encode(payload, schema_name: schema, namespace: @namespace)
+        stream = StringIO.new
+        schema = schema_store.find(@namespace + '.' + schema)
+        writer = Avro::IO::DatumWriter.new(schema)
+
+        dw = Avro::DataFile::Writer.new(stream, writer, schema)
+        dw << payload.to_h
+        dw.close
+        stream.string
       end
 
-    private
-
-      # @return [AvroTurf]
-      def avro_turf
-        @avro_turf ||= AvroTurf.new(
-          schemas_path: Deimos.config.schema.path,
-          schema_store: @schema_store
-        )
-      end
     end
   end
 end
