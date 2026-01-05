@@ -9,7 +9,7 @@ module Deimos
       # @override
       def decode_payload(payload, schema:)
         stream = StringIO.new(payload)
-        schema = @schema_store.find(@namespace + '.' + schema)
+        schema = @schema_store.find("#{@namespace}.#{schema}")
         reader = Avro::IO::DatumReader.new(nil, schema)
         Avro::DataFile::Reader.new(stream, reader).first
       end
@@ -17,7 +17,7 @@ module Deimos
       # @override
       def encode_payload(payload, schema: nil, subject: nil)
         stream = StringIO.new
-        schema = schema_store.find(@namespace + '.' + schema)
+        schema = schema_store.find("#{@namespace}.#{schema}")
         writer = Avro::IO::DatumWriter.new(schema)
 
         dw = Avro::DataFile::Writer.new(stream, writer, schema)
