@@ -94,8 +94,6 @@ Currently we have the following possible schema backends:
 * Protobuf Schema Registry (use Protobuf with the Confluent Schema Registry)
 * Mock (no actual encoding/decoding).
 
-Note that to use Protobuf, you must include the [proto_turf](https://github.com/flipp-oss/proto_turf) gem in your Gemfile.
-
 Other possible schemas could [JSONSchema](https://json-schema.org/), etc. Feel free to
 contribute!
 

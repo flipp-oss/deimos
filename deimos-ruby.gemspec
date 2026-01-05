@@ -17,9 +17,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency('avro_turf', '>= 1.4', '< 2')
   spec.add_dependency('benchmark', '~> 0.5')
   spec.add_dependency('fig_tree', '~> 0.2.0')
+  spec.add_dependency('schema_registry_client')
   spec.add_dependency('karafka', '~> 2.0')
   spec.add_dependency('sigurd', '>= 0.1.0', '< 1.0')
 
@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('guard-rubocop', '~> 1')
   spec.add_development_dependency('karafka-testing', '~> 2.0')
   spec.add_development_dependency('pg', '~> 1.1')
-  spec.add_development_dependency('proto_turf')
+  spec.add_development_dependency('schema_registry_client')
   spec.add_development_dependency('rails', '~> 8.0')
   spec.add_development_dependency('rake', '~> 13')
   spec.add_development_dependency('rspec', '~> 3')

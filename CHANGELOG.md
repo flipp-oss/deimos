@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Major change: Switch from using `avro_turf` and `proto_turf` to use `schema_registry_client`, which handles both Avro and Protobuf.
+
 # 2.2.2 - 2025-11-7
 
 - Fix: Calling `producer_classes` on a topic config could make all topics disappear. :(

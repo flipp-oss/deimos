@@ -248,7 +248,7 @@ When adding/modifying schemas:
 
 ### Protobuf
 
-- Requires `proto_turf` gem in Gemfile
+- Requires `schema_registry_client` gem in Gemfile
 - Protobuf payloads must be Protobuf message objects, not hashes
 - Protobuf should NOT be used for keys (unstable binary encoding)
 

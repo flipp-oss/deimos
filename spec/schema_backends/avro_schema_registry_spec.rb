@@ -15,17 +15,17 @@ RSpec.describe Deimos::SchemaBackends::AvroSchemaRegistry do
   it_should_behave_like 'an Avro backend'
 
   it 'should encode and decode correctly' do
-    avro_turf = instance_double(AvroTurf::Messaging)
-    allow(avro_turf).to receive_messages(encode: 'encoded-payload', decode: payload)
-    allow(backend).to receive(:avro_turf_messaging).and_return(avro_turf)
+    schema_registry = instance_double(SchemaRegistry::Client)
+    allow(schema_registry).to receive_messages(encode: 'encoded-payload', decode: payload)
+    allow(backend).to receive(:schema_registry).and_return(schema_registry)
     results = backend.encode(payload, topic: 'topic')
     expect(results).to eq('encoded-payload')
     results = backend.decode(results)
     expect(results).to eq(payload)
-    expect(avro_turf).to have_received(:encode).
-      with(payload, schema_name: 'MySchema', subject: 'topic-value')
-    expect(avro_turf).to have_received(:decode).
-      with('encoded-payload', schema_name: 'MySchema')
+    expect(schema_registry).to have_received(:encode).
+      with(payload, schema_name: 'com.my-namespace.MySchema', subject: 'topic-value')
+    expect(schema_registry).to have_received(:decode).
+      with('encoded-payload')
   end
 
 end
