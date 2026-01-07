@@ -31,9 +31,9 @@ module Deimos
         self.class.key_schema_registry.decode(payload)
       end
 
-      # @return [ProtoTurf]
+      # @return [SchemaRegistry::Client]
       def self.schema_registry
-        @schema_registry ||= ProtoTurf.new(
+        @schema_registry ||= SchemaRegistry::Client.new(
           registry_url: Deimos.config.schema.registry_url,
           logger: Karafka.logger
         )
