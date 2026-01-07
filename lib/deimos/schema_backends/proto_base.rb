@@ -26,7 +26,12 @@ module Deimos
       }.freeze
 
       def proto_schema(schema=@schema)
-        Google::Protobuf::DescriptorPool.generated_pool.lookup(schema)
+        proto = Google::Protobuf::DescriptorPool.generated_pool.lookup(schema)
+        if proto.nil?
+          raise "Could not find Protobuf schema '#{schema}'."
+        end
+
+        proto
       end
 
       # @override
