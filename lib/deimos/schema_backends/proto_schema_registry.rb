@@ -35,6 +35,8 @@ module Deimos
       def self.schema_registry
         @schema_registry ||= SchemaRegistry::Client.new(
           registry_url: Deimos.config.schema.registry_url,
+          user: Deimos.config.schema.user,
+          password: Deimos.config.schema.password,
           logger: Karafka.logger
         )
       end
@@ -42,6 +44,8 @@ module Deimos
       def self.key_schema_registry
         @key_schema_registry ||= SchemaRegistry::Client.new(
           registry_url: Deimos.config.schema.registry_url,
+          user: Deimos.config.schema.user,
+          password: Deimos.config.schema.password,
           logger: Karafka.logger,
           schema_type: SchemaRegistry::Schema::ProtoJsonSchema
         )
