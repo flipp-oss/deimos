@@ -110,12 +110,8 @@ module Deimos
         :mock
       end
 
-      def generate_key_schema(field_name)
-        SchemaRegistry::Output::JsonSchema.output(proto_schema, field: field_name)
-      end
-
       def supports_key_schemas?
-        true
+        false
       end
 
     end
