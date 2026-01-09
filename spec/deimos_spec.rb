@@ -51,6 +51,7 @@ describe Deimos do
   end
 
   specify '#producer_for' do
+    allow(described_class).to receive(:producer_for).and_call_original
     Karafka::App.routes.redraw do
       topic 'main-broker' do
         active false

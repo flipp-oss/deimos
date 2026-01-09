@@ -189,7 +189,7 @@ module Deimos
 
     # @return [Array<::WaterDrop::Producer>]
     def waterdrop_producers
-      @producers.values + [Karafka.producer]
+      (@producers.values + [Karafka.producer]).uniq
     end
 
     # @param topic [String]
