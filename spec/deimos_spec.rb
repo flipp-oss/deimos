@@ -50,4 +50,35 @@ describe Deimos do
     end
   end
 
+  specify '#producer_for' do
+    Karafka::App.routes.redraw do
+      topic 'main-broker' do
+        active false
+        kafka({
+                'bootstrap.servers': 'broker1:9092'
+              })
+      end
+      topic 'main-broker2' do
+        active false
+        kafka({
+                'bootstrap.servers': 'broker1:9092'
+              })
+      end
+      topic 'other-broker' do
+        active false
+        kafka({
+                'bootstrap.servers': 'broker2:9092'
+              })
+      end
+    end
+    described_class.setup_producers
+
+    producer1 = described_class.producer_for('main-broker')
+    producer2 = described_class.producer_for('main-broker2')
+    producer3 = described_class.producer_for('other-broker')
+    expect(producer1).to eq(producer2)
+    expect(producer1.config.kafka[:'bootstrap.servers']).to eq('broker1:9092')
+    expect(producer3.config.kafka[:'bootstrap.servers']).to eq('broker2:9092')
+  end
+
 end

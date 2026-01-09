@@ -142,23 +142,34 @@ module Deimos
       signal_handler.run!
     end
 
+    def setup_producers
+      @producers = {}
+      producers_by_broker = {}
+      Deimos.karafka_configs.each do |topic|
+        broker = topic.kafka[:'bootstrap.servers']
+        producers_by_broker[broker] ||= ::WaterDrop::Producer.new do |p_config|
+          config_hash = Karafka::Setup::Config.config.kafka.merge(topic.kafka)
+          p_config.kafka = Karafka::Setup::AttributesMap.producer(config_hash)
+        end
+        @producers[topic.name] = producers_by_broker[broker]
+      end
+    end
+
     def setup_karafka
-      Karafka.producer.middleware.append(Deimos::ProducerMiddleware)
-      # for multiple setup calls
-      Karafka.producer.config.kafka =
-        Karafka::Setup::AttributesMap.producer(Karafka::Setup::Config.config.kafka.dup)
-      EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.register_event(type) }
-
-      Karafka.producer.monitor.subscribe(ProducerMetricsListener.new)
-
-      Karafka.producer.monitor.subscribe('error.occurred') do |event|
-        if event.payload.key?(:messages)
-          topic = event[:messages].first[:topic]
-          config = Deimos.karafka_config_for(topic: topic)
-          message = Deimos::Logging.messages_log_text(config&.payload_log, event[:messages])
-          Karafka.logger.error("Error producing messages: #{event[:error].message} #{message.to_json}")
+      setup_producers
+      waterdrop_producers.each do |producer|
+        producer.middleware.append(Deimos::ProducerMiddleware)
+        producer.monitor.subscribe(ProducerMetricsListener.new)
+        producer.monitor.subscribe('error.occurred') do |event|
+          if event.payload.key?(:messages)
+            topic = event[:messages].first[:topic]
+            config = Deimos.karafka_config_for(topic: topic)
+            message = Deimos::Logging.messages_log_text(config&.payload_log, event[:messages])
+            Karafka.logger.error("Error producing messages: #{event[:error].message} #{message.to_json}")
+          end
         end
       end
+      EVENT_TYPES.each { |type| Karafka.monitor.notifications_bus.register_event(type) }
     end
 
     # @return [Array<Karafka::Routing::Topic]
@@ -176,7 +187,16 @@ module Deimos
       end
     end
 
-    # @param handler_class [Class]
+    # @return [Array<::WaterDrop::Producer>]
+    def waterdrop_producers
+      @producers.values + [Karafka.producer]
+    end
+
+    # @param topic [String]
+    def producer_for(topic)
+      @producers[topic] || Karafka.producer
+    end
+
     # @return [String,nil]
     def topic_for_consumer(handler_class)
       Deimos.karafka_configs.each do |topic|
