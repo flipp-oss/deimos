@@ -137,6 +137,13 @@ module Schemas; module MyNamespace
       'com.my-namespace'
     end
 
+    def self.tombstone(key)
+      record = self.allocate
+      record.tombstone_key = key
+      record.a_string = key
+      record
+    end
+
     # @override
     def as_json(_opts={})
       {
@@ -309,13 +316,6 @@ module Schemas; module MyNamespace
     # @override
     def namespace
       'com.my-namespace'
-    end
-
-    def self.tombstone(key)
-      record = self.allocate
-      record.tombstone_key = key
-      record.test_id = key
-      record
     end
 
     # @override
