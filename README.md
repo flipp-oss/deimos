@@ -141,6 +141,12 @@ end
 
 Note that if you are using Protobuf, you need to pass a Protobuf message object as the payload - you can't use a bare hash.
 
+## Multiple clusters
+
+If you have topics that are being routed to different clusters via Karafka configs, you can continue to make use of Deimos producers without having to instantiate the producer itself. Instead of calling `MyProducer.produce(message)`, you can call `Deimos.producer_for('MyTopic').produce(message)`.
+
+Deimos will keep around one producer per broker server (i.e. `bootstrap.servers` config) that it sees on startup.
+
 ## Auto-added Fields
 
 If your schema has a field called `message_id`, and the payload you give
