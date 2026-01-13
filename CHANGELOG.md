@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 2.3.0 - 2026-01-13
+
 - Feature: Support broker setting per topic in producer configs.
 
 # 2.2.2 - 2025-11-7
