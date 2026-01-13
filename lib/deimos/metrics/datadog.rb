@@ -58,7 +58,9 @@ module Deimos
           end
         end
         Karafka::Setup::Config.setup if Karafka.producer.nil?
-        Karafka.producer.monitor.subscribe(waterdrop_listener)
+        Deimos.waterdrop_producers.each do |producer|
+          producer.monitor.subscribe(waterdrop_listener)
+        end
       end
 
       # :nodoc:

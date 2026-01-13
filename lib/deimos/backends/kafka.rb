@@ -6,7 +6,7 @@ module Deimos
     class Kafka < Base
       # :nodoc:
       def self.execute(producer_class:, messages:)
-        Karafka.producer.produce_many_sync(messages)
+        Deimos.producer_for(producer_class.topic).produce_many_sync(messages)
       end
     end
   end

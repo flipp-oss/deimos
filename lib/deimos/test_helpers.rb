@@ -16,6 +16,14 @@ module Deimos
     def self.included(base)
       super
       base.include Karafka::Testing::RSpec::Helpers
+
+      # Ensure that we only use Karafka.producer, not the producers we set up for multi-broker
+      # configs. Only Karafka.producer works with Karafka test helpers.
+      RSpec.configure do |config|
+        config.before(:each) do
+          allow(Deimos).to receive(:producer_for).and_return(Karafka.producer)
+        end
+      end
     end
 
     # @return [Array<Hash>]

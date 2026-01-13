@@ -37,10 +37,9 @@ RSpec.describe Deimos::Generators::SchemaClassGenerator do
 
   context 'with a Consumers Schema' do
     before(:each) do
-      Deimos.configure do
-        consumer do
-          class_name 'ConsumerTest::MyConsumer'
-          topic 'MyTopic'
+      Karafka::App.routes.redraw do
+        topic 'MyTopic' do
+          consumer ConsumerTest::MyConsumer
           schema 'Generated'
           namespace 'com.my-namespace'
           key_config field: :a_string
