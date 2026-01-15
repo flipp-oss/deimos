@@ -96,7 +96,7 @@ module Deimos
 
       # @override
       def self.mock_backend
-        :avro_local
+        :avro_validation
       end
 
       # @override
