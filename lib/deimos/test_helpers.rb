@@ -50,6 +50,13 @@ module Deimos
         warn("unit_test! is deprecated and can be replaced by setting Deimos's schema backend " \
              'to `:avro_validation`. All other test behavior is provided by Karafka.')
       end
+
+      def with_mock_backends
+        Deimos.mock_backends = true
+        yield
+        Deimos.mock_backends = false
+      end
+
     end
 
     # get the difference of 2 hashes.

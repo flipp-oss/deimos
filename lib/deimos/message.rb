@@ -38,10 +38,19 @@ module Deimos
     def add_fields(fields)
       return if @payload.to_h.with_indifferent_access.except(:payload_key, :partition_key).blank?
 
-      if fields.include?('message_id')
+      if @payload.respond_to?(:message_id)
+        if fields.include?('message_id') && @payload.message_id.blank?
+          @payload.message_id = SecureRandom.uuid
+        end
+      elsif fields.include?('message_id')
         @payload['message_id'] ||= SecureRandom.uuid
       end
-      if fields.include?('timestamp')
+
+      if @payload.respond_to?(:timestamp)
+        if fields.include?('timestamp') && @payload.timestamp.blank?
+          @payload.timestamp = Time.now.in_time_zone.to_s
+        end
+      elsif fields.include?('timestamp')
         @payload['timestamp'] ||= Time.now.in_time_zone.to_s
       end
     end

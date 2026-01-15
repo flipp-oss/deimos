@@ -56,7 +56,7 @@ module Deimos
 
       # @param hash [Hash]
       # @return [String]
-      def encode_proto_key(hash, topic: nil)
+      def encode_proto_key(hash, topic: nil, field: nil)
         hash.sort.to_h.to_json
       end
 

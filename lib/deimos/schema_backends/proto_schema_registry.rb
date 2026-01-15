@@ -9,6 +9,11 @@ module Deimos
     class ProtoSchemaRegistry < ProtoBase
 
       # @override
+      def self.mock_backend
+        :proto_local
+      end
+
+      # @override
       def decode_payload(payload, schema:)
         self.class.schema_registry.decode(payload)
       end

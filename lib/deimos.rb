@@ -54,6 +54,9 @@ module Deimos
 
   class << self
 
+    # @return [Boolean] for use in unit tests
+    attr_accessor :mock_backends
+
     # @param backend [Symbol, nil]
     # @return [Class<Deimos::SchemaBackends::Base>]
     def schema_backend_class(backend: nil)
@@ -61,7 +64,12 @@ module Deimos
 
       require "deimos/schema_backends/#{backend}"
 
-      "Deimos::SchemaBackends::#{backend.to_s.classify}".constantize
+      klass = "Deimos::SchemaBackends::#{backend.to_s.classify}".constantize
+      if self.mock_backends
+        require "deimos/schema_backends/#{klass.mock_backend}"
+        klass = "Deimos::SchemaBackends::#{klass.mock_backend.to_s.classify}".constantize
+      end
+      klass
     end
 
     # @param schema [String, Symbol]

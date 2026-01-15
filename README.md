@@ -91,10 +91,11 @@ Currently we have the following possible schema backends:
 * Avro Schema Registry (use the Confluent Schema Registry)
 * Avro Validation (validate using an Avro schema but leave decoded - this is useful
   for unit testing and development)
+* Protobuf Local (use pure Protobuf)
 * Protobuf Schema Registry (use Protobuf with the Confluent Schema Registry)
 * Mock (no actual encoding/decoding).
 
-Other possible schemas could [JSONSchema](https://json-schema.org/), etc. Feel free to
+Other possible schemas could include [JSONSchema](https://json-schema.org/), etc. Feel free to
 contribute!
 
 To create a new schema backend, please see the existing examples [here](lib/deimos/schema_backends).
@@ -281,7 +282,7 @@ MyProducer.publish({
 ```
 
 > [!IMPORTANT]
-> Protobuf should *not* be used as a key schema, since the binary encoding is [unstable](https://protobuf.dev/programming-guides/encoding/#implications) and may break partitioning. Deimos will automatically convert key fields to plain values and key hashes to JSON.
+> Protobuf should *not* be used as a key schema, since the binary encoding is [unstable](https://protobuf.dev/programming-guides/encoding/#implications) and may break partitioning. Deimos will automatically convert keys to sorted JSON, and will use JSON Schema in the schema registry.
 
 ## Instrumentation
 
@@ -1010,7 +1011,13 @@ end
 # test can have the same settings every time it is run
 after(:each) do
   Deimos.config.reset!
-  Deimos.config.schema.backend = :avro_validation
+  # set specific settings here
+  Deimos.config.schema.path = 'my/schema/path'
+end
+
+around(:each) do |ex|
+  # replace e.g. avro_schema_registry with avro_validation, proto_schema_registry with proto_local
+  Deimos::TestHelpers.with_mock_backends { ex.run }
 end
 ```
 
