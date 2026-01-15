@@ -48,7 +48,7 @@ module Deimos
 
       if @payload.respond_to?(:timestamp)
         if fields.include?('timestamp') && @payload.timestamp.blank?
-          @payload.timestamp = Time.now.in_time_zone.to_s
+          @payload.timestamp = Time.now
         end
       elsif fields.include?('timestamp')
         @payload['timestamp'] ||= Time.now.in_time_zone.to_s
