@@ -44,12 +44,12 @@ module Deimos
         if key_config[:plain]
           key = Transcoder.new(
             schema: schema,
-            backend: schema_backend,
+            backend: nil,
             namespace: namespace,
             use_schema_classes: use_classes,
             topic: name
           )
-          key.backend = Deimos::SchemaBackends::Plain.new(schema: nil, namespace: nil)
+          key.backend_type = :plain
         elsif !key_config[:none]
           if key_config[:field]
             key = Transcoder.new(

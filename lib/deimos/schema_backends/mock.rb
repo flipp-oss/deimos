@@ -5,6 +5,10 @@ module Deimos
     # Mock implementation of a schema backend that does no encoding or validation.
     class Mock < Base
 
+      def self.mock_backend
+        :mock
+      end
+
       # @override
       def generate_key_schema(field_name)
       end
