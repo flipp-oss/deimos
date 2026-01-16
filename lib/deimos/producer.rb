@@ -156,11 +156,7 @@ module Deimos
         elsif backend == :kafka && sync == false
           backend = :kafka_async
         end
-        klass = "Deimos::Backends::#{backend.to_s.classify}".constantize
-        if Deimos.mock_backends
-          klass = "Deimos::SchemaBackends::#{klass.mock_backend.to_s.classify}".constantize
-        end
-        klass
+        "Deimos::Backends::#{backend.to_s.classify}".constantize
       end
       # rubocop:enable Style/OptionalBooleanParameter
 
