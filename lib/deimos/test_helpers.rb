@@ -53,6 +53,10 @@ module Deimos
 
       def with_mock_backends
         Deimos.mock_backends = true
+        Deimos.karafka_configs.each do |config|
+          config.deserializers[:payload].try(:reset_backend)
+          config.deserializers[:key].try(:reset_backend)
+        end
         yield
         Deimos.mock_backends = false
       end

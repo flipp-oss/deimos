@@ -29,6 +29,11 @@ module Deimos
                                          backend: @backend_type)
     end
 
+    # for test helpers
+    def reset_backend
+      @backend = nil
+    end
+
     # for use in test helpers
     # @param key [Object]
     # @return [String]
