@@ -72,9 +72,18 @@ module Deimos
       klass
     end
 
+    # @param topic_name [String]
+    # @return [SchemaBackends::Base]
+    def schema_backend_for(topic_name)
+      config = Deimos.karafka_config_for(topic: topic_name)
+      self.schema_backend(schema: config.schema,
+                          namespace: config.namespace,
+                          backend: config.schema_backend || Deimos.config.schema.backend)
+    end
+
     # @param schema [String, Symbol]
     # @param namespace [String]
-    # @return [Class<Deimos::SchemaBackends::Base>]
+    # @return [Deimos::SchemaBackends::Base]
     def schema_backend(schema:, namespace:, backend: Deimos.config.schema.backend)
       if config.schema.use_schema_classes
         # Initialize an instance of the provided schema

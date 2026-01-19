@@ -10,9 +10,10 @@ module Deimos
       end
 
       def producer_class
-        self.producer_classes.first
+        self.producer_classes&.first
       end
     end
+
     module Topic
       (FIELDS + [:producer_class]).each do |field|
         define_method(field) do |*args|

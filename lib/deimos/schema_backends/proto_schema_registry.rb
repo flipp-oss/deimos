@@ -56,6 +56,29 @@ module Deimos
         )
       end
 
+      # @param file [String]
+      # @param field_name [String]
+      def write_key_proto(file, field_name)
+        return if field_name.nil?
+
+        proto = proto_schema
+        package = proto.file_descriptor.to_proto.package
+        writer = SchemaRegistry::Output::ProtoText::Writer.new
+        info = SchemaRegistry::Output::ProtoText::ParseInfo.new(writer, package)
+        writer.write_line(%(syntax = "proto3";))
+        writer.write_line("package #{package};")
+        writer.writenl
+
+        field = proto.to_proto.field.find { |f| f.name == field_name.to_s }
+        writer.write_line("message #{proto.to_proto.name}Key {")
+        writer.indent
+        SchemaRegistry::Output::ProtoText.write_field(info, field)
+        writer.dedent
+        writer.write_line("}")
+        path = "#{file}/#{package.gsub('.', '/')}/#{proto.to_proto.name.underscore}_key.proto"
+        File.write(path, writer.string)
+      end
+
     end
   end
 end

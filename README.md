@@ -281,8 +281,14 @@ MyProducer.publish({
                    })
 ```
 
+### Protobuf and Key Schemas
+
 > [!IMPORTANT]
 > Protobuf should *not* be used as a key schema, since the binary encoding is [unstable](https://protobuf.dev/programming-guides/encoding/#implications) and may break partitioning. Deimos will automatically convert keys to sorted JSON, and will use JSON Schema in the schema registry.
+
+To enable integration with [buf](https://buf.build/), Deimos provides a Rake task that will auto-generate `.proto` files. This task can be run in CI before running `buf push`. This way, downstream systems that want to use the generated key schemas can do so using their own tech stack.
+
+    bundle exec rake deimos:generate_key_protos
 
 ## Instrumentation
 
