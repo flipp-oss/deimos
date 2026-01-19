@@ -58,6 +58,7 @@ module Deimos
           config.deserializers[:key].try(:reset_backend)
         end
         yield
+      ensure
         Deimos.mock_backends = false
       end
 

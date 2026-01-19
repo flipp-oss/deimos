@@ -190,6 +190,9 @@ module Deimos
       # would replace a prefixed with the given key with the module name SchemaClasses.
       # @return [Hash]
       setting :schema_namespace_map, {}
+
+      # The base directory for generated protobuf key schemas.
+      setting :proto_schema_key_path, 'protos'
     end
 
     # The configured metrics provider.

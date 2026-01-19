@@ -82,4 +82,74 @@ describe Deimos do
     expect(producer3.config.kafka[:'bootstrap.servers']).to eq('broker2:9092')
   end
 
+  describe '#schema_backend_for' do
+    it 'should return a schema backend for a given topic' do
+      Karafka::App.routes.redraw do
+        topic 'backend-test-topic' do
+          active false
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config none: true
+        end
+      end
+
+      backend = described_class.schema_backend_for('backend-test-topic')
+      expect(backend.inspect).to eq('Type AvroValidation Schema: com.my-namespace.MySchema Key schema: ')
+    end
+
+    it 'should use topic-specific schema_backend if configured' do
+      Karafka::App.routes.redraw do
+        topic 'backend-test-topic-local' do
+          active false
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config none: true
+          schema_backend :avro_local
+        end
+      end
+
+      backend = described_class.schema_backend_for('backend-test-topic-local')
+      expect(backend).to be_a(Deimos::SchemaBackends::AvroLocal)
+    end
+
+    it 'should fall back to global schema backend config' do
+      described_class.config.schema.backend = :avro_validation
+      Karafka::App.routes.redraw do
+        topic 'backend-test-topic-global' do
+          active false
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config none: true
+        end
+      end
+
+      backend = described_class.schema_backend_for('backend-test-topic-global')
+      expect(backend).to be_a(Deimos::SchemaBackends::AvroValidation)
+    end
+  end
+
+  describe '#schema_backend_class with mock_backends' do
+    after(:each) do
+      described_class.mock_backends = false
+    end
+
+    it 'should return the mock backend when mock_backends is true' do
+      described_class.mock_backends = true
+      klass = described_class.schema_backend_class(backend: :avro_schema_registry)
+      expect(klass).to eq(Deimos::SchemaBackends::AvroValidation)
+    end
+
+    it 'should return the real backend when mock_backends is false' do
+      described_class.mock_backends = false
+      klass = described_class.schema_backend_class(backend: :avro_schema_registry)
+      expect(klass).to eq(Deimos::SchemaBackends::AvroSchemaRegistry)
+    end
+
+    it 'should use proto_local for proto_schema_registry when mocked' do
+      described_class.mock_backends = true
+      klass = described_class.schema_backend_class(backend: :proto_schema_registry)
+      expect(klass).to eq(Deimos::SchemaBackends::ProtoLocal)
+    end
+  end
+
 end

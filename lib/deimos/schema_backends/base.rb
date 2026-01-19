@@ -41,6 +41,11 @@ module Deimos
         @namespace = namespace
       end
 
+      # @return [String]
+      def inspect
+        "Type #{self.class.name.demodulize} Schema: #{@namespace}.#{@schema} Key schema: #{@key_schema}"
+      end
+
       # @return [Boolean]
       def supports_key_schemas?
         false

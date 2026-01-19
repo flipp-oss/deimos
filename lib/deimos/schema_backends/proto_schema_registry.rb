@@ -74,7 +74,7 @@ module Deimos
         writer.indent
         SchemaRegistry::Output::ProtoText.write_field(info, field)
         writer.dedent
-        writer.write_line("}")
+        writer.write_line('}')
         path = "#{file}/#{package.gsub('.', '/')}/#{proto.to_proto.name.underscore}_key.proto"
         File.write(path, writer.string)
       end

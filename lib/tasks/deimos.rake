@@ -51,7 +51,7 @@ namespace :deimos do
 
       puts "Writing key proto for #{config.name}"
       backend = Deimos.schema_backend_for(config.name)
-      backend.write_key_proto('protos', config.deserializers[:key].key_field)
+      backend.write_key_proto(Deimos.config.schema.proto_schema_key_path, config.deserializers[:key].key_field)
     end
   end
 end

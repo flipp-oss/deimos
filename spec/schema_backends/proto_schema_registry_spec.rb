@@ -247,4 +247,10 @@ RSpec.describe Deimos::SchemaBackends::ProtoSchemaRegistry do
       expect(fields.map(&:name)).to include('str', 'num', 'str_arr', 'flag', 'timestamp')
     end
   end
+
+  describe '.mock_backend' do
+    it 'should return :proto_local' do
+      expect(described_class.mock_backend).to eq(:proto_local)
+    end
+  end
 end
