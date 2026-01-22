@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Feature: Allow strings to be used in the `record_class` declaration.
+
 # 2.3.0 - 2026-01-13
 
 - Feature: Support broker setting per topic in producer configs.

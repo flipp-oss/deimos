@@ -72,6 +72,7 @@ module Deimos
     # Setup
     def initialize
       @klass = self.class.config[:record_class]
+      @klass = @klass.constantize if @klass.is_a?(String)
       @compacted = self.class.config[:compacted] != false
     end
 
