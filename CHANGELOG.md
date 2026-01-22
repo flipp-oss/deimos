@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+# 2.3.1 - 2026-01-22
+
 - Feature: Allow strings to be used in the `record_class` declaration.
 
 # 2.3.0 - 2026-01-13
