@@ -13,16 +13,22 @@ module Deimos
   class ActiveRecordProducer < Producer
     class << self
       # Indicate the class this producer is working on.
-      # @param klass [Class]
+      # @param klass [Class,String]
       # @param refetch [Boolean] if true, and we are given a hash instead of
       # a record object, refetch the record to pass into the `generate_payload`
       # method.
       # @return [void]
       def record_class(klass=nil, refetch: true)
-        return @record_class if klass.nil?
+        return record_klass if klass.nil?
 
         @record_class = klass
         @refetch_record = refetch
+      end
+
+      # @return [Class,nil]
+      def record_klass
+        @record_class = @record_class.constantize if @record_class.is_a?(String)
+        @record_class
       end
 
       # @param record [ActiveRecord::Base]
@@ -38,14 +44,14 @@ module Deimos
       def send_events(records, force_send: false)
         return if Deimos.producers_disabled?(self)
 
-        primary_key = @record_class&.primary_key
+        primary_key = record_klass&.primary_key
         messages = records.map do |record|
           if record.respond_to?(:attributes)
             attrs = record.attributes.with_indifferent_access
           else
             attrs = record.with_indifferent_access
             if @refetch_record && attrs[primary_key]
-              record = @record_class.find(attrs[primary_key])
+              record = record_klass.find(attrs[primary_key])
             end
           end
           generate_payload(attrs, record).with_indifferent_access
@@ -96,7 +102,7 @@ module Deimos
       # than this value).
       # @return [ActiveRecord::Relation]
       def poll_query(time_from:, time_to:, min_id:, column_name: :updated_at)
-        klass = @record_class
+        klass = record_klass
         table = ActiveRecord::Base.connection.quote_table_name(klass.table_name)
         column = ActiveRecord::Base.connection.quote_column_name(column_name)
         primary = ActiveRecord::Base.connection.quote_column_name(klass.primary_key)
