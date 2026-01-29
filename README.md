@@ -1074,6 +1074,18 @@ end
 # topic, without having to know which class produced it.                         
 expect(topic_name).to have_sent(payload, key=nil, partition_key=nil, headers=nil)
 
+# You can use regular hash matching:
+expect(topic_name).to have_sent({'some_key' => 'some-value', 'message_id' => anything})
+
+# For Protobufs, default values are stripped from the hash so you need to use actual Protobuf
+# objects:
+expect(topic.name).to have_sent(MyMessage.new(some_key: 'some-value', message_id: 'my-message-id'))
+
+# However, Protobufs don't allow RSpec-style matching, so you can at least do a 
+# simple `include`-style matcher:
+
+expect(topic.name).to have_sent_including(MyMessage.new(some_key: 'some-value'))
+
 # Inspect sent messages
 message = Deimos::TestHelpers.sent_messages[0]
 expect(message).to eq({

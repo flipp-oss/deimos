@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## UNRELEASED
 
 - Major change: Switch from using `avro_turf` and `proto_turf` to use `schema_registry_client`, which handles both Avro and Protobuf.
+- Added `have_sent_including` RSpec matcher to allow for Protobuf messages that use default values to be checked.
 
 # 2.3.0 - 2026-01-13
 
