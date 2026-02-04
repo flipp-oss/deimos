@@ -25,9 +25,8 @@ module Deimos
           logger: Karafka.logger,
           user: Deimos.config.schema.user,
           password: Deimos.config.schema.password,
-          schema_type: SchemaRegistry::Schema::Avro
+          schema_type: SchemaRegistry::Schema::Avro.new(schema_store: @schema_store)
         )
-        SchemaRegistry.avro_schema_path = Deimos.config.schema.path
         @schema_registry
       end
     end

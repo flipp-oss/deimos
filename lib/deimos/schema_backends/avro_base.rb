@@ -34,7 +34,7 @@ module Deimos
         end
         field_name = _field_name_from_schema(@key_schema)
         payload = key.is_a?(Hash) ? key : { field_name => key }
-        encode(payload, schema: @key_schema['name'], topic: topic)
+        encode(payload, schema: @key_schema['name'], topic: topic, is_key: true)
       end
 
       # @override
