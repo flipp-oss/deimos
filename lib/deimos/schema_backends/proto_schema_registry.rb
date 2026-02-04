@@ -52,7 +52,7 @@ module Deimos
           user: Deimos.config.schema.user,
           password: Deimos.config.schema.password,
           logger: Karafka.logger,
-          schema_type: SchemaRegistry::Schema::ProtoJsonSchema
+          schema_type: SchemaRegistry::Schema::ProtoJsonSchema.new
         )
       end
 
