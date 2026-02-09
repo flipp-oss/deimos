@@ -76,29 +76,50 @@ module Deimos
     # @return [SchemaBackends::Base]
     def schema_backend_for(topic_name)
       config = Deimos.karafka_config_for(topic: topic_name)
+      registry_info = if config.registry_url
+                        Deimos::RegistryInfo.new(
+                          config.registry_url,
+                          config.registry_user,
+                          config.registry_password
+                        )
+                      else
+                        nil
+                      end
       self.schema_backend(schema: config.schema,
                           namespace: config.namespace,
+                          registry_info: registry_info,
                           backend: config.schema_backend || Deimos.config.schema.backend)
     end
 
     # @param schema [String, Symbol]
     # @param namespace [String]
+    # @param registry_info [Deimos::RegistryInfo]
     # @return [Deimos::SchemaBackends::Base]
-    def schema_backend(schema:, namespace:, backend: Deimos.config.schema.backend)
+    def schema_backend(schema:, namespace:,
+                       registry_info: nil,
+                       backend: Deimos.config.schema.backend)
       if config.schema.use_schema_classes
         # Initialize an instance of the provided schema
         # in the event the schema class is an override, the inherited
         # schema and namespace will be applied
         schema_class = Utils::SchemaClass.klass(schema, namespace)
         if schema_class.nil?
-          schema_backend_class(backend: backend).new(schema: schema, namespace: namespace)
+          schema_backend_class(backend: backend).
+            new(
+              schema: schema,
+              namespace: namespace,
+              registry_info: registry_info
+            )
         else
           schema_instance = schema_class.allocate
           schema_backend_class(backend: backend).
-            new(schema: schema_instance.schema, namespace: schema_instance.namespace)
+            new(schema: schema_instance.schema,
+                namespace: schema_instance.namespace,
+                registry_info: registry_info)
         end
       else
-        schema_backend_class(backend: backend).new(schema: schema, namespace: namespace)
+        schema_backend_class(backend: backend).
+          new(schema: schema, namespace: namespace, registry_info: registry_info)
       end
     end
 

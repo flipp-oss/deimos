@@ -11,7 +11,7 @@ module Deimos
       attr_accessor :schema_store
 
       # @override
-      def initialize(schema:, namespace:)
+      def initialize(schema:, namespace:, registry_info: nil)
         super
         @schema_store = SchemaRegistry::AvroSchemaStore.new(path: Deimos.config.schema.path)
       end

@@ -24,6 +24,24 @@ module Deimos
     end
   end
 
+  class RegistryInfo
+    # @return [String]
+    attr_accessor :url
+    # @return [String]
+    attr_accessor :user
+    # @return [String]
+    attr_accessor :password
+
+    # @param url [String]
+    # @param user [String,nil]
+    # @param password [String,nil]
+    def initialize(url, user, password)
+      @url = url
+      @user = user
+      @password = password
+    end
+  end
+
   module SchemaBackends
     # Base class for encoding / decoding.
     class Base
@@ -33,12 +51,15 @@ module Deimos
       attr_accessor :namespace
       # @return [String]
       attr_accessor :key_schema
+      # @return [RegistryInfo]
+      attr_accessor :registry_info
 
       # @param schema [String,Symbol]
       # @param namespace [String]
-      def initialize(schema:, namespace: nil)
+      def initialize(schema:, namespace: nil, registry_info: nil)
         @schema = schema
         @namespace = namespace
+        @registry_info = registry_info
       end
 
       # @return [String]

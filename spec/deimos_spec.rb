@@ -126,6 +126,42 @@ describe Deimos do
       backend = described_class.schema_backend_for('backend-test-topic-global')
       expect(backend).to be_a(Deimos::SchemaBackends::AvroValidation)
     end
+
+    it 'should use topic-specific registry configuration' do
+      Karafka::App.routes.redraw do
+        topic 'backend-test-topic-registry' do
+          active false
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config none: true
+          registry_url 'http://topic-specific-registry:8081'
+          registry_user 'topic-user'
+          registry_password 'topic-password'
+        end
+      end
+
+      backend = described_class.schema_backend_for('backend-test-topic-registry')
+      # Backend will be AvroValidation in test mode, but should have registry_info
+      expect(backend.registry_info).not_to be_nil
+      expect(backend.registry_info.url).to eq('http://topic-specific-registry:8081')
+      expect(backend.registry_info.user).to eq('topic-user')
+      expect(backend.registry_info.password).to eq('topic-password')
+    end
+
+    it 'should create backend with nil registry_info when not specified' do
+      Karafka::App.routes.redraw do
+        topic 'backend-test-topic-no-registry' do
+          active false
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config none: true
+        end
+      end
+
+      backend = described_class.schema_backend_for('backend-test-topic-no-registry')
+      # registry_info should be nil when not specified in topic config
+      expect(backend.registry_info).to be_nil
+    end
   end
 
   describe '#schema_backend_class with mock_backends' do

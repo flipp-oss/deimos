@@ -13,6 +13,9 @@ module Deimos
         namespace: nil,
         key_config: { none: true },
         schema_backend: nil,
+        registry_url: nil,
+        registry_user: nil,
+        registry_password: nil,
         use_schema_classes: nil
       }.each do |field, default|
         define_method(field) do |*args|
@@ -31,12 +34,18 @@ module Deimos
                       else
                         use_schema_classes
                       end
+        registry_info = if registry_url
+                          Deimos::RegistryInfo.new(registry_url, registry_user, registry_password)
+                        else
+                          nil
+                        end
         payload = Transcoder.new(
           schema: schema,
           namespace: namespace,
           backend: schema_backend,
           use_schema_classes: use_classes,
-          topic: name
+          topic: name,
+          registry_info: registry_info
         )
 
         key = nil
@@ -47,7 +56,8 @@ module Deimos
             backend: nil,
             namespace: namespace,
             use_schema_classes: use_classes,
-            topic: name
+            topic: name,
+            registry_info: registry_info
           )
           key.backend_type = :plain
         elsif !key_config[:none]
@@ -58,7 +68,8 @@ module Deimos
               namespace: namespace,
               use_schema_classes: use_classes,
               key_field: key_config[:field].to_s,
-              topic: name
+              topic: name,
+              registry_info: registry_info
             )
           elsif key_config[:schema]
             key = Transcoder.new(
@@ -66,7 +77,8 @@ module Deimos
               backend: schema_backend,
               namespace: namespace,
               use_schema_classes: use_classes,
-              topic: self.name
+              topic: self.name,
+              registry_info: registry_info
             )
           else
             raise 'No key config given - if you are not encoding keys, please use `key_config plain: true`'

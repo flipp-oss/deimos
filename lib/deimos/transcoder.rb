@@ -13,19 +13,21 @@ module Deimos
     # @param use_schema_classes [Boolean]
     # @param backend [Symbol]
     # @param topic [String]
-    def initialize(schema:, namespace:, key_field: nil, use_schema_classes: nil, topic: nil, backend: nil)
+    def initialize(schema:, namespace:, key_field: nil, use_schema_classes: nil, topic: nil, backend: nil, registry_info: nil)
       @schema = schema
       @namespace = namespace
       self.key_field = key_field
       @use_schema_classes = use_schema_classes
       @backend_type = backend
       @topic = topic
+      @registry_info = registry_info
     end
 
     # @return [Class<Deimos::SchemaBackends::Base>]
     def backend
       @backend ||= Deimos.schema_backend(schema: @schema,
                                          namespace: @namespace,
+                                         registry_info: @registry_info,
                                          backend: @backend_type)
     end
 

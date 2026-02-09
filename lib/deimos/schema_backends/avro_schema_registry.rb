@@ -21,10 +21,10 @@ module Deimos
       # @return [SchemaRegistry::Client]
       def schema_registry
         @schema_registry ||= SchemaRegistry::Client.new(
-          registry_url: Deimos.config.schema.registry_url,
+          registry_url: @registry_info&.url || Deimos.config.schema.registry_url,
           logger: Karafka.logger,
-          user: Deimos.config.schema.user,
-          password: Deimos.config.schema.password,
+          user: @registry_info&.user || Deimos.config.schema.user,
+          password: @registry_info&.password || Deimos.config.schema.password,
           schema_type: SchemaRegistry::Schema::Avro.new(schema_store: @schema_store)
         )
         @schema_registry
