@@ -44,7 +44,8 @@ RSpec.describe Deimos::SchemaBackends::AvroSchemaRegistry do
     end
 
     it 'should have nil registry_info when not provided' do
-      backend_without_registry = described_class.new(schema: 'MySchema', namespace: 'com.my-namespace', registry_info: nil)
+      backend_without_registry = described_class.new(schema: 'MySchema', namespace: 'com.my-namespace',
+                                                     registry_info: nil)
       expect(backend_without_registry.registry_info).to be_nil
     end
   end

@@ -28,7 +28,7 @@ module Deimos
           @_deimos_config[:schema][field] || default
         end
       end
-      def _deimos_setup_transcoders # rubocop:disable Metrics/AbcSize
+      def _deimos_setup_transcoders
         use_classes = if use_schema_classes.nil?
                         Deimos.config.schema.use_schema_classes
                       else
@@ -48,6 +48,11 @@ module Deimos
           registry_info: registry_info
         )
 
+        deserializers.payload = payload
+        _deimos_setup_key_transcoder(use_classes, registry_info)
+      end
+
+      def _deimos_setup_key_transcoder(use_classes, registry_info)
         key = nil
 
         if key_config[:plain]
@@ -84,7 +89,6 @@ module Deimos
             raise 'No key config given - if you are not encoding keys, please use `key_config plain: true`'
           end
         end
-        deserializers.payload = payload
         deserializers.key = key if key
       end
     end

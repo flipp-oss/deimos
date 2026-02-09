@@ -13,7 +13,8 @@ module Deimos
     # @param use_schema_classes [Boolean]
     # @param backend [Symbol]
     # @param topic [String]
-    def initialize(schema:, namespace:, key_field: nil, use_schema_classes: nil, topic: nil, backend: nil, registry_info: nil)
+    def initialize(schema:, namespace:, key_field: nil, use_schema_classes: nil, topic: nil, backend: nil,
+                   registry_info: nil)
       @schema = schema
       @namespace = namespace
       self.key_field = key_field

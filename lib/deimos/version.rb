@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module Deimos
-  VERSION = '2.4.0-beta13'
+  VERSION = '2.4.0-beta14'
 end
