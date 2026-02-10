@@ -23,8 +23,8 @@ RSpec.describe Deimos::SchemaBackends::ProtoSchemaRegistry do
   let(:backend) { described_class.new(schema: 'sample.v1.SampleMessage') }
 
   before(:each) do
-    allow(described_class).to receive_messages(schema_registry: schema_registry,
-                                               key_schema_registry: key_schema_registry)
+    allow(backend).to receive_messages(schema_registry: schema_registry,
+                                       key_schema_registry: key_schema_registry)
   end
 
   describe 'payload encoding and decoding' do
@@ -124,8 +124,8 @@ RSpec.describe Deimos::SchemaBackends::ProtoSchemaRegistry do
 
     before(:each) do
       # For key_backend tests, mock both schema_registry instances
-      allow(described_class).to receive_messages(schema_registry: schema_registry_for_test,
-                                                 key_schema_registry: key_schema_registry_for_test)
+      allow(key_backend).to receive_messages(schema_registry: schema_registry_for_test,
+                                             key_schema_registry: key_schema_registry_for_test)
     end
 
     it 'should encode a protobuf key message using the key schema' do

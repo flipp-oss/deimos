@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'base'
-require 'schema_registry_client'
 
 module Deimos
   module SchemaBackends

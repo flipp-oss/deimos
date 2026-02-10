@@ -15,38 +15,38 @@ module Deimos
 
       # @override
       def decode_payload(payload, schema:)
-        self.class.schema_registry.decode(payload)
+        self.schema_registry.decode(payload)
       end
 
       # @override
       def encode_payload(payload, schema: nil, subject: nil)
         msg = payload.is_a?(Hash) ? proto_schema.msgclass.new(**payload) : payload
-        encoder = subject&.ends_with?('-key') ? self.class.key_schema_registry : self.class.schema_registry
+        encoder = subject&.ends_with?('-key') ? self.key_schema_registry : self.schema_registry
         encoder.encode(msg, subject: subject)
       end
 
       # @override
       def encode_proto_key(key, topic: nil, field: nil)
         schema_text = SchemaRegistry::Output::JsonSchema.output(proto_schema.to_proto, path: field)
-        self.class.key_schema_registry.encode(key, subject: "#{topic}-key", schema_text: schema_text)
+        self.key_schema_registry.encode(key, subject: "#{topic}-key", schema_text: schema_text)
       end
 
       # @override
       def decode_proto_key(payload)
-        self.class.key_schema_registry.decode(payload)
+        self.key_schema_registry.decode(payload)
       end
 
       # @return [SchemaRegistry::Client]
-      def self.schema_registry
+      def schema_registry
         @schema_registry ||= SchemaRegistry::Client.new(
-          registry_url: Deimos.config.schema.registry_url,
-          user: Deimos.config.schema.user,
-          password: Deimos.config.schema.password,
+          registry_url: @registry_info&.url || Deimos.config.schema.registry_url,
+          user: @registry_info&.user || Deimos.config.schema.user,
+          password: @registry_info&.password || Deimos.config.schema.password,
           logger: Karafka.logger
         )
       end
 
-      def self.key_schema_registry
+      def key_schema_registry
         @key_schema_registry ||= SchemaRegistry::Client.new(
           registry_url: @registry_info&.url || Deimos.config.schema.registry_url,
           user: @registry_info&.user || Deimos.config.schema.user,
