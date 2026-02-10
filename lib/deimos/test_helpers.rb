@@ -115,7 +115,7 @@ module Deimos
       str + "\nAll Messages received:\n#{message_string}"
     end
 
-    RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil, including: false|
+    RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil, including=false|
       message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
         message_key = Deimos::TestHelpers.normalize_message(key)
@@ -156,7 +156,7 @@ module Deimos
     RSpec::Matchers.define :have_sent_including do |msg, key=nil, partition_key=nil, headers=nil|
       message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
-        expect(topic).to have_sent(msg, key, partition_key, headers, including: true)
+        expect(topic).to have_sent(msg, key, partition_key, headers, true)
       end
       failure_message do |topic|
         _frk_failure_message(topic, message, key, partition_key)
