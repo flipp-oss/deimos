@@ -141,7 +141,7 @@ module Deimos
       # directly, a good pattern is to set to async in your user-facing app, and
       # sync in your consumers or delayed workers.
       # @return [Symbol]
-      setting :backend, :kafka_async
+      setting :backend, ENV.fetch('DEIMOS_RAKE_TASK', nil) ? :kafka : :kafka_async
 
       # If set to true, KafkaSource will automatically truncate fields to match the column
       # length in the database.

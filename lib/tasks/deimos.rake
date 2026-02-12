@@ -7,9 +7,6 @@ require 'deimos/schema_backends/proto_schema_registry'
 namespace :deimos do
   desc 'Starts Deimos in the rails environment'
   task start: :environment do
-    Deimos.configure do |config|
-      config.producers.backend = :kafka if config.producers.backend == :kafka_async
-    end
     ENV['DEIMOS_RAKE_TASK'] = 'true'
     ENV['DEIMOS_TASK_NAME'] = 'consumer'
     STDOUT.sync = true
