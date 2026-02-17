@@ -11,6 +11,10 @@ module Deimos
 
   # :nodoc:
   after_configure do
+    Deimos.karafka_configs.each do |config|
+      config.deserializers[:payload].try(:reset_backend)
+      config.deserializers[:key].try(:reset_backend)
+    end
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
