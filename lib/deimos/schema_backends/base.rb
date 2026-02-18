@@ -84,7 +84,8 @@ module Deimos
       # @return [String]
       def encode(payload, schema: nil, topic: nil, is_key: false)
         validate(payload, schema: schema || @schema)
-        subject = is_key ? "#{topic}-key" : "#{topic}-value"
+        subject = topic.presence || schema
+        subject = is_key ? "#{subject}-key" : "#{subject}-value"
         encode_payload(payload, schema: schema || @schema, subject: subject)
       end
 
