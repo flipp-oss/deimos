@@ -26,6 +26,18 @@ describe Deimos::SchemaBackends::Base do
     backend.decode(payload, schema: 'schema2')
   end
 
+  it 'should use explicit schema as subject when topic is nil' do
+    expect(backend).to receive(:validate).with(payload, schema: 'schema2')
+    expect(backend).to receive(:encode_payload).with(payload, schema: 'schema2', subject: 'schema2-value')
+    backend.encode(payload, schema: 'schema2')
+  end
+
+  it 'should use explicit schema as subject for key when topic is nil' do
+    expect(backend).to receive(:validate).with(payload, schema: 'schema2')
+    expect(backend).to receive(:encode_payload).with(payload, schema: 'schema2', subject: 'schema2-key')
+    backend.encode(payload, schema: 'schema2', is_key: true)
+  end
+
   it 'should return nil if passed nil' do
     expect(backend.decode(nil, schema: 'schema2')).to be_nil
   end

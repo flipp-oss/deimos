@@ -164,6 +164,34 @@ describe Deimos do
     end
   end
 
+  describe 'configure' do
+    it 'should reset cached backends when configure is called again' do
+      Karafka::App.routes.redraw do
+        topic 'configure-test-topic' do
+          active false
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config none: true
+        end
+      end
+
+      topic_config = Deimos.karafka_configs.find { |c| c.name == 'configure-test-topic' }
+      payload_transcoder = topic_config.deserializers[:payload]
+
+      # Access the backend to cache it
+      first_backend = payload_transcoder.backend
+
+      # Call configure again (simulating a second configure call after topics are defined)
+      Deimos.configure do |config|
+        config.schema.backend = :avro_validation
+      end
+
+      # The cached backend should have been reset, so a new one is created
+      second_backend = payload_transcoder.backend
+      expect(second_backend).not_to equal(first_backend)
+    end
+  end
+
   describe '#schema_backend_class with mock_backends' do
     after(:each) do
       described_class.mock_backends = false
