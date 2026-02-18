@@ -175,14 +175,14 @@ describe Deimos do
         end
       end
 
-      topic_config = Deimos.karafka_configs.find { |c| c.name == 'configure-test-topic' }
+      topic_config = described_class.karafka_configs.find { |c| c.name == 'configure-test-topic' }
       payload_transcoder = topic_config.deserializers[:payload]
 
       # Access the backend to cache it
       first_backend = payload_transcoder.backend
 
       # Call configure again (simulating a second configure call after topics are defined)
-      Deimos.configure do |config|
+      described_class.configure do |config|
         config.schema.backend = :avro_validation
       end
 
