@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('karafka-testing', '~> 2.0')
   spec.add_development_dependency('pg', '~> 1.1')
   spec.add_development_dependency('proto_turf')
+  spec.add_development_dependency('pry', '~> 0.14.1')
   spec.add_development_dependency('rails', '~> 8.0')
   spec.add_development_dependency('rake', '~> 13')
   spec.add_development_dependency('rspec', '~> 3')

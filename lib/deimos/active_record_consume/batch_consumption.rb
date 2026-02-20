@@ -25,7 +25,15 @@ module Deimos
       # they are split
       # @return [void]
       def consume_batch
-        deimos_messages = messages.map { |p| Deimos::Message.new(p.payload, key: p.key) }
+        filtered = messages.select { |p| process_message?(p.payload) }
+        skipped_count = messages.size - filtered.size
+        if skipped_count.positive?
+          Deimos::Logging.log_debug(
+            message: 'Skipping processing of messages in batch',
+            skipped_count: skipped_count
+          )
+        end
+        deimos_messages = filtered.map { |p| Deimos::Message.new(p.payload, key: p.key) }
 
         tag = topic.name
         Deimos.config.tracer.active_span.set_tag('topic', tag)
@@ -37,6 +45,8 @@ module Deimos
             uncompacted_update(deimos_messages)
           end
         end
+
+        post_process_batch(deimos_messages)
       end
 
     protected
@@ -92,6 +102,14 @@ module Deimos
       # @return [Boolean]
       def should_consume?(_record, _associations=nil)
         true
+      end
+
+      # Perform any post-processing after a batch has been consumed.
+      # Called once per batch with the list of Deimos::Message that were processed (after filtering and compaction).
+      # @param messages [Array<Deimos::Message>] The batch of messages that were processed
+      # @return [void]
+      def post_process_batch(_messages)
+        nil
       end
 
     private
