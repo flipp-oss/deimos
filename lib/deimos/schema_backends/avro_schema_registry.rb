@@ -27,7 +27,6 @@ module Deimos
           password: @registry_info&.password || Deimos.config.schema.password,
           schema_type: SchemaRegistry::Schema::Avro.new(schema_store: @schema_store)
         )
-        @schema_registry
       end
     end
   end
