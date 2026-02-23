@@ -6,8 +6,12 @@ require 'deimos/metrics/minimal_datadog_listener'
 
 module Deimos
   module Metrics
-    # A Metrics wrapper class for Datadog, with only minimal metrics being sent. This will not
-    # send any rdkafka metrics, and only the following:
+    # A Metrics wrapper class for Datadog, with only minimal metrics being sent. This will only
+    # send the following rdkafka metrics:
+    # * consumer.lags
+    # * consumer.lags_delta
+    #
+    # and only the following other metrics:
     # * consumer_group
     # * error_occurred
     # * consumer.messages
@@ -28,7 +32,10 @@ module Deimos
           if config[:karafka_distribution_mode]
             karafka_config.distribution_mode = config[:karafka_distribution_mode]
           end
-          karafka_config.rd_kafka_metrics = []
+          karafka_config.rd_kafka_metrics = [
+            RdKafkaMetric.new(:gauge, :topics, 'consumer.lags', 'consumer_lag_stored'),
+            RdKafkaMetric.new(:gauge, :topics, 'consumer.lags_delta', 'consumer_lag_stored_d')
+          ]
         end
         Karafka.monitor.subscribe(karafka_listener)
       end

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Fix/feature: Send `consumer.lags` and `consumer.lags_delta` metrics via MinimalDatadogListener.
+
 # 2.3.2 - 2026-02-20
 
 - Feature: Add overridable process_message? for batch consumption.
