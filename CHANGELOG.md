@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `registry_url`, `registry_user` and `registry_password` per-topic configuration.
 - Added `have_sent_including` RSpec matcher to allow for Protobuf messages that use default values to be checked.
 
+# 2.3.3 - 2026-02-21
+
+- Fix/feature: Send `consumer.lags` and `consumer.lags_delta` metrics via MinimalDatadogListener.
+
+# 2.3.2 - 2026-02-20
+
+- Feature: Add overridable process_message? for batch consumption.
+- Feature: Add overridable post_process_batch for batch consumption.
+
+# 2.3.1 - 2026-01-22
+
+- Feature: Allow strings to be used in the `record_class` declaration.
+
 # 2.3.0 - 2026-01-13
 
 - Feature: Support broker setting per topic in producer configs.

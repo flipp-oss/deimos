@@ -403,6 +403,8 @@ class MyProducer < Deimos::ActiveRecordProducer
   # using the default functionality and don't need to override it) 
   # by setting `refetch` to false. This will avoid extra database fetches.
   record_class Widget, refetch: false
+  
+  # You can use a string here instead to avoid eager loading: record_class 'Widget'
 
   # Optionally override this if you want the message to be 
   # sent even if fields that aren't in the schema are changed.
@@ -490,6 +492,7 @@ A sample consumer would look as follows:
 ```ruby
 class MyConsumer < Deimos::ActiveRecordConsumer
   record_class Widget
+  # or use a string: record_class 'Widget'
 
   # Optional override of the way to fetch records based on payload and
   # key. Default is to use the key to search the primary key of the table.
@@ -567,6 +570,7 @@ A sample batch consumer would look as follows:
 ```ruby
 class MyConsumer < Deimos::ActiveRecordConsumer
   record_class Widget
+  # or use a string: record_class 'Widget'
 
   # Controls whether the batch is compacted before consuming.
   # If true, only the last message for each unique key in a batch will be

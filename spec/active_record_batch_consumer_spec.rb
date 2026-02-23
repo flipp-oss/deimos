@@ -57,6 +57,12 @@ module ActiveRecordBatchConsumerTest
       Class.new(described_class) do
         record_class Widget
         compacted false
+
+        def process_message?(payload)
+          return true if payload.nil?
+
+          payload['test_id'] != 'skipme'
+        end
       end
     end
 
@@ -99,6 +105,27 @@ module ActiveRecordBatchConsumerTest
                 have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start,
                                 created_at: start),
                 have_attributes(id: 2, test_id: 'def', some_int: 4, updated_at: start,
+                                created_at: start)
+              )
+          end
+
+          it 'should not create records for messages that return false from process_message?' do
+            publish_batch(
+              [
+                { key: 1,
+                  payload: { test_id: 'abc', some_int: 3 } },
+                { key: 2,
+                  payload: { test_id: 'skipme', some_int: 4 } },
+                { key: 3,
+                  payload: { test_id: 'ghi', some_int: 5 } }
+              ]
+            )
+
+            expect(all_widgets).
+              to contain_exactly(
+                have_attributes(id: 1, test_id: 'abc', some_int: 3, updated_at: start,
+                                created_at: start),
+                have_attributes(id: 3, test_id: 'ghi', some_int: 5, updated_at: start,
                                 created_at: start)
               )
           end
@@ -803,6 +830,64 @@ module ActiveRecordBatchConsumerTest
         end
       end
 
+    end
+
+    describe 'post_process_batch' do
+      before(:each) do
+        register_consumer(consumer_class,
+                          'MySchema',
+                          key_config: { plain: true })
+        MyBatchConsumer.last_post_process_batch = nil
+      end
+
+      let(:consumer_class) do
+        Class.new(described_class) do
+          class << self
+            attr_accessor :last_post_process_batch
+          end
+
+          record_class Widget
+          compacted false
+
+          def post_process_batch(messages)
+            self.class.last_post_process_batch = messages
+          end
+
+          def process_message?(payload)
+            payload['test_id'] != 'skipme'
+          end
+        end
+      end
+
+      it 'is called after the batch is processed with the processed messages' do
+        publish_batch(
+          [
+            { key: 1,
+              payload: { test_id: 'abc', some_int: 3 } },
+            { key: 2,
+              payload: { test_id: 'def', some_int: 4 } }
+          ]
+        )
+        expect(MyBatchConsumer.last_post_process_batch.map(&:payload).map do |p|
+ p[:test_id]
+        end).to contain_exactly('abc', 'def')
+      end
+
+      it 'is called with filtered messages when process_message? excludes some' do
+        publish_batch(
+          [
+            { key: 1,
+              payload: { test_id: 'abc', some_int: 3 } },
+            { key: 2,
+              payload: { test_id: 'skipme', some_int: 4 } },
+            { key: 3,
+              payload: { test_id: 'ghi', some_int: 5 } }
+          ]
+        )
+
+        expect(MyBatchConsumer.last_post_process_batch.size).to eq(2)
+        expect(MyBatchConsumer.last_post_process_batch.map(&:key).map(&:to_i)).to contain_exactly(1, 3)
+      end
     end
 
   end

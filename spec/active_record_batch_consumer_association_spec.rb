@@ -70,7 +70,7 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     end
 
     before(:each) do
-      ActiveRecord::Base.connection.truncate_tables(%i(widgets details locales))
+      ActiveRecord::Base.connection.truncate_tables(:widgets, :details, :locales)
       Widget.create!(test_id: 'bad_id', some_int: 100) # should not show up
     end
 
