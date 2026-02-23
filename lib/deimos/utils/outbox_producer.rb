@@ -205,7 +205,7 @@ module Deimos
         batch_size = batch.size
         current_index = 0
 
-        batch[current_index..-1].in_groups_of(batch_size, false).each do |group|
+        batch[current_index..].in_groups_of(batch_size, false).each do |group|
           @logger.debug("Publishing #{group.size} messages to #{@current_topic}")
           Deimos.producer_for(@current_topic).produce_many_sync(group)
           current_index += group.size

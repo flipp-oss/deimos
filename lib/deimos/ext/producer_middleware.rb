@@ -83,7 +83,7 @@ module Deimos
                                     nil
                                   else
                                     encoder.encode(message.payload,
-                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config.name}-value")
+                                                   topic: "#{Deimos.config.producers.topic_prefix}#{config.name}")
                                   end
       end
 
@@ -96,7 +96,7 @@ module Deimos
         if config.deserializers[:key].respond_to?(:encode_key)
           config.deserializers[:key].encode_key(key)
         elsif key
-          config.deserializers[:payload].encode(key)
+          config.deserializers[:payload].encode(key, is_key: true)
         else
           key
         end

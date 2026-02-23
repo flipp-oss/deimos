@@ -5,6 +5,10 @@ module Deimos
     # Mock implementation of a schema backend that does no encoding or validation.
     class Mock < Base
 
+      def self.mock_backend
+        :mock
+      end
+
       # @override
       def generate_key_schema(field_name)
       end
@@ -15,7 +19,7 @@ module Deimos
       end
 
       # @override
-      def encode_payload(payload, schema:, topic: nil)
+      def encode_payload(payload, schema:, subject: nil)
         payload.is_a?(String) ? 'payload-encoded' : payload.map { |k, v| [k, "encoded-#{v}"] }.to_json
       end
 

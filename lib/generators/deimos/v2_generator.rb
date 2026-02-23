@@ -119,7 +119,7 @@ module Deimos
       end
 
       def consumer_configs
-        deimos_config.consumer_objects.group_by(&:group_id).map { |group_id, consumers|
+        deimos_config.consumer_objects.group_by(&:group_id).to_h do |group_id, consumers|
           [group_id, consumers.map do |consumer|
             kafka_configs = {}
             kafka_configs['auto.offset.reset'] = consumer.start_from_beginning ? 'earliest' : 'latest'
@@ -159,7 +159,7 @@ module Deimos
             configs[:each_message] = true unless consumer.delivery.to_s == 'inline_batch'
             configs
           end]
-        }.to_h
+        end
       end
 
       def producer_configs

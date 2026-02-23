@@ -117,6 +117,9 @@ The following are additional settings that can be added to the `topic` block in 
 | namespace          | nil     | Namespace of the schema to use when finding it locally. Leave blank for protobuf.                                                                                                               |
 | key_config         | nil     | Configuration hash for message keys. See [Kafka Message Keys](../README.md#kafka-message-keys).                                                                                                 |
 | use_schema_classes | nil     | Set to true or false to enable or disable using the producers schema classes. See [Generated Schema Classes](../README.md#generated-schema-classes).                                            |
+| registry_url      | nil     | URL of the schema registry to use for this topic. Overrides the global `schema.registry_url` setting.                                                                                             | 
+| registry_user     | nil     | Basic auth user for the schema registry to use for this topic. Overrides the global `schema.user` setting.                                                                                         |
+| registry_password | nil     | Basic auth password for the schema registry to use for this topic. Overrides the global `schema.password` setting.                                                                                     |
 
 ### Consumer Settings
 

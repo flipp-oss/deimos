@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'base'
-require 'avro'
-require 'avro_turf'
-require 'avro_turf/mutable_schema_store'
+require 'schema_registry_client'
 require_relative 'avro_schema_coercer'
 
 module Deimos
@@ -13,9 +11,9 @@ module Deimos
       attr_accessor :schema_store
 
       # @override
-      def initialize(schema:, namespace:)
+      def initialize(schema:, namespace:, registry_info: nil)
         super
-        @schema_store = AvroTurf::MutableSchemaStore.new(path: Deimos.config.schema.path)
+        @schema_store = SchemaRegistry::AvroSchemaStore.new(path: Deimos.config.schema.path)
       end
 
       def supports_key_schemas?
@@ -31,12 +29,12 @@ module Deimos
       def encode_key(key_id, key, topic: nil)
         begin
           @key_schema ||= @schema_store.find("#{@schema}_key")
-        rescue AvroTurf::SchemaNotFoundError
+        rescue SchemaRegistry::SchemaNotFoundError
           @key_schema = generate_key_schema(key_id)
         end
         field_name = _field_name_from_schema(@key_schema)
         payload = key.is_a?(Hash) ? key : { field_name => key }
-        encode(payload, schema: @key_schema['name'], topic: topic)
+        encode(payload, schema: @key_schema['name'], topic: topic, is_key: true)
       end
 
       # @override
@@ -98,7 +96,7 @@ module Deimos
 
       # @override
       def self.mock_backend
-        :avro_local
+        :avro_validation
       end
 
       # @override
@@ -184,7 +182,7 @@ module Deimos
       # @return [Avro::Schema]
       def avro_schema(schema=nil)
         schema ||= @schema
-        @schema_store.find(schema, @namespace)
+        @schema_store.find("#{@namespace}.#{schema}")
       end
 
       # @param value_schema [Hash]

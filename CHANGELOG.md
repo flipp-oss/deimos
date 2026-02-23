@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
+- Major change: Switch from using `avro_turf` and `proto_turf` to use `schema_registry_client`, which handles both Avro and Protobuf.
+- Add `registry_url`, `registry_user` and `registry_password` per-topic configuration.
+- Added `have_sent_including` RSpec matcher to allow for Protobuf messages that use default values to be checked.
+
 # 2.3.5 - 2026-02-23
 
 - Fix: Non-batch consumers should now support string table names.

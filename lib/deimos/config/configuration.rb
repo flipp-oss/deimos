@@ -11,6 +11,10 @@ module Deimos
 
   # :nodoc:
   after_configure do
+    Deimos.karafka_configs.each do |config|
+      config.deserializers[:payload].try(:reset_backend)
+      config.deserializers[:key].try(:reset_backend)
+    end
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
@@ -43,7 +47,7 @@ module Deimos
               'Please provide a directory.'
       end
 
-      Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].sort.
+      Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].
         each { |f| require f }
     rescue LoadError
       raise 'Cannot load schema classes. Please regenerate classes with' \
@@ -141,7 +145,7 @@ module Deimos
       # directly, a good pattern is to set to async in your user-facing app, and
       # sync in your consumers or delayed workers.
       # @return [Symbol]
-      setting :backend, :kafka_async
+      setting :backend, ENV.fetch('DEIMOS_RAKE_TASK', nil) ? :kafka : :kafka_async
 
       # If set to true, KafkaSource will automatically truncate fields to match the column
       # length in the database.
@@ -190,6 +194,9 @@ module Deimos
       # would replace a prefixed with the given key with the module name SchemaClasses.
       # @return [Hash]
       setting :schema_namespace_map, {}
+
+      # The base directory for generated protobuf key schemas.
+      setting :proto_schema_key_path, 'protos'
     end
 
     # The configured metrics provider.

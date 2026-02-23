@@ -91,12 +91,11 @@ Currently we have the following possible schema backends:
 * Avro Schema Registry (use the Confluent Schema Registry)
 * Avro Validation (validate using an Avro schema but leave decoded - this is useful
   for unit testing and development)
+* Protobuf Local (use pure Protobuf)
 * Protobuf Schema Registry (use Protobuf with the Confluent Schema Registry)
 * Mock (no actual encoding/decoding).
 
-Note that to use Protobuf, you must include the [proto_turf](https://github.com/flipp-oss/proto_turf) gem in your Gemfile.
-
-Other possible schemas could [JSONSchema](https://json-schema.org/), etc. Feel free to
+Other possible schemas could include [JSONSchema](https://json-schema.org/), etc. Feel free to
 contribute!
 
 To create a new schema backend, please see the existing examples [here](lib/deimos/schema_backends).
@@ -282,8 +281,14 @@ MyProducer.publish({
                    })
 ```
 
+### Protobuf and Key Schemas
+
 > [!IMPORTANT]
-> Protobuf should *not* be used as a key schema, since the binary encoding is [unstable](https://protobuf.dev/programming-guides/encoding/#implications) and may break partitioning. Deimos will automatically convert key fields to plain values and key hashes to JSON.
+> Protobuf should *not* be used as a key schema, since the binary encoding is [unstable](https://protobuf.dev/programming-guides/encoding/#implications) and may break partitioning. Deimos will automatically convert keys to sorted JSON, and will use JSON Schema in the schema registry.
+
+To enable integration with [buf](https://buf.build/), Deimos provides a Rake task that will auto-generate `.proto` files. This task can be run in CI before running `buf push`. This way, downstream systems that want to use the generated key schemas can do so using their own tech stack.
+
+    bundle exec rake deimos:generate_key_protos
 
 ## Instrumentation
 
@@ -1016,7 +1021,13 @@ end
 # test can have the same settings every time it is run
 after(:each) do
   Deimos.config.reset!
-  Deimos.config.schema.backend = :avro_validation
+  # set specific settings here
+  Deimos.config.schema.path = 'my/schema/path'
+end
+
+around(:each) do |ex|
+  # replace e.g. avro_schema_registry with avro_validation, proto_schema_registry with proto_local
+  Deimos::TestHelpers.with_mock_backends { ex.run }
 end
 ```
 
@@ -1066,6 +1077,18 @@ end
 # A matcher which allows you to test that a message was sent on the given
 # topic, without having to know which class produced it.                         
 expect(topic_name).to have_sent(payload, key=nil, partition_key=nil, headers=nil)
+
+# You can use regular hash matching:
+expect(topic_name).to have_sent({'some_key' => 'some-value', 'message_id' => anything})
+
+# For Protobufs, default values are stripped from the hash so you need to use actual Protobuf
+# objects:
+expect(topic.name).to have_sent(MyMessage.new(some_key: 'some-value', message_id: 'my-message-id'))
+
+# However, Protobufs don't allow RSpec-style matching, so you can at least do a 
+# simple `include`-style matcher:
+
+expect(topic.name).to have_sent_including(MyMessage.new(some_key: 'some-value'))
 
 # Inspect sent messages
 message = Deimos::TestHelpers.sent_messages[0]
