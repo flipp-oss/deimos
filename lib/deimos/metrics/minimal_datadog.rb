@@ -33,8 +33,12 @@ module Deimos
             karafka_config.distribution_mode = config[:karafka_distribution_mode]
           end
           karafka_config.rd_kafka_metrics = [
-            RdKafkaMetric.new(:gauge, :topics, 'consumer.lags', 'consumer_lag_stored'),
-            RdKafkaMetric.new(:gauge, :topics, 'consumer.lags_delta', 'consumer_lag_stored_d')
+            Karafka::Instrumentation::Vendors::Datadog::MetricsListener::RdKafkaMetric.new(
+              :gauge, :topics, 'consumer.lags', 'consumer_lag_stored'
+            ),
+            Karafka::Instrumentation::Vendors::Datadog::MetricsListener::RdKafkaMetric.new(
+              :gauge, :topics, 'consumer.lags_delta', 'consumer_lag_stored_d'
+            )
           ]
         end
         Karafka.monitor.subscribe(karafka_listener)
