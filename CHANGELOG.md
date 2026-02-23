@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-# 2.3.3 - 2026-02-21
+# 2.3.4 - 2026-02-21
 
 - Fix/feature: Send `consumer.lags` and `consumer.lags_delta` metrics via MinimalDatadogListener.
 
