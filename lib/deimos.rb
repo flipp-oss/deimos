@@ -203,7 +203,12 @@ module Deimos
             topic = event[:messages].first[:topic]
             config = Deimos.karafka_config_for(topic: topic)
             message = Deimos::Logging.messages_log_text(config&.payload_log, event[:messages])
-            Karafka.logger.error("Error producing messages: #{event[:error].message} #{message.to_json}")
+            json = begin
+                     message.to_json
+            rescue StandardError
+                     message.to_s
+            end
+            Karafka.logger.error("Error producing messages: #{event[:error].message} #{json}")
           end
         end
       end
