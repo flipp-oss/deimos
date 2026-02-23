@@ -255,6 +255,29 @@ module ActiveRecordConsumerTest
             expect(Widget.find_by_test_id('id2').some_int).to eq(4)
           end
 
+          it 'should handle record_class as a string' do
+            consumer_class = Class.new(Deimos::ActiveRecordConsumer) do
+              record_class 'ActiveRecordConsumerTest::Widget'
+            end
+            stub_const('MyStringRecordClassConsumer', consumer_class)
+            Karafka::App.routes.redraw do
+              topic 'my-topic-string' do
+                consumer MyStringRecordClassConsumer
+                schema 'MySchema'
+                namespace 'com.my-namespace'
+                key_config plain: true
+              end
+            end
+
+            expect(Widget.count).to eq(0)
+            test_consume_message(MyStringRecordClassConsumer, {
+                                   test_id: 'abc',
+                                   some_int: 3
+                                 }, call_original: true, key: 5)
+            expect(Widget.count).to eq(1)
+            expect(Widget.last.test_id).to eq('abc')
+          end
+
           it 'should not create record of process_message returns false' do
             allow_any_instance_of(MyConsumer).to receive(:process_message?).and_return(false)
             expect(Widget.count).to eq(0)
