@@ -42,6 +42,7 @@ module Deimos
         end
 
         klass = self.class.config[:record_class]
+        klass = klass.constantize if klass.is_a?(String)
         payload = message.payload
         if payload.is_a?(Hash) || payload.nil?
           payload = payload.to_h.with_indifferent_access
