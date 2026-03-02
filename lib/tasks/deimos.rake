@@ -2,13 +2,11 @@
 
 require 'generators/deimos/schema_class_generator'
 require 'optparse'
+require 'deimos/schema_backends/proto_schema_registry'
 
 namespace :deimos do
   desc 'Starts Deimos in the rails environment'
   task start: :environment do
-    Deimos.configure do |config|
-      config.producers.backend = :kafka if config.producers.backend == :kafka_async
-    end
     ENV['DEIMOS_RAKE_TASK'] = 'true'
     ENV['DEIMOS_TASK_NAME'] = 'consumer'
     STDOUT.sync = true
@@ -40,4 +38,17 @@ namespace :deimos do
     Deimos::Generators::SchemaClassGenerator.start
   end
 
+  desc 'Output Protobuf key schemas'
+  task generate_key_protos: :environment do
+    puts "Generating Protobuf key schemas"
+    Deimos.karafka_configs.each do |config|
+      next if config.try(:producer_class).blank? ||
+              !Deimos.schema_backend_for(config.name).is_a?(Deimos::SchemaBackends::ProtoSchemaRegistry) ||
+              config.deserializers[:key].try(:key_field).blank?
+
+      puts "Writing key proto for #{config.name}"
+      backend = Deimos.schema_backend_for(config.name)
+      backend.write_key_proto(Deimos.config.schema.proto_schema_key_path, config.deserializers[:key].key_field)
+    end
+  end
 end

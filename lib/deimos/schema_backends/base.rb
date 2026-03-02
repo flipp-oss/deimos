@@ -24,6 +24,24 @@ module Deimos
     end
   end
 
+  class RegistryInfo
+    # @return [String]
+    attr_accessor :url
+    # @return [String]
+    attr_accessor :user
+    # @return [String]
+    attr_accessor :password
+
+    # @param url [String]
+    # @param user [String,nil]
+    # @param password [String,nil]
+    def initialize(url, user, password)
+      @url = url
+      @user = user
+      @password = password
+    end
+  end
+
   module SchemaBackends
     # Base class for encoding / decoding.
     class Base
@@ -33,12 +51,20 @@ module Deimos
       attr_accessor :namespace
       # @return [String]
       attr_accessor :key_schema
+      # @return [RegistryInfo]
+      attr_accessor :registry_info
 
       # @param schema [String,Symbol]
       # @param namespace [String]
-      def initialize(schema:, namespace: nil)
+      def initialize(schema:, namespace: nil, registry_info: nil)
         @schema = schema
         @namespace = namespace
+        @registry_info = registry_info
+      end
+
+      # @return [String]
+      def inspect
+        "Type #{self.class.name.demodulize} Schema: #{@namespace}.#{@schema} Key schema: #{@key_schema}"
       end
 
       # @return [Boolean]
@@ -56,9 +82,11 @@ module Deimos
       # @param schema [String,Symbol]
       # @param topic [String]
       # @return [String]
-      def encode(payload, schema: nil, topic: nil)
+      def encode(payload, schema: nil, topic: nil, is_key: false)
         validate(payload, schema: schema || @schema)
-        encode_payload(payload, schema: schema || @schema, topic: topic)
+        subject = topic.presence || schema
+        subject = is_key ? "#{subject}-key" : "#{subject}-value"
+        encode_payload(payload, schema: schema || @schema, subject: subject)
       end
 
       # Decode a payload with a schema. Public method.
@@ -114,9 +142,9 @@ module Deimos
       # Encode a payload. To be defined by subclass.
       # @param payload [Hash]
       # @param schema [String,Symbol]
-      # @param topic [String]
+      # @param subject [String]
       # @return [String]
-      def encode_payload(_payload, schema:, topic: nil)
+      def encode_payload(_payload, schema:, subject: nil)
         raise MissingImplementationError
       end
 

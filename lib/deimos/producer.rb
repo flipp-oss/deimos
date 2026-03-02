@@ -119,10 +119,10 @@ module Deimos
             topic: topic,
             partition_key: self.partition_key(p)
           }
-          if m.dig(:payload, :key).present? && m.dig(:payload, :message).present?
-            m[:key] = m[:payload][:key]
+          if payload.is_a?(Hash) && payload.key?(:key) && payload.key?(:message)
+            m[:key] = payload[:key]
             m[:key] = m[:key].to_h if m[:key].nil? || m[:key].is_a?(SchemaClass::Record)
-            m[:payload] = m[:payload][:message]
+            m[:payload] = payload[:message]
             m[:payload] = m[:payload].to_h if m[:payload].nil? ||
                                               m[:payload].is_a?(SchemaClass::Record)
           end

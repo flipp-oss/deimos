@@ -5,6 +5,10 @@ module Deimos
     # Schema backend that passes through as a basic string.
     class Plain < Base
 
+      def self.mock_backend
+        :plain
+      end
+
       # @override
       def generate_key_schema(field_name)
       end
@@ -15,7 +19,7 @@ module Deimos
       end
 
       # @override
-      def encode_payload(payload, schema:, topic: nil)
+      def encode_payload(payload, schema:, subject: nil)
         payload.to_s
       end
 

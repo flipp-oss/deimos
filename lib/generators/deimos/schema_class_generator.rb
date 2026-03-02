@@ -13,7 +13,7 @@ module Deimos
       # @return [Array<Symbol>]
       SPECIAL_TYPES = %i(record enum).freeze
       # @return [String]
-      INITIALIZE_WHITESPACE = "\n#{' ' * 19}"
+      INITIALIZE_WHITESPACE = "\n#{' ' * 19}".freeze
       # @return [Array<String>]
       IGNORE_DEFAULTS = %w(message_id timestamp).freeze
       # @return [String]
@@ -192,7 +192,7 @@ module Deimos
 
       def generate_from_schema_files(found_schemas)
         path = Deimos.config.schema.path || Deimos.config.schema.paths[:avro].first
-        schema_store = AvroTurf::MutableSchemaStore.new(path: path)
+        schema_store = SchemaRegistry::AvroSchemaStore.new(path: path)
         schema_store.load_schemas!
         schema_store.schemas.values.sort_by { |s| "#{s.namespace}#{s.name}" }.each do |schema|
           name = "#{schema.namespace}.#{schema.name}"
@@ -265,7 +265,7 @@ module Deimos
         end
 
         result = "def initialize(_from_message: false, #{arguments.first}"
-        arguments[1..-1].each_with_index do |arg, _i|
+        arguments[1..].each_with_index do |arg, _i|
           result += ",#{INITIALIZE_WHITESPACE}#{arg}"
         end
         "#{result})"

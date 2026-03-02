@@ -21,4 +21,5 @@ message SampleMessage {
   }
   NestedMessage non_union_nested = 8;
   map<string, string> str_map = 9;
+  string message_id = 10;
 }

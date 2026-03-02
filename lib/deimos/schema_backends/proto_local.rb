@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'proto_base'
-require 'proto_turf'
+require 'schema_registry_client'
 
 module Deimos
   module SchemaBackends
@@ -14,14 +14,14 @@ module Deimos
       end
 
       # @override
-      def encode_payload(payload, schema: nil, topic: nil)
+      def encode_payload(payload, schema: nil, subject: nil)
         msg = payload.is_a?(Hash) ? proto_schema.msgclass.new(**payload) : payload
         proto_schema.msgclass.encode(msg)
       end
 
-      # @return [ProtoTurf]
-      def self.proto_turf
-        @proto_turf ||= ProtoTurf.new(
+      # @return [SchemaRegistry::Client]
+      def self.schema_registry
+        @schema_registry ||= SchemaRegistry::Client.new(
           registry_url: Deimos.config.schema.registry_url,
           logger: Karafka.logger
         )

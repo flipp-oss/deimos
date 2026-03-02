@@ -16,7 +16,7 @@ require 'handlers/my_consumer'
 require 'rspec/rails'
 require 'rspec/snapshot'
 require 'karafka/testing/rspec/helpers'
-Dir['./spec/schemas/**/*.rb'].sort.each { |f| require f }
+Dir['./spec/schemas/**/*.rb'].each { |f| require f }
 
 # Constants used for consumer specs
 SCHEMA_CLASS_SETTINGS = { off: false, on: true }.freeze

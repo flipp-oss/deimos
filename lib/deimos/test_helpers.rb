@@ -50,6 +50,18 @@ module Deimos
         warn("unit_test! is deprecated and can be replaced by setting Deimos's schema backend " \
              'to `:avro_validation`. All other test behavior is provided by Karafka.')
       end
+
+      def with_mock_backends
+        Deimos.mock_backends = true
+        Deimos.karafka_configs.each do |config|
+          config.deserializers[:payload].try(:reset_backend)
+          config.deserializers[:key].try(:reset_backend)
+        end
+        yield
+      ensure
+        Deimos.mock_backends = false
+      end
+
     end
 
     # get the difference of 2 hashes.
@@ -103,7 +115,7 @@ module Deimos
       str + "\nAll Messages received:\n#{message_string}"
     end
 
-    RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil|
+    RSpec::Matchers.define :have_sent do |msg, key=nil, partition_key=nil, headers=nil, including=false|
       message = Deimos::TestHelpers.normalize_message(msg)
       match do |topic|
         message_key = Deimos::TestHelpers.normalize_message(key)
@@ -115,8 +127,12 @@ module Deimos
           if m.respond_to?(:[]) && m[:payload].respond_to?(:[]) && m[:payload][:payload_key].nil?
             m[:payload].delete(:payload_key)
           end
-          hash_matcher.send(:match, message, m[:payload]) &&
-            topic == m[:topic] &&
+          if including
+            next false unless RSpec::Matchers::BuiltIn::Include.new(message).matches?(m[:payload])
+          else
+            next false unless hash_matcher.send(:match, message, m[:payload])
+          end
+          topic == m[:topic] &&
             (key.present? ? message_key == m[:key] : true) &&
             (partition_key.present? ? partition_key == m[:partition_key] : true) &&
             if headers.present?
@@ -129,6 +145,19 @@ module Deimos
         end
       end
 
+      failure_message do |topic|
+        _frk_failure_message(topic, message, key, partition_key)
+      end
+      failure_message_when_negated do |topic|
+        _frk_failure_message(topic, message, key, partition_key, true)
+      end
+    end
+
+    RSpec::Matchers.define :have_sent_including do |msg, key=nil, partition_key=nil, headers=nil|
+      message = Deimos::TestHelpers.normalize_message(msg)
+      match do |topic|
+        expect(topic).to have_sent(msg, key, partition_key, headers, true)
+      end
       failure_message do |topic|
         _frk_failure_message(topic, message, key, partition_key)
       end

@@ -76,6 +76,58 @@ RSpec.describe Karafka::Routing::Topic do
       expect('MyTopic').to have_sent({ test_id: 'id1', some_int: 5 }, { test_id: 'id3' })
     end
 
+    it 'should work with custom registry configuration' do
+      KarafkaApp.routes.draw do
+        topic 'MyTopic' do
+          producer_class MyProducer
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config(none: true)
+          registry_url 'http://custom-registry:8081'
+          registry_user 'custom-user'
+          registry_password 'custom-password'
+        end
+      end
+
+      # Verify the topic configuration has the registry settings
+      topic_config = Deimos.karafka_config_for(topic: 'MyTopic')
+      expect(topic_config.registry_url).to eq('http://custom-registry:8081')
+      expect(topic_config.registry_user).to eq('custom-user')
+      expect(topic_config.registry_password).to eq('custom-password')
+
+      # Verify schema_backend_for uses the custom registry settings
+      backend = Deimos.schema_backend_for('MyTopic')
+      expect(backend.registry_info).not_to be_nil
+      expect(backend.registry_info.url).to eq('http://custom-registry:8081')
+      expect(backend.registry_info.user).to eq('custom-user')
+      expect(backend.registry_info.password).to eq('custom-password')
+    end
+
+    it 'should work with partial registry configuration' do
+      KarafkaApp.routes.draw do
+        topic 'MyTopic' do
+          producer_class MyProducer
+          schema 'MySchema'
+          namespace 'com.my-namespace'
+          key_config(none: true)
+          registry_url 'http://custom-registry:8081'
+          # No user or password specified
+        end
+      end
+
+      topic_config = Deimos.karafka_config_for(topic: 'MyTopic')
+      expect(topic_config.registry_url).to eq('http://custom-registry:8081')
+      expect(topic_config.registry_user).to be_nil
+      expect(topic_config.registry_password).to be_nil
+
+      # Verify schema_backend_for creates registry_info with nil user/password
+      backend = Deimos.schema_backend_for('MyTopic')
+      expect(backend.registry_info).not_to be_nil
+      expect(backend.registry_info.url).to eq('http://custom-registry:8081')
+      expect(backend.registry_info.user).to be_nil
+      expect(backend.registry_info.password).to be_nil
+    end
+
   end
 
   it 'should be able to pick up a consumer' do

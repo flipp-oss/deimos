@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'base'
-require 'proto_turf'
 
 module Deimos
   module SchemaBackends
@@ -24,26 +23,51 @@ module Deimos
         float: :float,
         message: :record
       }.freeze
+
       def proto_schema(schema=@schema)
-        Google::Protobuf::DescriptorPool.generated_pool.lookup(schema)
+        proto = Google::Protobuf::DescriptorPool.generated_pool.lookup(schema)
+        if proto.nil?
+          raise "Could not find Protobuf schema '#{schema}'."
+        end
+
+        proto
       end
 
       # @override
       def encode_key(key_id, key, topic: nil)
-        if key.is_a?(Hash)
-          key_id ? key.with_indifferent_access[key_id].to_s : key.sort.to_h.to_json
+        if key.respond_to?(:to_h)
+          hash = if key_id
+                   key_id.to_s.split('.')[...-1].each do |k|
+                     key = key.with_indifferent_access[k]
+                   end
+                   key.to_h.with_indifferent_access.slice(key_id.split('.').last)
+                 else
+                   key.to_h.sort.to_h
+                 end
+          self.encode_proto_key(hash, topic: topic, field: key_id)
+        elsif key_id
+          hash = { key_id.to_s.split('.').last => key }
+          self.encode_proto_key(hash, topic: topic, field: key_id)
         else
           key.to_s
         end
       end
 
+      # @param hash [Hash]
+      # @return [String]
+      def encode_proto_key(hash, topic: nil, field: nil)
+        hash.sort.to_h.to_json
+      end
+
+      def decode_proto_key(payload)
+        JSON.parse(payload)
+      rescue StandardError
+        payload
+      end
+
       # @override
       def decode_key(payload, key_id)
-        val = begin
-                JSON.parse(payload)
-        rescue StandardError
-                payload
-        end
+        val = decode_proto_key(payload)
         key_id ? val[key_id.to_s] : val
       end
 
@@ -85,8 +109,8 @@ module Deimos
         :mock
       end
 
-      def generate_key_schema(_field_name)
-        raise 'Protobuf cannot generate key schemas! Please use field_config :plain'
+      def supports_key_schemas?
+        false
       end
 
     end
