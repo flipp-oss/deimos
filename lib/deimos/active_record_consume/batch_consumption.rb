@@ -25,7 +25,7 @@ module Deimos
       # they are split
       # @return [void]
       def consume_batch
-        filtered = messages.select { |p| process_message?(p.payload) }
+        filtered = messages.select { |message| process_message?(message) }
         skipped_count = messages.size - filtered.size
         if skipped_count.positive?
           Deimos::Logging.log_debug(

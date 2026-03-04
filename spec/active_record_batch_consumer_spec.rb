@@ -58,10 +58,10 @@ module ActiveRecordBatchConsumerTest
         record_class Widget
         compacted false
 
-        def process_message?(payload)
-          return true if payload.nil?
+        def process_message?(message)
+          return true if message.payload.nil?
 
-          payload['test_id'] != 'skipme'
+          message.payload['test_id'] != 'skipme'
         end
       end
     end
@@ -853,8 +853,8 @@ module ActiveRecordBatchConsumerTest
             self.class.last_post_process_batch = messages
           end
 
-          def process_message?(payload)
-            payload['test_id'] != 'skipme'
+          def process_message?(message)
+            message.payload['test_id'] != 'skipme'
           end
         end
       end
