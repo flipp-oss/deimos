@@ -138,6 +138,7 @@ RSpec.describe Karafka::Routing::Topic do
         schema 'MySchema'
         namespace 'com.my-namespace'
         key_config({ field: :test_id })
+        each_message true
       end
     end
 

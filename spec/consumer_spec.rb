@@ -33,6 +33,7 @@ module ConsumerTest
           namespace 'com.my-namespace'
           key_config field: 'test_id'
           consumer consumer_class
+          each_message true
           reraise_errors true
           use_schema_classes route_usc
           reraise_errors route_rre
@@ -91,6 +92,7 @@ module ConsumerTest
                 namespace 'com.my-namespace'
                 key_config plain: true
                 consumer MyConsumer
+                each_message true
                 reraise_errors true
                 use_schema_classes use_schema_classes
                 reraise_errors true
@@ -177,6 +179,7 @@ module ConsumerTest
               namespace 'com.my-namespace'
               key_config field: 'test_id'
               consumer consumer_class
+              each_message true
               reraise_errors true
             end
           end
@@ -217,6 +220,7 @@ module ConsumerTest
               namespace 'com.my-namespace'
               key_config field: 'test_id'
               consumer ConsumerTest::MyConsumer
+              each_message true
               reraise_errors true
               use_schema_classes true
               reraise_errors true

@@ -340,3 +340,8 @@ RSpec/SpecFilePathFormat:
 Security/YAMLLoad:
   Exclude:
     - 'lib/deimos.rb'
+
+Style/OneClassPerFile:
+  Exclude:
+    - karafka.rb
+    - spec/spec_helper.rb

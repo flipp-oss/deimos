@@ -72,4 +72,56 @@ RSpec.describe Deimos::TestHelpers do
     end
   end
 
+  describe 'consumer config validation' do
+    let(:consumer_class) do
+      Class.new(Deimos::Consumer) do
+        def consume_message(message)
+          message.payload
+        end
+      end
+    end
+
+    context 'when calling test_consume_message on a batch topic' do
+      before(:each) do
+        stub_const('MyBatchConsumer', consumer_class)
+        Karafka::App.routes.redraw do
+          topic 'my-batch-topic' do
+            consumer MyBatchConsumer
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config field: 'test_id'
+            each_message false
+          end
+        end
+      end
+
+      it 'should raise an error' do
+        expect {
+          test_consume_message('my-batch-topic', { 'test_id' => 'foo', 'some_int' => 1 })
+        }.to raise_error(RuntimeError, /not configured with `each_message true`.*test_consume_batch/)
+      end
+    end
+
+    context 'when calling test_consume_batch on a single-message topic' do
+      before(:each) do
+        stub_const('MySingleConsumer', consumer_class)
+        Karafka::App.routes.redraw do
+          topic 'my-single-topic' do
+            consumer MySingleConsumer
+            schema 'MySchema'
+            namespace 'com.my-namespace'
+            key_config field: 'test_id'
+            each_message true
+          end
+        end
+      end
+
+      it 'should raise an error' do
+        expect {
+          test_consume_batch('my-single-topic', [{ 'test_id' => 'foo', 'some_int' => 1 }])
+        }.to raise_error(RuntimeError, /configured with `each_message true`.*test_consume_message/)
+      end
+    end
+  end
+
 end
