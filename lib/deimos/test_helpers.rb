@@ -232,6 +232,9 @@ module Deimos
                    else
         Deimos.topic_for_consumer(handler_class_or_topic)
       end
+
+      _validate_consumer_config(topic_name, single)
+
       consumer = karafka.consumer_for(topic_name)
 
       Deimos.karafka_config_for(topic: topic_name).each_message(single)
@@ -258,6 +261,26 @@ module Deimos
       karafka.produced_messages.concat(original_messages)
 
       consumer.consume
+    end
+
+  private
+
+    # Validate that the consumer config matches the test method being called.
+    # @param topic_name [String]
+    # @param single [Boolean] true if testing single message consumption
+    # @return [void]
+    def _validate_consumer_config(topic_name, single)
+      config = Deimos.karafka_config_for(topic: topic_name)
+      return if config.nil?
+
+      each_message = config.each_message
+      if single && !each_message
+        raise "Topic #{topic_name} is not configured with `each_message true` but " \
+              'you are trying to test with `test_consume_message`. Use `test_consume_batch` instead.'
+      elsif !single && each_message
+        raise "Topic #{topic_name} is configured with `each_message true` but " \
+              'you are trying to test with `test_consume_batch`. Use `test_consume_message` instead.'
+      end
     end
   end
 end

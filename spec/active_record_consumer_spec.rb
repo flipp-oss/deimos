@@ -135,18 +135,21 @@ module ActiveRecordConsumerTest
           schema 'MySchemaWithDateTimes'
           namespace 'com.my-namespace'
           key_config plain: true
+          each_message true
         end
         topic 'my-topic2' do
           consumer MyConsumerWithKey
           schema 'MySchemaWithDateTimes'
           namespace 'com.my-namespace'
           key_config schema: 'MySchemaId_key'
+          each_message true
         end
         topic 'my-topic3' do
           consumer MyCustomFetchConsumer
           schema 'MySchema'
           namespace 'com.my-namespace'
           key_config none: true
+          each_message true
         end
       end
     end
@@ -266,6 +269,7 @@ module ActiveRecordConsumerTest
                 schema 'MySchema'
                 namespace 'com.my-namespace'
                 key_config plain: true
+                each_message true
               end
             end
 
