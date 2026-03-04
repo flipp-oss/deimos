@@ -105,11 +105,14 @@ module Deimos
       message.payload.nil?
     end
 
-    # Override this message to conditionally save records
-    # @param _payload [Hash,Deimos::SchemaClass::Record] The kafka message
+    # Override this method to conditionally save records.
+    #
+    # This receives the full Kafka message so tombstones can still be
+    # identified and acted on using message metadata/key.
+    # @param _message [Karafka::Messages::Message] The Kafka message
     # @return [Boolean] if true, record is created/update.
     #   If false, record processing is skipped but message offset is still committed.
-    def process_message?(_payload)
+    def process_message?(_message)
       true
     end
   end

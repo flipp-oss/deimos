@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Breaking: `process_message?` in batch consumption now receives the full Kafka message object instead of just the payload, allowing tombstones to be identified via the message key and metadata.
+
 ## 2.4.0 - 2026-03-02
 
 - Major change: Switch from using `avro_turf` and `proto_turf` to use `schema_registry_client`, which handles both Avro and Protobuf.
