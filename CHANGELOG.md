@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.5.0 - 2026-03-04
+
 - Breaking: `process_message?` in batch consumption now receives the full Kafka message object instead of just the payload, allowing tombstones to be identified via the message key and metadata.
+- Breaking: `test_consume_batch` and `test_consume_message` will now raise an error if the topic is configured incorrectly (i.e. the `each_message` setting doesn't match the method used).
 
 ## 2.4.0 - 2026-03-02
 
