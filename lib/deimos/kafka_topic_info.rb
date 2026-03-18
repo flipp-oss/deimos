@@ -18,7 +18,7 @@ module Deimos
       def lock(topic, lock_id) # rubocop:disable Naming/PredicateMethod
         # Try to create it - it's fine if it already exists
         begin
-          self.create(topic: topic, last_processed_at: Time.zone.now)
+          self.create!(topic: topic, last_processed_at: Time.zone.now)
         rescue ActiveRecord::RecordNotUnique
           # continue on
         end
