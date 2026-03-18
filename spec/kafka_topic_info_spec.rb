@@ -11,6 +11,11 @@ each_db_config(Deimos::KafkaTopicInfo) do
     expect(described_class.last.locked_by).to eq('def')
   end
 
+  it 'should raise an error if the create fails for a non-unique reason' do
+    allow(described_class).to receive(:create!).and_raise(ActiveRecord::ActiveRecordError, 'some other error')
+    expect { described_class.lock('my-topic', 'abc') }.to raise_error(ActiveRecord::ActiveRecordError)
+  end
+
   it "should lock the topic if it's old" do
     described_class.create!(topic: 'my-topic', locked_by: 'abc', error: true,
                             locked_at: 2.minutes.ago)

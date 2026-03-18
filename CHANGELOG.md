@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix: Outbox producer would swallow ActiveRecord errors except for uniqueness.
+
 ## 2.5.0 - 2026-03-04
 
 - Breaking: `process_message?` in batch consumption now receives the full Kafka message object instead of just the payload, allowing tombstones to be identified via the message key and metadata.
