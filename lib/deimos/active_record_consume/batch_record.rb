@@ -16,6 +16,8 @@ module Deimos
       attr_accessor :bulk_import_id
       # @return [String] The column name to use for bulk IDs - defaults to `bulk_import_id`.
       attr_accessor :bulk_import_column
+      # @return [Boolean] true if the primary key was supplied in the input attributes,
+      attr_accessor :primary_key_preset
 
       delegate :valid?, :errors, :send, :attributes, to: :record
 
@@ -32,6 +34,7 @@ module Deimos
         end
         attributes = attributes.with_indifferent_access
         self.record = klass.new(attributes.slice(*klass.column_names))
+        self.primary_key_preset = !self.record[klass.primary_key].nil?
         assoc_keys = attributes.keys.select { |k| klass.reflect_on_association(k) }
         # a hash with just the association keys, removing all actual column information.
         self.associations = attributes.slice(*assoc_keys)
