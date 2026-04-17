@@ -120,7 +120,7 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
           detail_call_count = 0
           allow(Detail).to receive(:import!).and_wrap_original do |m, *args|
             detail_call_count += 1
-            raise ActiveRecord::Deadlocked.new('Lock wait timeout exceeded') if detail_call_count == 1
+            raise ActiveRecord::Deadlocked, 'Lock wait timeout exceeded' if detail_call_count == 1
 
             m.call(*args)
           end
