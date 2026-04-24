@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.5.2 - 2026-04-24
+
 - Fix: `BatchRecordList#fill_primary_keys!` no longer short-circuits on stale in-memory primary keys left over from a rolled-back `DeadlockRetry` attempt, preventing `ActiveRecord::InvalidForeignKey` during association imports.
 
 ## 2.5.1 - 2026-03-18
