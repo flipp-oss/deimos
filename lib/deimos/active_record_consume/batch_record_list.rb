@@ -53,7 +53,8 @@ module Deimos
       def fill_primary_keys!
         primary_col = self.klass.primary_key
 
-        return if self.batch_records.empty? || self.batch_records.first.send(primary_col).present?
+        # Skip if nothing to backfill or caller already supplied the PK.
+        return if self.batch_records.empty? || self.batch_records.first.primary_key_preset
 
         bulk_import_map = self.klass.
           where(self.bulk_import_column => self.batch_records.map(&:bulk_import_id)).

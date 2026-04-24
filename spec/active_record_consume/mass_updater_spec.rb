@@ -112,6 +112,34 @@ RSpec.describe Deimos::ActiveRecordConsume::MassUpdater do
           expect(Detail.count).to eq(0)
         end
 
+        it 'should refetch parent primary keys when retrying child import' do
+          allow(Widget).to receive(:import!).and_call_original
+          allow(Widget).to receive(:where).and_call_original
+
+          # Deadlock the first child import to trigger DeadlockRetry; let the retry pass through.
+          detail_call_count = 0
+          allow(Detail).to receive(:import!).and_wrap_original do |m, *args|
+            detail_call_count += 1
+            raise ActiveRecord::Deadlocked, 'Lock wait timeout exceeded' if detail_call_count == 1
+
+            m.call(*args)
+          end
+
+          described_class.new(Widget, bulk_import_id_generator: bulk_id_generator).mass_update(batch)
+
+          # Parent ids written by `fill_primary_keys!` during attempt 1 stay in
+          # memory after the DB rollback, so they're stale on retry. Assert the
+          # retry re-queries. Outcome-level checks are unreliable: SQLite reuses
+          # rolled-back ids so stale memory matches coincidentally; MySQL and
+          # Postgres burn auto-increment and surface ActiveRecord::InvalidForeignKey.
+          expect(Widget).to have_received(:where).
+            with(bulk_import_id: [instance_of(String), instance_of(String)]).twice
+          expect(Widget.count).to eq(2)
+          expect(Detail.count).to eq(2)
+          expect(Widget.first.detail).not_to be_nil
+          expect(Widget.last.detail).not_to be_nil
+        end
+
       end
 
       context 'with save_associations_first' do
