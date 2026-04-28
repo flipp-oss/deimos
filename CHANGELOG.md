@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix: `setup_karafka` applies the merged kafka config to `Karafka.producer`, so kafka overrides set in later `Karafka::App.setup` calls take effect on `Karafka.producer` callers (Karafka::Web, DLQ, ActiveJob).
+
 ## 2.5.2 - 2026-04-24
 
 - Fix: `BatchRecordList#fill_primary_keys!` no longer short-circuits on stale in-memory primary keys left over from a rolled-back `DeadlockRetry` attempt, preventing `ActiveRecord::InvalidForeignKey` during association imports.
