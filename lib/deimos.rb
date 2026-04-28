@@ -195,6 +195,10 @@ module Deimos
 
     def setup_karafka
       setup_producers
+      # Karafka.producer's kafka config is captured at first Karafka::App.setup;
+      # apply the merged global so later overrides actually take effect.
+      Karafka.producer.config.kafka =
+        Karafka::Setup::AttributesMap.producer(Karafka::Setup::Config.config.kafka.dup)
       waterdrop_producers.each do |producer|
         producer.middleware.append(Deimos::ProducerMiddleware)
         producer.monitor.subscribe(ProducerMetricsListener.new)
