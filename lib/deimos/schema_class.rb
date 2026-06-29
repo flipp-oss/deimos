@@ -38,13 +38,11 @@ module Deimos
 
     # Mirror the (now-delegated) Deimos schema settings onto AvroGen.config.
     # Deimos.config.schema stays the source of truth within Deimos, so this runs
-    # on every configure (keeping a reset in sync) and warns when a moved,
-    # generation-specific setting was explicitly set. Standalone AvroGen users
-    # never trigger this and set AvroGen.config directly.
+    # on every configure (keeping a reset in sync). Standalone AvroGen users never
+    # trigger this and set AvroGen.config directly.
     # @!visibility private
     def self.sync_config!
       schema = Deimos.config.schema
-      # schema.path is shared with the Avro backends, so sync it without a warning.
       AvroGen.config.schema_path = schema.path
       # Refresh AvroGen's cached schema stores on (re)configuration so they don't
       # serve stale schemas after the schema path or files change.
@@ -52,11 +50,6 @@ module Deimos
 
       GENERATION_SETTINGS.each do |deimos_key, avro_key|
         AvroGen.config.send("#{avro_key}=", schema.send(deimos_key))
-        next if schema.default_value?(deimos_key)
-
-        Deimos::Logging.deprecate(
-          "Deimos.config.schema.#{deimos_key} is deprecated; set AvroGen.config.#{avro_key} instead."
-        )
       end
     end
   end
