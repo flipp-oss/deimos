@@ -17,9 +17,9 @@ require 'deimos/backends/kafka_async'
 require 'deimos/backends/test'
 
 require 'deimos/schema_backends/base'
+require 'avro_gen'
+require 'deimos/schema_class'
 require 'deimos/utils/schema_class'
-require 'deimos/schema_class/enum'
-require 'deimos/schema_class/record'
 
 require 'deimos/ext/schema_route'
 require 'deimos/ext/consumer_route'
@@ -102,7 +102,7 @@ module Deimos
         # Initialize an instance of the provided schema
         # in the event the schema class is an override, the inherited
         # schema and namespace will be applied
-        schema_class = Utils::SchemaClass.klass(schema, namespace)
+        schema_class = AvroGen::SchemaClass.klass(schema, namespace)
         if schema_class.nil?
           schema_backend_class(backend: backend).
             new(

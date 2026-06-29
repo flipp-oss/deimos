@@ -30,6 +30,15 @@ module Deimos
         log_add(:warn, *args)
       end
 
+      # Emit a deprecation warning at most once per unique message.
+      # @param msg [String]
+      def deprecate(msg)
+        @deprecations ||= Set.new
+        return unless @deprecations.add?(msg)
+
+        warn("DEPRECATION WARNING: #{msg}")
+      end
+
       def metadata_log_text(metadata)
         metadata.to_h.slice(:timestamp, :offset, :first_offset, :last_offset, :partition, :topic, :size)
       end

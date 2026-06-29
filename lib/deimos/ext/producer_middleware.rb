@@ -5,7 +5,7 @@ module Deimos
     class << self
 
       def allowed_classes
-        arr = [Hash, SchemaClass::Record]
+        arr = [Hash, AvroGen::SchemaClass::Record]
         if defined?(Google::Protobuf)
           arr.push(Google::Protobuf.const_get(:AbstractMessage))
         end
@@ -26,7 +26,7 @@ module Deimos
                     self.allowed_classes.none? { |k| message[:payload].is_a?(k) }
 
           payload = message[:payload]
-          payload = payload.to_h if payload.nil? || payload.is_a?(SchemaClass::Record)
+          payload = payload.to_h if payload.nil? || payload.is_a?(AvroGen::SchemaClass::Record)
           m = Deimos::Message.new(payload,
                                   headers: message[:headers],
                                   partition_key: message[:partition_key])

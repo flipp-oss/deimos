@@ -75,7 +75,7 @@ module Deimos
       end
 
       # Publish the payload to the topic.
-      # @param payload [Hash, SchemaClass::Record] with an optional payload_key hash key.
+      # @param payload [Hash, AvroGen::SchemaClass::Record] with an optional payload_key hash key.
       # @param topic [String] if specifying the topic
       # @param headers [Hash] if specifying headers
       # @return [void]
@@ -99,7 +99,7 @@ module Deimos
       end
 
       # Publish a list of messages.
-      # @param payloads [Array<Hash, SchemaClass::Record>] with optional payload_key hash key.
+      # @param payloads [Array<Hash, AvroGen::SchemaClass::Record>] with optional payload_key hash key.
       # @param sync [Boolean] if given, override the default setting of
       # whether to publish synchronously.
       # @param force_send [Boolean] if true, ignore the configured backend
@@ -112,7 +112,7 @@ module Deimos
 
         messages = Array(payloads).map do |p|
           payload = p
-          payload = payload.to_h if p.is_a?(SchemaClass::Record)
+          payload = payload.to_h if p.is_a?(AvroGen::SchemaClass::Record)
           m = {
             payload: payload,
             headers: headers,
@@ -121,10 +121,10 @@ module Deimos
           }
           if payload.is_a?(Hash) && payload.key?(:key) && payload.key?(:message)
             m[:key] = payload[:key]
-            m[:key] = m[:key].to_h if m[:key].nil? || m[:key].is_a?(SchemaClass::Record)
+            m[:key] = m[:key].to_h if m[:key].nil? || m[:key].is_a?(AvroGen::SchemaClass::Record)
             m[:payload] = payload[:message]
             m[:payload] = m[:payload].to_h if m[:payload].nil? ||
-                                              m[:payload].is_a?(SchemaClass::Record)
+                                              m[:payload].is_a?(AvroGen::SchemaClass::Record)
           end
           m
         end

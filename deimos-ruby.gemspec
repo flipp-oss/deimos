@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
+  spec.add_dependency('avro-gen-ruby')
   spec.add_dependency('benchmark', '~> 0.5')
   spec.add_dependency('fig_tree', '~> 0.2.0')
   spec.add_dependency('karafka', '~> 2.0')

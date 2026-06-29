@@ -15,6 +15,7 @@ module Deimos
       config.deserializers[:payload].try(:reset_backend)
       config.deserializers[:key].try(:reset_backend)
     end
+    Deimos::SchemaClass.sync_config!
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
@@ -42,16 +43,16 @@ module Deimos
     # Loads generated classes
     # @return [void]
     def load_generated_schema_classes
-      if Deimos.config.schema.generated_class_path.nil?
-        raise 'Cannot use schema classes without schema.generated_class_path. ' \
-              'Please provide a directory.'
+      path = AvroGen.config.generated_class_path
+      if path.nil?
+        raise 'Cannot use schema classes without a generated class path. ' \
+              'Please set AvroGen.config.generated_class_path.'
       end
 
-      Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].
+      Dir["./#{path}/**/*.rb"].
         each { |f| require f }
     rescue LoadError
-      raise 'Cannot load schema classes. Please regenerate classes with' \
-            'rake deimos:generate_schema_models.'
+      raise 'Cannot load schema classes. Please regenerate classes with rake avro:generate.'
     end
 
     # Ensure everything is set up correctly for the DB backend.

@@ -58,9 +58,9 @@ module Deimos
 
       schema_key = decoded_key.is_a?(Hash) ? decoded_key : { self.key_field => decoded_key }
 
-      Utils::SchemaClass.instance(schema_key,
-                                  "#{@schema}_key",
-                                  @namespace)
+      AvroGen::SchemaClass.instance(schema_key,
+                                    "#{@schema}_key",
+                                    @namespace)
     end
 
     # @param payload [String]
@@ -71,9 +71,9 @@ module Deimos
       decoded_payload = self.backend.decode(payload)
       return decoded_payload if !@use_schema_classes || !decoded_payload.is_a?(Hash)
 
-      Utils::SchemaClass.instance(decoded_payload,
-                                  @schema,
-                                  @namespace)
+      AvroGen::SchemaClass.instance(decoded_payload,
+                                    @schema,
+                                    @namespace)
     end
 
     # @param payload [Object]

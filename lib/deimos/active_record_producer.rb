@@ -81,7 +81,7 @@ module Deimos
         return payload if self.karafka_config.use_schema_classes.nil? &&
                           !Deimos.config.schema.use_schema_classes
 
-        Utils::SchemaClass.instance(payload, encoder.schema, encoder.namespace)
+        AvroGen::SchemaClass.instance(payload, encoder.schema, encoder.namespace)
       end
 
       # Deletion payload for a record by default, delegate to the

@@ -2,6 +2,7 @@
 
 require_relative 'base'
 require 'schema_registry_client'
+require 'avro_gen/avro_parser'
 require_relative 'avro_schema_coercer'
 
 module Deimos
@@ -106,55 +107,25 @@ module Deimos
 
       # @param schema [Avro::Schema::NamedSchema] A named schema
       # @return [String]
+      # @deprecated Use AvroGen::AvroParser.schema_classname instead.
       def self.schema_classname(schema)
-        schema.name.underscore.camelize.singularize
+        AvroGen::AvroParser.schema_classname(schema)
       end
 
       # Converts Avro::Schema::NamedSchema's to String form for generated YARD docs.
-      # Recursively handles the typing for Arrays, Maps and Unions.
       # @param avro_schema [Avro::Schema::NamedSchema]
       # @return [String] A string representation of the Type of this SchemaField
+      # @deprecated Use AvroGen::AvroParser.field_type instead.
       def self.field_type(avro_schema)
-        case avro_schema.type_sym
-        when :string, :boolean
-          avro_schema.type_sym.to_s.titleize
-        when :int, :long
-          'Integer'
-        when :float, :double
-          'Float'
-        when :record, :enum
-          schema_classname(avro_schema)
-        when :array
-          arr_t = field_type(Deimos::SchemaField.new('n/a', avro_schema.items).type)
-          "Array<#{arr_t}>"
-        when :map
-          map_t = field_type(Deimos::SchemaField.new('n/a', avro_schema.values).type)
-          "Hash<String, #{map_t}>"
-        when :union
-          types = avro_schema.schemas.map do |t|
-            field_type(Deimos::SchemaField.new('n/a', t).type)
-          end
-          types.join(', ')
-        when :null
-          'nil'
-        end
+        AvroGen::AvroParser.field_type(avro_schema)
       end
 
       # Returns the base type of this schema. Decodes Arrays, Maps and Unions
       # @param schema [Avro::Schema::NamedSchema]
       # @return [Avro::Schema::NamedSchema]
+      # @deprecated Use AvroGen::AvroParser.schema_base_class instead.
       def self.schema_base_class(schema)
-        case schema.type_sym
-        when :array
-          schema_base_class(schema.items)
-        when :map
-          schema_base_class(schema.values)
-        when :union
-          schema.schemas.map(&method(:schema_base_class)).
-            reject { |s| s.type_sym == :null }.first
-        else
-          schema
-        end
+        AvroGen::AvroParser.schema_base_class(schema)
       end
 
       def generate_key_schema(field_name)
