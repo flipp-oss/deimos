@@ -51,7 +51,7 @@ module ConsumerTest
 
           let(:schema_class_batch) do
             batch.map do |p|
-              Deimos::Utils::SchemaClass.instance(p, 'MySchema', 'com.my-namespace')
+              AvroGen::SchemaClass.instance(p, 'MySchema', 'com.my-namespace')
             end
           end
           let(:use_schema_classes) { true }

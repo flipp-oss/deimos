@@ -891,7 +891,7 @@ end
 class MyActiveRecordConsumer < Deimos::ActiveRecordConsumer
   record_class Widget
   # Any method that expects a message payload as a hash will instead
-  # receive an instance of Deimos::SchemaClass::Record.
+  # receive an instance of AvroGen::SchemaClass::Record.
   def record_attributes(payload, key)
     # You can interact with the schema class instance in the following way:
     super.merge(:some_field => "some_value-#{payload.test_id}")
@@ -931,9 +931,9 @@ class MyActiveRecordProducer < Deimos::ActiveRecordProducer
   record_class Widget
   # @param attributes [Hash]
   # @param _record [Widget]
-  # @return [Deimos::SchemaClass::Record]
+  # @return [AvroGen::SchemaClass::Record]
   def self.generate_payload(attributes, _record)
-    # This method converts your ActiveRecord into a Deimos::SchemaClass::Record. You will be able to use super
+    # This method converts your ActiveRecord into a AvroGen::SchemaClass::Record. You will be able to use super
     # as an instance of Schemas::MySchema and set values that are not on your ActiveRecord schema.
     res = super
     res.some_value = "some_value-#{res.test_id}"
