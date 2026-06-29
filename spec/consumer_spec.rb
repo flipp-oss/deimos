@@ -48,8 +48,8 @@ module ConsumerTest
 
           before(:each) do
             Deimos.configure do |config|
-              config.schema.use_full_namespace = true
-              config.schema.schema_namespace_map = {
+              config.avrogen.use_full_namespace = true
+              config.avrogen.schema_namespace_map = {
                 'com' => 'Schemas',
                 'com.my-namespace.my-suborg' => %w(Schemas MyNamespace)
               }
@@ -160,7 +160,7 @@ module ConsumerTest
         before(:each) do
           set_karafka_config(:use_schema_classes, true)
           Deimos.configure do |config|
-            config.schema.use_full_namespace = true
+            config.avrogen.use_full_namespace = true
           end
         end
 
@@ -205,8 +205,8 @@ module ConsumerTest
         before(:each) do
           set_karafka_config(:use_schema_classes, true)
           Deimos.configure do |config|
-            config.schema.use_full_namespace = true
-            config.schema.schema_namespace_map = {
+            config.avrogen.use_full_namespace = true
+            config.avrogen.schema_namespace_map = {
               'com' => 'Schemas',
               'com.my-namespace.my-suborg' => %w(Schemas MyNamespace)
             }

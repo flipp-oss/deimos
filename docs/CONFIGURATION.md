@@ -60,10 +60,17 @@ things you need to reference into local variables before calling `configure`.
 | schema.password             | nil                      | Basic auth password.                                                                                                                                       |
 | schema.path                 | nil                      | Local path to find your schemas.                                                                                                                           |
 | schema.use_schema_classes   | false                    | Set this to true to use generated schema classes in your application.                                                                                      |
-| schema.generated_class_path | `app/lib/schema_classes` | Local path to generated schema classes.                                                                                                                    |
-| schema.nest_child_schemas   | false                    | Set to true to nest subschemas within the generated class for the parent schema.                                                                           |
-| schema.use_full_namespace   | false                    | Set to true to generate folders for schemas matching the full namespace.                                                                                   |
-| schema.schema_namespace_map | {}                       | A map of namespace prefixes to base module name(s). Example: { 'com.mycompany.suborg' => ['SchemaClasses'] }. Requires `use_full_namespace` to be true.    |
+
+#### Schema Class Generation (`avrogen`)
+
+Schema class generation is provided by the [avro-gen-ruby](https://github.com/flipp-oss/avro-gen-ruby) gem (namespace `AvroGen`). These settings are forwarded to `AvroGen.config`. The equivalent `schema.*` settings still work but are deprecated — using one prints a warning pointing to the `avrogen.*` setting, and you can migrate generated files with `rake avro:upgrade`.
+
+| Config name                   | Default                  | Description                                                                                                                                              |
+|-------------------------------|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| avrogen.generated_class_path  | `app/lib/schema_classes` | Local path to generated schema classes. (was `schema.generated_class_path`)                                                                              |
+| avrogen.nest_child_schemas    | true                     | Set to true to nest subschemas within the generated class for the parent schema. (was `schema.nest_child_schemas`)                                       |
+| avrogen.use_full_namespace    | false                    | Set to true to generate folders for schemas matching the full namespace. (was `schema.use_full_namespace`)                                               |
+| avrogen.schema_namespace_map  | {}                       | A map of namespace prefixes to base module name(s). Example: { 'com.mycompany.suborg' => ['SchemaClasses'] }. Requires `use_full_namespace` to be true. (was `schema.schema_namespace_map`) |
 
 ### Outbox Configuration
 

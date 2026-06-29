@@ -58,7 +58,7 @@ module ConsumerTest
 
           before(:each) do
             Deimos.configure do |config|
-              config.schema.use_full_namespace = true
+              config.avrogen.use_full_namespace = true
             end
           end
 

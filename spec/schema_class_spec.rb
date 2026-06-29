@@ -40,4 +40,26 @@ RSpec.describe Deimos::SchemaClass do
       expect { described_class.not_a_real_method }.to raise_error(NoMethodError)
     end
   end
+
+  describe 'generation config' do
+    it 'forwards Deimos.config.avrogen settings to AvroGen.config' do
+      Deimos.configure do |config|
+        config.avrogen.generated_class_path = 'custom/classes'
+        config.avrogen.use_full_namespace = true
+      end
+
+      expect(AvroGen.config.generated_class_path).to eq('custom/classes')
+      expect(AvroGen.config.use_full_namespace).to be(true)
+    end
+
+    it 'still honors the legacy schema setting, deprecating it in favour of avrogen' do
+      allow(Deimos::Logging).to receive(:deprecate)
+
+      Deimos.configure { |config| config.schema.generated_class_path = 'legacy/classes' }
+
+      expect(AvroGen.config.generated_class_path).to eq('legacy/classes')
+      expect(Deimos::Logging).to have_received(:deprecate).
+        with(a_string_matching(/Deimos\.config\.schema\.generated_class_path is deprecated.*avrogen/))
+    end
+  end
 end

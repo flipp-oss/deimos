@@ -840,18 +840,22 @@ DB backend only when your rake task is running.
 
 # Generated Schema Classes
 
-Deimos offers a way to generate classes from Avro schemas. These classes are documented
-with YARD to aid in IDE auto-complete, and will help to move errors closer to the code.
+Deimos generates classes from Avro schemas using the
+[avro-gen-ruby](https://github.com/flipp-oss/avro-gen-ruby) gem (namespace `AvroGen`).
+These classes are documented with YARD to aid in IDE auto-complete, and will help to move
+errors closer to the code.
 
-Add the following configurations for schema class generation: 
+Add the following configurations for schema class generation:
 
 ```ruby
-config.schema.generated_class_path 'path/to/generated/classes' # Defaults to 'app/lib/schema_classes'
+config.avrogen.generated_class_path 'path/to/generated/classes' # Defaults to 'app/lib/schema_classes'
 ```
 
 Run the following command to generate schema classes in your application. It will generate classes for every configured consumer or producer by `Deimos.configure`:
 
     bundle exec rake deimos:generate_schema_classes
+
+(The standalone `bundle exec rake avro:generate` task generates classes for every schema on disk, without the Kafka-aware key/tombstone handling.)
 
 Add the following configurations to start using generated schema classes in your application's Consumers and Producers:
 
@@ -864,7 +868,14 @@ Note that if you have a schema in your repo but have not configured a producer o
 
 One additional configuration option indicates whether nested records should be generated as top-level classes or would remain nested inside the generated class for its parent schema. The default is to nest them, as a flattened structure can have one sub-schema clobber another sub-schema defined in a different top-level schema.
 
-    config.schema.nest_child_schemas = false # Flatten all classes into one directory
+    config.avrogen.nest_child_schemas = false # Flatten all classes into one directory
+
+> **Note:** The schema-class generation settings moved from `config.schema.*` to
+> `config.avrogen.*`. The old `config.schema.generated_class_path` /
+> `nest_child_schemas` / `use_full_namespace` / `schema_namespace_map` settings still
+> work but are deprecated. Generated classes now inherit from
+> `AvroGen::SchemaClass::Record`/`Enum`; previously-generated files referencing
+> `Deimos::SchemaClass::*` still load, and `bundle exec rake avro:upgrade` rewrites them.
 
 You can generate a tombstone message (with only a key and no value) by calling the `YourSchemaClass.tombstone(key)` method. If you're using a `:field` key config, you can pass in just the key scalar value. If using a key schema, you can pass it in as a hash or as another schema class.
 
@@ -877,7 +888,7 @@ Examples of consumers would look like this:
 ```ruby
 class MyConsumer < Deimos::Consumer
   def consume_message(message)
-    # Same method as before but message.payload is now an instance of Deimos::SchemaClass::Record
+    # Same method as before but message.payload is now an instance of AvroGen::SchemaClass::Record
     # rather than a hash. 
     # You can interact with the schema class instance in the following way: 
     do_something(message.payload.test_id, message.payload.some_int)

@@ -14,13 +14,14 @@ module Deimos
       Enum: AvroGen::SchemaClass::Enum
     }.freeze
 
-    # Maps the moved generation settings from Deimos.config.schema to AvroGen.config.
-    GENERATION_SETTINGS = {
-      generated_class_path: :generated_class_path,
-      nest_child_schemas: :nest_child_schemas,
-      use_full_namespace: :use_full_namespace,
-      schema_namespace_map: :schema_namespace_map
-    }.freeze
+    # The generation settings that live under Deimos.config.avrogen and are
+    # forwarded to AvroGen.config (same names on both sides).
+    GENERATION_SETTINGS = %i(
+      generated_class_path
+      nest_child_schemas
+      use_full_namespace
+      schema_namespace_map
+    ).freeze
 
     # @param name [Symbol]
     def self.const_missing(name)
@@ -36,20 +37,35 @@ module Deimos
       klass
     end
 
-    # Mirror the (now-delegated) Deimos schema settings onto AvroGen.config.
-    # Deimos.config.schema stays the source of truth within Deimos, so this runs
-    # on every configure (keeping a reset in sync). Standalone AvroGen users never
-    # trigger this and set AvroGen.config directly.
+    # Mirror the Deimos generation settings onto AvroGen.config. Deimos.config is
+    # the source of truth within Deimos, so this runs on every configure (keeping
+    # a reset in sync). The settings live under Deimos.config.avrogen; the legacy
+    # Deimos.config.schema.* equivalents still work but emit a deprecation warning.
+    # Standalone AvroGen users never trigger this and set AvroGen.config directly.
     # @!visibility private
     def self.sync_config!
-      schema = Deimos.config.schema
-      AvroGen.config.schema_path = schema.path
+      # schema.path is shared with the Avro backends, so it stays under `schema`.
+      AvroGen.config.schema_path = Deimos.config.schema.path
       # Refresh AvroGen's cached schema stores on (re)configuration so they don't
       # serve stale schemas after the schema path or files change.
       AvroGen::SchemaValidator.clear_store_cache!
 
-      GENERATION_SETTINGS.each do |deimos_key, avro_key|
-        AvroGen.config.send("#{avro_key}=", schema.send(deimos_key))
+      GENERATION_SETTINGS.each do |key|
+        AvroGen.config.send("#{key}=", generation_setting(key))
+      end
+    end
+
+    # Resolve a generation setting, preferring the legacy (deprecated)
+    # Deimos.config.schema.* location when it was explicitly set.
+    # @!visibility private
+    def self.generation_setting(key)
+      if Deimos.config.schema.default_value?(key)
+        Deimos.config.avrogen.send(key)
+      else
+        Deimos::Logging.deprecate(
+          "Deimos.config.schema.#{key} is deprecated; use Deimos.config.avrogen.#{key} instead."
+        )
+        Deimos.config.schema.send(key)
       end
     end
   end
