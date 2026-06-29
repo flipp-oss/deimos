@@ -319,6 +319,6 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
         expect(Widget.second.some_int).to eq(5)
       end
     end
-           end
+  end
 end
 # rubocop:enable Lint/ConstantDefinitionInBlock

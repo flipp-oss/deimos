@@ -62,7 +62,7 @@ module ConsumerTest
                                  'some_int' => 123 }) do |payload, _metadata|
                                    expect(payload['test_id']).to eq('foo')
                                    expect(payload['some_int']).to eq(123)
-                                 end
+            end
           end
 
           it 'should consume a nil message' do
@@ -77,7 +77,7 @@ module ConsumerTest
                                  'some_int' => 123 }) do |payload, _metadata|
                                    expect(payload['test_id']).to eq('foo')
                                    expect(payload['some_int']).to eq(123)
-                                 end
+            end
           end
 
           it 'should fail on invalid message' do
@@ -196,7 +196,7 @@ module ConsumerTest
             expect(payload['test_id']).to eq('foo')
             expect(payload['some_int']).to eq(1)
             expect(payload['super_int']).to eq(9000)
-                                 end
+          end
         end
 
       end
@@ -255,7 +255,7 @@ module ConsumerTest
             expect(payload['some_nested_record']['some_int']).to eq(1)
             expect(payload.to_h).not_to have_key('additional_field')
             expect(payload.to_h['some_nested_record']).not_to have_key('additional_field')
-                                 end
+          end
 
         end
       end
