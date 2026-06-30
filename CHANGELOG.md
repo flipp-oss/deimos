@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Major change: Extract Avro schema class generation out of Deimos and into `avro-gen-ruby`.
+
 ## 2.5.3 - 2026-04-28
 
 - Fix: `setup_karafka` applies the merged kafka config to `Karafka.producer`, so kafka overrides set in later `Karafka::App.setup` calls take effect on `Karafka.producer` callers (Karafka::Web, DLQ, ActiveJob).

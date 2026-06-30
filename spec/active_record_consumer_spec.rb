@@ -59,7 +59,7 @@ module ActiveRecordConsumerTest
 
       Time.zone = 'Eastern Time (US & Canada)'
 
-      schema_class = Class.new(Deimos::SchemaClass::Record) do
+      schema_class = Class.new(AvroGen::SchemaClass::Record) do
         def schema
           'MySchema'
         end
@@ -88,7 +88,7 @@ module ActiveRecordConsumerTest
       end
       stub_const('Schemas::MySchema', schema_class)
 
-      schema_datetime_class = Class.new(Deimos::SchemaClass::Record) do
+      schema_datetime_class = Class.new(AvroGen::SchemaClass::Record) do
         def schema
           'MySchemaWithDateTimes'
         end
@@ -164,7 +164,7 @@ module ActiveRecordConsumerTest
               end
             end
             Deimos.configure do |config|
-              config.schema.use_full_namespace = true
+              config.avrogen.use_full_namespace = true
             end
           end
 

@@ -15,6 +15,7 @@ module Deimos
       config.deserializers[:payload].try(:reset_backend)
       config.deserializers[:key].try(:reset_backend)
     end
+    Deimos::SchemaClass.sync_config!
     if self.config.schema.use_schema_classes
       load_generated_schema_classes
     end
@@ -42,16 +43,16 @@ module Deimos
     # Loads generated classes
     # @return [void]
     def load_generated_schema_classes
-      if Deimos.config.schema.generated_class_path.nil?
-        raise 'Cannot use schema classes without schema.generated_class_path. ' \
-              'Please provide a directory.'
+      path = AvroGen.config.generated_class_path
+      if path.nil?
+        raise 'Cannot use schema classes without a generated class path. ' \
+              'Please set AvroGen.config.generated_class_path.'
       end
 
-      Dir["./#{Deimos.config.schema.generated_class_path}/**/*.rb"].
+      Dir["./#{path}/**/*.rb"].
         each { |f| require f }
     rescue LoadError
-      raise 'Cannot load schema classes. Please regenerate classes with' \
-            'rake deimos:generate_schema_models.'
+      raise 'Cannot load schema classes. Please regenerate classes with rake avro:generate.'
     end
 
     # Ensure everything is set up correctly for the DB backend.
@@ -173,13 +174,38 @@ module Deimos
       # @return [String]
       setting :path
 
-      # Local path for schema classes to be generated in.
+      # @deprecated Use config.avrogen.generated_class_path instead.
       # @return [String]
       setting :generated_class_path, 'app/lib/schema_classes'
 
       # Set to true to use the generated schema classes in your application.
       # @return [Boolean]
       setting :use_schema_classes
+
+      # @deprecated Use config.avrogen.nest_child_schemas instead.
+      # @return [Boolean]
+      setting :nest_child_schemas, true
+
+      # @deprecated Use config.avrogen.use_full_namespace instead.
+      # @return [Boolean]
+      setting :use_full_namespace, false
+
+      # @deprecated Use config.avrogen.schema_namespace_map instead.
+      # @return [Hash]
+      setting :schema_namespace_map, {}
+
+      # The base directory for generated protobuf key schemas.
+      setting :proto_schema_key_path, 'protos'
+    end
+
+    # Schema class generation settings, forwarded to the avro-gen-ruby gem
+    # (AvroGen.config). These previously lived under `schema` (still supported,
+    # but deprecated).
+    setting :avrogen do
+
+      # Local path for schema classes to be generated in.
+      # @return [String]
+      setting :generated_class_path, 'app/lib/schema_classes'
 
       # Set to false to generate child schemas as their own files.
       # @return [Boolean]
@@ -191,12 +217,9 @@ module Deimos
 
       # Use this option to reduce nesting when using use_full_namespace.
       # For example: { 'com.mycompany.suborg' => 'SchemaClasses' }
-      # would replace a prefixed with the given key with the module name SchemaClasses.
+      # would replace a prefix matching the given key with the module name SchemaClasses.
       # @return [Hash]
       setting :schema_namespace_map, {}
-
-      # The base directory for generated protobuf key schemas.
-      setting :proto_schema_key_path, 'protos'
     end
 
     # The configured metrics provider.

@@ -119,7 +119,7 @@ RSpec.describe Deimos::ActiveRecordConsume::BatchConsumption do
     end
 
     it 'for schema classes' do
-      klass = Class.new(Deimos::SchemaClass::Record) do
+      klass = Class.new(AvroGen::SchemaClass::Record) do
         attr_accessor :some_name
 
         # @override

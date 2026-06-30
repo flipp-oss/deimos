@@ -90,7 +90,7 @@ module Deimos
 
     # Override this method (with `super`) if you want to add/change the default
     # attributes set to the new/existing record.
-    # @param payload [Hash,Deimos::SchemaClass::Record]
+    # @param payload [Hash,AvroGen::SchemaClass::Record]
     # @param _key [String]
     # @return [Hash]
     def record_attributes(payload, _key=nil)

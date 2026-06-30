@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'generators/deimos/schema_class_generator'
+require 'avro_gen/generator'
 require 'optparse'
 require 'deimos/schema_backends/proto_schema_registry'
 
@@ -32,10 +32,22 @@ namespace :deimos do
     Deimos::Utils::DbPoller.start!
   end
 
-  desc 'Run Schema Model Generator'
+  desc 'Run Schema Model Generator (deprecated: use rake avro:generate)'
   task generate_schema_classes: :environment do
-    Rails.logger.info("Running deimos:generate_schema_classes")
-    Deimos::Generators::SchemaClassGenerator.start
+    Deimos::Logging.deprecate(
+      'rake deimos:generate_schema_classes is deprecated; use rake avro:generate instead.'
+    )
+    Rails.logger.info('Running deimos:generate_schema_classes')
+    # Derive AvroGen configs from the configured Kafka topics so keyed records
+    # still get their tombstone/payload_key helpers, then delegate to AvroGen.
+    configs = Deimos.karafka_configs.filter_map do |config|
+      next if config.schema.nil?
+
+      { schema: config.schema,
+        namespace: config.namespace,
+        key_config: config.key_config }
+    end
+    AvroGen::Generator.new.generate_from_configs(configs)
   end
 
   desc 'Output Protobuf key schemas'

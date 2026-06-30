@@ -13,7 +13,7 @@ module Deimos
       # Default is to use the primary key column and the value of the first
       # field in the key.
       # @param klass [Class<ActiveRecord::Base>]
-      # @param _payload [Hash,Deimos::SchemaClass::Record]
+      # @param _payload [Hash,AvroGen::SchemaClass::Record]
       # @param key [Object]
       # @return [ActiveRecord::Base]
       def fetch_record(klass, _payload, key)
@@ -23,7 +23,7 @@ module Deimos
 
       # Assign a key to a new record.
       # @param record [ActiveRecord::Base]
-      # @param _payload [Hash,Deimos::SchemaClass::Record]
+      # @param _payload [Hash,AvroGen::SchemaClass::Record]
       # @param key [Object]
       # @return [void]
       def assign_key(record, _payload, key)
