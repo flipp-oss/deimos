@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.5.4 - 2026-07-15
+
 - Fix: `DeadlockRetry.wrap` coerces its `tags` argument with `Array(...)`, so a scalar topic String (passed by `MassUpdater`/batch consumption) no longer raises `NoMethodError` on `String#to_a` inside the rescue, which had defeated the deadlock retry on the first deadlock.
 
 ## 2.5.3 - 2026-04-28
