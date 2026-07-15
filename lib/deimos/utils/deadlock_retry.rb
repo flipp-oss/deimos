@@ -28,10 +28,15 @@ module Deimos
         # be wrapped in a transaction.
         # Sleeps for a random number of seconds to prevent multiple transactions
         # from retrying at the same time.
-        # @param tags [Array] Tags to attach when logging and reporting metrics.
+        # @param tags [Array, String, nil] Tags to attach when logging and reporting metrics.
+        #   A scalar (e.g. a topic String) is coerced to a single-element array.
         # @yield Yields to the block that may deadlock.
         # @return [void]
         def wrap(tags=[])
+          # Normalize to an Array so downstream logging/metrics (and dogstatsd's
+          # `tags.to_a`) never receive a bare String, which would raise
+          # NoMethodError inside this rescue and defeat the retry mechanism.
+          tags = Array(tags)
           count = RETRY_COUNT
 
           begin

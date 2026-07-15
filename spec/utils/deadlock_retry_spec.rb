@@ -55,6 +55,26 @@ RSpec.describe Deimos::Utils::DeadlockRetry do
       expect(Widget.all).to contain_exactly(have_attributes(test_id: 'first'), have_attributes(test_id: 'second'))
     end
 
+    it 'should coerce a scalar tag to an array when reporting metrics' do
+      # Regression: mass_updater passes get_tag('topic') (a String) as tags.
+      # dogstatsd calls tags.to_a, which raises NoMethodError on a String and
+      # would defeat the retry mechanism on the first deadlock.
+      metrics = instance_double(Deimos::Metrics::Provider)
+      allow(Deimos.config).to receive(:metrics).and_return(metrics)
+      expect(metrics).to receive(:increment).with('deadlock', tags: ['Flyers.FlyerItem']).twice
+
+      expect(Widget).
+        to receive(:create).
+        and_raise(ActiveRecord::Deadlocked.new('Lock wait timeout exceeded')).
+        exactly(3).times
+
+      expect {
+        described_class.wrap('Flyers.FlyerItem') do
+          Widget.create(test_id: 'abc')
+        end
+      }.to raise_error(ActiveRecord::Deadlocked)
+    end
+
     it 'should not retry non-deadlock exceptions' do
       expect(Widget).
         to receive(:create).
