@@ -323,6 +323,12 @@ produced by Phobos and RubyKafka):
 * `deimos.batch_consumption.invalid_records` - sent when the consumer has rejected records returned from `filtered_records`. Limited by `max_db_batch_size`.
   * consumer: class of the consumer that rejected these records
   * records: Rejected records (of type `Deimos::ActiveRecordConsume::BatchRecord`)
+* `deimos.batch_consumption.individual_fallback` - sent when a batch database operation failed and the consumer is retrying its messages one at a time.
+  * consumer: class of the consumer that is falling back
+  * topic: name of the topic being consumed
+  * operation: `:upsert_records` or `:remove_records`
+  * message_count: number of messages in the batch that failed
+  * error: the exception the batch operation raised
   
 # Consumers
 
@@ -564,6 +570,30 @@ Batch consumption is used when the `each_message` setting for your consumer is s
 By default, batches will be compacted before processing, i.e. only the last
 message for each unique key in a batch will actually be processed. To change
 this behaviour, call `compacted false` inside of your consumer definition.
+
+#### Failure handling
+
+Because a batch is written in a single SQL statement inside a single transaction, one message
+which cannot be persisted would otherwise roll back every other message written alongside it.
+To avoid losing an entire batch to one bad message, Deimos retries the messages one at a time
+when a batch database operation fails. Every message that can be saved on its own is saved, and
+once the whole batch has been attempted a single `Deimos::BatchFallbackError` is raised. Its
+`failures` attribute holds the `[message, error]` pairs that could not be saved, and its message
+names their keys. From there it is handled by `reraise_errors`/`fatal_error` like any other
+consumer error.
+
+The original error is reraised unchanged, rather than wrapped, in three cases:
+
+* Batches of a single message, where there is nothing to isolate.
+* Deadlocks and lock wait timeouts, which are transient contention on the whole batch (already
+  retried by `DeadlockRetry`) rather than a problem with a particular message.
+* When no message could be saved on its own. Isolating salvaged nothing, so the failure was
+  never about one bad message - it is something systemic, such as an unreachable database or a
+  post-processing listener which raises - and the original error describes that better.
+
+Note that during the fallback `pre_process` is called once per message rather than once for the
+batch, and the `deimos.batch_consumption.valid_records` event is emitted per message. The
+`deimos.batch_consumption.individual_fallback` event fires whenever the fallback kicks in.
 
 A sample batch consumer would look as follows:
 

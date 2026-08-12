@@ -460,6 +460,222 @@ module ActiveRecordBatchConsumerTest
       end
     end
 
+    describe 'individual fallback when a batch operation fails' do
+      # `test_id: ''` passes Avro validation (it's a string) but fails the model's
+      # `validates :test_id, presence: true`, so `MassUpdater` raises before it issues any SQL.
+      # That's the poison-message case: one record that can never be persisted.
+      let(:poison_payload) { { test_id: '', some_int: 3 } }
+
+      let(:consumer_class) do
+        Class.new(described_class) do
+          record_class Widget
+          compacted false
+        end
+      end
+
+      before(:each) do
+        register_consumer(consumer_class, 'MySchema',
+                          key_config: { plain: true },
+                          configs: { reraise_errors: true })
+      end
+
+      it 'should not raise when the batch succeeds' do
+        publish_batch(
+          [
+            { key: 1, payload: { test_id: 'abc', some_int: 1 } },
+            { key: 2, payload: { test_id: 'def', some_int: 2 } }
+          ]
+        )
+
+        expect(all_widgets).
+          to contain_exactly(have_attributes(id: 1, test_id: 'abc'),
+                             have_attributes(id: 2, test_id: 'def'))
+      end
+
+      context 'when one record in the batch cannot be persisted' do
+
+        it 'should save every record except the bad one and report the failed key' do
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: { test_id: 'abc', some_int: 1 } },
+                { key: 2, payload: poison_payload },
+                { key: 3, payload: { test_id: 'ghi', some_int: 3 } }
+              ]
+            )
+          }.to raise_error(Deimos::BatchFallbackError, /Failed keys: "2"/)
+
+          expect(all_widgets).
+            to contain_exactly(have_attributes(id: 1, test_id: 'abc', some_int: 1),
+                               have_attributes(id: 3, test_id: 'ghi', some_int: 3))
+        end
+
+        it 'should collect the failures of every bad record in the batch' do
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: poison_payload },
+                { key: 2, payload: { test_id: 'def', some_int: 2 } },
+                { key: 3, payload: poison_payload }
+              ]
+            )
+          }.to raise_error(Deimos::BatchFallbackError) { |error|
+            expect(error.failures.map { |message, _| message.key }).to contain_exactly('1', '3')
+            expect(error.failures.map(&:last)).to all(be_a(ActiveRecord::RecordInvalid))
+          }
+
+          expect(all_widgets).to contain_exactly(have_attributes(id: 2, test_id: 'def'))
+        end
+
+        it 'should raise the original error when no record could be saved on its own' do
+          # Isolating salvaged nothing, so the failure was never about one bad message. The
+          # original error is more useful than a BatchFallbackError listing every key.
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: poison_payload },
+                { key: 2, payload: poison_payload }
+              ]
+            )
+          }.to raise_error(ActiveRecord::RecordInvalid)
+
+          expect(all_widgets).to be_empty
+        end
+
+        it 'should emit an instrumentation event naming the topic and operation' do
+          events = []
+          Karafka.monitor.subscribe('deimos.batch_consumption.individual_fallback') do |event|
+            events << event.payload
+          end
+
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: { test_id: 'abc', some_int: 1 } },
+                { key: 2, payload: poison_payload }
+              ]
+            )
+          }.to raise_error(Deimos::BatchFallbackError)
+
+          expect(events.size).to eq(1)
+          expect(events.first).to include(consumer: consumer_class,
+                                          topic: 'my-topic',
+                                          operation: :upsert_records,
+                                          message_count: 2)
+        end
+
+        it 'should not retry individually when the batch failed on a deadlock' do
+          allow(Deimos::Utils::DeadlockRetry).to receive(:sleep)
+          allow(Widget).to receive(:import!).
+            and_raise(ActiveRecord::Deadlocked.new('Lock wait timeout exceeded'))
+
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: { test_id: 'abc', some_int: 1 } },
+                { key: 2, payload: { test_id: 'def', some_int: 2 } }
+              ]
+            )
+          }.to raise_error(ActiveRecord::Deadlocked)
+
+          # Only DeadlockRetry's own 3 attempts - no per-message retries on top.
+          expect(Widget).to have_received(:import!).exactly(3).times
+        end
+      end
+
+      context 'with a single-message batch' do
+        it 'should raise the original error rather than wrapping it' do
+          expect {
+            publish_batch([{ key: 1, payload: poison_payload }])
+          }.to raise_error(ActiveRecord::RecordInvalid)
+
+          expect(all_widgets).to be_empty
+        end
+      end
+
+      context 'with keys repeated across BatchSlicer slices' do
+        it 'should still process the later slices after an earlier one fails' do
+          # Key 1 appears twice, so BatchSlicer splits the batch into two slices:
+          # [key 1 (poison), key 2] and [key 1 (valid)]. The valid update for key 1 sits in the
+          # second slice, so it only lands if a failure in the first slice doesn't abort the rest.
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: poison_payload },
+                { key: 1, payload: { test_id: 'later', some_int: 2 } },
+                { key: 2, payload: { test_id: 'ok', some_int: 3 } }
+              ]
+            )
+          }.to raise_error(Deimos::BatchFallbackError, /Failed keys: "1"/)
+
+          expect(all_widgets).
+            to contain_exactly(have_attributes(id: 1, test_id: 'later', some_int: 2),
+                               have_attributes(id: 2, test_id: 'ok', some_int: 3))
+        end
+      end
+
+      context 'with max_db_batch_size' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            record_class Widget
+            compacted false
+            max_db_batch_size 2
+          end
+        end
+
+        it 'should still process the later groups after an earlier one fails' do
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: { test_id: 'abc', some_int: 1 } },
+                { key: 2, payload: poison_payload },
+                { key: 3, payload: { test_id: 'ghi', some_int: 3 } },
+                { key: 4, payload: { test_id: 'jkl', some_int: 4 } }
+              ]
+            )
+          }.to raise_error(Deimos::BatchFallbackError, /Failed keys: "2"/)
+
+          expect(all_widgets).
+            to contain_exactly(have_attributes(id: 1, test_id: 'abc'),
+                               have_attributes(id: 3, test_id: 'ghi'),
+                               have_attributes(id: 4, test_id: 'jkl'))
+        end
+      end
+
+      context 'when removing records fails' do
+        let(:consumer_class) do
+          Class.new(described_class) do
+            record_class Widget
+            compacted false
+
+            def remove_records(messages)
+              raise 'cannot delete widget 2' if messages.any? { |m| m.key.to_s == '2' }
+
+              super
+            end
+          end
+        end
+
+        it 'should delete the records it can and report the one it cannot' do
+          Widget.create!(id: 1, test_id: 'abc', some_int: 1)
+          Widget.create!(id: 2, test_id: 'def', some_int: 2)
+          Widget.create!(id: 3, test_id: 'ghi', some_int: 3)
+
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: nil },
+                { key: 2, payload: nil },
+                { key: 3, payload: nil }
+              ]
+            )
+          }.to raise_error(Deimos::BatchFallbackError, /Failed keys: "2"/)
+
+          expect(all_widgets).to contain_exactly(have_attributes(id: 2, test_id: 'def'))
+        end
+      end
+    end
+
     describe 'skipping records' do
       before(:each) do
         register_consumer(consumer_class,

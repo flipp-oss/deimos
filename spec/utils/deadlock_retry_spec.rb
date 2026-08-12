@@ -7,6 +7,43 @@ RSpec.describe Deimos::Utils::DeadlockRetry do
     allow(described_class).to receive(:sleep)
   end
 
+  # `deadlock?` matches against the exception message, so the examples below are literal
+  # fragments as each engine emits them, padded with surrounding text to pin substring rather
+  # than equality matching. No database is exercised here - these are hand-built exceptions, so
+  # they verify the predicate agrees with DEADLOCK_MESSAGES, not that any engine really produces
+  # those strings. See the `each_db_config` specs for tests that run against real engines.
+  describe '.deadlock?' do
+    it 'should match MySQL deadlocks and lock wait timeouts' do
+      expect(described_class).to be_deadlock(
+        ActiveRecord::Deadlocked.new('Mysql2::Error: Deadlock found when trying to get lock')
+      )
+      expect(described_class).to be_deadlock(
+        ActiveRecord::StatementInvalid.new('Lock wait timeout exceeded; try restarting')
+      )
+    end
+
+    it 'should match Postgres deadlock detection' do
+      expect(described_class).to be_deadlock(
+        ActiveRecord::Deadlocked.new('PG::TRDeadlockDetected: ERROR: deadlock detected')
+      )
+    end
+
+    it 'should not match a database error whose message is not a known deadlock' do
+      expect(described_class).not_to be_deadlock(ActiveRecord::StatementInvalid.new('Oops!!'))
+    end
+
+    it 'should not match a non-database error that happens to mention a deadlock' do
+      expect(described_class).not_to be_deadlock(StandardError.new('deadlock detected'))
+    end
+
+    it 'should not match validation failures' do
+      # Batch consumption depends on this: if a RecordInvalid looked like a deadlock, the guard
+      # in `write_group` would reraise it and the individual fallback would never fire for the
+      # poison-message case it exists to handle.
+      expect(described_class).not_to be_deadlock(ActiveRecord::RecordInvalid.new)
+    end
+  end
+
   describe 'deadlock handling' do
     let(:batch) { [{ key: 1, payload: { test_id: 'abc', some_int: 3 } }] }
 
