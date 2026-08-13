@@ -21,6 +21,15 @@ module Deimos
           'deadlock detected'
         ].freeze
 
+        # Whether the given exception is a deadlock or lock wait timeout, i.e. transient
+        # contention on the database rather than a problem with the data being written.
+        # @param error [Exception]
+        # @return [Boolean]
+        def deadlock?(error)
+          error.is_a?(ActiveRecord::StatementInvalid) &&
+            DEADLOCK_MESSAGES.any? { |m| error.message.include?(m) }
+        end
+
         # Retry the given block when encountering a deadlock. For any other
         # exceptions, they are reraised. This is used to handle cases where
         # the database may be busy but the transaction would succeed if
@@ -45,7 +54,7 @@ module Deimos
             end
           rescue ActiveRecord::StatementInvalid => e
             # Reraise if not a known deadlock
-            raise if DEADLOCK_MESSAGES.none? { |m| e.message.include?(m) }
+            raise unless deadlock?(e)
 
             # Reraise if all retries exhausted
             raise if count <= 0

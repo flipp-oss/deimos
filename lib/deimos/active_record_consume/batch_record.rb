@@ -18,6 +18,9 @@ module Deimos
       attr_accessor :bulk_import_column
       # @return [Boolean] true if the primary key was supplied in the input attributes,
       attr_accessor :primary_key_preset
+      # @return [Deimos::Message,nil] the message this record was built from, if any. Used to
+      # report the Kafka key of a record which could not be saved. Not set on sub-records.
+      attr_accessor :message
 
       delegate :valid?, :errors, :send, :attributes, to: :record
 

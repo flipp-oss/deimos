@@ -49,6 +49,7 @@ module Deimos
     deimos.encode_message
     deimos.batch_consumption.invalid_records
     deimos.batch_consumption.valid_records
+    deimos.batch_consumption.initial_failure
     deimos.outbox.produce
   ).freeze
 

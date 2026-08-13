@@ -65,6 +65,11 @@ module Deimos
       topic.save_associations_first
     end
 
+    # @return [Boolean]
+    def batch_message_fallback
+      topic.batch_message_fallback
+    end
+
     def key_decoder
       self.topic.serializers[:key]&.backend
     end

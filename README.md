@@ -323,6 +323,12 @@ produced by Phobos and RubyKafka):
 * `deimos.batch_consumption.invalid_records` - sent when the consumer has rejected records returned from `filtered_records`. Limited by `max_db_batch_size`.
   * consumer: class of the consumer that rejected these records
   * records: Rejected records (of type `Deimos::ActiveRecordConsume::BatchRecord`)
+* `deimos.batch_consumption.initial_failure` - sent when a bulk database write failed and the consumer is about to retry it one record at a time. Fired once per failing write, and fired even if nothing ends up being salvaged.
+  * consumer: class of the consumer that is retrying
+  * topic: name of the topic being consumed
+  * operation: `:upsert_records` or `:remove_records`
+  * count: number of records or messages in the write that failed
+  * error: the exception the bulk write raised
   
 # Consumers
 
@@ -564,6 +570,36 @@ Batch consumption is used when the `each_message` setting for your consumer is s
 By default, batches will be compacted before processing, i.e. only the last
 message for each unique key in a batch will actually be processed. To change
 this behaviour, call `compacted false` inside of your consumer definition.
+
+#### Failure handling
+
+Because a batch is written in a single SQL statement inside a single transaction, one record
+which cannot be persisted would otherwise roll back every other record written alongside it.
+To avoid losing an entire batch to one bad record, Deimos retries the database write one record
+at a time when the bulk write fails. Everything that can be saved on its own is saved, and once
+the whole batch has been attempted a single `Deimos::BatchFallbackError` is raised. Its
+`failures` attribute holds the `[message, error]` pairs that could not be saved, and its message
+names their keys. From there it is handled by `reraise_errors`/`fatal_error` like any other
+consumer error.
+
+Only the database write is retried. Message-level work — `pre_process`, building and filtering
+records, and the `valid_records`/`invalid_records` events — happens exactly once for the group
+either way, so nothing is applied twice. The
+`deimos.batch_consumption.initial_failure` event fires when a bulk write fails and the records
+are about to be retried individually.
+
+The original error is reraised unchanged, rather than wrapped, in three cases:
+
+* Writes of a single record, where there is nothing to isolate.
+* Deadlocks and lock wait timeouts, which are transient contention on the whole write (already
+  retried by `DeadlockRetry`) rather than a problem with a particular record.
+* When nothing could be saved on its own. Isolating salvaged nothing, so the failure was
+  never about one bad record - it is something systemic, such as an unreachable database - and
+  the original error describes that better.
+
+Retrying row by row trades throughput for durability, which is not always the right trade for a
+very large batch on a hot topic. Set `batch_message_fallback false` on the topic to keep
+the previous all-or-nothing behaviour and let the whole batch fail.
 
 A sample batch consumer would look as follows:
 

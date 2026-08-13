@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Breaking: a failed batch database write is now retried one record at a time, so one unpersistable record no longer loses the whole batch. `Deimos::BatchFallbackError` is raised naming the keys that still failed.
+- Feature: new `batch_message_fallback` topic setting, default true. Set it to false to keep the previous all-or-nothing behaviour.
+- Feature: new `deimos.batch_consumption.initial_failure` instrumentation event, fired when a batch write fails and the records are about to be retried individually.
+
 ## 2.5.4 - 2026-07-15
 
 - Fix: `DeadlockRetry.wrap` coerces its `tags` argument with `Array(...)`, so a scalar topic String (passed by `MassUpdater`/batch consumption) no longer raises `NoMethodError` on `String#to_a` inside the rescue, which had defeated the deadlock retry on the first deadlock.
