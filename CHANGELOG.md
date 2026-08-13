@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.6.0 - 2026-08-13
 
 - Breaking: a failed batch database write is now retried one record at a time, so one unpersistable record no longer loses the whole batch. `Deimos::BatchFallbackError` is raised naming the keys that still failed.
 - Feature: new `batch_message_fallback` topic setting, default true. Set it to false to keep the previous all-or-nothing behaviour.
