@@ -66,8 +66,8 @@ module Deimos
     end
 
     # @return [Boolean]
-    def fallback_to_individual_updates
-      topic.fallback_to_individual_updates
+    def batch_message_fallback
+      topic.batch_message_fallback
     end
 
     def key_decoder

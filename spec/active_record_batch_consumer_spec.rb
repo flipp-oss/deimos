@@ -623,12 +623,12 @@ module ActiveRecordBatchConsumerTest
         end
       end
 
-      context 'when fallback_to_individual_updates is turned off' do
+      context 'when batch_message_fallback is turned off' do
         before(:each) do
           register_consumer(consumer_class, 'MySchema',
                             key_config: { plain: true },
                             configs: { reraise_errors: true,
-                                       fallback_to_individual_updates: false })
+                                       batch_message_fallback: false })
         end
 
         it 'should lose the whole batch to a single bad record' do

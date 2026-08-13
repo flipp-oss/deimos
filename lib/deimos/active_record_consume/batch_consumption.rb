@@ -156,9 +156,7 @@ module Deimos
         upsert_groups = max_db_batch_size ? upserted.each_slice(max_db_batch_size).to_a : [upserted]
         remove_groups = max_db_batch_size ? removed.each_slice(max_db_batch_size).to_a : [removed]
 
-        # Array() so that a consumer which overrode upsert_records back when it returned nothing
-        # degrades to "no failures" rather than tripping the BatchFallbackError below.
-        upsert_groups.reject(&:empty?).flat_map { |group| Array(upsert_records(group)) } +
+        upsert_groups.reject(&:empty?).flat_map { |group| upsert_records(group) } +
           remove_groups.reject(&:empty?).flat_map { |group| remove_group(group) }
       end
 
@@ -201,7 +199,7 @@ module Deimos
       # Write a list of records to the database. The list is written in a single statement inside
       # a single transaction, so one record which can't be persisted would otherwise take down
       # every other record written alongside it. Unless the topic turns
-      # `fallback_to_individual_updates` off, retry the write one record at a time so the healthy
+      # `batch_message_fallback` off, retry the write one record at a time so the healthy
       # ones still land - and only the write, so that message-level work isn't repeated.
       # @param record_list [BatchRecordList]
       # @param updater [MassUpdater]
@@ -210,7 +208,7 @@ module Deimos
       def save_record_list(record_list, updater)
         [updater.mass_update(record_list), []]
       rescue StandardError => e
-        raise unless self.fallback_to_individual_updates
+        raise unless self.batch_message_fallback
         # Nothing to isolate from a single record, and deadlocks/lock wait timeouts are transient
         # contention on the whole write which DeadlockRetry has already retried - they don't point
         # at a bad record, so retrying row by row only multiplies the work.
@@ -251,7 +249,7 @@ module Deimos
         remove_records(messages)
         []
       rescue StandardError => e
-        raise unless self.fallback_to_individual_updates
+        raise unless self.batch_message_fallback
         raise if messages.size <= 1 || Deimos::Utils::DeadlockRetry.deadlock?(e)
 
         report_initial_failure(:remove_records, messages.size, e)

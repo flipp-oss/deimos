@@ -598,7 +598,7 @@ The original error is reraised unchanged, rather than wrapped, in three cases:
   the original error describes that better.
 
 Retrying row by row trades throughput for durability, which is not always the right trade for a
-very large batch on a hot topic. Set `fallback_to_individual_updates false` on the topic to keep
+very large batch on a hot topic. Set `batch_message_fallback false` on the topic to keep
 the previous all-or-nothing behaviour and let the whole batch fail.
 
 A sample batch consumer would look as follows:
