@@ -38,8 +38,8 @@ RSpec.describe Deimos::Utils::DeadlockRetry do
 
     it 'should not match validation failures' do
       # Batch consumption depends on this: if a RecordInvalid looked like a deadlock, the guard
-      # in `write_group` would reraise it and the individual fallback would never fire for the
-      # poison-message case it exists to handle.
+      # in `save_record_list` would reraise it and the individual fallback would never fire for
+      # the poison-record case it exists to handle.
       expect(described_class).not_to be_deadlock(ActiveRecord::RecordInvalid.new)
     end
   end

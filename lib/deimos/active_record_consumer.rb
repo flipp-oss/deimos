@@ -65,6 +65,11 @@ module Deimos
       topic.save_associations_first
     end
 
+    # @return [Boolean]
+    def fallback_to_individual_updates
+      topic.fallback_to_individual_updates
+    end
+
     def key_decoder
       self.topic.serializers[:key]&.backend
     end

@@ -153,82 +153,22 @@ module Deimos
         removed, upserted = messages.partition { |m| delete_record?(m) }
 
         max_db_batch_size = self.class.config[:max_db_batch_size]
-        groups = if max_db_batch_size
-                   upserted.each_slice(max_db_batch_size).map { |g| [g, :upsert_records] } +
-                     removed.each_slice(max_db_batch_size).map { |g| [g, :remove_records] }
-                 else
-                   [[upserted, :upsert_records], [removed, :remove_records]]
-                 end
+        upsert_groups = max_db_batch_size ? upserted.each_slice(max_db_batch_size).to_a : [upserted]
+        remove_groups = max_db_batch_size ? removed.each_slice(max_db_batch_size).to_a : [removed]
 
-        groups.reject { |group, _| group.empty? }.
-          flat_map { |group, operation| write_group(group, operation) }
+        # Array() so that a consumer which overrode upsert_records back when it returned nothing
+        # degrades to "no failures" rather than tripping the BatchFallbackError below.
+        upsert_groups.reject(&:empty?).flat_map { |group| Array(upsert_records(group)) } +
+          remove_groups.reject(&:empty?).flat_map { |group| remove_group(group) }
       end
 
-      # Run one batch database operation. A batch is written in a single statement inside a
-      # single transaction, so one message that can't be persisted would otherwise take down
-      # every other message written alongside it. On failure, retry the messages one at a time
-      # so the healthy ones still land.
-      # @param messages [Array<Message>] List of messages, all of which are either upserts or
-      #   tombstones.
-      # @param operation [Symbol] `:upsert_records` or `:remove_records`.
-      # @return [Array<Array(Message, StandardError)>] messages that failed on their own, paired
-      #   with their error. Empty if the batch succeeded.
-      def write_group(messages, operation)
-        send(operation, messages)
-        []
-      rescue StandardError => e
-        # Nothing to isolate from a single message, and deadlocks/lock wait timeouts are
-        # transient contention on the whole batch which DeadlockRetry has already retried -
-        # they don't point at a bad message, so retrying row by row only multiplies the work.
-        raise if messages.size <= 1 || Deimos::Utils::DeadlockRetry.deadlock?(e)
-
-        retry_individually(messages, operation, e)
-      end
-
-      # @param messages [Array<Message>]
-      # @param operation [Symbol] `:upsert_records` or `:remove_records`.
-      # @param batch_error [StandardError] the error the batch operation raised.
-      # @return [Array<Array(Message, StandardError)>]
-      def retry_individually(messages, operation, batch_error)
-        Deimos::Logging.log_warn(
-          message: 'Batch database operation failed, retrying messages individually',
-          handler: self.class.name,
-          topic: self.topic.name,
-          operation: operation,
-          message_count: messages.size,
-          error_message: batch_error.message
-        )
-        Karafka.monitor.instrument('deimos.batch_consumption.individual_fallback', {
-                                     consumer: self.class,
-                                     topic: self.topic.name,
-                                     operation: operation,
-                                     message_count: messages.size,
-                                     error: batch_error
-                                   })
-
-        failures = []
-        messages.each do |message|
-          # Deliberately goes back through the full operation rather than reusing the records
-          # built for the batch: those carry primary keys filled in during the attempt that was
-          # just rolled back, which would be stale here.
-          send(operation, [message])
-        rescue StandardError => e
-          failures << [message, e]
-        end
-
-        # Every message failed on its own, so this was never about one bad message - it's
-        # something systemic (the database is unreachable, a post-processing listener is
-        # raising, ...). The original error describes that better than a BatchFallbackError
-        # listing every key in the batch.
-        raise batch_error if failures.size == messages.size
-
-        failures
-      end
-
-      # Upsert any non-deleted records
+      # Upsert any non-deleted records. Everything that operates on the messages - pre-processing,
+      # building and filtering records, instrumentation - happens exactly once here; only the
+      # database write is retried if it fails, so nothing gets applied twice.
       # @param messages [Array<Message>] List of messages for a group of
       # records to either be updated or inserted.
-      # @return [void]
+      # @return [Array<Array(Message, StandardError)>] messages whose records could not be saved
+      #   even on their own, paired with their error.
       def upsert_records(messages)
         record_list = build_records(messages)
         invalid = filter_records(record_list)
@@ -238,7 +178,7 @@ module Deimos
                                        consumer: self.class
                                      })
         end
-        return if record_list.empty?
+        return [] if record_list.empty?
 
         key_col_proc = self.method(:key_columns).to_proc
         col_proc = self.method(:columns).to_proc
@@ -250,9 +190,103 @@ module Deimos
                                   bulk_import_id_generator: self.bulk_import_id_generator,
                                   save_associations_first: self.save_associations_first,
                                   bulk_import_id_column: self.bulk_import_id_column)
+        saved, failures = save_record_list(record_list, updater)
         Karafka.monitor.instrument('deimos.batch_consumption.valid_records', {
-                                     records: updater.mass_update(record_list),
+                                     records: saved,
                                      consumer: self.class
+                                   })
+        failures
+      end
+
+      # Write a list of records to the database. The list is written in a single statement inside
+      # a single transaction, so one record which can't be persisted would otherwise take down
+      # every other record written alongside it. Unless the topic turns
+      # `fallback_to_individual_updates` off, retry the write one record at a time so the healthy
+      # ones still land - and only the write, so that message-level work isn't repeated.
+      # @param record_list [BatchRecordList]
+      # @param updater [MassUpdater]
+      # @return [Array(Array<ActiveRecord::Base>, Array<Array(Message, StandardError)>)] the
+      #   records that were saved, and the messages that could not be saved with their error.
+      def save_record_list(record_list, updater)
+        [updater.mass_update(record_list), []]
+      rescue StandardError => e
+        raise unless self.fallback_to_individual_updates
+        # Nothing to isolate from a single record, and deadlocks/lock wait timeouts are transient
+        # contention on the whole write which DeadlockRetry has already retried - they don't point
+        # at a bad record, so retrying row by row only multiplies the work.
+        raise if record_list.batch_records.size <= 1 || Deimos::Utils::DeadlockRetry.deadlock?(e)
+
+        save_records_individually(record_list, updater, e)
+      end
+
+      # @param record_list [BatchRecordList]
+      # @param updater [MassUpdater]
+      # @param batch_error [StandardError] the error the bulk write raised.
+      # @return [Array(Array<ActiveRecord::Base>, Array<Array(Message, StandardError)>)]
+      def save_records_individually(record_list, updater, batch_error)
+        report_initial_failure(:upsert_records, record_list.batch_records.size, batch_error)
+
+        saved = []
+        failures = []
+        record_list.batch_records.each do |batch_record|
+          saved.concat(updater.mass_update(BatchRecordList.new([batch_record])))
+        rescue StandardError => e
+          failures << [batch_record.message, e]
+        end
+
+        # Nothing could be saved on its own, so this was never about one bad record - it's
+        # something systemic (the database is unreachable, ...). The original error describes that
+        # better than a BatchFallbackError listing every key.
+        raise batch_error if saved.empty?
+
+        [saved, failures]
+      end
+
+      # Delete the records for a group of tombstones, falling back to one message at a time if the
+      # bulk delete fails. Unlike upserts there is no record building, pre-processing or
+      # instrumentation on this path, so the whole operation can safely be retried per message.
+      # @param messages [Array<Message>]
+      # @return [Array<Array(Message, StandardError)>]
+      def remove_group(messages)
+        remove_records(messages)
+        []
+      rescue StandardError => e
+        raise unless self.fallback_to_individual_updates
+        raise if messages.size <= 1 || Deimos::Utils::DeadlockRetry.deadlock?(e)
+
+        report_initial_failure(:remove_records, messages.size, e)
+
+        failures = []
+        messages.each do |message|
+          remove_records([message])
+        rescue StandardError => individual_error
+          failures << [message, individual_error]
+        end
+        raise e if failures.size == messages.size
+
+        failures
+      end
+
+      # Log and announce that a bulk write failed and is about to be retried one at a time.
+      # @param operation [Symbol] `:upsert_records` or `:remove_records`.
+      # @param count [Integer] how many records or messages were in the failed write.
+      # @param error [StandardError]
+      # @return [void]
+      def report_initial_failure(operation, count, error)
+        Deimos::Logging.log_warn(
+          message: 'Batch database write failed, retrying one at a time',
+          handler: self.class.name,
+          topic: self.topic.name,
+          operation: operation,
+          count: count,
+          error_message: error.message
+        )
+        Karafka.monitor.instrument('deimos.batch_consumption.initial_failure', {
+                                     consumer: self.class,
+                                     topic: self.topic.name,
+                                     operation: operation,
+                                     count: count,
+                                     error: error
                                    })
       end
 
@@ -288,10 +322,13 @@ module Deimos
                   self.bulk_import_id_column
                 end
 
-          BatchRecord.new(klass: @klass,
-                          attributes: attrs,
-                          bulk_import_column: col,
-                          bulk_import_id_generator: self.bulk_import_id_generator)
+          record = BatchRecord.new(klass: @klass,
+                                   attributes: attrs,
+                                   bulk_import_column: col,
+                                   bulk_import_id_generator: self.bulk_import_id_generator)
+          # Keep the message so a record which can't be saved can be reported by its Kafka key.
+          record.message = m
+          record
         end
         BatchRecordList.new(records.compact)
       end

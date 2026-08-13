@@ -10,7 +10,8 @@ module Deimos
                   each_message
                   reraise_errors
                   fatal_error
-                  save_associations_first).freeze
+                  save_associations_first
+                  fallback_to_individual_updates).freeze
       Config = Struct.new(*FIELDS, keyword_init: true)
 
       FIELDS.each do |field|
@@ -19,6 +20,7 @@ module Deimos
             bulk_import_id_column: :bulk_import_id,
             replace_associations: true,
             each_message: false,
+            fallback_to_individual_updates: true,
             reraise_errors: Rails.env.test?,
             bulk_import_id_generator: proc { SecureRandom.uuid },
             fatal_error: proc { false }

@@ -544,7 +544,7 @@ module ActiveRecordBatchConsumerTest
 
         it 'should emit an instrumentation event naming the topic and operation' do
           events = []
-          Karafka.monitor.subscribe('deimos.batch_consumption.individual_fallback') do |event|
+          Karafka.monitor.subscribe('deimos.batch_consumption.initial_failure') do |event|
             events << event.payload
           end
 
@@ -561,7 +561,37 @@ module ActiveRecordBatchConsumerTest
           expect(events.first).to include(consumer: consumer_class,
                                           topic: 'my-topic',
                                           operation: :upsert_records,
-                                          message_count: 2)
+                                          count: 2)
+        end
+
+        it 'should only re-run the database write, not the message-level processing' do
+          # Retrying by breaking the batch into writes of one must not re-run anything that
+          # already ran for the batch as a whole. pre_process is called once for the group, and
+          # valid_records is announced once with every record that made it, rather than once per
+          # record.
+          pre_processed = []
+          allow_any_instance_of(consumer_class).to receive(:pre_process) do |_, messages|
+            pre_processed << messages.map(&:key)
+          end
+
+          valid_records = []
+          Karafka.monitor.subscribe('deimos.batch_consumption.valid_records') do |event|
+            valid_records << event.payload[:records]
+          end
+
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: { test_id: 'abc', some_int: 1 } },
+                { key: 2, payload: poison_payload },
+                { key: 3, payload: { test_id: 'ghi', some_int: 3 } }
+              ]
+            )
+          }.to raise_error(Deimos::BatchFallbackError)
+
+          expect(pre_processed).to eq([%w(1 2 3)])
+          expect(valid_records.size).to eq(1)
+          expect(valid_records.first.map(&:test_id)).to contain_exactly('abc', 'ghi')
         end
 
         it 'should not retry individually when the batch failed on a deadlock' do
@@ -590,6 +620,45 @@ module ActiveRecordBatchConsumerTest
           }.to raise_error(ActiveRecord::RecordInvalid)
 
           expect(all_widgets).to be_empty
+        end
+      end
+
+      context 'when fallback_to_individual_updates is turned off' do
+        before(:each) do
+          register_consumer(consumer_class, 'MySchema',
+                            key_config: { plain: true },
+                            configs: { reraise_errors: true,
+                                       fallback_to_individual_updates: false })
+        end
+
+        it 'should lose the whole batch to a single bad record' do
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: { test_id: 'abc', some_int: 1 } },
+                { key: 2, payload: poison_payload },
+                { key: 3, payload: { test_id: 'ghi', some_int: 3 } }
+              ]
+            )
+          }.to raise_error(ActiveRecord::RecordInvalid)
+
+          expect(all_widgets).to be_empty
+        end
+
+        it 'should not attempt any individual writes' do
+          allow(Widget).to receive(:import!).and_call_original
+
+          expect {
+            publish_batch(
+              [
+                { key: 1, payload: { test_id: 'abc', some_int: 1 } },
+                { key: 2, payload: poison_payload }
+              ]
+            )
+          }.to raise_error(ActiveRecord::RecordInvalid)
+
+          # The batch write raises during validation, before any import is issued.
+          expect(Widget).not_to have_received(:import!)
         end
       end
 

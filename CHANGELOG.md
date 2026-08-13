@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Breaking: when a batch database operation fails, `ActiveRecordConsumer` batch consumption now retries the messages one at a time instead of losing the whole batch to a single message that cannot be persisted. Every message that can be saved on its own is saved, and once the whole batch has been attempted a single `Deimos::BatchFallbackError` is raised carrying the `[message, error]` pairs that failed. This means the error escaping a failed batch is now a `BatchFallbackError` rather than the underlying error (e.g. `ActiveRecord::RecordInvalid`) - if you branch on exception class in `fatal_error?` or your error tracking, you will need to account for it. The original error is reraised unchanged rather than wrapped for batches of a single message, for deadlock/lock wait timeout failures, and when no message could be saved on its own (i.e. the failure was systemic rather than one bad message). Note also that during the fallback `pre_process` is called once per message rather than once per batch, and `deimos.batch_consumption.valid_records` is emitted per message.
-- Feature: new `deimos.batch_consumption.individual_fallback` instrumentation event, fired when the above fallback kicks in.
-- Feature: `Deimos::Utils::DeadlockRetry.deadlock?` is now public, for callers that need to distinguish transient lock contention from other database errors.
+- Breaking: a failed batch database write is now retried one record at a time, so one unpersistable record no longer loses the whole batch. `Deimos::BatchFallbackError` is raised naming the keys that still failed.
+- Feature: new `fallback_to_individual_updates` topic setting, default true. Set it to false to keep the previous all-or-nothing behaviour.
+- Feature: new `deimos.batch_consumption.initial_failure` instrumentation event, fired when a batch write fails and the records are about to be retried individually.
 
 ## 2.5.4 - 2026-07-15
 
