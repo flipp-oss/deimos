@@ -101,13 +101,13 @@ module Deimos
         rescue WaterDrop::Errors::ProduceManyError => e
             if FATAL_CODES.include?(e.cause.try(:code))
               @logger.error('Message batch too large, deleting...')
+              log_dropped_messages(compacted_messages, e)
               delete_messages(messages)
               raise e
             else
               Deimos.log_error("Got error #{e.cause.class.name} when publishing #{batch_size} messages, retrying...")
               retry
             end
-
         end
         delete_messages(messages)
         Deimos.config.metrics&.increment(
@@ -210,6 +210,25 @@ module Deimos
           Deimos.producer_for(@current_topic).produce_many_sync(group)
           current_index += group.size
           @logger.info("Sent #{group.size} messages to #{@current_topic}")
+        end
+      end
+
+      # Find and logs messages that were rejected by the cluster e.g payload too large.
+      # @param messages [Array<Deimos::KafkaMessage>]
+      # @param error [WaterDrop::Errors::ProduceManyError]
+      # @return [void]
+      def log_dropped_messages(messages, error)
+        # Error.dispatch contains handles with information about each message in the batch
+        # zip weaves messages and their respective handles
+        # [[msg_A, handle_A], [msg_B, handle_B], [msg_C, handle_C]]
+        messages.zip(error.dispatched).each do |message, handle|
+          # We then use the handle to see if this particular message failed
+          result = handle&.create_result
+          next if result.nil? || result.error.nil?
+
+          @logger.error("Dropping message on topic #{@current_topic} (id=#{message.id}): " \
+                        "#{result.error.code} - #{result.error.message}")
+          Deimos.config.metrics&.increment('outbox.message_dropped', tags: %W(topic:#{@current_topic}))
         end
       end
 
