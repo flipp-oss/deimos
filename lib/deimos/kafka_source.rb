@@ -88,10 +88,13 @@ end
       # Basically we want to first do the import, then reload the records
       # and send them to Kafka.
       # @!visibility private
-      def import_without_validations_or_callbacks(column_names,
-                                                  array_of_attributes,
-                                                  options={})
+      #
+      # activerecord-import 2.3+ prepends a `conn` arg to this method - accept a splat and
+      # grab the last 3 args (column_names, array_of_attributes, options) either way.
+      def import_without_validations_or_callbacks(*args)
         results = super
+        column_names, array_of_attributes, options = args.last(3)
+        options ||= {}
         if !self.kafka_config[:import] || array_of_attributes.empty?
           return results
         end
