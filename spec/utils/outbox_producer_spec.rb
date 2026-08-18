@@ -60,6 +60,46 @@ each_db_config(Deimos::Utils::OutboxProducer) do
       producer.produce_messages(batch)
     end
 
+    describe '#log_dropped_messages' do
+      let(:messages) do
+        (1..2).map do |i|
+          Deimos::KafkaMessage.new(id: i, topic: 'my-topic', message: "mess#{i}")
+        end
+      end
+
+      before(:each) { producer.current_topic = 'my-topic' }
+
+      it 'logs and increments a metric only for the message(s) that actually errored' do
+        rdkafka_error = instance_double(
+          Rdkafka::RdkafkaError, code: :msg_size_too_large, message: 'Message size too large'
+        )
+        ok_result = instance_double(Rdkafka::Producer::DeliveryReport, error: nil)
+        failed_result = instance_double(Rdkafka::Producer::DeliveryReport, error: rdkafka_error)
+        ok_handle = instance_double(Rdkafka::Producer::DeliveryHandle, create_result: ok_result)
+        failed_handle = instance_double(Rdkafka::Producer::DeliveryHandle, create_result: failed_result)
+        error = WaterDrop::Errors::ProduceManyError.new([ok_handle, failed_handle], 'batch failed')
+        allow(Deimos.config.metrics).to receive(:increment)
+
+        producer.log_dropped_messages(messages, error)
+
+        expect(logger).to have_received(:error).once
+        expect(logger).to have_received(:error).
+          with('Dropping message on topic my-topic (id=2): msg_size_too_large - Message size too large')
+        expect(Deimos.config.metrics).to have_received(:increment).
+          with('outbox.message_dropped', tags: %w(topic:my-topic)).once
+      end
+
+      it 'does nothing when no handles are attached (e.g. a transactional producer)' do
+        error = WaterDrop::Errors::ProduceManyError.new([], 'batch failed')
+        allow(Deimos.config.metrics).to receive(:increment)
+
+        producer.log_dropped_messages(messages, error)
+
+        expect(logger).not_to have_received(:error)
+        expect(Deimos.config.metrics).not_to have_received(:increment)
+      end
+    end
+
     describe '#compact_messages' do
       let(:batch) do
         [

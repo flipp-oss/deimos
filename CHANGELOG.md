@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Feature: `OutboxProducer` now logs which specific message(s) in a batch actually caused a fatal (`FATAL_CODES`) rejection, and increments a new `outbox.message_dropped` metric for each one - previously "Message batch too large, deleting..." gave no way to tell which of up to 1000 messages was the actual offender.
+- Fix: `KafkaSource#import_without_validations_or_callbacks` no longer raises `ArgumentError` against `activerecord-import` >= 2.3, which added a leading `conn` argument to this internal method. The override now accepts a splat and reads the last 3 args (`column_names`, `array_of_attributes`, `options`), so it works against both the old and new call signatures.
+- Feature: new `producers.max_payload_size` config setting to override WaterDrop's default (1,000,012 bytes). Setting `producer.config.max_payload_size` directly after setup has no effect - WaterDrop bakes this value into its validation contract once at setup time - so this is now applied inside `setup_producers` before that happens (and the contract is rebuilt for `Karafka.producer`, whose contract is already built by then).
+
 ## 2.6.0 - 2026-08-13
 
 - Breaking: a failed batch database write is now retried one record at a time, so one unpersistable record no longer loses the whole batch. `Deimos::BatchFallbackError` is raised naming the keys that still failed.

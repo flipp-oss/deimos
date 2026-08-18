@@ -82,6 +82,28 @@ describe Deimos do
     expect(producer3.config.kafka[:'bootstrap.servers']).to eq('broker2:9092')
   end
 
+  specify '#setup_producers applies max_payload_size to every producer, contract included' do
+    described_class.configure do |config|
+      config.producers.max_payload_size = 123_456
+    end
+
+    Karafka::App.routes.redraw do
+      topic 'payload-size-test-topic' do
+        active false
+        kafka({ 'bootstrap.servers': 'broker3:9092' })
+      end
+    end
+    described_class.setup_producers
+
+    # WaterDrop bakes max_payload_size into its validation contract at setup time, so
+    # config alone isn't enough - assert the contract picked it up too.
+    described_class.waterdrop_producers.each do |producer|
+      expect(producer.config.max_payload_size).to eq(123_456)
+      contract = producer.instance_variable_get(:@contract)
+      expect(contract.max_payload_size).to eq(123_456)
+    end
+  end
+
   describe '#schema_backend_for' do
     it 'should return a schema backend for a given topic' do
       Karafka::App.routes.redraw do

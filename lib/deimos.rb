@@ -184,11 +184,14 @@ module Deimos
     def setup_producers
       @producers = {}
       producers_by_broker = {}
+      max_payload_size = Deimos.config.producers.max_payload_size
+
       Deimos.karafka_configs.each do |topic|
         broker = topic.kafka[:'bootstrap.servers']
         producers_by_broker[broker] ||= ::WaterDrop::Producer.new do |p_config|
           config_hash = Karafka::Setup::Config.config.kafka.merge(topic.kafka)
           p_config.kafka = Karafka::Setup::AttributesMap.producer(config_hash)
+          p_config.max_payload_size = max_payload_size if max_payload_size
         end
         @producers[topic.name] = producers_by_broker[broker]
       end
@@ -196,6 +199,22 @@ module Deimos
       # apply the merged global so later overrides actually take effect.
       Karafka.producer.config.kafka =
         Karafka::Setup::AttributesMap.producer(Karafka::Setup::Config.config.kafka.dup)
+
+      apply_max_payload_size_to_karafka_producer(max_payload_size)
+    end
+
+    # Karafka.producer's contract is already built by the time setup_producers runs, so
+    # setting its config alone won't affect validation - rebuild the contract too, same as
+    # WaterDrop does internally the first time a producer is set up.
+    # @param max_payload_size [Integer, nil]
+    # @return [void]
+    def apply_max_payload_size_to_karafka_producer(max_payload_size)
+      return unless max_payload_size
+
+      Karafka.producer.config.max_payload_size = max_payload_size
+      Karafka.producer.instance_variable_set(
+        :@contract, WaterDrop::Contracts::Message.new(max_payload_size: max_payload_size)
+      )
     end
 
     def setup_karafka

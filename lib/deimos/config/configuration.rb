@@ -150,6 +150,11 @@ module Deimos
       # If set to true, KafkaSource will automatically truncate fields to match the column
       # length in the database.
       setting :truncate_columns
+
+      # Overrides WaterDrop's default max_payload_size (1_000_012 bytes) on all producers.
+      # Leave unset to keep WaterDrop's own default.
+      # @return [Integer, nil]
+      setting :max_payload_size
     end
 
     setting :schema do

@@ -993,6 +993,8 @@ The following metrics are reported:
 * `deimos.outbox.process` - the number of DB messages processed. Note that this
   is *not* the same as the number of messages *published* if those messages
   are compacted. Tagged with `topic:{topic_name}`
+* `deimos.outbox.message_dropped` - incremented once per message dropped after
+  a fatal (too-large) rejection from the cluster. Tagged with `topic:{topic_name}`
 
 ## Configuring Metrics Providers
 
