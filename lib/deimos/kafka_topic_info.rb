@@ -16,11 +16,15 @@ module Deimos
       # @param lock_id [String]
       # @return [Boolean]
       def lock(topic, lock_id) # rubocop:disable Naming/PredicateMethod
-        # Try to create it - it's fine if it already exists
-        begin
-          self.create!(topic: topic, last_processed_at: Time.zone.now)
-        rescue ActiveRecord::RecordNotUnique
-          # continue on
+        # Only attempt the insert if the row is missing. On MySQL a failed
+        # insert still consumes an auto-increment value, so retrying it on
+        # every lock attempt would eventually exhaust the ID space.
+        unless self.exists?(topic: topic)
+          begin
+            self.create!(topic: topic, last_processed_at: Time.zone.now)
+          rescue ActiveRecord::RecordNotUnique
+            # another process created it in the meantime - continue on
+          end
         end
 
         # Lock the record

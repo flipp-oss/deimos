@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Fix: `KafkaTopicInfo.lock` only attempts the `INSERT` when the topic row is missing, instead of relying on a unique-index failure. On MySQL a failed insert still consumes an auto-increment value, so the old behaviour burned an ID on every lock attempt and could exhaust the ID space.
+
 ## 2.6.0 - 2026-08-13
 
 - Breaking: a failed batch database write is now retried one record at a time, so one unpersistable record no longer loses the whole batch. `Deimos::BatchFallbackError` is raised naming the keys that still failed.
