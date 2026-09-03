@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fix: `KafkaTopicInfo.lock` only attempts the `INSERT` when the topic row is missing, instead of relying on a unique-index failure. On MySQL a failed insert still consumes an auto-increment value, so the old behaviour burned an ID on every lock attempt and could exhaust the ID space.
 - Fix: `KafkaSource#import_without_validations_or_callbacks` accepts a variable number of arguments, so it works with both `activerecord-import` 2.3+ (which prepends a `conn` argument) and earlier versions. Previously an app on 2.3+ raised `ArgumentError: wrong number of arguments` on any import with `kafka_config[:import]` enabled.
 
 ## 2.6.0 - 2026-08-13
