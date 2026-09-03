@@ -5,7 +5,7 @@ require 'activerecord-import'
 # Wrap in a module so our classes don't leak out afterwards
 module KafkaSourceSpec
   RSpec.describe Deimos::KafkaSource do
-    # rubocop:disable Lint/ConstantDefinitionInBlock
+    # rubocop:disable-next Lint/ConstantDefinitionInBlock
     before(:all) do
       ActiveRecord::Base.connection.create_table(:widgets, force: true) do |t|
         t.integer(:widget_id)
@@ -42,7 +42,6 @@ module KafkaSourceSpec
       end
       Widget.reset_column_information
     end
-    # rubocop:enable Lint/ConstantDefinitionInBlock
 
     after(:all) do
       ActiveRecord::Base.connection.drop_table(:widgets)

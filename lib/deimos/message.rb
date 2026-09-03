@@ -12,11 +12,11 @@ module Deimos
     # @return [Integer]
     attr_accessor :partition_key
     # @return [String]
-    attr_accessor  :encoded_key
+    attr_accessor :encoded_key
     # @return [String]
-    attr_accessor  :encoded_payload
+    attr_accessor :encoded_payload
     # @return [String]
-    attr_accessor  :topic
+    attr_accessor :topic
 
     # @param payload [Hash]
     # @param topic [String]

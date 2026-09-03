@@ -137,7 +137,7 @@ each_db_config(Deimos::Utils::OutboxProducer) do
     end
 
     # using expect(x).to have_received(:y).ordered doesn't work
-    # rubocop:disable RSpec/StubbedMock
+    # rubocop:disable-next RSpec/StubbedMock
     it 'should complete successfully' do # rubocop:disable RSpec/ExampleLength
       messages = (1..4).map do |i|
         Deimos::KafkaMessage.new(
@@ -203,7 +203,6 @@ each_db_config(Deimos::Utils::OutboxProducer) do
         with('my-topic', 'abc').once
       producer.process_topic('my-topic')
     end
-    # rubocop:enable RSpec/StubbedMock
 
     it 'should register an error if it gets an error' do
       allow(producer).to receive(:retrieve_messages).and_raise('OH NOES')

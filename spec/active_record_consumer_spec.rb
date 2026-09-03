@@ -3,7 +3,7 @@
 require 'date'
 
 # Wrapped in a module to prevent class leakage
-# rubocop:disable Metrics/ModuleLength
+# rubocop:disable-next Metrics/ModuleLength
 module ActiveRecordConsumerTest
   describe Deimos::ActiveRecordConsumer, 'Message Consumer' do
     before(:all) do
@@ -299,4 +299,3 @@ module ActiveRecordConsumerTest
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

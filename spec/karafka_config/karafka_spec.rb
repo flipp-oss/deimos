@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Style/GlobalVars
+# rubocop:disable-next Style/GlobalVars
 RSpec.describe Karafka::Routing::Topic do
   before(:each) do
     KarafkaApp.routes.clear
@@ -150,4 +150,3 @@ RSpec.describe Karafka::Routing::Topic do
   end
 
 end
-# rubocop:enable Style/GlobalVars

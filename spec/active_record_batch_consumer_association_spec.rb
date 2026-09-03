@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Lint/ConstantDefinitionInBlock
+# rubocop:disable-next Lint/ConstantDefinitionInBlock
 module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
   describe Deimos::ActiveRecordConsumer,
            'Batch Consumer with MySQL handling associations',
@@ -321,4 +321,3 @@ module ActiveRecordBatchConsumerTest # rubocop:disable Metrics/ModuleLength
     end
            end
 end
-# rubocop:enable Lint/ConstantDefinitionInBlock
