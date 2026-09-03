@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Fix: `KafkaSource#import_without_validations_or_callbacks` accepts a variable number of arguments, so it works with both `activerecord-import` 2.3+ (which prepends a `conn` argument) and earlier versions. Previously an app on 2.3+ raised `ArgumentError: wrong number of arguments` on any import with `kafka_config[:import]` enabled.
+
 ## 2.6.0 - 2026-08-13
 
 - Breaking: a failed batch database write is now retried one record at a time, so one unpersistable record no longer loses the whole batch. `Deimos::BatchFallbackError` is raised naming the keys that still failed.
